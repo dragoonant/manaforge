@@ -1,0 +1,32 @@
+# Secrets. Ignored in the first commit, before the first tool.
+tokens.txt
+tokens.txt.txt
+hf_token.md
+elevenlabs.token.rtf
+*.token
+*.token.*
+.env
+.env.*
+
+# Raw research: rules text, card dumps, decklist scrapes, screenshots.
+# Nothing in here crosses into the repo except through a generated pack.
+scratch/
+
+# Art masters and archives. The repo carries delivery encodes only.
+art/masters/
+art/archive/
+*.psd
+
+# Traces, replays, sweep sandboxes.
+traces/
+sweeps/
+*.trace.json
+
+# Editor and OS noise, including the lock files a synced folder produces.
+.DS_Store
+._*
+.~lock.*
+*.swp
+node_modules/
+.idea/
+.claude/
