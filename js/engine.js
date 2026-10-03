@@ -555,8 +555,10 @@
       const opts = s.bf.filter(i => !chosen.includes(i) && canAttack(s, i)).map(i => ({ id: i, iid: i }));
       if (!opts.length && !chosen.length) break;                                             // nothing could attack: not a choice
       opts.push({ id: 'done' });
+      if (chosen.length) opts.push({ id: 'undo' });
       const a = ask(x, { who: who, kind: 'attack', chosen: chosen.slice(), opts: opts });
       if (a === 'done') break;
+      if (a === 'undo') { chosen.pop(); continue; }
       chosen.push(a);
     }
     const cb = s.combat;
