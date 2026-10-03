@@ -357,7 +357,7 @@
     step(fresh.length > 0);
   }
   function step(visible) {
-    render();
+    try { render(); } catch (err) { MF.main.crash(err); return; }                              // a drawing error shows the bug report; it never freezes the table silently
     const s = ui.s;
     if (s.winner != null) return;
     const who = MF.whoActs(s);

@@ -184,7 +184,7 @@
         if (p || t) x.s.effects.push({ k: 'pt', iid: i, p: p, t: t, until: 'eot', ts: x.s.ts++ });
         if (op.grant) x.s.effects.push({ k: 'grant', iid: i, kws: op.grant.slice(), until: 'eot', ts: x.s.ts++ });
       }
-      if (iids.length) log(x.s, 'pump', { who: x.ctrl, cs: iids.map(i => I(x.s, i).id), p: p, t: t, grant: op.grant || null, src: x.L ? x.L.srcId || x.L.id : null, all: !!(op.on && op.on.each) });
+      if (iids.length) log(x.s, 'pump', { who: x.ctrl, cs: iids.map(i => I(x.s, i).id), p: p, tou: t, grant: op.grant || null, src: x.L ? x.L.srcId || x.L.id : null, all: !!(op.on && op.on.each) });
     },
     unblockable(x, op) { for (const i of MF.resolveRefs(x, op.on)) { x.s.effects.push({ k: 'unblockable', iid: i, until: 'eot' }); log(x.s, 'unblockable', { c: I(x.s, i).id }); } },
     scry(x, op) {                                                                              // CR 701.22a
@@ -284,7 +284,7 @@
       const n = MF.move(s, p.lib[0], 'exile');
       const turn = s.ap === x.ctrl ? s.turn + 2 : s.turn + 1;                                   // the end of your next turn
       s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, until: 'endOfTurn', turn: turn });
-      log(s, 'impulse', { who: x.ctrl, c: id, turn: turn });
+      log(s, 'impulse', { who: x.ctrl, c: id, until: turn });
       x.it = n;
     },
     attach(x, op) {                                                                            // CR 701.3, 702.6a

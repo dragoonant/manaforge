@@ -22,7 +22,12 @@
   const I = MF.inst = (s, iid) => s.cards[iid];
   const P = (s, seat) => s.players[seat];
   const def = MF.def = (s, iid) => MF.cards[s.cards[iid].id];
-  const log = MF.log = function (s, t, d) { s.log.push(Object.assign({ t: t, turn: s.turn }, d)); };
+  // The log door. An entry's own fields may not reuse the names `t` (its type) or `turn`: a pump's
+  // toughness once overwrote `t`, and the interface could no longer read the entry.
+  const log = MF.log = function (s, t, d) {
+    if (d && ('t' in d || 'turn' in d)) throw new Error('log entry ' + t + ' reuses a reserved field (t or turn)');
+    s.log.push(Object.assign({ t: t, turn: s.turn }, d));
+  };
   const ctl = MF.ctl = (s, iid) => s.cards[iid].ctrl;
   const freshHist = () => ({ cast: 0, castInstant: 0, castSorcery: 0, castOtter: 0, entered: 0, gained: 0, died: 0, attackedWith: 0 });
 

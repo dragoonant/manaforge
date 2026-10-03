@@ -63,7 +63,7 @@
     resolveAb: (e) => `${tag(e.c)}’s ${e.trig ? 'triggered' : 'activated'} ability resolves.`,
     counter: (e) => `${tag(e.c)} gets ${e.n === 1 ? 'a ' + e.kind + ' counter' : e.n + ' ' + e.kind + ' counters'}.`,
     tapped: (e) => `${tag(e.c)} becomes tapped.`,
-    pump: (e) => `${e.all ? 'Each of ' : ''}${list(e.cs)} ${e.cs.length > 1 || e.all ? 'get' : 'gets'}${e.p || e.t ? ' ' + (e.p >= 0 ? '+' : '') + e.p + '/' + (e.t >= 0 ? '+' : '') + e.t : ''}${e.grant ? (e.p || e.t ? ' and' : '') + ' ' + e.grant.map(k => MF.KWNAME[k]).join(', ') : ''} until end of turn.`,
+    pump: (e) => `${e.all ? 'Each of ' : ''}${list(e.cs)} ${e.cs.length > 1 || e.all ? 'get' : 'gets'}${e.p || e.tou ? ' ' + (e.p >= 0 ? '+' : '') + e.p + '/' + (e.tou >= 0 ? '+' : '') + e.tou : ''}${e.grant ? (e.p || e.tou ? ' and' : '') + ' ' + e.grant.map(k => MF.KWNAME[k]).join(', ') : ''} until end of turn.`,
     unblockable: (e) => `${tag(e.c)} can’t be blocked this turn.`,
     scry: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'scry', 'scries')} ${e.n}: ${e.top} on top, ${e.bottom} on the bottom.`,
     token: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'create', 'creates')} a ${MF.cards[e.c].power}/${MF.cards[e.c].toughness} ${tag(e.c)} token.`,
