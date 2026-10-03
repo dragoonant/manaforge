@@ -16,6 +16,9 @@ This file owns decisions. No other file states one.
 | D8 | 2026-10-03 | **Mana payment**: the solver proposes a complete payment, shown land by land; one click confirms, or the player taps lands one at a time. Identical basics are indistinguishable and are not asked one by one. | handoff §11.3 |
 | D9 | 2026-10-03 | Defaults not asked: 1v1 against the AI; art style "E" (anime trading-card illustration, cel shading, thick ink outlines) unless the owner auditions another; ElevenLabs sound and music with a synthesised fallback; keys only from `tokens.txt.txt` in this folder; single agent. | handoff §13 |
 
+| D10 | 2026-10-03 | **Art: super-deformed versions of what each card shows.** Owner's choice. Concern stated once: Wizards' official illustrations are never used as input, traced or reproduced — each prompt describes the card's subject (the same character, creature or moment) in this project's own words, drawn super-deformed: chibi, two heads tall. `STYLE` in `tools/build-art-prompts.mjs` leads every prompt; FLUX.1-schnell at 768×1088, 560 px JPEG delivered. Sample one (style last) came out only half super-deformed; sample two (style first) approved for review. | owner |
+| D11 | 2026-10-03 | The repository's `main` is the build: the first session's branch was fast-forwarded into it. Still no remote (D1). | owner |
+
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.
