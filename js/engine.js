@@ -124,7 +124,7 @@
     }
     if (zone === 'bf') {
       const ch = chars(s, n);
-      if (ch.types.includes('Creature')) P(s, nc.ctrl).h.entered++;
+      if (ch.types.includes('Creature')) { const h = P(s, nc.ctrl).h; h.entered++; (h.enteredIids = h.enteredIids || []).push(n); }   // turn history (handoff 11.7)
       emit(s, { t: 'enters', iid: n, ctrl: nc.ctrl });
     }
     return n;
@@ -976,6 +976,7 @@
     if (ch.types.includes('Instant')) p.h.castInstant++;
     if (ch.types.includes('Sorcery')) p.h.castSorcery++;
     if (ch.subtypes.includes('Otter')) p.h.castOtter++;
+    (p.h.castList = p.h.castList || []).push({ lid: L.lid, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice() });   // turn history: "the first instant spell ... you've cast this turn"
     L.nth = { cast: p.h.cast, instant: ch.types.includes('Instant') ? p.h.castInstant : 0, sorcery: ch.types.includes('Sorcery') ? p.h.castSorcery : 0, otter: ch.subtypes.includes('Otter') ? p.h.castOtter : 0 };
     log(s, 'cast', { who: who, c: d.id, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring });
     emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid });   // CR 601.2i

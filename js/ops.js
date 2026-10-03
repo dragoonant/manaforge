@@ -258,7 +258,7 @@
       const top = p.lib[0], d = MF.def(s, top);
       if (d.types.includes(op.type)) {
         const a = MF.ask(x.x, { who: x.ctrl, kind: 'lookTop', src: x.src, opts: [{ id: 'yes', iid: top }, { id: 'no', iid: top }] });
-        if (a === 'yes') { log(s, 'putOnto', { who: x.ctrl, c: d.id, tapped: true, from: 'library' }); const n = MF.move(s, top, 'bf', { ctrl: x.ctrl, tapped: true }); noteEntered(s, n); }
+        if (a === 'yes') { log(s, 'putOnto', { who: x.ctrl, c: d.id, tapped: true, from: 'library' }); MF.move(s, top, 'bf', { ctrl: x.ctrl, tapped: true }); }
         else log(s, 'lookedKept', { who: x.ctrl });
       } else { log(s, 'toHand', { who: x.ctrl, c: d.id, revealed: false, from: 'library' }); MF.move(s, top, 'hand'); }
     },
@@ -270,7 +270,7 @@
       for (const iid of p.lib) { shown.push(iid); if (MF.def(s, iid).types.includes(op.type)) { hit = iid; break; } }
       log(s, 'reveal', { who: x.ctrl, cs: shown.map(i => I(s, i).id) });
       const rest = shown.filter(i => i !== hit);
-      if (hit != null) { const n = MF.move(s, hit, 'bf', { ctrl: x.ctrl, tapped: true }); noteEntered(s, n); log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: true, from: 'library' }); }
+      if (hit != null) { const n = MF.move(s, hit, 'bf', { ctrl: x.ctrl, tapped: true }); log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: true, from: 'library' }); }
       for (const i of rest) p.lib.splice(p.lib.indexOf(i), 1);
       MF.shuffle(s, rest);
       p.lib.push.apply(p.lib, rest);

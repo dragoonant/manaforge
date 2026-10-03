@@ -35,7 +35,7 @@
     if (r === 'it') return 'that card';
     if (r === 'eachOpp') return 'each opponent';
     if (r === 'you') return 'you';
-    if (r.t != null) { const sl = curTg[r.t] || {}; return (sl.upTo ? 'up to ' + sl.n + ' ' : '') + 'target ' + filt(sl.f) + ' [' + (r.t + 1) + ']'; }
+    if (r.t != null) { const sl = curTg[r.t] || {}; return (sl.upTo ? 'up to ' + sl.n + ' ' : '') + (sl.f && sl.f.any ? 'any target' : 'target ' + filt(sl.f)) + ' [' + (r.t + 1) + ']'; }
     if (r.each) return 'each ' + filt(r.each);
     return JSON.stringify(r);
   }
@@ -43,7 +43,7 @@
     control: c => 'you control ' + (c.n > 1 ? c.n + ' or more ' : 'a ') + filt(c.f),
     totalPower: c => 'creatures you control have total power ' + c.n + ' or greater',
     did: () => 'you did',
-    enteredOther: () => 'another creature entered under your control this turn',
+    enteredOther: () => 'another creature entered the battlefield under your control this turn',
     offspringPaid: () => 'its offspring cost was paid',
     firstOfKind: () => 'that spell is your first instant, first sorcery, or first Otter spell other than this this turn',
   };
@@ -53,7 +53,7 @@
     counter: op => 'put ' + N(op.n) + ' ' + op.kind + ' counter' + (op.n === 1 ? '' : 's') + ' on ' + ref(op.on),
     doubleCounters: op => 'double the ' + op.kind + ' counters on ' + ref(op.on),
     tap: op => 'tap ' + ref(op.on),
-    pump: op => ref(op.on) + ((op.p != null || op.t != null) && (op.p !== 0 || op.t !== 0) ? ' gets ' + sgn(op.p) + '/' + sgn(op.t) : '') + (op.grant ? ' and gains ' + op.grant.map(k => KWNAME[k]).join(', ') : '') + ' until end of turn',
+    pump: op => { const pt = (op.p != null || op.t != null) && (op.p !== 0 || op.t !== 0); return ref(op.on) + (pt ? ' gets ' + sgn(op.p) + '/' + sgn(op.t) : '') + (op.grant ? (pt ? ' and' : '') + ' gains ' + op.grant.map(k => KWNAME[k]).join(', ') : '') + ' until end of turn'; },
     unblockable: op => ref(op.on) + ' can’t be blocked this turn',
     scry: op => 'scry ' + N(op.n),
     token: op => 'create ' + N(op.n) + ' ' + MF.cards[op.id].power + '/' + MF.cards[op.id].toughness + ' ' + MF.cards[op.id].colors.map(c => MF.COLOR_NAME[c]).join(' ') + ' ' + MF.cards[op.id].name + ' creature token' + (op.n === 1 ? '' : 's'),
