@@ -205,19 +205,23 @@
       <svg id="arrows" class="arrows"></svg>
       <div id="zoom" class="zoom"></div>
     </div>`;
-    drawArrows(v);
+    drawArrows(v, s.pending && s.pending.q);
   }
   ui.render = render;
 
   // Combat arrows: attacker → defending player, blocker → attacker (CARD-LOG-AND-TARGETING-SPEC §14).
-  function drawArrows(v) {
+  function drawArrows(v, q) {
     const svg = document.getElementById('arrows'); if (!svg || !v.combat) return;
+    // A declaration in progress is drawn as a proposal (amber); a declared one in red and blue.
+    if (q && q.kind === 'attack') for (const i of q.chosen) { const el = document.querySelector('.field [data-iid="' + i + '"]'); if (el) el.classList.add('aiming'); }
     const at = iid => { const el = document.querySelector(`.field [data-iid="${iid}"]`); return el ? el.getBoundingClientRect() : null; };
     const pr = seat => { const el = document.querySelector(`.ppanel[data-seat="${seat}"]`); return el ? el.getBoundingClientRect() : null; };
     let h = '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>';
     const line = (a, b, cls) => { if (!a || !b) return; const x1 = a.left + a.width / 2, y1 = a.top + a.height / 2, x2 = b.left + b.width / 2, y2 = b.top + b.height / 2; h += `<line class="${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#ah)"/>`; };
     for (const a of v.combat.attackers) { if (!(v.combat.blockedBy[a] || []).length) line(at(a), pr(1 - v.ap), 'atk'); }
     for (const b in v.combat.blocks) for (const a of v.combat.blocks[b]) line(at(+b), at(a), 'blk');
+    if (q && q.kind === 'block') for (const b in q.assign) line(at(+b), at(q.assign[b]), 'aim');
+    if (q && q.kind === 'attack') for (const a of q.chosen) line(at(a), pr(1 - v.ap), 'aim');
     svg.innerHTML = h;
   }
 

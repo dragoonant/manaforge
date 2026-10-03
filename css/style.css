@@ -129,7 +129,8 @@ a { color: var(--accent); }
 .spotlbl { margin-top: .4rem; background: rgba(0,0,0,.75); padding: .3rem .7rem; border-radius: 6px; font-weight: 700; }
 .arrows { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 45; }
 .arrows line { stroke-width: 4; stroke-dasharray: 10 7; animation: crawl 1s linear infinite; }
-.arrows line.atk { stroke: var(--danger); color: var(--danger); } .arrows line.blk { stroke: var(--block); color: var(--block); }
+.arrows line.atk { stroke: var(--danger); color: var(--danger); } .arrows line.aim { stroke: var(--accent); color: var(--accent); }
+.card.aiming { box-shadow: 0 0 0 3px var(--accent); border-color: var(--accent); } .arrows line.blk { stroke: var(--block); color: var(--block); }
 @keyframes crawl { to { stroke-dashoffset: -17; } }
 .cmenu { position: fixed; z-index: 55; display: flex; flex-direction: column; gap: .25rem; background: #141b24; border: 1px solid var(--accent); border-radius: 8px; padding: .4rem; max-width: 300px; }
 .cmenu .btn { text-align: left; }
