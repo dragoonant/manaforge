@@ -22,5 +22,22 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-03** — Commit one was `.gitignore`. Rights recorded (docs/rights.md), owner's D1/D2
-recorded, defaults D3–D9 stated. Next: CLAUDE.md, docs/rules.md, engine spine.
+**2026-10-03, end of the first session — playable against the AI, private and local.**
+
+- Built: the engine (CR 103, 117, 302.6, 400.7, 500–514, 601–608, 613 with all seven layers
+  named, the 616 doors, 704.5a–q, 733), the cost door with the mana solver, the AI with its
+  behaviour counters, the interface (board, stack, stops, prompts, preview, log, zone viewers,
+  combat arrows), the compiler (a grammar), the Oracle-text auditor, 51 behaviour and rules tests.
+- Registered: the two Bloomburrow Starter Kit decks, Hare Raising and Otter Limits, all 60 cards
+  of each (D3).
+- Gates, all green: `tools/test.mjs` 51/51; `tools/audit-cards.mjs` 0 FAIL / 0 WARN on 90
+  compiled cards (`--selftest` PASS); `tools/check-pages.mjs` clean; `tools/sim.mjs` 150 random
+  games, 0 violations; `tools/replay-report.mjs --selftest` PASS; 134 CR sections cited, all real.
+- Arena, AI in both seats, holdout seed 2000, 20 games: first player 45.0% of decisive games;
+  lands 0.98 per turn through turn 10; attacks 60.0% of chances; blocks 32.8%; empty turns 2.2%;
+  instant windows used 1.9%; mean 17.1 turns.
+- Not yet: art (the procedural fallback only), sound and music, the animation layer, more decks.
+  The compile report's work order: modal spells ("Choose one —", 4 candidate decks), linked exile
+  ("until this leaves the battlefield"), "can't attack or block", landfall.
+- Open for the owner: Q2 and Q4 were taken as the stated defaults (D3, D4). Round two (art style,
+  the animation layer, the generation budget) has not been asked.
