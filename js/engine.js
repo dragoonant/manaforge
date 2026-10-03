@@ -12,8 +12,13 @@
     const log = s.log; s.log = null;
     const c = JSON.parse(JSON.stringify(s));
     s.log = log; c.log = log.slice();
+    if (s.pending && s.pending.view) Object.defineProperty(c.pending, 'view', { value: s.pending.view, enumerable: false });
     return c;
   };
+  // What the player sees while a question is pending: the partial run that asked it (a card just
+  // drawn by "draw a card, then discard a card" exists only there). Read-only; the answer re-runs
+  // the effect from the pre-effect state.
+  MF.view = s => (s.pending && s.pending.view) || s;
   const I = MF.inst = (s, iid) => s.cards[iid];
   const P = (s, seat) => s.players[seat];
   const def = MF.def = (s, iid) => MF.cards[s.cards[iid].id];
@@ -1066,7 +1071,7 @@
         const x = { s: c, inv: inv, ai: 0 };
         try { EXEC[inv.t](x); s = c; }
         catch (e) {
-          if (e instanceof Ask) { s.pending = { q: e.ask }; return freeze(s); }
+          if (e instanceof Ask) { s.pending = { q: e.ask }; c.log = c.log.slice(); Object.defineProperty(s.pending, 'view', { value: freeze(c), enumerable: false }); return freeze(s); }
           if (e instanceof Illegal) { s.todo.shift(); log(s, 'undone', { who: inv.who, why: e.illegal }); continue; }   // CR 733.1: the action is reversed
           throw e;
         }
