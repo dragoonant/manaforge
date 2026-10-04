@@ -19,6 +19,8 @@ This file owns decisions. No other file states one.
 | D10 | 2026-10-03 | **Art: super-deformed versions of what each card shows.** Owner's choice. Concern stated once: Wizards' official illustrations are never used as input, traced or reproduced — each prompt describes the card's subject (the same character, creature or moment) in this project's own words, drawn super-deformed: chibi, two heads tall. `STYLE` in `tools/build-art-prompts.mjs` leads every prompt; FLUX.1-schnell at 768×1088, 560 px JPEG delivered. Sample one (style last) came out only half super-deformed; sample two (style first) approved for review. | owner |
 | D11 | 2026-10-03 | The repository's `main` is the build: the first session's branch was fast-forwarded into it. Still no remote (D1). | owner |
 
+| D12 | 2026-10-03 | **Supersedes D1: public repository `dragoonant/manaforge` on GitHub, deployed to GitHub Pages for web playtesting.** Owner's call, with the concern stated once beforehand: the Pages site is public whatever the repository's visibility, and Wizards' Fan Content Policy does not cover a rules-enforcing client (docs/rights.md). NOTICE.md carries the policy's sentence; docs/takedown.md says how to take it down. | owner |
+
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.

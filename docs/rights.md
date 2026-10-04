@@ -26,8 +26,9 @@ section that covers rules-enforcement apps.
 
 ## The owner's decision
 
-**D1 (2026-10-03): private and local.** The repository has no remote. Nothing is deployed. The
-app runs from `file://` or `node tools/serve.mjs` on the owner's machine. See `PLAN.md`.
+**D1 (2026-10-03): private and local** — superseded the same day by **D12: a public repository
+(`dragoonant/manaforge`) deployed to GitHub Pages so the owner can playtest on the web.** The
+concern above was stated to the owner before D12. See `PLAN.md` and `docs/takedown.md`.
 
 ## Precedent
 
