@@ -65,7 +65,9 @@ for (const key of keys) {
   if (!e) { missing.push(key); continue; }
   if (e.who && !WHO[e.who]) { unknown.push(`${key} (who "${e.who}")`); continue; }
   const subject = e.who ? `${WHO[e.who]}, ${e.subject}` : e.subject;
-  prompts.push({ key, prompt: `${STYLE}. ${subject}, ${e.setting}.` });
+  // The parts travel too: SDXL reads 77 tokens per text encoder, so tools/gen-art-sdxl.py sends
+  // the subject to one encoder and the style and setting to the other (PLAN D13).
+  prompts.push({ key, prompt: `${STYLE}. ${subject}, ${e.setting}.`, subject: subject, setting: e.setting, style: STYLE });
 }
 if (missing.length || unknown.length) {
   if (missing.length) console.error(`${missing.length} wanted key(s) have no CARDS entry in tools/art-identity.mjs:\n  ` + missing.join('\n  '));

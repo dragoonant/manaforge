@@ -33,7 +33,7 @@ export const CARDS = {
   'colossification': { subject: 'an ordinary small badger growing to colossal size, glowing green vines and golden light spiralling up its body', setting: 'towering above treetops ' + V },
   'fecund-greenshell': { subject: 'a gentle giant turtle whose mossy shell is a whole garden of ferns, flowers and saplings', setting: 'wading through a shallow green river ' + V },
   'finneas-ace-archer': { who: 'finneas', subject: 'loosing an arrow trailing a ribbon of green light', setting: 'perched on a high tree branch at golden hour ' + V },
-  'pileated-provisioner': { subject: 'a red-crested woodpecker courier in a little satchel, dropping a bundle of acorns to a rabbit below', setting: 'flying between tall pine trunks ' + V },
+  'pileated-provisioner': { subject: 'a red-crested woodpecker bird courier with black-and-white feathers and a long beak, a little leather satchel of acorns on its back, wings spread in flight', setting: 'flying between tall pine trunks ' + V },
   'warren-elder': { subject: 'an old rabbit cleric with a gnarled staff, raising a paw as warm light washes over a pair of younger rabbits', setting: 'at the round door of a cosy burrow ' + V },
   'rabbit-response': { subject: 'a pair of rabbit militia leaping into action with spears and pots for helmets, glowing with sudden courage', setting: 'bursting out of their burrow entrance ' + V },
   'carrot-cake': { subject: 'a tall frosted carrot cake on a wooden stand, a tiny rabbit peeking out from behind it licking frosting from a paw', setting: 'on a picnic blanket in a sunny glade ' + V },
@@ -68,5 +68,5 @@ export const CARDS = {
   'stormcatch-mentor': { subject: 'a wise otter teacher catching a bolt of lightning in a glass jar while a young apprentice watches in awe', setting: 'on a windy hilltop at dusk ' + V },
   'swiftwater-cliffs': { subject: 'tall red cliffs with a rushing blue waterfall pouring into a foaming river below', setting: 'at sunset ' + V },
   'island': { subject: 'a calm blue lake with a small wooded island and a tiny otter house on stilts', setting: 'under a soft pastel sky ' + V },
-  'mountain': { subject: 'jagged red-rock mountains with a smoking peak and a winding goat trail', setting: 'under a fiery orange sky ' + V },
+  'mountain': { subject: 'a scenic landscape of jagged red-rock mountain peaks and a smoking volcano summit, a tiny cottage on a ledge', setting: 'under a fiery orange sky ' + V },
 };

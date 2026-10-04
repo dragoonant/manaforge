@@ -1,8 +1,6 @@
 # TODO — wanted improvements to things that already work
 
-- **Art pipeline** (handoff 10): copy FABFORGE's build-art-prompts / art-identity / gen-art /
-  write-manifest / check-art / shrink-art; wire `data/art-manifest.js` empty and failing loudly;
-  sample three for the owner before any batch. Five basic lands and the Rabbit token need art.
+- Art: every card in both decks is illustrated (D13). Re-roll any card with `--force <key> --seed-offset N` in `tools/gen-art-sdxl.py`; review with `tools/contact-sheet.ps1`.
 - **Sound and music**: ElevenLabs effects and music with a synthesised fallback voice (D9).
 - **The animation layer** (handoff 10): a presentation director playing the log; deferred by six
   games — budget it as a stage. Creatures dying with no motion are hard to follow.

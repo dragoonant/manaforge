@@ -21,6 +21,8 @@ This file owns decisions. No other file states one.
 
 | D12 | 2026-10-03 | **Supersedes D1: public repository `dragoonant/manaforge` on GitHub, deployed to GitHub Pages for web playtesting.** Owner's call, with the concern stated once beforehand: the Pages site is public whatever the repository's visibility, and Wizards' Fan Content Policy does not cover a rules-enforcing client (docs/rights.md). NOTICE.md carries the policy's sentence; docs/takedown.md says how to take it down. | owner |
 
+| D13 | 2026-10-03 | **Art is rendered locally with Stable Diffusion XL base 1.0** (the owner's install under Hunyuan3D-2, weights in `~/.cache/hy3dgen/sdxl`), by `tools/gen-art-sdxl.py`: no network, no cost. Owner's call, after first asking for Hunyuan (HunyuanDiT was tried for one round of three, then set aside on request). SDXL reads 77 tokens per text encoder, so both encoders lead with a short style clause and the subject; the second also carries the setting and the full STYLE. Monochrome, line art and frames are in the negative prompt. `tools/gen-art.mjs` (FLUX via Hugging Face, paid) is kept as an alternative, unused. | owner |
+
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.
