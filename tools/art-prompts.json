@@ -1,282 +1,402 @@
 [
   {
     "key": "alania-divergent-storm",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a graceful otter storm-wizard with silver-tipped fur and flowing blue-and-crimson robes, crackling lightning swirling around her paws, splitting a bolt of lightning into a pair of mirrored bolts, on a rocky island amid a stormy lake in a lush storybook woodland valley of animal folk.",
-    "subject": "a graceful otter storm-wizard with silver-tipped fur and flowing blue-and-crimson robes, crackling lightning swirling around her paws, splitting a bolt of lightning into a pair of mirrored bolts",
-    "setting": "on a rocky island amid a stormy lake in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a fearsome otter storm-sorceress in torn crimson-and-blue robes, eyes blazing white, lightning crawling up her arms, splitting a lightning bolt in two and hurling both at the enemy, on a rocky island amid a raging storm lake. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a fearsome otter storm-sorceress in torn crimson-and-blue robes, eyes blazing white, lightning crawling up her arms, splitting a lightning bolt in two and hurling both at the enemy",
+    "setting": "on a rocky island amid a raging storm lake",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "alanias-pathmaker",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. an adventurous otter wizard with a lantern staff opening a shimmering portal of red and blue light, at a fork in a forest trail in a lush storybook woodland valley of animal folk.",
-    "subject": "an adventurous otter wizard with a lantern staff opening a shimmering portal of red and blue light",
-    "setting": "at a fork in a forest trail in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a battle-worn otter wizard tearing open a crackling portal of red and blue fire with a staff, at a fork in a dark forest trail, sparks and smoke. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a battle-worn otter wizard tearing open a crackling portal of red and blue fire with a staff",
+    "setting": "at a fork in a dark forest trail, sparks and smoke",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "bellowing-crier",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a plump frog town crier puffing out a huge throat sac, bellowing news with a brass handbell, on a lily-pad town square in a lush storybook woodland valley of animal folk.",
-    "subject": "a plump frog town crier puffing out a huge throat sac, bellowing news with a brass handbell",
-    "setting": "on a lily-pad town square in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a bloated frog herald in battered armour bellowing a war call through a dented horn, atop a palisade wall at dawn, smoke rising behind. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a bloated frog herald in battered armour bellowing a war call through a dented horn",
+    "setting": "atop a palisade wall at dawn, smoke rising behind",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "blossoming-sands",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a sunny sandy riverbank where wildflowers bloom across the dunes, a rabbit family resting in the shade, under a warm afternoon sky in a lush storybook woodland valley of animal folk.",
-    "subject": "a sunny sandy riverbank where wildflowers bloom across the dunes, a rabbit family resting in the shade",
-    "setting": "under a warm afternoon sky in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": true,
+    "prompt": "landscape painting, scenery, a desolate sandy riverbank with pale wildflowers pushing through scorched dunes, broken stones half buried, under a hazy ash-grey sky, harsh light. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a desolate sandy riverbank with pale wildflowers pushing through scorched dunes, broken stones half buried",
+    "setting": "under a hazy ash-grey sky, harsh light",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "bria-riptide-rogue",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a sly sleek otter rogue with glossy brown fur, a sea-blue bandana and a curved dagger in each paw, grinning, surfing the crest of a curling wave, on a sparkling river rapid in a lush storybook woodland valley of animal folk.",
-    "subject": "a sly sleek otter rogue with glossy brown fur, a sea-blue bandana and a curved dagger in each paw, grinning, surfing the crest of a curling wave",
-    "setting": "on a sparkling river rapid in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a vicious otter cutthroat with a scarred snout, a sea-soaked leather coat and a curved dagger in each paw, riding the crest of a crashing wave, daggers raised to strike, over a black storm-tossed river, spray and lightning. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a vicious otter cutthroat with a scarred snout, a sea-soaked leather coat and a curved dagger in each paw, riding the crest of a crashing wave, daggers raised to strike",
+    "setting": "over a black storm-tossed river, spray and lightning",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "burrowguard-mentor",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a broad-shouldered rabbit soldier sergeant drilling a pair of young recruits with wooden practice swords, in a training yard outside a burrow fort in a lush storybook woodland valley of animal folk.",
-    "subject": "a broad-shouldered rabbit soldier sergeant drilling a pair of young recruits with wooden practice swords",
-    "setting": "in a training yard outside a burrow fort in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a broad scarred rabbit sergeant in heavy armour bellowing at recruits, a notched sword pointed forward, in a muddy training yard outside a burrow fortress, rain falling. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a broad scarred rabbit sergeant in heavy armour bellowing at recruits, a notched sword pointed forward",
+    "setting": "in a muddy training yard outside a burrow fortress, rain falling",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "byrke-long-ear-of-the-law",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. an elderly stern rabbit lawkeeper with extremely long upright ears and a white muzzle, in polished green-and-silver plate armour with a round wooden shield and a short spear, raising the spear in a solemn salute as golden light falls on a pair of rabbit soldiers beside him, before a great hollow-oak courthouse in a lush storybook woodland valley of animal folk.",
-    "subject": "an elderly stern rabbit lawkeeper with extremely long upright ears and a white muzzle, in polished green-and-silver plate armour with a round wooden shield and a short spear, raising the spear in a solemn salute as golden light falls on a pair of rabbit soldiers beside him",
-    "setting": "before a great hollow-oak courthouse in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a grim veteran rabbit knight-commander with long battle-torn ears and a scarred muzzle, dented steel plate armour, round iron shield and a long spear, roaring an order with the spear levelled at the enemy, on a battlefield beneath giant oak roots, arrows and embers in the air, smoke behind. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a grim veteran rabbit knight-commander with long battle-torn ears and a scarred muzzle, dented steel plate armour, round iron shield and a long spear, roaring an order with the spear levelled at the enemy",
+    "setting": "on a battlefield beneath giant oak roots, arrows and embers in the air, smoke behind",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "carrot-cake",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a tall frosted carrot cake on a wooden stand, a tiny rabbit peeking out from behind it licking frosting from a paw, on a picnic blanket in a sunny glade in a lush storybook woodland valley of animal folk.",
-    "subject": "a tall frosted carrot cake on a wooden stand, a tiny rabbit peeking out from behind it licking frosting from a paw",
-    "setting": "on a picnic blanket in a sunny glade in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a battered soldier’s ration crate split open on a war-camp table, a hunk of carrot cake beside a dented helmet and a bloodied dagger, inside a dim canvas field tent lit by a single lantern. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a battered soldier’s ration crate split open on a war-camp table, a hunk of carrot cake beside a dented helmet and a bloodied dagger",
+    "setting": "inside a dim canvas field tent lit by a single lantern",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "charmed-sleep",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a fierce weasel warrior curled up fast asleep, drifting blue sparkles and dreamy bubbles around it, in a hollow log in a lush storybook woodland valley of animal folk.",
-    "subject": "a fierce weasel warrior curled up fast asleep, drifting blue sparkles and dreamy bubbles around it",
-    "setting": "in a hollow log in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a weasel warrior lying slumped on the ground in an enchanted sleep, eyes shut, sword fallen beside it, ghostly blue chains binding its body, on a misty battlefield at night. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a weasel warrior lying slumped on the ground in an enchanted sleep, eyes shut, sword fallen beside it, ghostly blue chains binding its body",
+    "setting": "on a misty battlefield at night",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "clifftop-lookout",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a little frog scout with a brass spyglass standing on a ledge, pointing excitedly at distant land, atop a mossy cliff overlooking rolling valleys in a lush storybook woodland valley of animal folk.",
-    "subject": "a little frog scout with a brass spyglass standing on a ledge, pointing excitedly at distant land",
-    "setting": "atop a mossy cliff overlooking rolling valleys in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a grim frog sentry in a weathered cloak holding a brass spyglass and a spear, watching for enemies, on a wind-lashed cliff edge above a dark valley at dusk. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a grim frog sentry in a weathered cloak holding a brass spyglass and a spear, watching for enemies",
+    "setting": "on a wind-lashed cliff edge above a dark valley at dusk",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "colossification",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. an ordinary small badger growing to colossal size, glowing green vines and golden light spiralling up its body, towering above treetops in a lush storybook woodland valley of animal folk.",
-    "subject": "an ordinary small badger growing to colossal size, glowing green vines and golden light spiralling up its body",
-    "setting": "towering above treetops in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, an armoured badger warrior swelling into a towering giant, armour plates splitting, veins of green power erupting across its body, roaring, trees snapping around it in a dark storm-lashed forest. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "an armoured badger warrior swelling into a towering giant, armour plates splitting, veins of green power erupting across its body, roaring",
+    "setting": "trees snapping around it in a dark storm-lashed forest",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "coruscation-mage",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a small otter mage juggling crackling sparks of red and blue lightning, a tiny copy of itself copying its pose, on a wooden river dock in a lush storybook woodland valley of animal folk.",
-    "subject": "a small otter mage juggling crackling sparks of red and blue lightning, a tiny copy of itself copying its pose",
-    "setting": "on a wooden river dock in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a wild-eyed otter mage hurling crackling sparks of red and blue lightning from both paws, a smaller copy of itself mirroring the attack, on a rotting river dock at night. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a wild-eyed otter mage hurling crackling sparks of red and blue lightning from both paws, a smaller copy of itself mirroring the attack",
+    "setting": "on a rotting river dock at night",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "druid-of-the-spade",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a sturdy rabbit druid gardener holding a big iron spade, sprouts and roots curling up around the blade, in a tilled vegetable patch in a lush storybook woodland valley of animal folk.",
-    "subject": "a sturdy rabbit druid gardener holding a big iron spade, sprouts and roots curling up around the blade",
-    "setting": "in a tilled vegetable patch in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a hulking rabbit druid-warrior swinging a heavy iron spade like a war axe, roots and thorns erupting from the earth where it strikes, in a churned battlefield garden at night. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a hulking rabbit druid-warrior swinging a heavy iron spade like a war axe, roots and thorns erupting from the earth where it strikes",
+    "setting": "in a churned battlefield garden at night",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "fecund-greenshell",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a gentle giant turtle whose mossy shell is a whole garden of ferns, flowers and saplings, wading through a shallow green river in a lush storybook woodland valley of animal folk.",
-    "subject": "a gentle giant turtle whose mossy shell is a whole garden of ferns, flowers and saplings",
-    "setting": "wading through a shallow green river in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a massive ancient war-turtle with a mossy spiked shell like a fortress, scarred beak, standing its ground, in a churned muddy river ford under a grey sky. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a massive ancient war-turtle with a mossy spiked shell like a fortress, scarred beak, standing its ground",
+    "setting": "in a churned muddy river ford under a grey sky",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "finneas-ace-archer",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a young cheerful rabbit archer with long tan ears and a leaf-green hooded cloak, drawing a carved wooden longbow, loosing an arrow trailing a ribbon of green light, perched on a high tree branch at golden hour in a lush storybook woodland valley of animal folk.",
-    "subject": "a young cheerful rabbit archer with long tan ears and a leaf-green hooded cloak, drawing a carved wooden longbow, loosing an arrow trailing a ribbon of green light",
-    "setting": "perched on a high tree branch at golden hour in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a hard-eyed rabbit ranger with notched ears, a hooded leaf-green cloak over scale mail, a war bow of black yew, drawing the bow at full stretch, an arrow aimed straight at the viewer, crouched on a high gnarled branch above a burning forest, smoke rising. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a hard-eyed rabbit ranger with notched ears, a hooded leaf-green cloak over scale mail, a war bow of black yew, drawing the bow at full stretch, an arrow aimed straight at the viewer",
+    "setting": "crouched on a high gnarled branch above a burning forest, smoke rising",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "flame-lash",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. an otter sorcerer cracking a whip of roaring fire through the air, on a dark stormy riverbank in a lush storybook woodland valley of animal folk.",
-    "subject": "an otter sorcerer cracking a whip of roaring fire through the air",
-    "setting": "on a dark stormy riverbank in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, an otter battle-mage cracking a whip of roaring fire through the air, the lash streaking toward the viewer, on a dark stormy riverbank, embers swirling. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "an otter battle-mage cracking a whip of roaring fire through the air, the lash streaking toward the viewer",
+    "setting": "on a dark stormy riverbank, embers swirling",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "forest",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a deep green forest of giant mossy trees with little lantern-lit homes built into the roots, in soft dappled morning light in a lush storybook woodland valley of animal folk.",
-    "subject": "a deep green forest of giant mossy trees with little lantern-lit homes built into the roots",
-    "setting": "in soft dappled morning light in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": true,
+    "prompt": "landscape painting, scenery, a dark primeval forest of colossal moss-covered trees and twisted roots, thin shafts of grey light through mist. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a dark primeval forest of colossal moss-covered trees and twisted roots",
+    "setting": "thin shafts of grey light through mist",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "giant-growth",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a tiny squirrel suddenly swelling to huge size, bursting with green glowing energy, surprised expression, among mushrooms and ferns in a lush storybook woodland valley of animal folk.",
-    "subject": "a tiny squirrel suddenly swelling to huge size, bursting with green glowing energy, surprised expression",
-    "setting": "among mushrooms and ferns in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a squirrel soldier suddenly surging to enormous size mid-battle, armour straps bursting, green power blazing in its eyes, roaring, towering over a smoky skirmish in a dark forest. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a squirrel soldier suddenly surging to enormous size mid-battle, armour straps bursting, green power blazing in its eyes, roaring",
+    "setting": "towering over a smoky skirmish in a dark forest",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "hop-to-it",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a pair of excited baby rabbits tumbling out of a burrow mid-hop, a third pair of ears poking up behind them, in a flowery spring meadow in a lush storybook woodland valley of animal folk.",
-    "subject": "a pair of excited baby rabbits tumbling out of a burrow mid-hop, a third pair of ears poking up behind them",
-    "setting": "in a flowery spring meadow in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a pair of young rabbit recruits in mismatched armour charging out of a burrow with spears, grim faces, into a smoky battlefield at dusk, drifting smoke behind. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a pair of young rabbit recruits in mismatched armour charging out of a burrow with spears, grim faces",
+    "setting": "into a smoky battlefield at dusk, drifting smoke behind",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "island",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a calm blue lake with a small wooded island and a tiny otter house on stilts, under a soft pastel sky in a lush storybook woodland valley of animal folk.",
-    "subject": "a calm blue lake with a small wooded island and a tiny otter house on stilts",
-    "setting": "under a soft pastel sky in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": true,
+    "prompt": "landscape painting, scenery, a cold grey lake with a lone wooded island of jagged rocks and dead trees, under a low overcast sky, fog on the water. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a cold grey lake with a lone wooded island of jagged rocks and dead trees",
+    "setting": "under a low overcast sky, fog on the water",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "mind-spring",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a young otter scholar floating in a glowing blue spring as swirling ideas of light pour into its head, in a misty forest grotto in a lush storybook woodland valley of animal folk.",
-    "subject": "a young otter scholar floating in a glowing blue spring as swirling ideas of light pour into its head",
-    "setting": "in a misty forest grotto in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, an otter sorcerer half submerged in a glowing pool, eyes burning blue as torrents of arcane knowledge pour into its skull, in a dark flooded cavern. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "an otter sorcerer half submerged in a glowing pool, eyes burning blue as torrents of arcane knowledge pour into its skull",
+    "setting": "in a dark flooded cavern",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "mockingbird",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a cheeky little grey mockingbird bard in a feathered cap, shimmering as it mimics the shape of a bigger animal, perched on a fence post in a lush storybook woodland valley of animal folk.",
-    "subject": "a cheeky little grey mockingbird bard in a feathered cap, shimmering as it mimics the shape of a bigger animal",
-    "setting": "perched on a fence post in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a sinister grey mockingbird spy in a ragged cloak, its silhouette warping into the shape of a larger predator, perched on a broken fence post in fog at night. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a sinister grey mockingbird spy in a ragged cloak, its silhouette warping into the shape of a larger predator",
+    "setting": "perched on a broken fence post in fog at night",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "mountain",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a scenic landscape of jagged red-rock mountain peaks and a smoking volcano summit, a tiny cottage on a ledge, under a fiery orange sky in a lush storybook woodland valley of animal folk.",
-    "subject": "a scenic landscape of jagged red-rock mountain peaks and a smoking volcano summit, a tiny cottage on a ledge",
-    "setting": "under a fiery orange sky in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": true,
+    "prompt": "landscape painting, scenery, a towering range of jagged red-rock mountains with a smouldering volcanic peak, glowing lava seams down the cliffs, vast epic landscape under a burning storm sky, deep valley in shadow. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a towering range of jagged red-rock mountains with a smouldering volcanic peak, glowing lava seams down the cliffs",
+    "setting": "vast epic landscape under a burning storm sky, deep valley in shadow",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "pearl-of-wisdom",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a young otter holding up a glowing pearl, its soft light reflected in her wide amazed eyes, underwater among kelp and bubbles in a lush storybook woodland valley of animal folk.",
-    "subject": "a young otter holding up a glowing pearl, its soft light reflected in her wide amazed eyes",
-    "setting": "underwater among kelp and bubbles in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a scarred otter scholar-mage clutching a glowing pearl, cold blue light carving its grim face out of the dark, deep underwater among black kelp and drifting bones. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a scarred otter scholar-mage clutching a glowing pearl, cold blue light carving its grim face out of the dark",
+    "setting": "deep underwater among black kelp and drifting bones",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "pileated-provisioner",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a red-crested woodpecker bird courier with black-and-white feathers and a long beak, a little leather satchel of acorns on its back, wings spread in flight, flying between tall pine trunks in a lush storybook woodland valley of animal folk.",
-    "subject": "a red-crested woodpecker bird courier with black-and-white feathers and a long beak, a little leather satchel of acorns on its back, wings spread in flight",
-    "setting": "flying between tall pine trunks in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a woodpecker bird soldier with a long sharp beak, red crest and black-and-white feathers, a dented iron cap and a supply harness, wings spread in a dive, over a war camp among giant pine trunks, ash in the air. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a woodpecker bird soldier with a long sharp beak, red crest and black-and-white feathers, a dented iron cap and a supply harness, wings spread in a dive",
+    "setting": "over a war camp among giant pine trunks, ash in the air",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "plains",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. wide golden meadows of tall grass and wildflowers with a single round burrow door in a hillside, under a bright blue sky with puffy clouds in a lush storybook woodland valley of animal folk.",
-    "subject": "wide golden meadows of tall grass and wildflowers with a single round burrow door in a hillside",
-    "setting": "under a bright blue sky with puffy clouds in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": true,
+    "prompt": "landscape painting, scenery, wide windswept grasslands under a vast stormy sky, a lone dead tree on a low hill, grey light breaking through heavy clouds. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "wide windswept grasslands under a vast stormy sky, a lone dead tree on a low hill",
+    "setting": "grey light breaking through heavy clouds",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "quaketusk-boar",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a massive furious boar with huge stone tusks charging forward, the ground cracking under its hooves, on a rocky hillside trail in a lush storybook woodland valley of animal folk.",
-    "subject": "a massive furious boar with huge stone tusks charging forward, the ground cracking under its hooves",
-    "setting": "on a rocky hillside trail in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a massive furious war boar with huge stone tusks and plated armour charging forward, the ground cracking under its hooves, on a rocky hillside trail, dust and debris flying. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a massive furious war boar with huge stone tusks and plated armour charging forward, the ground cracking under its hooves",
+    "setting": "on a rocky hillside trail, dust and debris flying",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "rabbit-response",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a pair of rabbit militia leaping into action with spears and pots for helmets, glowing with sudden courage, bursting out of their burrow entrance in a lush storybook woodland valley of animal folk.",
-    "subject": "a pair of rabbit militia leaping into action with spears and pots for helmets, glowing with sudden courage",
-    "setting": "bursting out of their burrow entrance in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, an armoured rabbit militia captain bursting out of a burrow gate with a spear and shield, rallying with a war cry, flaming arrows streaking overhead, mud and smoke at a fortified hillside. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "an armoured rabbit militia captain bursting out of a burrow gate with a spear and shield, rallying with a war cry",
+    "setting": "flaming arrows streaking overhead, mud and smoke at a fortified hillside",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "rabid-bite",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a fierce rabbit lunging forward with bared teeth at a startled weasel, motion lines streaking behind it, in tall grass in a lush storybook woodland valley of animal folk.",
-    "subject": "a fierce rabbit lunging forward with bared teeth at a startled weasel, motion lines streaking behind it",
-    "setting": "in tall grass in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a ferocious rabbit berserker in scarred leather armour leaping straight at the viewer mid-attack, jaws wide with bared fangs, claws out, an enemy sword spinning away, violent ambush bursting out of towering grass, dust and torn leaves flying, motion blur. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a ferocious rabbit berserker in scarred leather armour leaping straight at the viewer mid-attack, jaws wide with bared fangs, claws out, an enemy sword spinning away",
+    "setting": "violent ambush bursting out of towering grass, dust and torn leaves flying, motion blur",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "rabid-gnaw",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a feral otter biting into the tail of a startled lizard, teeth flashing, in reeds at the water’s edge in a lush storybook woodland valley of animal folk.",
-    "subject": "a feral otter biting into the tail of a startled lizard, teeth flashing",
-    "setting": "in reeds at the water’s edge in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a feral otter warrior lunging with bared teeth and a jagged knife at a startled lizard soldier, in reeds at the water’s edge, spray and mud flying. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a feral otter warrior lunging with bared teeth and a jagged knife at a startled lizard soldier",
+    "setting": "in reeds at the water’s edge, spray and mud flying",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "repel-calamity",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a small rabbit knight bracing a shining shield as a huge shadowy beast recoils from a flash of white light, on a rocky hillside path in a lush storybook woodland valley of animal folk.",
-    "subject": "a small rabbit knight bracing a shining shield as a huge shadowy beast recoils from a flash of white light",
-    "setting": "on a rocky hillside path in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a rabbit knight in heavy plate bracing a glowing tower shield as a monstrous horned beast smashes into it, sparks exploding, on a rocky mountain pass in a storm. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a rabbit knight in heavy plate bracing a glowing tower shield as a monstrous horned beast smashes into it, sparks exploding",
+    "setting": "on a rocky mountain pass in a storm",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "serra-redeemer",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a kind angel with white feathered wings and a halo of soft light, cradling a small glowing rabbit soldier, descending through sunbeams over meadow hills in a lush storybook woodland valley of animal folk.",
-    "subject": "a kind angel with white feathered wings and a halo of soft light, cradling a small glowing rabbit soldier",
-    "setting": "descending through sunbeams over meadow hills in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a stern armoured war-angel with battle-scarred white wings and a burning sword, descending to shield a wounded rabbit soldier, through smoke and ash over a ruined battlefield, harsh light breaking through clouds. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a stern armoured war-angel with battle-scarred white wings and a burning sword, descending to shield a wounded rabbit soldier",
+    "setting": "through smoke and ash over a ruined battlefield, harsh light breaking through clouds",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "stormcatch-mentor",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a wise otter teacher catching a bolt of lightning in a glass jar while a young apprentice watches in awe, on a windy hilltop at dusk in a lush storybook woodland valley of animal folk.",
-    "subject": "a wise otter teacher catching a bolt of lightning in a glass jar while a young apprentice watches in awe",
-    "setting": "on a windy hilltop at dusk in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a stern otter battle-mage catching a bolt of lightning in an iron gauntlet, sparks scorching its armour, on a windswept hilltop at dusk, storm overhead. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a stern otter battle-mage catching a bolt of lightning in an iron gauntlet, sparks scorching its armour",
+    "setting": "on a windswept hilltop at dusk, storm overhead",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "swiftwater-cliffs",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. tall red cliffs with a rushing blue waterfall pouring into a foaming river below, at sunset in a lush storybook woodland valley of animal folk.",
-    "subject": "tall red cliffs with a rushing blue waterfall pouring into a foaming river below",
-    "setting": "at sunset in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": true,
+    "prompt": "landscape painting, scenery, towering red cliffs with a thundering blue waterfall plunging into a foaming river gorge, at a dark stormy dusk, mist rising. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "towering red cliffs with a thundering blue waterfall plunging into a foaming river gorge",
+    "setting": "at a dark stormy dusk, mist rising",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "sword-of-vengeance",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. an ornate silver sword with a glowing red gem in the hilt, standing upright in a mossy stump, fiery light around its edge, in a quiet woodland shrine in a lush storybook woodland valley of animal folk.",
-    "subject": "an ornate silver sword with a glowing red gem in the hilt, standing upright in a mossy stump, fiery light around its edge",
-    "setting": "in a quiet woodland shrine in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a cruel silver longsword with a blood-red gem in the hilt, driven point-first into a scorched stump, flames licking along its edge, on a burned battlefield at night, embers rising. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a cruel silver longsword with a blood-red gem in the hilt, driven point-first into a scorched stump, flames licking along its edge",
+    "setting": "on a burned battlefield at night, embers rising",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "thieving-otter",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a mischievous otter tiptoeing away with an armful of stolen shiny trinkets, along a moonlit riverbank market in a lush storybook woodland valley of animal folk.",
-    "subject": "a mischievous otter tiptoeing away with an armful of stolen shiny trinkets",
-    "setting": "along a moonlit riverbank market in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a ruthless otter thief in a dark hood slipping away with a stolen jewelled dagger, a knife held back in warning, along a moonlit riverbank market, lanterns and shadows. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a ruthless otter thief in a dark hood slipping away with a stolen jewelled dagger, a knife held back in warning",
+    "setting": "along a moonlit riverbank market, lanterns and shadows",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "token-rabbit-1-1-w",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a single small brave white rabbit in a tiny helmet holding a twig spear, standing on a mossy stone in a lush storybook woodland valley of animal folk.",
-    "subject": "a single small brave white rabbit in a tiny helmet holding a twig spear",
-    "setting": "standing on a mossy stone in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a lone grim rabbit militia soldier in a battered helmet gripping a short spear, standing in trampled grass with smoke behind. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a lone grim rabbit militia soldier in a battered helmet gripping a short spear",
+    "setting": "standing in trampled grass with smoke behind",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "treeguard-duo",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a stout frog warrior and a rabbit warrior standing back to back with wooden shields, leaves swirling around them, beneath an enormous guardian tree in a lush storybook woodland valley of animal folk.",
-    "subject": "a stout frog warrior and a rabbit warrior standing back to back with wooden shields, leaves swirling around them",
-    "setting": "beneath an enormous guardian tree in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a scarred frog warrior and an armoured rabbit warrior back to back with shields locked, weapons raised against unseen attackers, beneath an enormous ancient tree, falling leaves and drifting smoke. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a scarred frog warrior and an armoured rabbit warrior back to back with shields locked, weapons raised against unseen attackers",
+    "setting": "beneath an enormous ancient tree, falling leaves and drifting smoke",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "warren-elder",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. an old rabbit cleric with a gnarled staff, raising a paw as warm light washes over a pair of younger rabbits, at the round door of a cosy burrow in a lush storybook woodland valley of animal folk.",
-    "subject": "an old rabbit cleric with a gnarled staff, raising a paw as warm light washes over a pair of younger rabbits",
-    "setting": "at the round door of a cosy burrow in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a grizzled old rabbit war-priest in a chain hood raising a gnarled staff, a fierce blessing of pale light flaring over battered soldiers, at the barricaded mouth of a burrow fortress, torches and smoke. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a grizzled old rabbit war-priest in a chain hood raising a gnarled staff, a fierce blessing of pale light flaring over battered soldiers",
+    "setting": "at the barricaded mouth of a burrow fortress, torches and smoke",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   },
   {
     "key": "waterspout-warden",
-    "prompt": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour. a frog soldier with a spear riding a spinning column of water up into the air, above a wide blue lake in a lush storybook woodland valley of animal folk.",
-    "subject": "a frog soldier with a spear riding a spinning column of water up into the air",
-    "setting": "above a wide blue lake in a lush storybook woodland valley of animal folk",
-    "style": "super deformed chibi figure, two heads tall, giant round head on a tiny stubby body, big sparkling eyes, cute toy-like rounded shapes, polished cel shading, clean thick ink outlines, trading card illustration, soft painterly storybook background, vivid saturated colour"
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, an armoured frog soldier with a spear erupting out of a lake on a roaring column of water, ready to strike, above a dark lake under storm clouds. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "an armoured frog soldier with a spear erupting out of a lake on a roaring column of water, ready to strike",
+    "setting": "above a dark lake under storm clouds",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
   }
 ]

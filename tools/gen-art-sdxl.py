@@ -25,11 +25,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SDXL = os.path.expanduser('~/.cache/hy3dgen/sdxl')
 WIDTH, HEIGHT = 832, 1216      # an SDXL training bucket close to the card's 5:7
 STEPS, GUIDANCE = 30, 7.5
-SHORT = 'chibi super deformed character art, giant head, tiny body, cel shaded, thick outlines, '
+SHORT = 'chibi super deformed character art, giant head, tiny body, cel shaded, thick outlines, '   # a prompt may carry its own `short`
 # The negative prompt is where "no text" belongs: in the positive prompt a negation summons what it negates.
 NEGATIVE = ('text, letters, words, watermark, signature, logo, caption, frame, border, card frame, blurry, low quality, '
             'jpeg artifacts, deformed, extra limbs, extra fingers, mutated hands, bad anatomy, cropped, photorealistic, '
-            'realistic proportions, tall slender body, ornate border, panel frame, vignette frame, monochrome, black and white, uncolored line art, coloring book, sketch, washed out')
+            'tall slender body, ornate border, panel frame, vignette frame, monochrome, black and white, uncolored line art, coloring book, sketch, washed out, '
+            'cute, kawaii, adorable, smiling, happy, hugging, childish, kids illustration, plush toy, mascot')   # owner, 2026-10-04: never cute
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--only', default='')
@@ -37,11 +38,13 @@ ap.add_argument('--limit', type=int, default=10 ** 9)
 ap.add_argument('--force', default='')
 ap.add_argument('--seed-offset', type=int, default=0)
 ap.add_argument('--dry-run', action='store_true')
+ap.add_argument('--prompts', default=os.path.join('tools', 'art-prompts.json'))
+ap.add_argument('--out', default=os.path.join('art', 'cards'))
 args = ap.parse_args()
 
-plan = json.load(open(os.path.join(ROOT, 'tools', 'art-prompts.json'), encoding='utf-8'))
+plan = json.load(open(os.path.join(ROOT, args.prompts), encoding='utf-8'))
 only = [k.strip() for k in args.only.split(',') if k.strip()]
-out_dir = os.path.join(ROOT, 'art', 'cards')
+out_dir = os.path.join(ROOT, args.out)
 masters = os.path.join(ROOT, 'art', 'masters')
 archive = os.path.join(ROOT, 'art', 'archive')
 
@@ -82,12 +85,14 @@ os.makedirs(masters, exist_ok=True)
 ok = 0
 for i, p in enumerate(work):
     key = p['key']
-    seed = int(hashlib.sha1(key.encode()).hexdigest()[:8], 16) + args.seed_offset   # a key always renders from the same seed
+    seed = int(hashlib.sha1(p.get('card', key).encode()).hexdigest()[:8], 16) + args.seed_offset   # a card always renders from the same seed, so audition variants differ only in style
+    short = p.get('short', SHORT)
+    negative = NEGATIVE + (', ' + p['negativeExtra'] if p.get('negativeExtra') else '')
     t0 = time.time()
     # Both encoders lead with a short form of the style and carry the subject; the second also
     # carries the full style and the setting. (Sending the subject to one encoder and the style to
     # the other lost both: sample round one, 2026-10-03.)
-    img = pipe(prompt=SHORT + p['subject'], prompt_2=SHORT + p['subject'] + ', ' + p['setting'] + ', ' + p['style'], negative_prompt=NEGATIVE,
+    img = pipe(prompt=short + p['subject'], prompt_2=short + p['subject'] + ', ' + p['setting'] + ', ' + p['style'], negative_prompt=negative,
                num_inference_steps=STEPS, guidance_scale=GUIDANCE, width=WIDTH, height=HEIGHT,
                generator=torch.Generator('cuda').manual_seed(seed)).images[0]
     prior = existing(key)

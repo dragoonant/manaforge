@@ -23,6 +23,8 @@ This file owns decisions. No other file states one.
 
 | D13 | 2026-10-03 | **Art is rendered locally with Stable Diffusion XL base 1.0** (the owner's install under Hunyuan3D-2, weights in `~/.cache/hy3dgen/sdxl`), by `tools/gen-art-sdxl.py`: no network, no cost. Owner's call, after first asking for Hunyuan (HunyuanDiT was tried for one round of three, then set aside on request). SDXL reads 77 tokens per text encoder, so both encoders lead with a short style clause and the subject; the second also carries the setting and the full STYLE. Monochrome, line art and frames are in the negative prompt. `tools/gen-art.mjs` (FLUX via Hugging Face, paid) is kept as an alternative, unused. | owner |
 
+| D14 | 2026-10-04 | **Supersedes D10's look: direction D, "Grim Dark".** Owner's brief: warriors, fighters and mages trying to kill or undo each other, never cute; a master-grade super-deformed build (stocky, three heads tall, scarred and armoured); lands are pure landscape with every living thing in the negative prompt; cues from the real cards' art direction, no copying. Chosen from a five-direction audition (`tools/art-style-audition.mjs`, `tools/audition-sheet.ps1`). The lint now also refuses cute words. | owner |
+
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.
