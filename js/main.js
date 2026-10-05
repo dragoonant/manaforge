@@ -44,7 +44,7 @@
     const decks = reg();
     if (!pick.me) { pick.me = decks[0].id; pick.opp = decks[1 % decks.length].id; }
     app().innerHTML = `<div class="menu">
-      <div class="mhead"><h1>MANAFORGE</h1><div class="sub">Magic: The Gathering against the machine · a private, unofficial fan project</div></div>
+      <div class="mhead"><h1>MANAFORGE</h1><div class="sub">Magic: The Gathering against the machine · an unofficial fan project</div></div>
       <div class="mcols">
         <div class="mcol"><h2>Your deck</h2><div class="deckrow">${decks.map(d => deckCard(d, 'me')).join('')}</div>${deckDetail(pick.me)}</div>
         <div class="mcol"><h2>Opponent</h2><div class="deckrow">${decks.map(d => deckCard(d, 'opp')).join('')}</div>${deckDetail(pick.opp)}</div>
