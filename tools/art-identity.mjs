@@ -86,4 +86,18 @@ export const CARDS = {
   'rockface-village': { land: true, subject: 'a fortified village carved into a red rock cliff face, rope bridges and watchtowers, smoke from chimneys', setting: 'at dusk under a smoky orange sky' },
   'soulstone-sanctuary': { land: true, subject: 'an ancient ruined stone sanctuary of towering monoliths with a glowing soulstone at its heart', setting: 'on a misty highland at twilight' },
   'mountain': { land: true, subject: 'a towering range of jagged red-rock mountains with a smouldering volcanic peak, glowing lava seams down the cliffs', setting: 'vast epic landscape under a burning storm sky, deep valley in shadow' },
+  // ---- Gruul Delirium (Pro Tour Final Fantasy era) ----
+  'patchwork-beastie': { subject: 'a hulking stitched-together beast of mismatched hide, bone and rusted iron plates, crude seams leaking smoke, lurching forward with a roar', setting: 'in a gloomy overgrown graveyard at night' },
+  'break-out': { subject: 'a snarling armoured beast smashing out of an iron cage, chains and splintered bars flying', setting: 'in a dark dungeon lit by a single torch' },
+  'bushwhack': { subject: 'a hooded wild-elf ranger leaping from the undergrowth with a hooked axe to ambush an armoured knight', setting: 'in a dense dark forest of thorns' },
+  'keen-eyed-curator': { subject: 'a hulking ape-like beast scholar in a leather apron, clutching a stolen skull and relics, eyes gleaming with greed', setting: 'in a crumbling museum vault full of broken display cases' },
+  'wildfire-wickerfolk': { subject: 'a towering scarecrow warrior woven from burning wicker and branches, flames pouring from its chest, swinging a blazing scythe', setting: 'across a burning wheat field at night' },
+  'fear-of-missing-out': { subject: 'a frenzied nightmare creature with long grasping claws and a huge staring eye, lunging at the viewer, shadows clawing behind it', setting: 'in a dark warped hallway of flickering doors' },
+  'violent-urge': { subject: 'a berserker warrior with blood-red eyes and veins glowing like lava, charging with two axes raised', setting: 'through smoke on a ruined battlefield' },
+  'seed-of-hope': { subject: 'a battle-scarred druid warrior kneeling to plant a glowing green seed in a field of ashes and broken weapons', setting: 'on a scorched battlefield at dawn' },
+  'overprotect': { subject: 'a massive armoured war beast shielded by a dome of thorny green light as arrows and spears shatter against it', setting: 'in a dark forest clearing under a storm' },
+  'thornspire-verge': { land: true, subject: 'a jagged spire of red rock wrapped in giant black thorn vines, a forest edge burning at its base', setting: 'at a smoky dusk' },
+  'commercial-district': { land: true, subject: 'an empty crowded city market district of stone arches and shuttered stalls, lanterns guttering', setting: 'at night in heavy rain' },
+  'copperline-gorge': { land: true, subject: 'a deep gorge of copper-veined red rock with a thin river and gnarled trees clinging to the walls', setting: 'at sunset, long shadows' },
+  'karplusan-forest': { land: true, subject: 'a dark pine forest growing over smouldering volcanic rock, steam and embers rising between the trunks', setting: 'under a red overcast sky' },
 };

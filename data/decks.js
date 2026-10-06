@@ -1050,8 +1050,7 @@ window.MF.decks = {
    "formidable-speaker: effect: You may discard a card",
    "oblivious-bookworm: trigger event: the beginning of your end step, you may draw a card. If you do, discard a card unless a permanent entered the battlefield face down under your control this turn or you turned a permanent face up this turn.",
    "overlord-of-the-balemurk: ability: Impending 5—{1}{B}",
-   "rapid-rescue: effect: Mill two cards",
-   "town-greeter: effect: Mill four cards",
+   "town-greeter: effect: You may put a land card from among them into your hand",
    "imodanes-recruiter-train-troops: object: creatures you control get +1/+0 and",
    "jadzi-steward-of-fate-oracles-gift: layout prepare is not compiled",
    "kiora-the-rising-tide: effect: Draw two cards, then discard two cards",
@@ -1371,7 +1370,7 @@ window.MF.decks = {
    "voice-of-victory: ability: Mobilize 2",
    "aunt-may: condition: it's a Spider",
    "enduring-innocence: trigger event: one or more other creatures you control with power 2 or less enter, draw a card. This ability triggers only once each turn.",
-   "starscape-cleric: ability: ~ can't block."
+   "starscape-cleric: trigger event: you gain life, each opponent loses 1 life."
   ],
   "tokens": []
  },
@@ -1668,7 +1667,7 @@ window.MF.decks = {
    "dalkovan-encampment: effect: Whenever you attack this turn, create two 1/1 red Warrior creature tokens that are tapped and attacking",
    "fountainport: cost: Sacrifice a token",
    "belladonna-took: trigger event: a token you control enters, you gain 1 life if this is the first time this ability has resolved this turn. If it's the second time, draw a card. If it's the third time, put a +1/+1 counter on each creature you control.",
-   "frontline-rush: effect: Choose one —",
+   "frontline-rush: effect: Target creature gets +X/+X until end of turn, where X is the number of creatures you control",
    "stadium-headliner: ability: Mobilize 1",
    "song-of-totentanz: object: create X 1/1 black Rat creature tokens with \"This token can't block.\" Creatures you control",
    "the-last-ronins-technique: effect: Sneak {1}{W}",
@@ -1831,7 +1830,6 @@ window.MF.decks = {
    "mightform-harmonizer: trigger event: a land you control enters, double the power of target creature you control until end of turn.",
    "sapling-nursery: ability: Affinity for Forests",
    "surrak-elusive-hunter: ability: This spell can't be countered.",
-   "keen-eyed-curator: condition: there are four or more card types among cards exiled with ~",
    "lumbering-worldwagon: ability: This Vehicle's power is equal to the number of lands you control."
   ],
   "tokens": []
@@ -2172,7 +2170,7 @@ window.MF.decks = {
    "moonshadow: ability: ~ enters with six -1/-1 counters on it.",
    "hardened-academic: ability: Discard a card: ~ gains lifelink until end of turn.",
    "cool-but-rude: layout class is not compiled",
-   "bloodghast: ability: ~ can't block.",
+   "bloodghast: ability: ~ has haste as long as an opponent has 10 or less life.",
    "practiced-offense: filter qualifier: target player controls",
    "carnage-crimson-chaos: effect: Return target creature card with mana value 3 or less from your graveyard to the battlefield",
    "inti-seneschal-of-the-sun: trigger event: you attack, you may discard a card. When you do, put a +1/+1 counter on target attacking creature. It gains trample until end of turn.",
@@ -2463,7 +2461,7 @@ window.MF.decks = {
    "nighthowl-pursuer: trigger event: ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn.",
    "desolation-prowler: ability: Pay 2 life: ~ gets +2/+2 until end of turn. Activate only once each turn.",
    "shoot-the-sheriff: filter noun: non-outlaw creature",
-   "forsaken-miner: ability: ~ can't block.",
+   "forsaken-miner: trigger event: you commit a crime, you may pay {B}. If you do, return this card from your graveyard to the battlefield.",
    "sunset-saboteur: ability: Ward—Discard a card.",
    "corpses-of-the-lost: ability: Skeletons you control get +1/+0 and have haste.",
    "gollum-riddle-master: ability: As ~ enters, choose odd or even.",
@@ -3085,7 +3083,7 @@ window.MF.decks = {
   "compiles": false,
   "refused": [
    "abuelos-awakening: effect: Return target artifact or non-Aura enchantment card from your graveyard to the battlefield with X additional +1/+1 counters on it",
-   "fallaji-archaeologist: effect: Mill three cards",
+   "fallaji-archaeologist: effect: You may put a noncreature, nonland card from among the cards milled this way into your hand",
    "get-lost: filter qualifier: , enchantment, or planeswalker",
    "overlord-of-the-floodpits: ability: Impending 4—{1}{U}{U}",
    "cavern-of-souls: ability: As ~ enters, choose a creature type.",
@@ -3427,17 +3425,17 @@ window.MF.decks = {
   "compiles": false,
   "refused": [
    "agathas-soul-cauldron: ability: You may spend mana as though it were mana of any color to activate abilities of creatures you control.",
-   "molt-tender: effect: Mill a card",
-   "town-greeter: effect: Mill four cards",
+   "molt-tender: cost: Exile a card from your graveyard",
+   "town-greeter: effect: You may put a land card from among them into your hand",
    "coati-scavenger: intervening if: if there are four or more permanent cards in your graveyard, return target permanent card from your graveyard to your hand.",
-   "scavenging-ooze: effect: Exile target card from a graveyard",
+   "scavenging-ooze: condition: it was a creature card",
    "insidious-roots: cost: Creature tokens you control have \"{T}",
    "osteomancer-adept: effect: Until end of turn, you may cast creature spells from your graveyard by foraging in addition to paying their other costs",
    "tyvar-jubilant-brawler: ability: You may activate abilities of creatures you control as though those creatures had haste.",
    "rubblebelt-maverick: cost: Exile this card from your graveyard",
    "disruptive-stormbrood-petty-revenge: filter qualifier: or enchantment",
    "great-arashin-city: cost: Exile a creature card from your graveyard",
-   "cache-grab: effect: Mill four cards",
+   "cache-grab: effect: You may put a permanent card from among the cards milled this way into your hand",
    "haywire-mite: effect: Exile target noncreature artifact or noncreature enchantment",
    "overlord-of-the-balemurk: ability: Impending 5—{1}{B}",
    "dredgers-insight: trigger event: one or more artifact and/or creature cards leave your graveyard, you gain 1 life."
@@ -3752,7 +3750,7 @@ window.MF.decks = {
   "refused": [
    "floodpits-drowner: filter qualifier: and put a stun counter on it",
    "vren-the-relentless: ability: Ward {2}",
-   "gixs-command: effect: Choose two —",
+   "gixs-command: modal \"choose two\" is not compiled",
    "kaito-bane-of-nightmares: ability: Ninjutsu {1}{U}{B}",
    "sheoldred-the-apocalypse: trigger event: you draw a card, you gain 2 life.",
    "cecil-dark-knight-cecil-redeemed-paladin: layout transform is not compiled",
@@ -3924,13 +3922,12 @@ window.MF.decks = {
    "qarsi-revenant: cost: Exile this card from your graveyard",
    "up-the-beanstalk: trigger event: ~ enters and whenever you cast a spell with mana value 5 or greater, draw a card.",
    "hollow-marauder: ability: This spell costs {1} less to cast for each creature card in your graveyard.",
-   "town-greeter: effect: Mill four cards",
+   "town-greeter: effect: You may put a land card from among them into your hand",
    "harvester-of-misery: object: other creatures",
    "souls-of-the-lost: ability: As an additional cost to cast this spell, discard a card or sacrifice a permanent.",
    "rubblebelt-maverick: cost: Exile this card from your graveyard",
    "overwhelming-remorse: effect: This spell costs {1} less to cast for each creature card in your graveyard",
    "gnawing-vermin: effect: Target player mills two cards",
-   "seed-of-hope: effect: Mill two cards",
    "overlord-of-the-balemurk: ability: Impending 5—{1}{B}"
   ],
   "tokens": []
@@ -3957,7 +3954,7 @@ window.MF.decks = {
   "player": "Shintaro Ishimura",
   "rank": 35,
   "players": 3,
-  "registered": false,
+  "registered": true,
   "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
   "min": 60,
   "main": [
@@ -4064,17 +4061,7 @@ window.MF.decks = {
     "name": "Lithomantic Barrage"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "patchwork-beastie: ability: ~ can't attack or block unless there are four or more card types among cards in your graveyard.",
-   "break-out: effect: Look at the top six cards of your library",
-   "bushwhack: effect: Choose one —",
-   "keen-eyed-curator: condition: there are four or more card types among cards exiled with ~",
-   "wildfire-wickerfolk: ability: ~ gets +1/+1 and has trample as long as there are four or more card types among cards in your graveyard.",
-   "fear-of-missing-out: effect: Discard a card, then draw a card",
-   "violent-urge: condition: there are four or more card types among cards in your graveyard",
-   "seed-of-hope: effect: Mill two cards"
-  ],
+  "compiles": true,
   "tokens": []
  }
 };

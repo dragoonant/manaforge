@@ -34,6 +34,17 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
+**2026-10-05 — the championship decks (D15) under way: 2 of 20 registered.**
+
+- Registered: Mono-Red Aggro (PT Final Fantasy #1) and Gruul Delirium (PT Final Fantasy #35),
+  beside the two Starter Kits. Gruul brought modal spells (CR 700.2), fight (701.14), extra
+  combat phases (500.8), linked exile, mill/surveil, "can't attack or block unless".
+- Gates: `tools/test.mjs` 81/81; audit 66 cards 0 FAIL / 0 WARN; check-pages clean (68 log types,
+  30 question kinds); `tools/sim.mjs` 60 mixed games, 0 violations.
+- Art: Grim Dark subjects written for every registered card; the 6:00 AM run renders the missing
+  ones (procedural until then, at the owner's request).
+- Next: the remaining 8 Pro Tour Final Fantasy archetypes, then the 10 Hobbit-era Arena lists.
+
 **2026-10-03, end of the first session — playable against the AI, private and local.**
 
 - Built: the engine (CR 103, 117, 302.6, 400.7, 500–514, 601–608, 613 with all seven layers

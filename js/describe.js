@@ -10,6 +10,7 @@
   function filt(f) {
     if (!f) return 'anything';
     if (f.any) return 'any target';
+    if (f.card) return 'card from a graveyard';
     if (f.player) return f.player === 'opp' ? 'opponent' : f.player === 'you' ? 'you' : 'player';
     const w = [];
     if (f.other) w.push('other');
@@ -53,6 +54,8 @@
     earlyTurn: c => 'it is your first, second, or third turn of the game',
     enteredThisTurn: () => 'this land entered this turn',
     any: c => c.of.map(cond).join(' or '),
+    graveTypes: c => 'there are ' + c.n + ' or more card types among cards in your graveyard',
+    exiledWithTypes: c => 'there are ' + c.n + ' or more card types among cards exiled with this',
   };
   const cond = c => (C[c.c] ? C[c.c](c) : c.c);
   MF.describeCond = cond;
@@ -84,8 +87,15 @@
     graveImpulse: () => 'exile a card at random from your graveyard; you may play it this turn',
     noLifeGain: op => 'a player dealt damage this way can’t gain life for the rest of the game',
     surveil: op => 'surveil ' + N(op.n),
-    searchBasic: op => 'search your library for a basic land card, put it onto the battlefield' + (op.tapped ? ' tapped' : '') + ', then shuffle',
+    searchBasic: op => 'search your library for a basic land card, ' + (op.toHand ? 'reveal it, put it into your hand' : 'put it onto the battlefield' + (op.tapped ? ' tapped' : '')) + ', then shuffle',
     untapIt: () => 'untap that land',
+    mill: op => 'mill ' + N(op.n) + ' card' + (op.n === 1 ? '' : 's'),
+    pickMilled: op => 'you may put a ' + op.type + ' card from among the milled cards into your hand',
+    exile: op => 'exile ' + ref(op.on) + (op.link ? ' (linked: cards exiled with this)' : ''),
+    dig: op => 'look at the top ' + op.n + ' cards; you may reveal a ' + op.type.toLowerCase() + ' card; if its mana value is ' + op.bfMvMax + ' or less you may put it onto the battlefield (it gains ' + (op.grant || []).map(k => KWNAME[k]).join(', ') + ' until end of turn), otherwise into your hand; the rest on the bottom in a random order',
+    untap: op => 'untap ' + ref(op.on),
+    extraCombat: () => 'after this phase, there is an additional combat phase',
+    fight: op => ref(op.a) + ' fights ' + ref(op.b),
   };
   const sgn = v => v == null ? '+0' : typeof v === 'number' ? (v >= 0 ? '+' + v : String(v)) : '+' + N(v);
   function ops(list) { return (list || []).map(op => D[op.o](op)).join('; then '); }
@@ -114,7 +124,8 @@
       case 'enchant': return 'enchant ' + filt(a.f);
       case 'costLess': return 'costs {' + a.n + '} less if ' + cond(a.cond);
       case 'costLessFor': return a.spell.types.join(' and ').toLowerCase() + ' spells you cast cost {' + a.n + '} less';
-      case 'spell': return ops(a.ops);
+      case 'spell': if (a.modes) return 'choose one — ' + a.modes.map((m, i) => { curTg = m.tg || []; return '(' + (i + 1) + ') ' + ops(m.ops); }).join(' / '); return ops(a.ops);
+      case 'restrict': return 'this can’t ' + [a.attack ? 'attack' : '', a.block ? 'block' : ''].filter(Boolean).join(' or ') + (a.unless ? ' unless ' + cond(a.unless) : '');
       case 'offspring': return 'offspring ' + a.cost + ' (an optional additional cost)';
       case 'kicker': return 'kicker ' + a.cost + ' (an optional additional cost)';
       case 'enterAsCopy': return 'may enter as a copy of a creature with mana value up to the mana spent, except it is also a ' + a.except.addSubtypes.join(' ') + ' and has ' + a.except.kw.map(k => KWNAME[k]).join(', ');

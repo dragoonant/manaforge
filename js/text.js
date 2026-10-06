@@ -44,6 +44,12 @@
     surveil: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'surveil', 'surveils')} ${e.n}: ${e.top} kept on top${e.grave.length ? ', ' + list(e.grave) + ' to the graveyard' : ''}.`,
     searchNothing: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'search', 'searches')} and ${V(e.who, v, 'find', 'finds')} nothing to take.`,
     untapped: (e) => `${tag(e.c)} untaps.`,
+    mill: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'mill', 'mills')} ${list(e.cs)}.`,
+    extraCombatAdded: (e, v) => `There will be an additional combat phase after this one.`,
+    extraCombat: (e, v) => `<span class="turnline">Additional combat phase</span>`,
+    fight: (e) => `${tag(e.a)} fights ${tag(e.b)}.`,
+    noFight: () => `<span class="notice">The fight does not happen: one of the two is gone or is no longer a creature.</span>`,
+    exiled: (e, v) => `${tag(e.c)} is exiled from ${T.whose(e.who, v)} graveyard${e.by ? ' by ' + tag(e.by) : ''}.`,
     noGain: (e, v) => `<span class="notice">${W(e.who, v)} can’t gain life: ${e.n} life is not gained.</span>`,
     activate: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'activate', 'activates')} ${tag(e.c)}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
     mana: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'tap', 'taps')} ${tag(e.c)} for ${sym(e.col)}.`,
@@ -126,6 +132,9 @@
     legend: (s, q) => ({ title: 'Legend rule: keep one', body: 'You control two legendary permanents with the same name. Choose the one to keep; the other goes to the graveyard (CR 704.5j).', labels: {} }),
     trigOrder: (s, q) => ({ title: 'Order your triggered abilities', body: `Several of your abilities triggered at once. Click the one to put on the stack next — ${q.placed ? q.placed + ' placed so far; ' : ''}the first you choose resolves <b>last</b> (CR 603.3b).`, labels: Object.fromEntries(q.opts.map(o => [o.id, MF.cards[o.trig.src].name + (o.trig.inl === 'prowess' ? ' — prowess' : '')])) }),
     x: (s, q) => ({ title: `Choose X for ${C(s, q.src)}`, body: `X is announced before you pay (CR 601.2b).${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'X = ' + o.id])) }),
+    mode: (s, q) => ({ title: `Choose a mode for ${C(s, q.src)}`, body: `Choose one; the mode is chosen as you cast it (CR 700.2). A mode whose targets can’t be chosen isn’t offered.${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, o.text])) }),
+    pickMilled: (s, q) => ({ title: `${C(s, q.src)}: take a milled ${q.type} card?`, body: `You may put a ${q.type} card from among the cards you just milled into your hand.`, labels: { none: 'Take nothing' } }),
+    dig: (s, q) => ({ title: `${C(s, q.src)}: the top ${q.n} cards of your library`, body: `Only you see these. You may reveal a ${q.type.toLowerCase()} card from among them; the rest go to the bottom in a random order.`, labels: { none: `Reveal no ${q.type.toLowerCase()}` } }),
     payLifeOrTap: (s, q) => ({ title: `${tag(q.c)} is entering: pay ${q.life} life?`, body: `If you pay ${q.life} life it enters untapped; if you don’t, it enters tapped (CR 614.12). Your life: ${s.players[q.who].life}.`, labels: { pay: `Pay ${q.life} life — enter untapped`, tapped: 'Enter tapped' } }),
     surveil: (s, q) => ({ title: `Surveil ${q.n}: card ${q.k} of ${q.n}`, body: 'Only you see these. Keep the card shown on top of your library, or put it into your graveyard.', labels: { top: 'Keep it on top', grave: 'Put it into the graveyard' } }),
     search: (s, q) => ({ title: `${C(s, q.src)}: search your library for a ${q.what}`, body: 'Choose one; your library is shuffled afterwards. You may find nothing.', labels: { none: 'Take nothing' } }),
@@ -138,6 +147,8 @@
     lookTop: (s, q) => ({ title: `${C(s, q.src)}: the top card is a land`, body: 'You may put it onto the battlefield tapped. If you don’t, it stays on top of your library.', labels: { yes: 'Put it onto the battlefield tapped', no: 'Leave it on top' } }),
     may: (s, q) => q.what === 'oppDrawCopy'
       ? ({ title: `${C(s, q.src)}: copy that spell?`, body: 'If you let the opponent draw a card, you copy the spell, and may choose new targets for the copy.', labels: { yes: 'Opponent draws a card — copy it', no: 'Don’t copy' } })
+      : q.what === 'mill' ? ({ title: `${C(s, q.src)}: mill a card?`, body: `You may put the top card of your library into your graveyard.${oracle(s, q.src)}`, labels: { yes: 'Mill the top card', no: 'Don’t mill' } })
+      : q.what === 'digOnto' ? ({ title: `Put ${tag(q.c)} onto the battlefield?`, body: 'Its mana value is low enough: it may go onto the battlefield and gain haste until end of turn. Otherwise it goes into your hand.', labels: { yes: 'Onto the battlefield, with haste', no: 'Into my hand' } })
       : ({ title: `${C(s, q.src)}`, body: oracle(s, q.src), labels: { yes: 'Yes', no: 'No' } }),
     newTargets: (s, q) => ({ title: `Choose new targets for the copy of ${C(s, q.src)}?`, body: 'You may keep the original targets or choose new ones (CR 707.10c).', labels: { keep: 'Keep the same targets', new: 'Choose new targets' } }),
     enterAsCopy: (s, q) => ({ title: `${C(s, q.src)}: enter as a copy?`, body: `It may enter as a copy of a creature with mana value ${q.spent} or less (the mana spent to cast it), and it is also a Bird with flying. Click a glowing creature, or decline.`, labels: { no: 'Enter as itself' } }),

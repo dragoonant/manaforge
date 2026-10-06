@@ -74,10 +74,14 @@
     earlyTurn: (x, c) => { const n = x.s.log.filter(e => e.t === 'turn' && e.who === x.ctrl).length; return n <= c.n; },   // "your first, second, or third turn of the game"
     enteredThisTurn: x => { const o = I(x.s, x.src); return !!o && o.ctlTurn === x.s.turn; },
     any: (x, c) => c.of.some(k => MF.cond(x, k)),
+    graveTypes: (x, c) => cardTypes(x.s, P(x.s, x.ctrl).grave) >= c.n,                          // delirium: card types among cards in your graveyard (CR 205.2a)
+    exiledWithTypes: (x, c) => { const o = I(x.s, x.src); return cardTypes(x.s, ((o && o.exiled) || []).filter(i => I(x.s, i) && I(x.s, i).zone === 'exile')) >= c.n; },   // CR 607.2a
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
   };
   MF.conds = CONDS;
+  function cardTypes(s, iids) { const ts = new Set(); for (const i of iids) for (const ty of MF.def(s, i).types) ts.add(ty); return ts.size; }
+  MF.cardTypes = cardTypes;
   MF.cond = function (x, c) {
     if (!c) return true;
     const f = CONDS[c.c];
@@ -116,7 +120,7 @@
   };
   MF.trigMatch = function (s, iid, src, a, ev) {
     switch (ev.t) {
-      case 'enters': case 'attacks': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid);
+      case 'enters': case 'attacks': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid) && (!a.firstEachTurn || ev.first);
       case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
       case 'dealsDamage': return ev.src === iid && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.combat || ev.combat);
       case 'sacrificed': case 'dies': case 'leaves': return ev.iid === iid;
@@ -287,9 +291,69 @@
       const seen = new Set(), uniq = opts.filter(o => { const id = I(s, o.iid).id; if (seen.has(id)) return false; seen.add(id); return true; });   // identical basics are one choice
       uniq.push({ id: 'none' });
       const a = MF.ask(x.x, { who: x.ctrl, kind: 'search', src: x.src, what: 'basic land', opts: uniq });
-      if (a !== 'none') { const n = MF.move(s, a, 'bf', { ctrl: x.ctrl, tapped: !!op.tapped, x: x.x }); x.it = n; log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: !!op.tapped, from: 'library' }); }
+      if (a !== 'none' && op.toHand) { const id = I(s, a).id; MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'library' }); }
+      else if (a !== 'none') { const n = MF.move(s, a, 'bf', { ctrl: x.ctrl, tapped: !!op.tapped, x: x.x }); x.it = n; log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: !!op.tapped, from: 'library' }); }
       else log(s, 'searchNothing', { who: x.ctrl });
       MF.shuffle(s, p.lib);
+    },
+    mill(x, op) {                                                                              // CR 701.17a
+      const s = x.s, p = P(s, x.ctrl), n = Math.min(num(x, op.n), p.lib.length);
+      const ids = [], milled = [];
+      for (let k = 0; k < n; k++) { const id = I(s, p.lib[0]).id; milled.push(MF.move(s, p.lib[0], 'grave')); ids.push(id); }
+      x.milled = milled;
+      if (n) log(s, 'mill', { who: x.ctrl, cs: ids });
+    },
+    // "You may put a permanent card from among the milled cards into your hand" (CR 701.17c: found in the graveyard).
+    pickMilled(x, op) {
+      const s = x.s, PERM = ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'];
+      const ok = t => op.type === 'permanent' ? PERM.some(ty => t.includes(ty)) : t.includes(op.type[0].toUpperCase() + op.type.slice(1));
+      const opts = (x.milled || []).filter(i => I(s, i).zone === 'grave' && ok(MF.def(s, i).types)).map(i => ({ id: i, iid: i }));
+      if (!opts.length) return;
+      opts.push({ id: 'none' });
+      const a = MF.ask(x.x, { who: x.ctrl, kind: 'pickMilled', src: x.src, type: op.type, opts: opts });
+      if (a !== 'none') { const id = I(s, a).id; MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'graveyard' }); }
+    },
+    untap(x, op) { for (const i of MF.resolveRefs(x, op.on)) { const c = I(x.s, i); if (c.tapped) { c.tapped = false; log(x.s, 'untapped', { c: c.id }); } } },
+    extraCombat(x) { x.s.extraCombat = (x.s.extraCombat || 0) + 1; log(x.s, 'extraCombatAdded', { who: x.ctrl }); },
+    // CR 701.14: each deals damage equal to its power to the other; if either is gone or not a creature, neither fights.
+    fight(x, op) {
+      const s = x.s, a = MF.resolveRefs(x, op.a)[0], b = MF.resolveRefs(x, op.b)[0];
+      if (a == null || b == null || !MF.isType(s, a, 'Creature') || !MF.isType(s, b, 'Creature')) { log(s, 'noFight', {}); return; }
+      const ca = Object.assign({ id: I(s, a).id }, MF.chars(s, a)), cb = Object.assign({ id: I(s, b).id }, MF.chars(s, b));
+      log(s, 'fight', { a: ca.id, b: cb.id });
+      MF.dealDamage(s, { srcChars: ca, to: { c: b }, n: Math.max(0, ca.p) });
+      MF.dealDamage(s, { srcChars: cb, to: { c: a }, n: Math.max(0, cb.p) });
+    },
+    // "Exile target card from a graveyard." Linked to "cards exiled with this creature" (CR 607.2a).
+    exile(x, op) {
+      const s = x.s;
+      const ids = op.on && op.on.t != null ? (x.t[op.on.t] || []).filter(q => q && q.c != null).map(q => q.c) : MF.resolveRefs(x, op.on);
+      for (const i of ids) {
+        const c = I(s, i); if (!c || c.zone === 'moved' || c.zone === 'exile') continue;
+        const id = c.id, n = MF.move(s, i, 'exile');
+        log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null });
+        if (op.link) { const src = I(s, x.src); if (src && src.zone === 'bf') (src.exiled = src.exiled || []).push(n); }
+      }
+    },
+    // Break Out: look at the top N, may reveal a card of a type; low enough mana value may go onto the battlefield, else to hand; the rest to the bottom at random.
+    dig(x, op) {
+      const s = x.s, p = P(s, x.ctrl), look = p.lib.slice(0, op.n);
+      if (!look.length) return;
+      const opts = look.filter(i => MF.def(s, i).types.includes(op.type)).map(i => ({ id: i, iid: i }));
+      opts.push({ id: 'none' });
+      const pick = MF.ask(x.x, { who: x.ctrl, kind: 'dig', src: x.src, n: look.length, type: op.type, look: look, opts: opts });
+      const rest = look.filter(i => i !== pick);
+      if (pick !== 'none') {
+        const d = MF.def(s, pick);
+        log(s, 'reveal', { who: x.ctrl, cs: [d.id] });
+        let onto = false;
+        if (MF.manaValue(MF.parseMana(d.mana)) <= op.bfMvMax) onto = MF.ask(x.x, { who: x.ctrl, kind: 'may', src: x.src, what: 'digOnto', c: d.id, opts: [{ id: 'yes' }, { id: 'no' }] }) === 'yes';
+        if (onto) { const n = MF.move(s, pick, 'bf', { ctrl: x.ctrl, x: x.x }); if (op.grant) s.effects.push({ k: 'grant', iid: n, kws: op.grant.slice(), until: 'eot', ts: s.ts++ }); log(s, 'putOnto', { who: x.ctrl, c: d.id, tapped: false, from: 'library' }); }
+        else { MF.move(s, pick, 'hand'); log(s, 'toHand', { who: x.ctrl, c: d.id, revealed: true, from: 'library' }); }
+      }
+      for (const i of rest) p.lib.splice(p.lib.indexOf(i), 1);
+      MF.shuffle(s, rest); p.lib.push.apply(p.lib, rest);
+      if (rest.length) log(s, 'toBottom', { who: x.ctrl, n: rest.length, random: true });
     },
     untapIt(x) { const c = x.it != null ? I(x.s, x.it) : null; if (c && c.zone === 'bf' && c.tapped) { c.tapped = false; log(x.s, 'untapped', { c: c.id }); } },
     // Manifold Mouse: "gains your choice of double strike or trample until end of turn" — chosen on resolution (CR 608.2d).
@@ -405,9 +469,9 @@
       if (!L0) { log(s, 'copyGone', { who: x.ctrl }); return; }                               // the spell has left the stack: there is nothing to copy (CR 707.10: last known information is not used for a copy of a spell that is gone in this engine — see DEVIATIONS)
       const c0 = I(s, L0.iid), iid = s.nid++;
       s.cards[iid] = { iid: iid, id: c0.id, owner: x.ctrl, ctrl: x.ctrl, zone: 'stack', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, copySpell: true };
-      const L = { lid: s.lid++, kind: 'spell', ctrl: x.ctrl, iid: iid, id: c0.id, t: JSON.parse(JSON.stringify(L0.t)), x: L0.x, copy: true, spent: 0, from: 'copy' };
+      const L = { lid: s.lid++, kind: 'spell', ctrl: x.ctrl, iid: iid, id: c0.id, t: JSON.parse(JSON.stringify(L0.t)), x: L0.x, mode: L0.mode, copy: true, spent: 0, from: 'copy' };   // CR 707.10: the copy has the same mode
       const d = MF.cards[c0.id], sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
-      const slots = sp && sp.tg ? sp.tg : aura ? [{ f: aura.f }] : [];
+      const slots = sp && sp.modes ? (sp.modes[L0.mode].tg || []) : sp && sp.tg ? sp.tg : aura ? [{ f: aura.f }] : [];
       if (slots.length) {
         const a = MF.ask(x.x, { who: x.ctrl, kind: 'newTargets', src: iid, opts: [{ id: 'keep' }, { id: 'new' }] });
         if (a === 'new') L.t = MF.chooseTargets(x.x, x.ctrl, iid, slots, 'copy', false);
@@ -469,7 +533,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
@@ -477,6 +541,7 @@
       const d = MF.cards[id];
       if (d.un) continue;
       for (const a of d.ab.concat(d.alt ? d.alt.ab : [])) {
+        for (const m of a.modes || []) walkOps(id, m.ops);                                      // a modal spell's modes (CR 700.2)
         if (!ABKINDS.includes(a.k)) bad.push(id + ': ability kind with no rule: ' + a.k);
         walkOps(id, a.ops);
         if (a.cond && !CONDS[a.cond.c]) bad.push(id + ': no condition ' + a.cond.c);

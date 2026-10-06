@@ -139,6 +139,8 @@
       case 'payLifeOrTap': return P(s, me).life > 8 ? 'pay' : 'tapped';
       case 'surveil': { const lands = s.bf.filter(i => I(s, i).ctrl === me && MF.isType(s, i, 'Land')).length; const land = MF.def(s, q.opts[0].iid).types.includes('Land'); return land && lands >= 5 ? 'grave' : 'top'; }
       case 'search': return q.opts[0].id;
+      case 'mode': return q.opts[0].id;
+      case 'pickMilled': case 'dig': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'none'; }
       case 'discardUpTo': return 'done';
       case 'trigOrder': return q.opts[0].id;
       case 'legend': return q.opts[0].id;
@@ -179,7 +181,7 @@
     return evalFor(s, me);
   }
   // Kinds where every answer is worth a roll-out when the AI itself is asked.
-  const SEARCH_KINDS = { target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
+  const SEARCH_KINDS = { mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
   function candidates(s, legal) {
     const seen = new Set(), out = [];

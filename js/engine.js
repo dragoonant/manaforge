@@ -476,6 +476,7 @@
   const targetable = MF.targetable = function (s, ref, slot, who, srcIid) {
     if (ref.p != null) return MF.matchPlayer(s, ref.p, slot.f, who);
     const c = s.cards[ref.c];
+    if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card;                        // a card in a graveyard: no characteristics beyond the card's own are checked
     if (!c || c.zone !== 'bf') return false;
     const ch = chars(s, ref.c);
     if (ch.kw.shroud) return false;                                                          // CR 702.18a
@@ -485,7 +486,8 @@
   MF.targetOptions = function (s, slot, who, srcIid, chosen) {
     const out = [];
     if (MF.slotTakesPlayers(slot.f)) for (const seat of [who, 1 - who]) if (targetable(s, { p: seat }, slot, who, srcIid)) out.push({ p: seat });
-    if (MF.slotTakesObjects(slot.f)) for (const iid of s.bf) if (targetable(s, { c: iid }, slot, who, srcIid)) out.push({ c: iid });
+    if (slot.f && slot.f.card) { for (const p of s.players) for (const iid of p[slot.f.card]) out.push({ c: iid }); }
+    else if (MF.slotTakesObjects(slot.f)) for (const iid of s.bf) if (targetable(s, { c: iid }, slot, who, srcIid)) out.push({ c: iid });
     return out.filter(r => !(chosen || []).some(q => q.p === r.p && q.c === r.c));
   };
   const refId = r => r.p != null ? 'p' + r.p : 'c' + r.c;
@@ -530,11 +532,13 @@
   // CR 500.5: as a step ends, "until end of step" effects end, then mana empties.
   function endStep(s) {
     for (const p of s.players) { if (poolTotal(p.pool)) log(s, 'manaEmpties', { who: p.seat, n: poolTotal(p.pool) }); p.pool = emptyPool(); p.poolCre = emptyPool(); }
+    let extra = false;
     if (s.step === 'eoc') {                                                                   // CR 511.3
       s.effects = s.effects.filter(e => e.until !== 'eoc');
       s.combat = null;
+      if (s.extraCombat > 0) { s.extraCombat--; extra = true; log(s, 'extraCombat', { who: s.ap }); }   // CR 500.8: "After this phase, there is an additional combat phase"
     }
-    let i = STEPS.indexOf(s.step) + 1;
+    let i = extra ? STEPS.indexOf('boc') : STEPS.indexOf(s.step) + 1;
     if (s.step === 'attackers' && s.combat && !s.combat.attackers.length) i = STEPS.indexOf('eoc');   // CR 508.8
     if (STEPS[i] === 'fsdamage') { const cb = s.combat; cb.fs = cb.attackers.concat(Object.keys(cb.blocks).map(Number)).some(i2 => I(s, i2).zone === 'bf' && (hasKw(s, i2, 'firstStrike') || hasKw(s, i2, 'doubleStrike'))); if (!cb.fs) i++; }                                        // CR 510.4: the first-strike step exists only if a first or double striker is in combat
     if (s.step === 'cleanup' && s.cleanupAgain) { s.cleanupAgain = false; s.sub = 0; return; }   // CR 514.3a: another cleanup step
@@ -542,7 +546,7 @@
     s.step = STEPS[i]; s.sub = 0;
   }
   function nextTurn(s) {
-    s.ap = 1 - s.ap; s.turn++; s.step = 'untap'; s.sub = 0; s.firstTurn = false;
+    s.ap = 1 - s.ap; s.turn++; s.step = 'untap'; s.sub = 0; s.firstTurn = false; s.extraCombat = 0;
     for (const p of s.players) { p.landsPlayed = 0; p.h = freshHist(); }
     s.diedThisTurn = 0;
   }
@@ -586,10 +590,12 @@
     if (cb.blocks[iid]) { for (const a of cb.blocks[iid]) cb.blockedBy[a] = (cb.blockedBy[a] || []).filter(b => b !== iid); delete cb.blocks[iid]; }
     if (cb.blockedBy[iid]) { for (const b of cb.blockedBy[iid]) if (cb.blocks[b]) cb.blocks[b] = cb.blocks[b].filter(a => a !== iid); delete cb.blockedBy[iid]; }
   }
+  const restricted = MF.restricted = (s, iid, what) => chars(s, iid).ab.some(a => a.k === 'restrict' && a[what] && !(a.unless && MF.cond({ s: s, ctrl: I(s, iid).ctrl, src: iid, flags: {} }, a.unless)));
   const canAttack = MF.canAttack = function (s, iid) {                                       // CR 508.1a
     const c = I(s, iid), ch = chars(s, iid);
     if (c.ctrl !== s.ap || !ch.types.includes('Creature') || c.tapped) return false;
     if (ch.kw.defender) return false;                                                        // CR 702.3b
+    if (restricted(s, iid, 'attack')) return false;
     if (!ch.kw.haste && !(c.ctlTurn < s.turn)) return false;                                 // CR 302.6
     if (s.effects.some(e => e.k === 'cantAttack' && e.iid === iid)) return false;
     return true;
@@ -600,6 +606,7 @@
     if (bc.ctrl === s.ap || bc.tapped || !bch.types.includes('Creature')) return false;       // CR 509.1a
     if (s.effects.some(e => e.k === 'cantBlock' && e.iid === b)) return false;
     if (ach.unblockable) return false;
+    if (restricted(s, b, 'block')) return false;
     if (ach.kw.flying && !bch.kw.flying && !bch.kw.reach) return false;                      // CR 702.9b
     return true;
   };
@@ -623,7 +630,7 @@
     }
     log(s, 'attackers', { who: who, cs: chosen.map(i => I(s, i).id) });
     if (chosen.length) P(s, who).h.attackedWith += chosen.length;
-    for (const iid of chosen) emit(s, { t: 'attacks', iid: iid, ctrl: who });                // CR 508.1m
+    for (const iid of chosen) { const c = I(s, iid), first = c.attackedTurn !== s.turn; c.attackedTurn = s.turn; emit(s, { t: 'attacks', iid: iid, ctrl: who, first: first }); }   // CR 508.1m
     if (chosen.length) {                                                                      // CR 508.3c: "Whenever you attack with one or more Lizards" — once for the declaration
       const subs = new Set(); let anyType = false;
       for (const iid of chosen) { const ch = chars(s, iid); ch.subtypes.forEach(st => subs.add(st)); if (ch.allCreatureTypes) anyType = true; }
@@ -856,6 +863,7 @@
     if (!instant && !sorceryTiming(s, who)) return false;
     const sp = d.ab.find(a => a.k === 'spell');
     const aura = d.ab.find(a => a.k === 'enchant');
+    if (sp && sp.modes && !sp.modes.some(m => !m.tg || slotsLegalNow(s, who, iid, m.tg))) return false;   // CR 700.2a: a mode whose targets cannot be chosen cannot be chosen
     if (sp && sp.tg && !slotsLegalNow(s, who, iid, sp.tg)) return false;
     if (aura && !slotsLegalNow(s, who, iid, [{ f: aura.f }])) return false;
     return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt }), { creature: ch.types.includes('Creature') });
@@ -1038,6 +1046,11 @@
       }
     }
     const sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
+    if (sp && sp.modes) {                                                                     // CR 700.2a, 601.2b: the mode is chosen as it is cast
+      const opts = sp.modes.map((m, i) => ({ id: i, text: m.text })).filter(o => !sp.modes[o.id].tg || slotsLegalNow(s, who, iid, sp.modes[o.id].tg));
+      L.mode = ask(x, { who: who, kind: 'mode', src: iid, opts: opts, cancel: true });
+      if (sp.modes[L.mode].tg) L.t = chooseTargets(x, who, iid, sp.modes[L.mode].tg, 'spell', true);
+    }
     if (sp && sp.tg) L.t = chooseTargets(x, who, iid, sp.tg, 'spell', true);                 // CR 601.2c
     if (aura) L.t = chooseTargets(x, who, iid, [{ f: aura.f }], 'aura', true);                 // CR 303.4a
     const cost = spellCost(s, who, iid, { x: L.x, extra: extra });                            // CR 601.2f
@@ -1115,7 +1128,8 @@
     const X = ctxFor(s, L, x);
     if (L.kind === 'spell') {
       const c = I(s, L.iid), d = L.alt ? def(s, L.iid).alt : def(s, L.iid), ch = chars(s, L.iid);
-      const sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
+      const sp0 = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
+      const sp = sp0 && sp0.modes ? sp0.modes[L.mode] : sp0;                                // CR 700.2: only the chosen mode
       const slots = sp && sp.tg ? sp.tg : aura ? [{ f: aura.f }] : null;
       const lt = liveTargets(s, L, slots);
       s.stack.pop();

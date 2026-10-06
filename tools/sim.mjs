@@ -18,7 +18,7 @@ function check(s, prev, where) {
   }
   for (const i of s.bf) { if (seen.has(i)) bad('an object is in two zones'); seen.add(i); if (s.cards[i].zone !== 'bf') bad('battlefield zone mismatch'); }
   for (const L of s.stack) if (L.iid != null && s.cards[L.iid].zone !== 'stack') bad('stack object not on the stack');
-  if (prev && prev.turn === s.turn && s.step !== 'pregame' && prev.step !== 'pregame' && STEPS.indexOf(s.step) < STEPS.indexOf(prev.step) && !(prev.step === 'cleanup')) bad('steps went backwards ' + prev.step + ' -> ' + s.step);
+  if (prev && prev.turn === s.turn && s.step !== 'pregame' && prev.step !== 'pregame' && STEPS.indexOf(s.step) < STEPS.indexOf(prev.step) && !(prev.step === 'cleanup') && !(prev.step === 'eoc' && s.step === 'boc')) bad('steps went backwards ' + prev.step + ' -> ' + s.step);
   if (s.winner == null) {
     const l = MF.legalActions(s); if (!l.length) bad('no legal action'); if (MF.whoActs(s) == null) bad('nobody acts');
     if (s.pending && !s.pending.q.opts.length) bad('a pending decision with no answer');

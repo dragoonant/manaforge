@@ -114,6 +114,8 @@ export function parseCond(str, ctx) {
   if (c === 'this spell was kicked') return { c: 'kicked' };                                           // CR 702.33d
   if ((m = c.match(/^there are (\w+) or more cards in your graveyard$/))) return { c: 'graveCount', n: numOf(m[1]) };
   if (c === 'an opponent lost life this turn') return { c: 'oppLostLife' };
+  if ((m = c.match(/^there are (\w+) or more card types among cards in your graveyard$/))) return { c: 'graveTypes', n: numOf(m[1]) };   // delirium (CR 207.2c ability word)
+  if ((m = c.match(/^there are (\w+) or more card types among cards exiled with ~$/))) return { c: 'exiledWithTypes', n: numOf(m[1]) };   // CR 607.2a: linked
   throw new Fail('condition: ' + c);
 }
 // One effect sentence (no trailing period) → ops.
@@ -135,6 +137,15 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^(.+?) gains? (.+) until end of turn$/))) return [{ o: 'pump', on: parseRef(T, ctx, m[1]), grant: kwList(m[2]) }];
   if ((m = s.match(/^[Ss]cry (\d+)$/))) return [{ o: 'scry', n: +m[1] }];
   if ((m = s.match(/^[Ss]urveil (\d+)$/))) return [{ o: 'surveil', n: +m[1] }];                         // CR 701.25
+  if ((m = s.match(/^[Mm]ill (a card|\w+ cards)$/))) return [{ o: 'mill', n: m[1] === 'a card' ? 1 : numOf(m[1].split(' ')[0]) }];   // CR 701.17
+  if ((m = s.match(/^[Yy]ou may (mill a card|mill \w+ cards)$/))) return [{ o: 'may', what: 'mill', ops: parseEffect(T, ctx, cap(m[1])) }];
+  if ((m = s.match(/^[Yy]ou may put a (permanent|creature|land) card from among the milled cards into your hand$/))) return [{ o: 'pickMilled', type: m[1] }];   // CR 701.17c
+  if ((m = s.match(/^[Uu]ntap (target .+)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
+  if (/^After this phase, there is an additional combat phase$/.test(s)) return [{ o: 'extraCombat' }];   // CR 500.8
+  if ((m = s.match(/^(.+?) fights (.+)$/))) return [{ o: 'fight', a: parseRef(T, ctx, m[1]), b: parseRef(T, ctx, m[2]) }];   // CR 701.14
+  if ((m = s.match(/^[Ee]xile target card from a graveyard$/))) { T.push({ f: { card: 'grave' } }); return [{ o: 'exile', on: { t: T.length - 1 }, link: true }]; }   // CR 607.2a: linked to "exiled with"
+  if ((m = s.match(/^[Ss]earch your library for a basic land card, reveal it, put it into your hand, then shuffle$/))) return [{ o: 'searchBasic', toHand: true }];
+  if ((m = s.match(/^[Dd]iscard a card, then draw a card$/))) return [{ o: 'discard', n: 1 }, { o: 'draw', n: 1 }];
   if ((m = s.match(/^[Ss]earch your library for a basic land card, put it onto the battlefield( tapped)?, then shuffle$/))) return [{ o: 'searchBasic', tapped: !!m[1] }];   // CR 701.23
   if ((m = s.match(/^[Uu]ntap that land$/))) return [{ o: 'untapIt' }];
   if ((m = s.match(/^[Cc]reate (a|an|one|two|three|\d+) (\d+)\/(\d+) (white|blue|black|red|green|colorless) (\w+) creature tokens?$/))) {
@@ -178,6 +189,9 @@ function parseEffects(T, ctx, text) {
   if ((m = t.match(/^exile the top card of your library\. Until the end of your next turn, you may play that card$/i))) return [{ o: 'impulse' }];
   if ((m = t.match(/^exile the top card of your library\. Until end of turn, you may play that card$/i))) return [{ o: 'impulse', until: 'eot' }];
   if ((m = t.match(/^exile a card at random from your graveyard\. You may play that card this turn$/i))) return [{ o: 'graveImpulse' }];
+  // Break Out: "Look at the top six cards of your library. You may reveal a creature card from among them. If that card has mana value 2 or less, you may put it onto the battlefield and it gains haste until end of turn. If you didn't put the revealed card onto the battlefield this way, put it into your hand. Put the rest on the bottom of your library in a random order."
+  if ((m = t.match(/^look at the top (\w+) cards of your library\. You may reveal an? (creature|land|permanent) card from among them\. If that card has mana value (\d+) or less, you may put it onto the battlefield and it gains (\w+) until end of turn\. If you didn't put the revealed card onto the battlefield this way, put it into your hand\. Put the rest on the bottom of your library in a random order$/i)))
+    return [{ o: 'dig', n: numOf(m[1]), type: cap(m[2]), bfMvMax: +m[3], grant: kwList(m[4]), rest: 'bottomRandom' }];
   if ((m = t.match(/^(.+?) deals (\d+) damage to (.+)\. If this spell was kicked, it deals (\d+) damage instead$/i))) {   // CR 702.33e
     const from = parseRef(T, ctx, m[1]), to = parseRef(T, ctx, m[3]);
     return [{ o: 'damage', from: from, n: { v: 'kicked', yes: +m[4], no: +m[2] }, to: to }];
@@ -222,7 +236,9 @@ const EVENTS = [
   [/^~ enters$/, () => [{ on: 'enters', who: 'self' }]],
   [/^~ or (another creature you control .+) enters$/, m => [{ on: 'enters', who: { or: ['self', parseFilter(m[1])] } }]],
   [/^(another creature you control.*) enters$/, m => [{ on: 'enters', who: parseFilter(m[1]) }]],
+  [/^~ attacks for the first time each turn$/, () => [{ on: 'attacks', who: 'self', firstEachTurn: true }]],
   [/^~ attacks$/, () => [{ on: 'attacks', who: 'self' }]],
+  [/^the beginning of your upkeep$/, () => [{ on: 'beginStep', step: 'upkeep', yours: true }]],                       // CR 503.1a
   [/^(a creature you control.*) attacks$/, m => [{ on: 'attacks', who: parseFilter(m[1].replace(/^a /, '')) }]],
   [/^you cast a noncreature spell$/, () => [{ on: 'cast', spell: { notTypes: ['Creature'] } }]],
   [/^you cast a spell$/, () => [{ on: 'cast', spell: null }]],
@@ -269,6 +285,11 @@ function parseStatic(line, ctx, out, d) {
   if (line === '~ enters tapped.') { out.push({ k: 'etbTapped' }); return true; }
   if ((m = line.match(/^~ enters tapped unless (.+)\.$/))) { out.push({ k: 'etbTapped', unless: parseCond(m[1], ctx) }); return true; }   // CR 614.1c
   if ((m = line.match(/^As ~ enters, you may pay (\d+) life\. If you don't, it enters tapped\.$/))) { out.push({ k: 'etbPayOrTap', life: +m[1] }); return true; }   // CR 614.12a: a choice made as it enters
+  if ((m = line.match(/^~ can't attack or block unless (.+)\.$/))) { out.push({ k: 'restrict', attack: true, block: true, unless: parseCond(m[1], ctx) }); return true; }   // CR 508.1c, 509.1b
+  if (line === "~ can't block.") { out.push({ k: 'restrict', block: true }); return true; }
+  if (line === "~ can't attack.") { out.push({ k: 'restrict', attack: true }); return true; }
+  if ((m = line.match(/^~ gets (\S+?)(?: and has (.+?))? as long as (.+)\.$/))) { const pt = pumpOf(m[1]); out.push(Object.assign({ k: 'static', affects: 'self', p: pt.p, t: pt.t, cond: parseCond(m[3], ctx) }, m[2] ? { grant: kwList(m[2]) } : {})); return true; }
+  if ((m = line.match(/^As long as (.+?), ~ gets (\S+?)(?: and has (.+))?\.$/))) { const pt = pumpOf(m[2]); out.push(Object.assign({ k: 'static', affects: 'self', p: pt.p, t: pt.t, cond: parseCond(m[1], ctx) }, m[3] ? { grant: kwList(m[3]) } : {})); return true; }
   if ((m = line.match(/^Enchant (creature)\.?$/))) { out.push({ k: 'enchant', f: parseFilter(m[1]) }); return true; }
   if ((m = line.match(/^Enchanted creature doesn't untap during its controller's untap step\.$/))) { out.push({ k: 'noUntap', affects: 'enchanted' }); return true; }
   if ((m = line.match(/^(Enchanted|Equipped) creature gets (\S+?)(?: and has (.+))?\.$/))) {
@@ -277,7 +298,7 @@ function parseStatic(line, ctx, out, d) {
   if ((m = line.match(/^(Other creatures you control|Creatures you control) have (.+)\.$/))) { out.push({ k: 'static', affects: parseFilter(m[1].toLowerCase()), grant: kwList(m[2]) }); return true; }
   if ((m = line.match(/^As long as (.+?), (.+)\.$/))) {
     const cond = parseCond(m[1], ctx), body = m[2]; let b;
-    if ((b = body.match(/^~ gets (\S+) and has (.+)$/))) { const pt = pumpOf(b[1]); out.push({ k: 'static', affects: 'self', p: pt.p, t: pt.t, grant: kwList(b[2]), cond: cond }); return true; }
+    if ((b = body.match(/^(?:~|it) gets (\S+) and has (.+)$/))) { const pt = pumpOf(b[1]); out.push({ k: 'static', affects: 'self', p: pt.p, t: pt.t, grant: kwList(b[2]), cond: cond }); return true; }
     if ((b = body.match(/^creatures you control get (\S+)$/))) { const pt = pumpOf(b[1]); out.push({ k: 'static', affects: parseFilter('creatures you control'), p: pt.p, t: pt.t, cond: cond }); return true; }
     throw new Fail('static body: ' + body);
   }
@@ -329,9 +350,13 @@ function parseLine(line, ctx, d, kw, ab) {
     return;
   }
   if (d.types.includes('Instant') || d.types.includes('Sorcery')) {
-    const T = []; const ops = parseEffects(T, Object.assign({}, ctx, { it: null }), line);
+    // A later paragraph of the same spell (a delirium rider) may say "that creature" about an earlier target.
     const sp = ab.find(a => a.k === 'spell');
-    if (sp) { sp.ops.push.apply(sp.ops, ops); if (T.length) throw new Fail('targets in a second paragraph'); }
+    const T = sp && sp.tg ? sp.tg.slice() : [], n0 = T.length;
+    const c2 = Object.assign({}, ctx, { it: ctx.spellIt || null });
+    const ops = parseEffects(T, c2, line);
+    ctx.spellIt = c2.it;
+    if (sp) { if (sp.modes) throw new Fail('a paragraph after a modal spell\'s modes'); sp.ops.push.apply(sp.ops, ops); if (T.length > n0) throw new Fail('targets in a second paragraph'); }
     else ab.push(Object.assign({ k: 'spell', ops: ops }, T.length ? { tg: T } : {}));
     return;
   }
@@ -364,7 +389,24 @@ export function compileCard(c, tokens, alt) {
   const ctx = { token: tokens, name: faceName };
   try {
     for (const st of d.subtypes) if (BASIC_MANA[st]) d.ab.push({ k: 'mana', cost: { tap: true }, cols: [BASIC_MANA[st]] });   // CR 305.6: intrinsic
-    for (const line of normalize(d.text, faceName)) parseLine(line, ctx, d, d.kw, d.ab);
+    const lines = normalize(d.text, faceName);
+    for (let i = 0; i < lines.length; i++) {
+      // A modal spell: "Choose one —" then bullet lines, one mode each (CR 700.2).
+      const mm = lines[i].match(/^Choose (one|two|one or both) —$/);
+      if (mm && (d.types.includes('Instant') || d.types.includes('Sorcery'))) {
+        if (mm[1] !== 'one') throw new Fail('modal "choose ' + mm[1] + '" is not compiled');
+        const modes = [];
+        while (i + 1 < lines.length && /^• /.test(lines[i + 1])) {
+          const text = lines[++i].slice(2), T = [];
+          const ops = parseEffects(T, Object.assign({}, ctx, { it: null }), text);
+          modes.push(Object.assign({ text: text, ops: ops }, T.length ? { tg: T } : {}));
+        }
+        if (modes.length < 2) throw new Fail('modal spell with fewer than two modes');
+        d.ab.push({ k: 'spell', modes: modes });
+        continue;
+      }
+      parseLine(lines[i], ctx, d, d.kw, d.ab);
+    }
   } catch (e) {
     if (!(e instanceof Fail)) throw e;
     d.un = e.fail; d.kw = {}; d.ab = [];
