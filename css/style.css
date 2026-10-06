@@ -183,3 +183,7 @@ a { color: var(--accent); }
 }
 .zalt { margin-top: .5rem; padding-top: .4rem; border-top: 1px dashed #8a7f6a; }
 .eralbl { margin: .6rem 0 .3rem; color: var(--accent); font-weight: 700; font-size: .9rem; }
+/* Rooms (CR 709.5): each door, locked or unlocked; stun counters (CR 122.1d) */
+.b-doors { top: 3.6em; left: .25em; right: .25em; display: flex; flex-direction: column; gap: .1em; font-size: .62em; background: rgba(10,10,14,.78); }
+.b-doors .dopen { color: #ffd98a; } .b-doors .dlock { color: #8d8a99; }
+.b-stun { bottom: 3.4em; right: .25em; color: #ffb36b; }

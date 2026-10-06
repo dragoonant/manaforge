@@ -1048,7 +1048,7 @@ window.MF.decks = {
    "superior-spider-man: ability: Mind Swap — You may have ~ enter as a copy of any creature card in a graveyard, except his name is ~ and he's a 4/4 Spider Human Hero in addition to his other types. When you do, exile that card.",
    "bringer-of-the-last-gift: intervening if: if you cast it, each player sacrifices all other creatures they control. Then each player returns all creature cards from their graveyard that weren't put there this way to the battlefield.",
    "formidable-speaker: effect: You may discard a card",
-   "oblivious-bookworm: trigger event: the beginning of your end step, you may draw a card. If you do, discard a card unless a permanent entered the battlefield face down under your control this turn or you turned a permanent face up this turn.",
+   "oblivious-bookworm: effect: You may draw a card",
    "overlord-of-the-balemurk: ability: Impending 5—{1}{B}",
    "town-greeter: effect: You may put a land card from among them into your hand",
    "imodanes-recruiter-train-troops: object: creatures you control get +1/+0 and",
@@ -1363,7 +1363,7 @@ window.MF.decks = {
    "haliya-guided-by-light: trigger event: ~ or another creature or artifact you control enters, you gain 1 life.",
    "essence-channeler: condition: you've lost life this turn",
    "amalia-benavides-aguirre: ability: Ward—Pay 3 life.",
-   "lunar-convocation: trigger event: the beginning of your end step, if you gained life this turn, each opponent loses 1 life.",
+   "lunar-convocation: intervening if: if you gained life this turn, each opponent loses 1 life.",
    "case-of-the-uneaten-feast: layout case is not compiled",
    "moseo-veins-new-dean: effect: Create a 1/1 black and green Pest creature token with \"Whenever this token attacks, you gain 1 life.\"",
    "deep-cavern-bat: effect: Look at target opponent's hand",
@@ -1524,7 +1524,6 @@ window.MF.decks = {
   "refused": [
    "restless-reef: effect: Until end of turn, ~ becomes a 4/4 blue and black Shark creature with deathtouch",
    "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
-   "dream-beavers: effect: Each opponent loses 1 life",
    "spyglass-siren: effect: Create a Map token",
    "kaito-bane-of-nightmares: ability: Ninjutsu {1}{U}{B}",
    "floodpits-drowner: filter qualifier: and put a stun counter on it",
@@ -2456,7 +2455,7 @@ window.MF.decks = {
   ],
   "compiles": false,
   "refused": [
-   "realm-of-koh: effect: Create a 1/1 colorless Spirit creature token with \"This token can't block or be blocked by non-Spirit creatures.\"",
+   "realm-of-koh: keyword: \"This token can't block or be blocked by non-Spirit creatures.\"",
    "iridescent-vinelasher: trigger event: a land you control enters, ~ deals 1 damage to target opponent.",
    "nighthowl-pursuer: trigger event: ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn.",
    "desolation-prowler: ability: Pay 2 life: ~ gets +2/+2 until end of turn. Activate only once each turn.",
@@ -2734,7 +2733,7 @@ window.MF.decks = {
    "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}",
    "cori-steel-cutter: trigger event: you cast your second spell each turn, create a 1/1 white Monk creature token with prowess. You may attach ~ to it.",
    "stock-up: effect: Look at the top five cards of your library",
-   "drake-hatcher: trigger event: ~ deals combat damage to a player, put that many incubation counters on it.",
+   "drake-hatcher: effect: Put that many incubation counters on it",
    "sleight-of-hand: effect: Look at the top two cards of your library"
   ],
   "tokens": []
@@ -2916,14 +2915,13 @@ window.MF.decks = {
    "cavern-of-souls: ability: As ~ enters, choose a creature type.",
    "beza-the-bounding-spring: effect: Create a Treasure token if an opponent controls more lands than you",
    "overlord-of-the-hauntwoods: ability: Impending 4—{1}{G}{G}",
-   "day-of-judgment: object: all creatures",
    "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
    "overlord-of-the-mistmoors: ability: Impending 4—{2}{W}{W}",
    "zur-eternal-schemer: ability: Enchantment creatures you control have deathtouch, lifelink, and hexproof.",
    "rides-end: condition: it targets a tapped permanent",
    "authority-of-the-consuls: ability: Creatures your opponents control enter tapped.",
    "leyline-binding: ability: This spell costs {1} less to cast for each basic land type among lands you control.",
-   "ultima: object: all artifacts and creatures"
+   "ultima: filter noun: artifacts and creatures"
   ],
   "tokens": []
  },
@@ -3261,7 +3259,7 @@ window.MF.decks = {
    "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
    "stock-up: effect: Look at the top five cards of your library",
    "marang-river-regent-coil-and-catch: effect: Return up to two other target nonland permanents to their owners' hands",
-   "ultima: object: all artifacts and creatures"
+   "ultima: filter noun: artifacts and creatures"
   ],
   "tokens": []
  },
@@ -3464,7 +3462,7 @@ window.MF.decks = {
   "player": "Luís Gobern",
   "rank": 28,
   "players": 1,
-  "registered": false,
+  "registered": true,
   "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
   "min": 60,
   "main": [
@@ -3567,19 +3565,11 @@ window.MF.decks = {
     "name": "Ghost Vacuum"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "elenda-saint-of-dusk: ability: Lifelink, hexproof from instants",
-   "bloodletter-of-aclazotz: ability: If an opponent would lose life during your turn, they lose twice that much life instead.",
-   "pest-control: object: all nonland permanents with mana value 1 or less",
-   "preacher-of-the-schism: trigger event: ~ attacks the player with the most life or tied for most life, create a 1/1 white Vampire creature token with lifelink.",
-   "unholy-annex-ritual-chamber: layout split is not compiled",
-   "duress: effect: Target opponent reveals their hand",
-   "cut-down: filter qualifier: with total power and toughness 5 or less",
-   "unstoppable-slasher: trigger event: ~ deals combat damage to a player, they lose half their life, rounded up.",
-   "cruelclaws-heist: effect: Gift a card"
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-vampire-1-1-w-lifelink",
+   "token-demon-6-6-b-flying"
+  ]
  },
  "dimir-midrange-fin": {
   "id": "dimir-midrange-fin",
@@ -3756,15 +3746,14 @@ window.MF.decks = {
    "cecil-dark-knight-cecil-redeemed-paladin: layout transform is not compiled",
    "azure-beastbinder: ability: ~ can't be blocked by creatures with power 2 or greater.",
    "restless-reef: effect: Until end of turn, ~ becomes a 4/4 blue and black Shark creature with deathtouch",
-   "duress: effect: Target opponent reveals their hand",
    "enduring-curiosity: trigger event: a creature you control deals combat damage to a player, draw a card.",
    "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}",
    "faerie-mastermind: trigger event: an opponent draws their second card each turn, you draw a card.",
-   "preacher-of-the-schism: trigger event: ~ attacks the player with the most life or tied for most life, create a 1/1 white Vampire creature token with lifelink.",
-   "deep-cavern-bat: effect: Look at target opponent's hand",
-   "cut-down: filter qualifier: with total power and toughness 5 or less"
+   "deep-cavern-bat: effect: Look at target opponent's hand"
   ],
-  "tokens": []
+  "tokens": [
+   "token-vampire-1-1-w-lifelink"
+  ]
  },
  "golgari-graveyard-fin": {
   "id": "golgari-graveyard-fin",

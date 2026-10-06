@@ -48,6 +48,8 @@ export function parseFilter(str) {
     if ((m = s.match(/^with power (\d+) or greater\b ?(.*)$/))) { f.powGE = +m[1]; s = m[2]; continue; }
     if ((m = s.match(/^with power or toughness (\d+) or greater\b ?(.*)$/))) { f.ptGE = +m[1]; s = m[2]; continue; }
     if ((m = s.match(/^with toughness greater than its power\b ?(.*)$/))) { f.touGtPow = true; s = m[1]; continue; }
+    if ((m = s.match(/^with mana value (\d+) or less\b ?(.*)$/))) { f.mvLE = +m[1]; s = m[2]; continue; }                 // CR 202.3
+    if ((m = s.match(/^with total power and toughness (\d+) or less\b ?(.*)$/))) { f.ptSumLE = +m[1]; s = m[2]; continue; }
     if ((m = s.match(/^with a \+1\/\+1 counter on it\b ?(.*)$/))) { f.counter = '+1/+1'; s = m[1]; continue; }
     if ((m = s.match(new RegExp('^with (' + KWRE + ')\\b ?(.*)$')))) { f.kw = KW[m[1]]; s = m[2]; continue; }
     if ((m = s.match(new RegExp('^without (' + KWRE + ')\\b ?(.*)$')))) { f.notKw = KW[m[1]]; s = m[2]; continue; }
@@ -85,6 +87,7 @@ function parseRef(T, ctx, phrase) {
   if (p === 'each opponent') return 'eachOpp';
   let m;
   if ((m = p.match(/^each (.+)$/))) return { each: parseFilter(m[1]) };
+  if ((m = p.match(/^all (.+)$/))) return { each: parseFilter(singular(m[1])) };
   if ((m = p.match(/^(creatures you control|other creatures you control)$/))) return { each: parseFilter(m[1]) };
   throw new Fail('object: ' + p);
 }
@@ -114,6 +117,10 @@ export function parseCond(str, ctx) {
   if (c === 'this spell was kicked') return { c: 'kicked' };                                           // CR 702.33d
   if ((m = c.match(/^there are (\w+) or more cards in your graveyard$/))) return { c: 'graveCount', n: numOf(m[1]) };
   if (c === 'an opponent lost life this turn') return { c: 'oppLostLife' };
+  if (c === 'your life total is greater than your starting life total') return { c: 'lifeOverStart', n: 1 };          // CR 119.1
+  if ((m = c.match(/^your life total is at least (\w+) greater than your starting life total$/))) return { c: 'lifeOverStart', n: numOf(m[1]) };
+  if (c === 'the gift was promised') return { c: 'giftPromised' };                                  // CR 702.174k
+  if (c === 'it had no counters on it') return { c: 'noCounters' };
   if ((m = c.match(/^there are (\w+) or more card types among cards in your graveyard$/))) return { c: 'graveTypes', n: numOf(m[1]) };   // delirium (CR 207.2c ability word)
   if ((m = c.match(/^there are (\w+) or more card types among cards exiled with ~$/))) return { c: 'exiledWithTypes', n: numOf(m[1]) };   // CR 607.2a: linked
   throw new Fail('condition: ' + c);
@@ -148,8 +155,8 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Dd]iscard a card, then draw a card$/))) return [{ o: 'discard', n: 1 }, { o: 'draw', n: 1 }];
   if ((m = s.match(/^[Ss]earch your library for a basic land card, put it onto the battlefield( tapped)?, then shuffle$/))) return [{ o: 'searchBasic', tapped: !!m[1] }];   // CR 701.23
   if ((m = s.match(/^[Uu]ntap that land$/))) return [{ o: 'untapIt' }];
-  if ((m = s.match(/^[Cc]reate (a|an|one|two|three|\d+) (\d+)\/(\d+) (white|blue|black|red|green|colorless) (\w+) creature tokens?$/))) {
-    const id = ctx.token({ p: +m[2], t: +m[3], color: m[4], sub: m[5] });
+  if ((m = s.match(/^[Cc]reate (a|an|one|two|three|\d+) (\d+)\/(\d+) (white|blue|black|red|green|colorless) (\w+) creature tokens?(?: with (.+))?$/))) {
+    const id = ctx.token({ p: +m[2], t: +m[3], color: m[4], sub: m[5], kw: m[6] ? kwList(m[6]) : [] });
     return [{ o: 'token', id: id, n: numOf(m[1]) }];
   }
   if ((m = s.match(/^[Dd]estroy (.+)$/))) return [{ o: 'destroy', on: parseRef(T, ctx, m[1]) }];
@@ -172,6 +179,11 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Dd]raw (a card|\w+ cards), then discard (a card)$/))) return [{ o: 'draw', n: m[1] === 'a card' ? 1 : numOf(m[1].split(' ')[0]) }, { o: 'discard', n: 1 }];
   if ((m = s.match(/^[Dd]raw (a card|\w+ cards)$/))) return [{ o: 'draw', n: m[1] === 'a card' ? 1 : numOf(m[1].split(' ')[0]) }];
   if ((m = s.match(/^[Yy]ou gain (\d+) life$/))) return [{ o: 'gain', n: +m[1] }];
+  if ((m = s.match(/^(.+) and you lose (\d+) life$/))) return parseEffect(T, ctx, m[1]).concat([{ o: 'loseLife', who: 'you', n: +m[2] }]);
+  if ((m = s.match(/^[Yy]ou draw (a card|\w+ cards)$/))) return [{ o: 'draw', n: m[1] === 'a card' ? 1 : numOf(m[1].split(' ')[0]) }];
+  if ((m = s.match(/^([Ee]ach opponent|[Yy]ou) loses? (\d+) life$/))) return [{ o: 'loseLife', who: /^each/i.test(m[1]) ? 'eachOpp' : 'you', n: +m[2] }];   // CR 119.3
+  if ((m = s.match(/^([Tt]hey|[Tt]hat player) loses? half their life, rounded up$/)) && ctx.evPlayer) return [{ o: 'loseLife', who: 'evPlayer', half: 'up' }];   // CR 107.1a
+  if ((m = s.match(/^[Rr]eturn it to the battlefield( tapped)? under its owner's control(?: with (\w+) stun counters on it)?$/)) && ctx.it === 'self') return [Object.assign({ o: 'returnFromGrave', tapped: !!m[1] }, m[2] ? { ctr: { stun: numOf(m[2]) } } : {})];   // CR 122.1d
   if ((m = s.match(/^(.+?) can't be blocked this turn$/))) return [{ o: 'unblockable', on: parseRef(T, ctx, m[1]) }];
   throw new Fail('effect: ' + s);
 }
@@ -204,10 +216,21 @@ function parseEffects(T, ctx, text) {
     const who = parseRef(T, ctx, m[1]);
     return [{ o: 'may', what: 'oppDrawCopy', ops: [{ o: 'draw', n: 1, who: who }] }, { o: 'if', cond: { c: 'did' }, ops: [{ o: 'copySpell' }] }];
   }
+  // Duress / Cruelclaw's Heist: the revealed hand, the caster's choice, then discard or exile.
+  if ((m = t.match(/^(target opponent) reveals their hand\. You choose an? (noncreature, nonland|nonland) card from it\. That player discards that card$/i))) {
+    const who = parseRef(T, ctx, m[1].toLowerCase());
+    return [{ o: 'handPick', who: who, f: { notTypes: m[2] === 'nonland' ? ['Land'] : ['Creature', 'Land'] }, then: 'discard' }];
+  }
+  if ((m = t.match(/^(target opponent) reveals their hand\. You choose a nonland card from it\. Exile that card\. If the gift was promised, you may cast that card for as long as it remains exiled, and mana of any type can be spent to cast it$/i))) {
+    const who = parseRef(T, ctx, m[1].toLowerCase());
+    return [{ o: 'handPick', who: who, f: { notTypes: ['Land'] }, then: 'exile', castIfGift: true }];   // CR 609.4b
+  }
   const sentences = t.split(/\. (?=[A-Z])/);
   const ops = [];
   for (const sn of sentences) {
     // "X. Then it deals ..." — "it" is the object the previous sentence acted on.
+    const ow = sn.match(/^Otherwise, (.+)$/);                                                    // "If X, A. Otherwise, B."
+    if (ow) { const last = ops[ops.length - 1]; if (!last || last.o !== 'if' || last.else) throw new Fail('"Otherwise" with no "if" before it'); last.else = parseEffect(T, ctx, cap(ow[1])); continue; }
     const out = parseEffect(T, ctx, sn);
     const last = out[out.length - 1]; if (last && last.on && typeof last.on === 'object' && last.on.t != null) ctx.it = last.on;
     ops.push.apply(ops, out);
@@ -238,6 +261,11 @@ const EVENTS = [
   [/^(another creature you control.*) enters$/, m => [{ on: 'enters', who: parseFilter(m[1]) }]],
   [/^~ attacks for the first time each turn$/, () => [{ on: 'attacks', who: 'self', firstEachTurn: true }]],
   [/^~ attacks$/, () => [{ on: 'attacks', who: 'self' }]],
+  [/^~ attacks the player with the most life or tied for most life$/, () => [{ on: 'attacks', who: 'self', defMostLife: true }]],
+  [/^~ attacks while you have the most life or are tied for most life$/, () => [{ on: 'attacks', who: 'self', youMostLife: true }]],
+  [/^the beginning of your end step$/, () => [{ on: 'beginStep', step: 'end', yours: true }]],                         // CR 513.1
+  [/^you unlock this door$/, () => [{ on: 'unlock', who: 'self', door: true }]],                                        // CR 709.5h
+  [/^~ deals combat damage to a player$/, () => [{ on: 'dealsDamage', combat: true, toPlayer: true }]],
   [/^the beginning of your upkeep$/, () => [{ on: 'beginStep', step: 'upkeep', yours: true }]],                       // CR 503.1a
   [/^(a creature you control.*) attacks$/, m => [{ on: 'attacks', who: parseFilter(m[1].replace(/^a /, '')) }]],
   [/^you cast a noncreature spell$/, () => [{ on: 'cast', spell: { notTypes: ['Creature'] } }]],
@@ -271,8 +299,10 @@ function parseTrigger(line, ctx, out) {
       for (const tr of trigs) {
         const T = []; const c2 = Object.assign({}, ctx, { it: tr.who && tr.who !== 'self' ? 'ev' : tr.who === 'self' ? 'self' : null });
         if (tr.on === 'cast') { c2.spellEv = true; if (tr.anyPlayer) c2.evPlayer = true; }
+        if (tr.on === 'dealsDamage' && tr.toPlayer) c2.evPlayer = true;
+        if (tr.door) { if (ctx.door == null) throw new Fail('"unlock this door" on a card that is not a Room'); tr.door = ctx.door; }
         const ops = parseEffects(T, c2, cap(eff.replace(/^this creature\b/, '~')));
-        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub']) if (tr[k] != null) extra[k] = tr[k];
+        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer']) if (tr[k] != null) extra[k] = tr[k];
         out.push(Object.assign({ k: 'trig', on: tr.on, ops: ops }, tr.who ? { who: tr.who } : {}, tr.spell !== undefined ? { spell: tr.spell } : {}, tr.toOpp ? { toOpp: true } : {}, tr.lookBack ? { lookBack: true } : {}, T.length ? { tg: T } : {}, cond ? { cond: cond } : {}, extra));
       }
       return true;
@@ -288,6 +318,8 @@ function parseStatic(line, ctx, out, d) {
   if ((m = line.match(/^~ can't attack or block unless (.+)\.$/))) { out.push({ k: 'restrict', attack: true, block: true, unless: parseCond(m[1], ctx) }); return true; }   // CR 508.1c, 509.1b
   if (line === "~ can't block.") { out.push({ k: 'restrict', block: true }); return true; }
   if (line === "~ can't attack.") { out.push({ k: 'restrict', attack: true }); return true; }
+  if ((m = line.match(/^~ gets an additional (\S+) as long as (.+)\.$/))) { const pt = pumpOf(m[1]); out.push({ k: 'static', affects: 'self', p: pt.p, t: pt.t, cond: parseCond(m[2], ctx) }); return true; }
+  if (line === 'If an opponent would lose life during your turn, they lose twice that much life instead.') { out.push({ k: 'lifeLossDouble' }); return true; }   // CR 614.1a
   if ((m = line.match(/^~ gets (\S+?)(?: and has (.+?))? as long as (.+)\.$/))) { const pt = pumpOf(m[1]); out.push(Object.assign({ k: 'static', affects: 'self', p: pt.p, t: pt.t, cond: parseCond(m[3], ctx) }, m[2] ? { grant: kwList(m[2]) } : {})); return true; }
   if ((m = line.match(/^As long as (.+?), ~ gets (\S+?)(?: and has (.+))?\.$/))) { const pt = pumpOf(m[2]); out.push(Object.assign({ k: 'static', affects: 'self', p: pt.p, t: pt.t, cond: parseCond(m[1], ctx) }, m[3] ? { grant: kwList(m[3]) } : {})); return true; }
   if ((m = line.match(/^Enchant (creature)\.?$/))) { out.push({ k: 'enchant', f: parseFilter(m[1]) }); return true; }
@@ -315,7 +347,13 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(AW_RE))) line = m[2];                                                         // CR 207.2c
   // A keyword line: "Flying", "Reach, vigilance", "Offspring {2}", "Equip {3}", "Kicker {4}".
   const parts = line.replace(/\.$/, '').split(/, /);
-  if (parts.every(p => KW[p.toLowerCase()])) { for (const p of parts) kw[KW[p.toLowerCase()]] = (kw[KW[p.toLowerCase()]] || 0) + 1; return; }
+  const HEXFROM = /^hexproof from (instants|sorceries|creatures|artifacts|enchantments)$/i, PLURAL_TYPE = { instants: 'Instant', sorceries: 'Sorcery', creatures: 'Creature', artifacts: 'Artifact', enchantments: 'Enchantment' };
+  if (parts.every(p => KW[p.toLowerCase()] || HEXFROM.test(p))) {
+    for (const p of parts) { const h = p.match(HEXFROM); if (h) ab.push({ k: 'hexproofFrom', types: [PLURAL_TYPE[h[1].toLowerCase()]] }); else kw[KW[p.toLowerCase()]] = (kw[KW[p.toLowerCase()]] || 0) + 1; }   // CR 702.11d
+    return;
+  }
+  if ((m = line.match(/^Cycling (\{[^ ]+\})$/))) { ab.push({ k: 'act', zone: 'hand', cycling: true, cost: { mana: m[1], tap: false, sacSelf: false, discardSelf: true }, ops: [{ o: 'draw', n: 1 }] }); return; }   // CR 702.29a
+  if ((m = line.match(/^Gift a card$/))) { ab.push({ k: 'gift', what: 'card' }); return; }       // CR 702.174a, e
   if ((m = line.match(/^Kicker (\{[^ ]+\})$/))) { ab.push({ k: 'kicker', cost: m[1] }); return; }      // CR 702.33a
   if ((m = line.match(/^Offspring (\{[^ ]+\})$/))) {                                              // CR 702.175a
     ab.push({ k: 'offspring', cost: m[1] });
@@ -326,6 +364,7 @@ function parseLine(line, ctx, d, kw, ab) {
     ab.push({ k: 'act', cost: { mana: m[1], tap: false, sacSelf: false }, sorcery: true, tg: [{ f: { types: ['Creature'], ctrl: 'you' } }], ops: [{ o: 'attach', on: { t: 0 } }], equip: true });
     return;
   }
+  if ((m = line.match(/^(As long as .+?\.) (~ gets an additional .+\.)$/))) { parseLine(m[1], ctx, d, kw, ab); parseLine(m[2], ctx, d, kw, ab); return; }   // Elenda: two statics in one paragraph
   if (parseStatic(line, ctx, ab, d)) return;
   if (parseTrigger(line, ctx, ab)) return;
   if ((m = line.match(/^([^:]+): (.+)$/)) && /\{|Sacrifice/.test(m[1])) {                          // CR 602.1
@@ -376,7 +415,22 @@ export function normalize(text, name) {
 }
 // `alt`: the other face of an Adventure or Omen card (CR 715, 720), compiled as its own set of
 // characteristics the card has only while it is on the stack as that spell.
-export function compileCard(c, tokens, alt) {
+// A Room (CR 709.5): two doors under one shared type line, each compiled as its own face; every
+// ability is tagged with its door, and exists on the battlefield only while that door is unlocked.
+function compileRoom(c, b, tokens) {
+  const full = c.faceName + ' // ' + b.faceName;
+  const doors = [c, b].map((f, i) => compileCard(Object.assign({}, f, { name: f.faceName, layout: 'normal', faceName: null }), tokens, null, { door: i }));
+  const d = { id: slug(full), name: full, mana: doors.map(x => x.mana).join(' // '), colors: [...new Set(doors.flatMap(x => x.colors))], types: c.types || [], subtypes: c.subtypes || [], supers: c.supertypes || [],
+    power: null, toughness: null, typeLine: c.type, text: doors.map(x => x.text).join('\n'), kw: {}, ab: [], layout: 'room' };
+  d.doors = doors.map(x => ({ name: x.name, mana: x.mana, colors: x.colors, types: x.types, subtypes: x.subtypes, supers: x.supers, typeLine: x.typeLine, text: x.text, kw: x.kw, ab: x.ab, kind: 'door' }));
+  const bad = doors.find(x => x.un);
+  if (bad) { d.un = bad.name + ': ' + bad.un; d.doors.forEach(x => { x.ab = []; }); return d; }
+  if (doors.some(x => Object.keys(x.kw).length)) { d.un = 'a keyword on a Room door'; return d; }
+  d.ab = doors.flatMap((x, i) => x.ab.map(a => Object.assign({ door: i }, a)));
+  return d;
+}
+export function compileCard(c, tokens, alt, room) {
+  if (c.layout === 'split' && alt && (c.subtypes || []).includes('Room')) return compileRoom(c, alt, tokens);
   const faceName = c.faceName || c.name;
   const d = {
     id: slug(c.name), name: c.name, mana: c.manaCost || '', colors: c.colors || [], types: c.types || [], subtypes: c.subtypes || [], supers: c.supertypes || [],
@@ -386,7 +440,7 @@ export function compileCard(c, tokens, alt) {
   if (alt) d.name = faceName;
   const twoPart = c.layout === 'adventure' && alt;
   if (c.layout !== 'normal' && !twoPart) { d.un = 'layout ' + c.layout + ' is not compiled'; return d; }
-  const ctx = { token: tokens, name: faceName };
+  const ctx = { token: tokens, name: faceName, door: room ? room.door : null };
   try {
     for (const st of d.subtypes) if (BASIC_MANA[st]) d.ab.push({ k: 'mana', cost: { tap: true }, cols: [BASIC_MANA[st]] });   // CR 305.6: intrinsic
     const lines = normalize(d.text, faceName);
@@ -429,8 +483,10 @@ const ROLES = {
 };
 function tokenMaker(pack) {
   const mk = function (t) {
-    const id = 'token-' + t.sub.toLowerCase() + '-' + t.p + '-' + t.t + '-' + (COLOR[t.color] || 'c').toLowerCase();
-    if (!pack[id]) pack[id] = { id: id, name: t.sub, token: true, mana: '', colors: COLOR[t.color] ? [COLOR[t.color]] : [], types: ['Creature'], subtypes: [t.sub], supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub, text: '', kw: {}, ab: [], layout: 'token' };
+    const kws = t.kw || [];
+    const id = 'token-' + t.sub.toLowerCase() + '-' + t.p + '-' + t.t + '-' + (COLOR[t.color] || 'c').toLowerCase() + kws.map(k => '-' + k.toLowerCase()).join('');
+    const KWTEXT = { flying: 'Flying', lifelink: 'Lifelink', haste: 'Haste', vigilance: 'Vigilance', trample: 'Trample', deathtouch: 'Deathtouch', menace: 'Menace', reach: 'Reach' };
+    if (!pack[id]) pack[id] = { id: id, name: t.sub, token: true, mana: '', colors: COLOR[t.color] ? [COLOR[t.color]] : [], types: ['Creature'], subtypes: [t.sub], supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub, text: kws.map(k => KWTEXT[k]).join(', '), kw: Object.fromEntries(kws.map(k => [k, 1])), ab: [], layout: 'token' };
     return id;
   };
   mk.role = function (name) {

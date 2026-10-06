@@ -35,6 +35,8 @@
       if (v.combat && v.combat.attackers.includes(o.iid)) cls.push('attacking');
       if (v.combat && v.combat.blocks[o.iid]) cls.push('blocking');
       if (c.copy) badges += `<div class="badge b-copy" title="A copy of ${esc(MF.cards[c.copy.id].name)}">copy</div>`;
+      if (d.doors) badges += `<div class="badge b-doors">${d.doors.map((f, k) => `<span class="${(c.unlocked || [])[k] ? 'dopen' : 'dlock'}" title="${esc(f.name)}: ${(c.unlocked || [])[k] ? 'unlocked' : 'locked — unlock it for ' + esc(f.mana) + ' in your main phase'}">${(c.unlocked || [])[k] ? '◨' : '▣'} ${esc(f.name)}</span>`).join('')}</div>`;   // CR 709.5
+      if (c.ctr.stun) badges += `<div class="badge b-stun" title="Stun counters: when it would untap, a counter is removed instead (CR 122.1d)">${c.ctr.stun} stun</div>`;
     }
     const shownId = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].copy ? v.cards[o.iid].copy.id : id;
     const sd = MF.cards[shownId];
@@ -86,10 +88,11 @@
       for (const a of MF.legalActions(s)) {
         if (a.type === 'land') add(a.iid, a, 'Play ' + MF.cards[s.cards[a.iid].id].name);
         else if (a.type === 'cast') {
-          const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt }); delete cost.xs;
-          add(a.iid, a, 'Cast ' + (a.alt ? d.alt.name + ' (' + (d.alt.kind === 'omen' ? 'Omen' : 'Adventure') + ')' : d.name) + ' — ' + MF.manaStr(cost));
+          const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid) }); delete cost.xs;
+          add(a.iid, a, 'Cast ' + (a.door != null ? d.doors[a.door].name + ' (door)' : a.alt ? d.alt.name + ' (' + (d.alt.kind === 'omen' ? 'Omen' : 'Adventure') + ')' : d.name) + ' — ' + MF.manaStr(cost));
         }
-        else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
+        else if (a.type === 'unlock') { const f = MF.cards[s.cards[a.iid].id].doors[a.door]; add(a.iid, a, 'Unlock ' + f.name + ' — ' + f.mana); }
+        else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
         else if (a.type === 'pass') btns.push({ a: a, label: T.passLabel(s, ui.human), cls: 'primary' });
       }
       btns.push({ ui: 'passTurn', label: 'Pass to end of turn', cls: 'ghost' });
@@ -266,6 +269,15 @@
     const tokens = [...new Set((JSON.stringify(d.ab).match(/token-[a-z0-9-]+/g) || []))];
     const rules = t => T.symbols(t).replace(/\(([^)]*)\)/g, '<i>($1)</i>').replace(/\n/g, '<br>');
     // An Adventure or Omen card shows both faces (CR 715.2, 720.2).
+    // A Room shows each door with its own name and cost (CR 709.5).
+    if (d.doors) {
+      const c = iid != null && v ? v.cards[iid] : null, onBf = c && c.zone === 'bf';
+      const doorsHtml = d.doors.map((f, k) => `<div class="zalt"><b>${esc(f.name)}</b> <span class="zcost">${T.symbols(f.mana)}</span>${onBf ? ` — <i>${(c.unlocked || [])[k] ? 'unlocked' : 'locked'}</i>` : ''}<br>${rules(f.text)}</div>`).join('');
+      return `<div class="zcard">${face(null, id, { size: 'lg' })}${tokens.map(t => `<div class="ztok">Creates:${face(null, t, { size: 'sm' })}</div>`).join('')}</div>
+      <div class="ztext"><div class="zname">${esc(d.name)} <span class="zcost">${T.symbols(d.mana)}</span></div><div class="ztype">${esc(d.typeLine)}</div>
+      <div class="zrules">${doorsHtml}<div class="zkw">Room — cast one door; it enters unlocked. In your main phase with the stack empty you may pay a locked door’s cost to unlock it (CR 709.5e).</div></div>
+      ${live}${why ? `<div class="zwhy">Can’t play now: ${T.symbols(why)}</div>` : ''}</div>`;
+    }
     const text = rules(d.text) + (d.alt ? `<div class="zalt"><b>${esc(d.alt.name)}</b> <span class="zcost">${T.symbols(d.alt.mana)}</span><br><i>${esc(d.alt.typeLine)}</i><br>${rules(d.alt.text)}</div>` : '');
     return `<div class="zcard">${face(null, id, { size: 'lg' })}${tokens.map(t => `<div class="ztok">Creates:${face(null, t, { size: 'sm' })}</div>`).join('')}</div>
       <div class="ztext"><div class="zname">${esc(d.name)} <span class="zcost">${T.symbols(d.mana)}</span></div><div class="ztype">${esc(d.typeLine)}</div>

@@ -34,6 +34,7 @@
     if (f.tok && !I(s, iid).tok) return false;
     if (f.tokOrSub && !(I(s, iid).tok || ch.subtypes.includes(f.tokOrSub))) return false;
     if (f.mvLE != null && !(ch.mv <= f.mvLE)) return false;
+    if (f.ptSumLE != null && !(ch.p + ch.t <= f.ptSumLE)) return false;                         // Cut Down: "total power and toughness 5 or less"
     return true;
   };
   MF.matchPlayer = function (s, seat, f, who) {
@@ -78,6 +79,9 @@
     exiledWithTypes: (x, c) => { const o = I(x.s, x.src); return cardTypes(x.s, ((o && o.exiled) || []).filter(i => I(x.s, i) && I(x.s, i).zone === 'exile')) >= c.n; },   // CR 607.2a
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
+    lifeOverStart: (x, c) => P(x.s, x.ctrl).life - P(x.s, x.ctrl).startLife >= c.n,            // "greater than your starting life total" (n 1), "at least 10 greater" (n 10) — CR 119.1
+    giftPromised: x => !!(x.L && x.L.gift != null),                                            // CR 702.174k
+    noCounters: x => { const l = x.lki; return !!l && !Object.values(l.ctr || {}).some(n => n > 0); },   // "if it had no counters on it" — as it last existed (CR 603.10a)
   };
   MF.conds = CONDS;
   function cardTypes(s, iids) { const ts = new Set(); for (const i of iids) for (const ty of MF.def(s, i).types) ts.add(ty); return ts.size; }
@@ -120,9 +124,18 @@
   };
   MF.trigMatch = function (s, iid, src, a, ev) {
     switch (ev.t) {
-      case 'enters': case 'attacks': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid) && (!a.firstEachTurn || ev.first);
+      case 'attacks': {
+        if (!subject(s, iid, src, a.who, ev.iid) || (a.firstEachTurn && !ev.first)) return false;
+        // Preacher of the Schism: checked as it triggers only (its rulings). In a two-player game the attacked player is the opponent.
+        const me = P(s, src.ctrl).life, them = P(s, 1 - src.ctrl).life;
+        if (a.defMostLife && !(them >= me)) return false;
+        if (a.youMostLife && !(me >= them)) return false;
+        return true;
+      }
+      case 'enters': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid) && (!a.firstEachTurn || ev.first);
+      case 'unlock': return ev.iid === iid && ev.door === a.door;                                // "When you unlock this door" (CR 709.5h)
       case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
-      case 'dealsDamage': return ev.src === iid && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.combat || ev.combat);
+      case 'dealsDamage': return ev.src === iid && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);
       case 'sacrificed': case 'dies': case 'leaves': return ev.iid === iid;
       case 'beginStep': return ev.step === a.step && (!a.yours || ev.ap === src.ctrl);
       case 'gainLife': return ev.who === src.ctrl;
@@ -160,7 +173,7 @@
   const players = (x, r) => {
     if (r === 'you') return [x.ctrl];
     if (r === 'eachOpp') return [1 - x.ctrl];
-    if (r === 'evPlayer') return [x.ev.ctrl];                                                  // "that player": the one the event names
+    if (r === 'evPlayer') return [x.ev.t === 'dealsDamage' ? x.ev.to.p : x.ev.ctrl];          // "that player" / "they": the one the event names
     if (r && r.t != null) return (x.t[r.t] || []).filter(q => q && q.p != null).map(q => q.p);
     return [];
   };
@@ -313,7 +326,7 @@
       const a = MF.ask(x.x, { who: x.ctrl, kind: 'pickMilled', src: x.src, type: op.type, opts: opts });
       if (a !== 'none') { const id = I(s, a).id; MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'graveyard' }); }
     },
-    untap(x, op) { for (const i of MF.resolveRefs(x, op.on)) { const c = I(x.s, i); if (c.tapped) { c.tapped = false; log(x.s, 'untapped', { c: c.id }); } } },
+    untap(x, op) { for (const i of MF.resolveRefs(x, op.on)) MF.untap(x.s, i); },
     extraCombat(x) { x.s.extraCombat = (x.s.extraCombat || 0) + 1; log(x.s, 'extraCombatAdded', { who: x.ctrl }); },
     // CR 701.14: each deals damage equal to its power to the other; if either is gone or not a creature, neither fights.
     fight(x, op) {
@@ -355,7 +368,7 @@
       MF.shuffle(s, rest); p.lib.push.apply(p.lib, rest);
       if (rest.length) log(s, 'toBottom', { who: x.ctrl, n: rest.length, random: true });
     },
-    untapIt(x) { const c = x.it != null ? I(x.s, x.it) : null; if (c && c.zone === 'bf' && c.tapped) { c.tapped = false; log(x.s, 'untapped', { c: c.id }); } },
+    untapIt(x) { const c = x.it != null ? I(x.s, x.it) : null; if (c && c.zone === 'bf') MF.untap(x.s, x.it); },
     // Manifold Mouse: "gains your choice of double strike or trample until end of turn" — chosen on resolution (CR 608.2d).
     pumpChoice(x, op) {
       const iids = MF.resolveRefs(x, op.on); if (!iids.length) return;
@@ -462,7 +475,40 @@
       x.flags.did = a === 'yes';
       if (x.flags.did) MF.runOps(x, op.ops);
     },
-    if(x, op) { if (MF.cond(x, op.cond)) MF.runOps(x, op.ops); },
+    if(x, op) { if (MF.cond(x, op.cond)) MF.runOps(x, op.ops); else if (op.else) MF.runOps(x, op.else); },   // "Otherwise, ..."
+    // "each opponent loses 2 life", "you lose 1 life", "they lose half their life, rounded up" (CR 119.3, 107.1a)
+    loseLife(x, op) {
+      for (const who of players(x, op.who)) {
+        const n = op.half ? Math.ceil(Math.max(0, P(x.s, who).life) / 2) : num(x, op.n);
+        MF.loseLife(x.s, who, n, 'effect', x.L ? (x.L.srcId || x.L.id) : null);
+      }
+    },
+    // Duress, Cruelclaw's Heist: "Target opponent reveals their hand. You choose a <kind> card from it.
+    // That player discards that card." / "Exile that card." The revealed hand is public: named in the log.
+    handPick(x, op) {
+      const s = x.s;
+      for (const who of players(x, op.who)) {
+        const p = P(s, who);
+        log(s, 'revealHand', { who: who, cs: p.hand.map(i => I(s, i).id) });
+        const fit = i => { const d = MF.def(s, i); return !(op.f.notTypes || []).some(ty => d.types.includes(ty)); };
+        const opts = p.hand.filter(fit).map(i => ({ id: i, iid: i }));
+        if (!opts.length) { log(s, 'handPickNone', { who: x.ctrl }); continue; }
+        const a = MF.ask(x.x, { who: x.ctrl, kind: 'handPick', src: x.src, from: who, then: op.then, opts: opts });
+        if (op.then === 'discard') MF.discard(s, a);
+        else {
+          const id = I(s, a).id, n = MF.move(s, a, 'exile');
+          log(s, 'exiledFromHand', { who: who, c: id, by: x.L ? (x.L.srcId || x.L.id) : null });
+          if (op.castIfGift && x.L && x.L.gift != null) { s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, until: 'exiled', anyMana: true, castOnly: true }); log(s, 'mayCastExiled', { who: x.ctrl, c: id }); }
+        }
+      }
+    },
+    // Unstoppable Slasher: "return it to the battlefield tapped under its owner's control with two stun counters on it."
+    returnFromGrave(x, op) {
+      const s = x.s, g = x.ev && x.ev.to != null ? I(s, x.ev.to) : null;
+      if (!g || g.zone !== 'grave') { log(s, 'returnGone', { c: x.L.srcId }); return; }           // CR 400.7: it is a new object once it has left the graveyard
+      const n = MF.move(s, x.ev.to, 'bf', { ctrl: g.owner, tapped: !!op.tapped, ctr: op.ctr || null, x: x.x });
+      log(s, 'putOnto', { who: g.owner, c: I(s, n).id, tapped: !!op.tapped, from: 'graveyard', ctr: op.ctr || null });
+    },
     // Alania: "copy that spell. You may choose new targets for the copy." (CR 707.10, 707.10c)
     copySpell(x, op) {
       const s = x.s, L0 = s.stack.find(L => L.lid === x.ev.lid);
@@ -470,6 +516,7 @@
       const c0 = I(s, L0.iid), iid = s.nid++;
       s.cards[iid] = { iid: iid, id: c0.id, owner: x.ctrl, ctrl: x.ctrl, zone: 'stack', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, copySpell: true };
       const L = { lid: s.lid++, kind: 'spell', ctrl: x.ctrl, iid: iid, id: c0.id, t: JSON.parse(JSON.stringify(L0.t)), x: L0.x, mode: L0.mode, copy: true, spent: 0, from: 'copy' };   // CR 707.10: the copy has the same mode
+      if (L0.gift != null) L.gift = L0.gift;                                                   // a copy's gift was promised too (Gift rulings)
       const d = MF.cards[c0.id], sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
       const slots = sp && sp.modes ? (sp.modes[L0.mode].tg || []) : sp && sp.tg ? sp.tg : aura ? [{ f: aura.f }] : [];
       if (slots.length) {
@@ -479,6 +526,12 @@
       s.stack.push(L);
       log(s, 'copy', { who: x.ctrl, c: c0.id, tg: L.t.map(sl => sl.map(r => MF.refLabel(s, r))) });
     },
+  };
+  // CR 702.174e: "Gift a card" — the chosen player draws a card.
+  MF.giveGift = function (x, a, to) {
+    log(x.s, 'gift', { who: x.ctrl, to: to, what: a.what });
+    if (a.what === 'card') MF.draw(x.s, to, 1);
+    else throw new Error('gift not implemented: ' + a.what);
   };
   function noteEntered(s, iid) {                                                               // turn history: "if another creature entered the battlefield under your control this turn"
     const c = I(s, iid); if (!MF.isType(s, iid, 'Creature')) return;
@@ -533,10 +586,10 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift'];
   MF.validate = function () {
     const bad = [];
-    const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
+    const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
     for (const id in MF.cards) {
       const d = MF.cards[id];
       if (d.un) continue;

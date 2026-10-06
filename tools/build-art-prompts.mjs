@@ -17,7 +17,11 @@ import { join } from 'node:path';
 import { ROOT } from './load.mjs';
 import { WHO, CARDS } from './art-identity.mjs';
 import { wantedKeys } from './art-keys.mjs';
+import { STYLES, styleFor } from './art-styles.mjs';
 
+// PLAN D17 (2026-10-05): each card takes one of the fifteen styles in tools/art-styles.mjs, by a
+// stable hash of its key, so the art reads as many artists' work. The constants below are style D
+// (D14), kept for the selftest.
 // PLAN D14: direction D, "Grim Dark", chosen by the owner from the audition of 2026-10-04
 // (scratch/audition-sheet.jpg). These constants are byte-identical on every prompt of their kind;
 // they were reviewed as a whole, so the count rule does not apply to "three heads tall" inside them.
@@ -69,10 +73,11 @@ for (const key of keys) {
   if (!e) { missing.push(key); continue; }
   if (e.who && !WHO[e.who]) { unknown.push(`${key} (who "${e.who}")`); continue; }
   const subject = e.who ? `${WHO[e.who]}, ${e.subject}` : e.subject;
-  const land = !!e.land, style = land ? LAND_STYLE : STYLE, short = land ? LAND_SHORT : SHORT;
+  const sid = styleFor(key), st = STYLES[sid];
+  const land = !!e.land, style = land ? st.land : st.style, short = land ? LAND_SHORT : st.short;
   // The parts travel too: SDXL reads 77 tokens per text encoder; tools/gen-art-sdxl.py leads both
   // encoders with `short` + subject and gives the second the setting and the full style (PLAN D13).
-  prompts.push({ key, land, prompt: `${short}${subject}, ${e.setting}. ${style}.`, subject, setting: e.setting, style, short, negativeExtra: land ? LAND_NEGATIVE : '' });
+  prompts.push({ key, styleId: sid, land, prompt: `${short}${subject}, ${e.setting}. ${style}.`, subject, setting: e.setting, style, short, negativeExtra: land ? LAND_NEGATIVE : '' });
 }
 if (missing.length || unknown.length) {
   if (missing.length) console.error(`${missing.length} wanted key(s) have no CARDS entry in tools/art-identity.mjs:\n  ` + missing.join('\n  '));
@@ -86,4 +91,5 @@ if (errs.length) {
   process.exit(1);
 }
 await writeFile(join(ROOT, 'tools', 'art-prompts.json'), JSON.stringify(prompts, null, 2) + '\n');
-console.log(`${prompts.length} prompts written to tools/art-prompts.json (${prompts.filter(p => p.land).length} lands), lint clean.`);
+const mix = {}; for (const p of prompts) mix[p.styleId] = (mix[p.styleId] || 0) + 1;
+console.log(`${prompts.length} prompts written to tools/art-prompts.json (${prompts.filter(p => p.land).length} lands), lint clean. Styles: ${Object.keys(mix).sort().map(k => k + ' ' + mix[k]).join(', ')}.`);
