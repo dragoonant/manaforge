@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import { loadEngine } from './load.mjs';
 const MF = loadEngine();
-const same = (a, b) => a.type === b.type && a.id === b.id && a.iid === b.iid && a.ab === b.ab;
+const same = (a, b) => a.type === b.type && a.id === b.id && a.iid === b.iid && a.ab === b.ab && !!a.alt === !!b.alt;
 
 export function replay(rep) {
   let s = MF.newGame({ seed: rep.seed, decks: rep.decks });

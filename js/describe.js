@@ -6,7 +6,7 @@
   const MF = window.MF;
   const KWNAME = { flying: 'flying', reach: 'reach', firstStrike: 'first strike', doubleStrike: 'double strike', deathtouch: 'deathtouch', lifelink: 'lifelink', trample: 'trample', vigilance: 'vigilance', haste: 'haste', menace: 'menace', defender: 'defender', flash: 'flash', hexproof: 'hexproof', indestructible: 'indestructible', prowess: 'prowess', shroud: 'shroud' };
   MF.KWNAME = KWNAME;
-  const N = n => typeof n === 'number' ? String(n) : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'power' ? 'its power' : '?';
+  const N = n => typeof n === 'number' ? String(n) : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
   function filt(f) {
     if (!f) return 'anything';
     if (f.any) return 'any target';
@@ -46,6 +46,9 @@
     enteredOther: () => 'another creature entered the battlefield under your control this turn',
     offspringPaid: () => 'its offspring cost was paid',
     firstOfKind: () => 'that spell is your first instant, first sorcery, or first Otter spell other than this this turn',
+    kicked: () => 'this spell was kicked',
+    graveCount: c => 'there are ' + c.n + ' or more cards in your graveyard',
+    oppLostLife: () => 'an opponent lost life this turn',
   };
   const cond = c => (C[c.c] ? C[c.c](c) : c.c);
   MF.describeCond = cond;
@@ -70,10 +73,16 @@
     may: op => 'you may: ' + ops(op.ops),
     if: op => 'if ' + cond(op.cond) + ': ' + ops(op.ops),
     copySpell: () => 'copy that spell; you may choose new targets for the copy',
+    pumpChoice: op => ref(op.on) + ' gains your choice of ' + op.kws.map(k => KWNAME[k]).join(' or ') + ' until end of turn',
+    animate: op => ref(op.on) + ' becomes a ' + op.p + '/' + op.t + ' creature with ' + op.kws.map(k => KWNAME[k]).join(', ') + (op.allTypes ? ' and all creature types' : '') + ', still a land',
+    role: op => 'create a ' + op.role + ' Role token attached to ' + ref(op.on),
+    discardUpTo: op => 'discard up to ' + op.n + ' cards, then draw that many',
+    graveImpulse: () => 'exile a card at random from your graveyard; you may play it this turn',
+    noLifeGain: op => 'a player dealt damage this way can’t gain life for the rest of the game',
   };
   const sgn = v => v == null ? '+0' : typeof v === 'number' ? (v >= 0 ? '+' + v : String(v)) : '+' + N(v);
   function ops(list) { return (list || []).map(op => D[op.o](op)).join('; then '); }
-  const EV = { enters: 'enters', attacks: 'attacks', cast: 'you cast', dealsDamage: 'deals damage', sacrificed: 'you sacrifice it', beginStep: 'at the beginning of' };
+  const EV = { enters: 'enters', attacks: 'attacks', cast: 'you cast', dealsDamage: 'deals damage', sacrificed: 'you sacrifice it', beginStep: 'at the beginning of', dies: 'dies', dealtDamage: 'is dealt damage', targeted: 'becomes the target of a spell or ability you control for the first time each turn' };
   function who(w) { if (w === 'self') return 'this'; if (w && w.or) return w.or.map(who).join(' or '); return 'a ' + filt(w); }
   MF.describeAbility = function (a) {
     curTg = a.tg || [];
@@ -82,7 +91,9 @@
       case 'act': return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '');
       case 'trig': {
         let e;
-        if (a.on === 'cast') e = 'Whenever you cast a ' + (a.spell && a.spell.notTypes ? 'non' + a.spell.notTypes.join('').toLowerCase() + ' ' : '') + 'spell';
+        if (a.on === 'cast') e = 'Whenever ' + (a.anyPlayer ? 'a player casts' : 'you cast') + ' a ' + (a.spell && a.spell.notTypes ? 'non' + a.spell.notTypes.join('').toLowerCase() + ' ' : '') + 'spell';
+        else if (a.on === 'beginStep') e = 'At the beginning of ' + ({ boc: 'combat', upkeep: 'upkeep', end: 'the end step' }[a.step] || a.step) + (a.yours ? ' on your turn' : '');
+        else if (a.on === 'attackWith') e = 'Whenever you attack with one or more ' + a.sub + 's';
         else if (a.on === 'dealsDamage') e = 'Whenever this deals damage' + (a.toOpp ? ' to an opponent' : '');
         else if (a.on === 'sacrificed') e = 'When you sacrifice this';
         else e = 'Whenever ' + who(a.who) + ' ' + EV[a.on];
@@ -97,6 +108,7 @@
       case 'costLessFor': return a.spell.types.join(' and ').toLowerCase() + ' spells you cast cost {' + a.n + '} less';
       case 'spell': return ops(a.ops);
       case 'offspring': return 'offspring ' + a.cost + ' (an optional additional cost)';
+      case 'kicker': return 'kicker ' + a.cost + ' (an optional additional cost)';
       case 'enterAsCopy': return 'may enter as a copy of a creature with mana value up to the mana spent, except it is also a ' + a.except.addSubtypes.join(' ') + ' and has ' + a.except.kw.map(k => KWNAME[k]).join(', ');
       default: return a.k;
     }

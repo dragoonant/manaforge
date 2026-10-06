@@ -27,7 +27,8 @@ const text = read('js/text.js');
 const hasKey = k => new RegExp('\\n\\s+' + k + ':').test(text);
 const logTypes = new Set([...engine.matchAll(/\b(?:MF\.)?log\(\s*(?:x\.)?s,\s*'([A-Za-z0-9_]+)'/g)].map(m => m[1]));
 for (const t of logTypes) if (!hasKey(t)) bad.push('engine log type with no line in js/text.js: ' + t);
-const kinds = new Set([...engine.matchAll(/ask\([^,]+,\s*\{\s*who:[^}]*?kind:\s*'([A-Za-z0-9_]+)'/g)].map(m => m[1]));   // questions asked (a stack object's kind is not one)
+const kinds = new Set([...engine.matchAll(/\{\s*who:[^{}]*?kind:\s*'([A-Za-z0-9_]+)'/g)].map(m => m[1]));   // questions asked, written as { who, kind: '...' } (a stack object's kind is not one)
+for (const m of engine.matchAll(/kind:\s*[^'\s,][^,}]*/g)) if (!/kind:\s*(L\.kind|e\.kind|a\.k|d\.kind|op\.kind|'[^']+')/.test(m[0])) bad.push('a question kind that is not a literal (the gate cannot check its prompt): ' + m[0].slice(0, 60));
 if (kinds.size < 10) bad.push('found only ' + kinds.size + ' question kinds: the scan is broken');
 for (const k of kinds) if (!hasKey(k)) bad.push('question kind with no prompt in js/text.js: ' + k);
 

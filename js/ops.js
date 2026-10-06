@@ -15,11 +15,11 @@
   // -------------------------------------------------------------------------------------------
   MF.matchChars = function (s, iid, ch, f, who, srcIid) {
     if (!f) return true;
-    if (f.any) return ch.types.some(t => t === 'Creature' || t === 'Planeswalker' || t === 'Battle');   // CR 115.4: "any target"
+    if (f.any) return (!f.other || iid !== srcIid) && ch.types.some(t => t === 'Creature' || t === 'Planeswalker' || t === 'Battle');   // CR 115.4: "any target"; "any other target"
     if (f.player) return false;
     if (f.types && !f.types.some(t => ch.types.includes(t))) return false;
     if (f.notTypes && f.notTypes.some(t => ch.types.includes(t))) return false;
-    if (f.subtypes && !f.subtypes.some(t => ch.subtypes.includes(t))) return false;
+    if (f.subtypes && !(ch.allCreatureTypes && ch.types.includes('Creature')) && !f.subtypes.some(t => ch.subtypes.includes(t))) return false;   // CR 205.3m: "all creature types"
     if (f.ctrl === 'you' && ch.ctrl !== who) return false;
     if (f.ctrl === 'opp' && ch.ctrl === who) return false;
     if (f.other && iid === srcIid) return false;
@@ -68,6 +68,9 @@
       if (otter(me) && !before.some(otter)) return true;
       return false;
     },
+    kicked: x => !!(x.L && x.L.kicked),                                                         // CR 702.33d
+    graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
+    oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
   };
   MF.conds = CONDS;
   MF.cond = function (x, c) {
@@ -86,7 +89,11 @@
   const VALS = {
     creatures: (x, v, table) => countMine(x.s, x.ctrl, { types: ['Creature'] }, x.src, table),
     x: x => x.L.x || 0,
-    power: (x, v) => { const r = MF.resolveRefs(x, v.of)[0]; return r != null ? MF.chars(x.s, r).p : (x.lastPower != null ? x.lastPower : 0); },
+    // "its power": the object's current power, or its last known power if it has left (CR 608.2h).
+    power: (x, v) => { const r = MF.resolveRefs(x, v.of)[0]; if (r != null) return MF.chars(x.s, r).p; if (v.of === 'self' && x.lki) return x.lki.p; return 0; },
+    castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
+    evAmount: x => x.ev.n,                                                                      // "that much damage"
+    kicked: (x, v) => x.L && x.L.kicked ? v.yes : v.no,                                        // CR 702.33e
   };
   MF.vals = VALS;
   const num = MF.num = function (x, v) { if (typeof v === 'number') return v; const f = VALS[v.v]; if (!f) throw new Error('no value: ' + v.v); return f(x, v, null); };
@@ -105,11 +112,15 @@
   MF.trigMatch = function (s, iid, src, a, ev) {
     switch (ev.t) {
       case 'enters': case 'attacks': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid);
-      case 'cast': return ev.ctrl === src.ctrl && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
+      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
       case 'dealsDamage': return ev.src === iid && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.combat || ev.combat);
       case 'sacrificed': case 'dies': case 'leaves': return ev.iid === iid;
       case 'beginStep': return ev.step === a.step && (!a.yours || ev.ap === src.ctrl);
       case 'gainLife': return ev.who === src.ctrl;
+      // Valiant: "becomes the target of a spell or ability you control for the first time each turn".
+      case 'targeted': return ev.iid === iid && (!a.byYou || ev.by === src.ctrl) && (!a.firstEachTurn || ev.firstThisTurn);
+      case 'attackWith': return ev.ctrl === src.ctrl && (ev.subtypes.includes(a.sub) || ev.anyType);   // CR 508.3c: once for the declaration; "all creature types" counts (CR 205.3m)
+      case 'dealtDamage': return ev.iid === iid;
       default: return false;
     }
   };
@@ -136,9 +147,11 @@
     if (r.each) return s.bf.filter(i => MF.matchChars(s, i, MF.chars(s, i), r.each, x.ctrl, x.src));
     throw new Error('unknown reference ' + JSON.stringify(r));
   };
+  const PLAYER_REFS = ['eachOpp', 'you', 'evPlayer'];
   const players = (x, r) => {
     if (r === 'you') return [x.ctrl];
     if (r === 'eachOpp') return [1 - x.ctrl];
+    if (r === 'evPlayer') return [x.ev.ctrl];                                                  // "that player": the one the event names
     if (r && r.t != null) return (x.t[r.t] || []).filter(q => q && q.p != null).map(q => q.p);
     return [];
   };
@@ -223,8 +236,10 @@
     // Offspring (CR 702.175a): "create a token that's a copy of it, except it's 1/1".
     tokenCopy(x, op) {
       const s = x.s, src = MF.resolveRefs(x, op.of)[0];
-      const base = src != null ? I(s, src) : null;
-      const id = base ? base.id : x.lki.id, copy = base && base.copy ? base.copy : null;
+      // If the creature has left the battlefield, its copiable values are its last known ones (CR 608.2h, 707.2): the record it left behind.
+      const base = src != null ? I(s, src) : I(s, x.src);
+      if (!base) { log(s, 'noSource', { src: x.L.srcId }); return; }
+      const id = base.id, copy = base.copy ? base.copy : null;
       const iid = s.nid++;
       const except = Object.assign({}, copy ? copy.except : {}, op.except);
       s.cards[iid] = { iid: iid, id: id, owner: x.ctrl, ctrl: x.ctrl, zone: 'bf', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, tok: true, copy: { id: copy ? copy.id : id, except: except } };
@@ -238,8 +253,57 @@
       const sc = srcChars(x, op.from);
       if (!sc) { log(x.s, 'noSource', { src: x.L.srcId || x.L.id }); return; }               // the source is gone and has no last known information: nothing deals the damage
       const n = num(x, op.n);
-      for (const seat of players(x, op.to)) MF.dealDamage(x.s, { srcChars: sc, to: { p: seat }, n: n });
-      if (op.to !== 'eachOpp' && op.to !== 'you') for (const i of MF.resolveRefs(x, op.to)) MF.dealDamage(x.s, { srcChars: sc, to: { c: i }, n: n });
+      for (const seat of players(x, op.to)) if (MF.dealDamage(x.s, { srcChars: sc, to: { p: seat }, n: n }) > 0) (x.flags.dealtTo = x.flags.dealtTo || []).push(seat);
+      if (!PLAYER_REFS.includes(op.to)) for (const i of MF.resolveRefs(x, op.to)) MF.dealDamage(x.s, { srcChars: sc, to: { c: i }, n: n });
+    },
+    // Manifold Mouse: "gains your choice of double strike or trample until end of turn" — chosen on resolution (CR 608.2d).
+    pumpChoice(x, op) {
+      const iids = MF.resolveRefs(x, op.on); if (!iids.length) return;
+      const k = MF.ask(x.x, { who: x.ctrl, kind: 'chooseKw', src: x.src, on: iids[0], opts: op.kws.map(k => ({ id: k })) });
+      OPS.pump(x, { on: op.on, grant: [k] });
+    },
+    // Soulstone Sanctuary: "becomes a 3/3 creature with vigilance and all creature types. It's still a land." No duration: it lasts while the object does (CR 611.2a).
+    animate(x, op) {
+      for (const i of MF.resolveRefs(x, op.on)) {
+        x.s.effects.push({ k: 'animate', iid: i, p: op.p, t: op.t, kws: op.kws.slice(), allTypes: !!op.allTypes, ts: x.s.ts++ });
+        log(x.s, 'animate', { who: x.ctrl, c: I(x.s, i).id, p: op.p, tou: op.t, kws: op.kws });
+      }
+    },
+    // A Role token is an Aura token created attached to a creature (CR 111.10j-r, 303.7).
+    role(x, op) {
+      const s = x.s, to = MF.resolveRefs(x, op.on)[0];
+      if (to == null) return;
+      const id = 'token-role-' + op.role.toLowerCase().replace(/ /g, '-');
+      if (!MF.cards[id]) throw new Error('Role token not in the pack: ' + op.role);
+      const iid = s.nid++;
+      s.cards[iid] = { iid: iid, id: id, owner: x.ctrl, ctrl: x.ctrl, zone: 'bf', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: to, ctlTurn: s.turn, tok: true };
+      s.bf.push(iid);
+      log(s, 'role', { who: x.ctrl, c: id, to: I(s, to).id });
+      MF.emit(s, { t: 'enters', iid: iid, ctrl: x.ctrl });
+    },
+    // Tersa Lightshatter: "discard up to two cards, then draw that many cards".
+    discardUpTo(x, op) {
+      const s = x.s, p = P(s, x.ctrl); let n = 0;
+      while (n < op.n && p.hand.length) {
+        const opts = p.hand.map(i => ({ id: i, iid: i })); opts.push({ id: 'done' });
+        const a = MF.ask(x.x, { who: x.ctrl, kind: 'discardUpTo', src: x.src, n: op.n, done: n, opts: opts });
+        if (a === 'done') break;
+        MF.discard(s, a); n++;
+      }
+      if (op.thenDraw && n) MF.draw(s, x.ctrl, n);
+    },
+    // Tersa Lightshatter: "exile a card at random from your graveyard. You may play that card this turn."
+    graveImpulse(x, op) {
+      const s = x.s, p = P(s, x.ctrl);
+      if (!p.grave.length) return;
+      const pick = p.grave[MF.randInt(s, p.grave.length)], id = I(s, pick).id;
+      const n = MF.move(s, pick, 'exile');
+      s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, until: 'endOfTurn', turn: s.turn });
+      log(s, 'impulse', { who: x.ctrl, c: id, until: s.turn, from: 'graveyard' });
+    },
+    // Screaming Nemesis: "If a player is dealt damage this way, they can't gain life for the rest of the game."
+    noLifeGain(x, op) {
+      for (const seat of players(x, op.on)) if ((x.flags.dealtTo || []).includes(seat)) { P(x.s, seat).noGain = true; log(x.s, 'noLifeGain', { who: seat }); }
     },
     draw(x, op) { for (const who of op.who ? players(x, op.who) : [x.ctrl]) MF.draw(x.s, who, num(x, op.n)); },
     discard(x, op) {                                                                           // "then discard a card": the player chooses
@@ -282,7 +346,7 @@
       if (!p.lib.length) return;
       const id = I(s, p.lib[0]).id;
       const n = MF.move(s, p.lib[0], 'exile');
-      const turn = s.ap === x.ctrl ? s.turn + 2 : s.turn + 1;                                   // the end of your next turn
+      const turn = op.until === 'eot' ? s.turn : s.ap === x.ctrl ? s.turn + 2 : s.turn + 1;    // "until end of turn" / "until the end of your next turn"
       s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, until: 'endOfTurn', turn: turn });
       log(s, 'impulse', { who: x.ctrl, c: id, until: turn });
       x.it = n;
@@ -369,14 +433,14 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
     for (const id in MF.cards) {
       const d = MF.cards[id];
       if (d.un) continue;
-      for (const a of d.ab) {
+      for (const a of d.ab.concat(d.alt ? d.alt.ab : [])) {
         if (!ABKINDS.includes(a.k)) bad.push(id + ': ability kind with no rule: ' + a.k);
         walkOps(id, a.ops);
         if (a.cond && !CONDS[a.cond.c]) bad.push(id + ': no condition ' + a.cond.c);

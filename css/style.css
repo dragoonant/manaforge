@@ -181,3 +181,5 @@ a { color: var(--accent); }
   .mcols { grid-template-columns: 1fr; }
   :root { --card-md-w: 4.4rem; --card-hand-w: 5.6rem; }
 }
+.zalt { margin-top: .5rem; padding-top: .4rem; border-top: 1px dashed #8a7f6a; }
+.eralbl { margin: .6rem 0 .3rem; color: var(--accent); font-weight: 700; font-size: .9rem; }

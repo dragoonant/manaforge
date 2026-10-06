@@ -141,7 +141,7 @@
   }
   function snapshot(s, iid) {
     const c = I(s, iid), ch = chars(s, iid);
-    return { iid: iid, id: c.id, owner: c.owner, ctrl: c.ctrl, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), p: ch.p, t: ch.t, kw: Object.assign({}, ch.kw), ctr: Object.assign({}, c.ctr), tok: !!c.tok };
+    return { iid: iid, id: c.id, owner: c.owner, ctrl: c.ctrl, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), p: ch.p, t: ch.t, kw: Object.assign({}, ch.kw), ab: ch.ab, ctr: Object.assign({}, c.ctr), tok: !!c.tok };
   }
   MF.snapshot = snapshot;
   // The object an iid now is: follows the moved chain (for the log and the interface only; the
@@ -167,8 +167,18 @@
   // and nothing recurses.
   // -------------------------------------------------------------------------------------------
   const KWS = MF.KEYWORDS = ['flying', 'reach', 'firstStrike', 'doubleStrike', 'deathtouch', 'lifelink', 'trample', 'vigilance', 'haste', 'menace', 'defender', 'flash', 'hexproof', 'indestructible', 'prowess', 'shroud'];
+  // An Adventure or Omen card on the stack as that spell has only its alternative characteristics
+  // (CR 715.3b, 720.3b); asked about while casting, its alternative face is evaluated (715.3a, 720.3a).
+  const faceChars = MF.faceChars = function (s, iid, alt) {
+    if (!alt) return chars(s, iid);
+    const f = def(s, iid).alt, c = I(s, iid);
+    if (!f) throw new Error('no alternative face: ' + c.id);
+    return { iid: iid, name: f.name, types: f.types.slice(), subtypes: f.subtypes.slice(), supers: f.supers.slice(), colors: f.colors.slice(), p: null, t: null, ab: f.ab, kw: Object.assign({}, f.kw), mana: f.mana, mv: MF.manaValue(MF.parseMana(f.mana)), ctrl: c.ctrl, owner: c.owner, tok: !!c.tok, alt: f.kind };
+  };
+  const faceDef = MF.faceDef = (s, iid, alt) => alt ? def(s, iid).alt : def(s, iid);
   function baseChars(s, iid) {
     const c = I(s, iid);
+    if (c.asAlt && c.zone === 'stack') return faceChars(s, iid, true);
     let d = def(s, iid);
     let name = d.name, types = d.types.slice(), subtypes = d.subtypes.slice(), supers = d.supers.slice(), colors = d.colors.slice(), p = d.power, t = d.toughness, ab = d.ab, kw = Object.assign({}, d.kw), mana = d.mana;
     if (c.copy) {                                                                             // CR 613.2a layer 1a: copiable values
@@ -189,6 +199,7 @@
     // (No card in a registered deck makes these; written here so the order is right when one does.)
     for (const e of s.effects) if (e.k === 'control' && out[e.iid]) out[e.iid].ctrl = e.who;   // layer 2
     for (const e of s.effects) if (e.k === 'types' && out[e.iid]) { const o = out[e.iid]; o.types = e.types.slice(); o.subtypes = e.subtypes.slice(); }   // layer 4
+    for (const e of s.effects) if (e.k === 'animate' && out[e.iid]) { const o = out[e.iid]; if (!o.types.includes('Creature')) o.types.push('Creature'); if (e.allTypes) o.allCreatureTypes = true; }   // layer 4: "becomes a creature ... It's still a land"
     for (const e of s.effects) if (e.k === 'color' && out[e.iid]) out[e.iid].colors = e.colors.slice();                                                 // layer 5
     // Statics that apply, in timestamp order (CR 613.7). Their conditions and affected sets are
     // read with layers 1-4 applied.
@@ -204,12 +215,12 @@
     };
     // Layer 6: ability-adding and -removing effects.
     for (const st of statics) if (st.a.k === 'static' && st.a.grant) for (const i of affected(st)) for (const k of st.a.grant) out[i].kw[k] = (out[i].kw[k] || 0) + 1;
-    for (const e of s.effects) if (e.k === 'grant' && out[e.iid]) for (const k of e.kws) out[e.iid].kw[k] = (out[e.iid].kw[k] || 0) + 1;
+    for (const e of s.effects) if ((e.k === 'grant' || e.k === 'animate') && out[e.iid]) for (const k of e.kws) out[e.iid].kw[k] = (out[e.iid].kw[k] || 0) + 1;
     // Layer 7a: characteristic-defining abilities.
     for (const st of statics) if (st.a.k === 'cda') { const o = out[st.src]; const v = MF.valueStatic(s, st.src, st.a.v, out); if (st.a.p) o.p = v; if (st.a.t) o.t = v; }
     for (const iid of s.bf) { const o = out[iid]; if (o.p === '*') o.p = 0; if (o.t === '*') o.t = 0; }
     // Layer 7b: effects that set power and toughness.
-    for (const e of s.effects) if (e.k === 'setPT' && out[e.iid]) { out[e.iid].p = e.p; out[e.iid].t = e.t; }
+    for (const e of s.effects) if ((e.k === 'setPT' || e.k === 'animate') && out[e.iid]) { out[e.iid].p = e.p; out[e.iid].t = e.t; }
     // Layer 7c: modifications, and counters.
     for (const st of statics) if (st.a.k === 'static' && (st.a.p || st.a.t)) for (const i of affected(st)) { out[i].p += st.a.p || 0; out[i].t += st.a.t || 0; }
     for (const e of s.effects) if (e.k === 'pt' && out[e.iid]) { out[e.iid].p += e.p; out[e.iid].t += e.t; }
@@ -248,10 +259,12 @@
     if (o.to.p != null) {
       const p = P(s, o.to.p);
       p.life -= n;                                                                           // CR 120.3a
+      p.h.lostLife = (p.h.lostLife || 0) + n;                                                // turn history: "if an opponent lost life this turn"
       log(s, 'damage', { who: o.to.p, n: n, src: sc.name, srcId: sc.id, life: p.life, combat: !!o.combat });
     } else {
       const c = I(s, o.to.c);
       c.dmg += n;                                                                            // CR 120.3e
+      emit(s, { t: 'dealtDamage', iid: o.to.c, n: n, src: sc.iid });                          // "whenever this creature is dealt damage"
       if (sc.kw.deathtouch) c.dt = true;                                                     // CR 702.2b
       log(s, 'damageCreature', { who: c.ctrl, n: n, src: sc.name, srcId: sc.id, c: c.id, combat: !!o.combat });
     }
@@ -262,7 +275,9 @@
   MF.replacers = { damage: [] };
   const gainLife = MF.gainLife = function (s, who, n, src) {
     if (n <= 0) return 0;
-    const p = P(s, who); p.life += n; p.h.gained += n;
+    const p = P(s, who);
+    if (p.noGain) { log(s, 'noGain', { who: who, n: n }); return 0; }                        // Screaming Nemesis: "can't gain life for the rest of the game"
+    p.life += n; p.h.gained += n;
     log(s, 'life', { who: who, n: n, life: p.life, src: src ? src.name : null });
     emit(s, { t: 'gainLife', who: who, n: n });
     return n;
@@ -293,20 +308,23 @@
     for (const iid of s.bf.slice()) scan(iid, null);
     if (ev.lki) scan(ev.iid, ev.lki);
   };
-  function abFromLki(s, lki) { return MF.cards[lki.id].ab; }
+  function abFromLki(s, lki) { return lki.ab || MF.cards[lki.id].ab; }                     // the abilities it had, a copy's included (CR 608.2h)
 
   // -------------------------------------------------------------------------------------------
   // Mana and the cost door (CR 601.2f-h, 605)
   // -------------------------------------------------------------------------------------------
   // Mana abilities a player could activate now: [{ iid, ab index, cols }]. CR 302.6: a creature's
   // {T} ability needs it to have been controlled since the turn began, unless it has haste.
-  const manaSources = MF.manaSources = function (s, who) {
+  // ctx: { creature } — what the mana is for. Mana that may be spent only on creature spells
+  // (Rockface Village, CR 106.6) is offered only when paying for one.
+  const manaSources = MF.manaSources = function (s, who, ctx) {
     const out = [];
     for (const iid of s.bf) {
       const c = I(s, iid); if (c.ctrl !== who || c.tapped) continue;
       const ch = chars(s, iid);
       ch.ab.forEach((a, i) => {
         if (a.k !== 'mana') return;
+        if (a.only === 'creature' && !(ctx && ctx.creature)) return;
         if (ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn)) return;
         out.push({ iid: iid, ab: i, cols: a.cols, name: ch.name, id: c.id });
       });
@@ -345,17 +363,21 @@
     return fill(0) ? { taps: taps } : null;
   };
   const poolTotal = p => p.W + p.U + p.B + p.R + p.G + p.C;
-  const canPayMana = MF.canPayMana = (s, who, need) => !!solve(P(s, who).pool, manaSources(s, who), need);
+  // The pool that may pay this cost: creature-only mana (p.poolCre, a part of p.pool) only for a creature spell.
+  const usablePool = (p, ctx) => { if (ctx && ctx.creature) return Object.assign({}, p.pool); const u = {}; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) u[k] = p.pool[k] - ((p.poolCre && p.poolCre[k]) || 0); return u; };
+  const canPayMana = MF.canPayMana = (s, who, need, ctx) => !!solve(usablePool(P(s, who), ctx), manaSources(s, who, ctx), need);
   // How much mana a player could make right now: pool plus untapped sources (for the X question).
-  MF.manaAvailable = (s, who) => poolTotal(P(s, who).pool) + manaSources(s, who).length;
+  MF.manaAvailable = (s, who, ctx) => poolTotal(usablePool(P(s, who), ctx)) + manaSources(s, who, ctx).length;
 
   function activateMana(s, who, iid, abIdx, col) {
     const c = I(s, iid), a = chars(s, iid).ab[abIdx];
     if (a.k !== 'mana' || !a.cols.includes(col)) throw new Error('not a mana ability for ' + col);
     if (c.tapped) throw new Illegal('already tapped');
     c.tapped = true;                                                                          // CR 605.3b: it resolves immediately
-    P(s, who).pool[col]++;
-    log(s, 'mana', { who: who, c: c.id, col: col });
+    const p = P(s, who);
+    p.pool[col]++;
+    if (a.only === 'creature') { p.poolCre = p.poolCre || emptyPool(); p.poolCre[col]++; }   // CR 106.6: mana with a spending restriction
+    log(s, 'mana', { who: who, c: c.id, col: col, only: a.only || null });
   }
   // Ways to spend the pool on a cost that it covers: the coloured pips are forced; the generic
   // part is a choice when the pool holds more than one kind of mana beyond the pips.
@@ -376,20 +398,25 @@
   }
   // The mana half of the cost door. Mana abilities are activated inside the payment (CR 601.2g,
   // 605.3a); the player always chooses which source, unless the sources are indistinguishable.
-  const payMana = MF.payMana = function (x, who, need, srcIid, cancel) {
+  const payMana = MF.payMana = function (x, who, need, srcIid, cancel, ctx) {
     const s = x.s, p = P(s, who);
     if (MF.manaValue(need) === 0) return;
     for (let guard = 0; guard < 60; guard++) {
-      const covered = ['W', 'U', 'B', 'R', 'G', 'C'].every(k => p.pool[k] >= need[k]) && poolTotal(p.pool) >= MF.manaValue(need);
+      const pool = usablePool(p, ctx);
+      const covered = ['W', 'U', 'B', 'R', 'G', 'C'].every(k => pool[k] >= need[k]) && poolTotal(pool) >= MF.manaValue(need);
       if (covered) {
-        const plans = spendPlans(p.pool, need);
+        const plans = spendPlans(pool, need);
         const plan = plans.length > 1 ? plans[ask(x, { who: who, kind: 'spend', src: srcIid, need: need, opts: plans.map((pl, i) => ({ id: i, plan: pl })), cancel: cancel })] : plans[0];
-        for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) p.pool[k] -= need[k] + (plan[k] || 0);
+        for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) {
+          const spent = need[k] + (plan[k] || 0);
+          p.pool[k] -= spent;
+          if (ctx && ctx.creature && p.poolCre) p.poolCre[k] -= Math.min(p.poolCre[k], spent);   // creature-only mana is spent first on a creature spell
+        }
         log(s, 'pay', { who: who, mana: MF.manaStr(need) });
         return;
       }
-      const srcs = manaSources(s, who);
-      const plan = solve(p.pool, srcs, need);
+      const srcs = manaSources(s, who, ctx);
+      const plan = solve(pool, srcs, need);
       if (!plan) throw new Illegal('cannot pay ' + MF.manaStr(need));
       // One option per distinguishable source and colour: identical basic lands are one option.
       const opts = [{ id: 'auto', taps: plan.taps }], seenKey = new Set();
@@ -409,7 +436,7 @@
   // reductions (generic only, never below zero).
   MF.costMods = [];          // (s, who, iid, d, cost) => void: js/ops.js registers "costs {1} less"
   const spellCost = MF.spellCost = function (s, who, iid, o) {
-    const ch = chars(s, iid);
+    const ch = faceChars(s, iid, o && o.alt);
     const c = MF.parseMana(ch.mana);
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
     if (o && o.extra) { const e = o.extra; for (const k in e) c[k] += e[k]; }
@@ -480,7 +507,7 @@
   }
   // CR 500.5: as a step ends, "until end of step" effects end, then mana empties.
   function endStep(s) {
-    for (const p of s.players) { if (poolTotal(p.pool)) log(s, 'manaEmpties', { who: p.seat, n: poolTotal(p.pool) }); p.pool = emptyPool(); }
+    for (const p of s.players) { if (poolTotal(p.pool)) log(s, 'manaEmpties', { who: p.seat, n: poolTotal(p.pool) }); p.pool = emptyPool(); p.poolCre = emptyPool(); }
     if (s.step === 'eoc') {                                                                   // CR 511.3
       s.effects = s.effects.filter(e => e.until !== 'eoc');
       s.combat = null;
@@ -575,6 +602,11 @@
     log(s, 'attackers', { who: who, cs: chosen.map(i => I(s, i).id) });
     if (chosen.length) P(s, who).h.attackedWith += chosen.length;
     for (const iid of chosen) emit(s, { t: 'attacks', iid: iid, ctrl: who });                // CR 508.1m
+    if (chosen.length) {                                                                      // CR 508.3c: "Whenever you attack with one or more Lizards" — once for the declaration
+      const subs = new Set(); let anyType = false;
+      for (const iid of chosen) { const ch = chars(s, iid); ch.subtypes.forEach(st => subs.add(st)); if (ch.allCreatureTypes) anyType = true; }
+      emit(s, { t: 'attackWith', ctrl: who, subtypes: [...subs], anyType: anyType });
+    }
     setPriority(s, s.ap);                                                                     // CR 508.2
   });
   function blockLegal(s, assign) {                                                           // CR 509.1b: menace (702.111b) is checked on the whole declaration
@@ -703,6 +735,10 @@
         if (!ok) out.push({ k: 'unattach', iid: iid });
       }
       if (c.ctr['+1/+1'] && c.ctr['-1/-1']) out.push({ k: 'counters', iid: iid });             // CR 704.5q
+      if (ch.subtypes.includes('Role') && c.att != null && c.att >= 0) {                      // CR 704.5z, 303.7a: one Role per controller on a permanent; the newest stays
+        const mine = s.bf.filter(i => I(s, i).att === c.att && I(s, i).ctrl === c.ctrl && chars(s, i).subtypes.includes('Role'));
+        if (mine.length > 1 && mine.some(i => I(s, i).ts > c.ts)) out.push({ k: 'grave', iid: iid, why: 'role' });
+      }
     }
     for (const k in legends) if (legends[k].length > 1) out.push({ k: 'legend', iids: legends[k], who: +k.split('|')[0] });   // CR 704.5j
     return out;
@@ -759,6 +795,7 @@
         }
         s.stack.push(L);
         log(s, 'trigger', { who: t.ctrl, c: L.srcId, ab: t.ab, inl: t.inl || null, tg: L.t.map(sl => sl.map(r => refLabel(s, r))) });
+        emitTargeted(s, L.t, t.ctrl);
       }
     }
   });
@@ -788,8 +825,9 @@
     const d = def(s, iid);
     return d.types.includes('Land') && sorceryTiming(s, who) && P(s, who).landsPlayed < 1 && s.priority === who;
   };
-  const canCast = MF.canCast = function (s, who, iid) {                                      // CR 601.2e
-    const ch = chars(s, iid), d = def(s, iid);
+  // `alt`: cast as its Adventure or Omen (CR 715.3a, 720.3a: only the alternative face is evaluated).
+  const canCast = MF.canCast = function (s, who, iid, alt) {                                 // CR 601.2e
+    const ch = faceChars(s, iid, alt), d = faceDef(s, iid, alt);
     if (ch.types.includes('Land')) return false;
     if (s.priority !== who) return false;
     const instant = ch.types.includes('Instant') || ch.kw.flash;                             // CR 117.1a, 702.8a
@@ -798,7 +836,7 @@
     const aura = d.ab.find(a => a.k === 'enchant');
     if (sp && sp.tg && !slotsLegalNow(s, who, iid, sp.tg)) return false;
     if (aura && !slotsLegalNow(s, who, iid, [{ f: aura.f }])) return false;
-    return canPayMana(s, who, spellCost(s, who, iid, { x: 0 }));
+    return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt }), { creature: ch.types.includes('Creature') });
   };
   const canActivate = MF.canActivate = function (s, who, iid, i) {                            // CR 602.5
     const c = I(s, iid), ch = chars(s, iid), a = ch.ab[i];
@@ -808,9 +846,10 @@
     if (a.tg && !slotsLegalNow(s, who, iid, a.tg)) return false;
     if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid }, a.cond)) return false;
     if (a.once && c.usedOnce) return false;
+    if (a.oncePerTurn && c.actTurn && c.actTurn[i] === s.turn) return false;                  // CR 602.5b: "Activate only once each turn"
     const need = MF.parseMana(a.cost.mana || '');
     if (a.cost.tap && MF.manaValue(need)) {                                                   // the source taps for its own cost: it cannot also pay mana
-      const pool = P(s, who).pool, srcs = manaSources(s, who).filter(m => m.iid !== iid);
+      const pool = usablePool(P(s, who), null), srcs = manaSources(s, who).filter(m => m.iid !== iid);
       return !!solve(pool, srcs, need);
     }
     return canPayMana(s, who, need);
@@ -830,6 +869,8 @@
     for (const iid of playableZones(s, who)) {
       if (canPlayLand(s, who, iid)) out.push({ type: 'land', iid: iid });
       else if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid });
+      // CR 715.3, 720.3: an Adventure or Omen card may be cast as that spell — not again from exile after its Adventure (715.3d)
+      if (def(s, iid).alt && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.noAlt) && canCast(s, who, iid, true)) out.push({ type: 'cast', iid: iid, alt: true });
     }
     for (const iid of s.bf) {
       if (I(s, iid).ctrl !== who) continue;
@@ -947,34 +988,39 @@
     setPriority(s, who);                                                                      // CR 117.3c
   });
   EXEC_DEF('cast', function (x) {
-    const s = x.s, who = x.inv.who, iid0 = x.inv.iid, c0 = I(s, iid0), from = c0.zone;
-    const d = def(s, iid0);
+    const s = x.s, who = x.inv.who, iid0 = x.inv.iid, c0 = I(s, iid0), from = c0.zone, alt = !!x.inv.alt;
+    const card = def(s, iid0), d = alt ? card.alt : card;                                      // CR 715.3b, 720.3b: as an Adventure or Omen it has only that face
     const iid = move(s, iid0, 'stack', { ctrl: who });                                        // CR 601.2a
-    const L = { lid: s.lid++, kind: 'spell', ctrl: who, iid: iid, id: d.id, t: [], x: 0, from: from };
+    const L = { lid: s.lid++, kind: 'spell', ctrl: who, iid: iid, id: card.id, t: [], x: 0, from: from, alt: alt ? d.kind : null };
     s.stack.push(L);
     const c = I(s, iid);
+    if (alt) c.asAlt = true;
+    const ctx = { creature: d.types.includes('Creature') };                                   // what the mana is spent on (CR 106.6)
     const costRaw = MF.parseMana(d.mana);
     if (costRaw.x) {                                                                           // CR 601.2b, 107.3a: X is announced
-      const max = Math.max(0, MF.manaAvailable(s, who) - MF.manaValue(spellCost(s, who, iid, { x: 0 })));
+      const max = Math.max(0, MF.manaAvailable(s, who, ctx) - MF.manaValue(spellCost(s, who, iid, { x: 0 })));
       const opts = []; for (let n = 0; n <= max; n++) opts.push({ id: n });
       L.x = ask(x, { who: who, kind: 'x', src: iid, opts: opts, cancel: true });
     }
     const extra = {};
-    for (const a of d.ab) if (a.k === 'offspring') {                                          // CR 702.175a: an optional additional cost, announced now
-      const add = MF.parseMana(a.cost), tot = spellCost(s, who, iid, { x: L.x });
+    // Optional additional costs are announced now (CR 601.2b): offspring (702.175a), kicker (702.33a).
+    for (const a of d.ab) if (a.k === 'offspring' || a.k === 'kicker') {
+      const add = MF.parseMana(a.cost), tot = spellCost(s, who, iid, { x: L.x, extra: extra });
       for (const k of ['W', 'U', 'B', 'R', 'G', 'C', 'g']) tot[k] += add[k];
-      if (canPayMana(s, who, tot) && ask(x, { who: who, kind: 'offspring', src: iid, cost: a.cost, opts: [{ id: 'yes' }, { id: 'no' }], cancel: true }) === 'yes') {
-        L.offspring = true; for (const k of ['W', 'U', 'B', 'R', 'G', 'C', 'g']) extra[k] = (extra[k] || 0) + add[k];
+      if (!canPayMana(s, who, tot, ctx)) continue;                                           // it cannot be paid: not a choice
+      const yn = [{ id: 'yes' }, { id: 'no' }];
+      const q = a.k === 'kicker' ? { who: who, kind: 'kicker', src: iid, cost: a.cost, opts: yn, cancel: true } : { who: who, kind: 'offspring', src: iid, cost: a.cost, opts: yn, cancel: true };
+      if (ask(x, q) === 'yes') {
+        if (a.k === 'offspring') L.offspring = true; else L.kicked = true;
+        for (const k of ['W', 'U', 'B', 'R', 'G', 'C', 'g']) extra[k] = (extra[k] || 0) + add[k];
       }
     }
     const sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
     if (sp && sp.tg) L.t = chooseTargets(x, who, iid, sp.tg, 'spell', true);                 // CR 601.2c
     if (aura) L.t = chooseTargets(x, who, iid, [{ f: aura.f }], 'aura', true);                 // CR 303.4a
     const cost = spellCost(s, who, iid, { x: L.x, extra: extra });                            // CR 601.2f
-    const spent0 = poolTotal(P(s, who).pool);
-    payMana(x, who, cost, iid, true);                                                         // CR 601.2g-h
+    payMana(x, who, cost, iid, true, ctx);                                                    // CR 601.2g-h
     L.spent = MF.manaValue(cost);                                                             // "the amount of mana spent to cast" (CR 601.2h)
-    void spent0;
     const ch = chars(s, iid);
     const p = P(s, who);
     p.h.cast++;
@@ -983,11 +1029,23 @@
     if (ch.subtypes.includes('Otter')) p.h.castOtter++;
     (p.h.castList = p.h.castList || []).push({ lid: L.lid, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice() });   // turn history: "the first instant spell ... you've cast this turn"
     L.nth = { cast: p.h.cast, instant: ch.types.includes('Instant') ? p.h.castInstant : 0, sorcery: ch.types.includes('Sorcery') ? p.h.castSorcery : 0, otter: ch.subtypes.includes('Otter') ? p.h.castOtter : 0 };
-    log(s, 'cast', { who: who, c: d.id, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring });
+    log(s, 'cast', { who: who, c: card.id, face: alt ? d.name : null, alt: alt ? d.kind : null, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring, kicked: !!L.kicked });
     emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid });   // CR 601.2i
+    emitTargeted(s, L.t, who);
     setPriority(s, who);                                                                      // CR 117.3c
-    void c;
   });
+  // "Becomes the target of a spell or ability you control for the first time each turn" (valiant):
+  // each object records, per controller, the turn it was last targeted (CR 603.2e: "becomes").
+  function emitTargeted(s, t, by) {
+    const seen = new Set();
+    for (const sl of t || []) for (const r of sl) {
+      if (!r || r.c == null || seen.has(r.c)) continue; seen.add(r.c);
+      const c = I(s, r.c), key = 'tgtBy' + by, first = c[key] !== s.turn;
+      c[key] = s.turn;
+      emit(s, { t: 'targeted', iid: r.c, by: by, firstThisTurn: first });
+    }
+  }
+  MF.emitTargeted = emitTargeted;
   EXEC_DEF('act', function (x) {                                                             // CR 602.2
     const s = x.s, who = x.inv.who, iid = x.inv.iid, c = I(s, iid), ch = chars(s, iid), a = ch.ab[x.inv.ab];
     const L = { lid: s.lid++, kind: 'ab', ctrl: who, src: iid, ab: x.inv.ab, srcId: c.id, t: [], lki: null };
@@ -995,10 +1053,12 @@
     if (a.cost.tap) { if (c.tapped) throw new Illegal('already tapped'); c.tapped = true; }    // CR 602.2b, 601.2h
     payMana(x, who, MF.parseMana(a.cost.mana || ''), iid, true);
     if (a.once) c.usedOnce = true;
+    if (a.oncePerTurn) { c.actTurn = c.actTurn || {}; c.actTurn[x.inv.ab] = s.turn; }
     L.lki = snapshot(s, iid);
     log(s, 'activate', { who: who, c: c.id, ab: x.inv.ab, tg: L.t.map(sl => sl.map(r => refLabel(s, r))) });
     if (a.cost.sacSelf) MF.sacrifice(s, iid);
     s.stack.push(L);
+    emitTargeted(s, L.t, who);
     setPriority(s, who);
   });
   MF.sacrifice = function (s, iid) {                                                         // CR 701.21
@@ -1014,7 +1074,9 @@
 
   // The context an effect runs in: who controls it, its source, its targets, the event.
   function ctxFor(s, L, x) {
-    return { s: s, x: x || null, ctrl: L.ctrl, src: L.kind === 'spell' ? L.iid : L.src, L: L, ev: L.ev || null, t: L.t || [], flags: {}, lki: L.lki || null };
+    // Last known information (CR 608.2h): the ability's own snapshot, else the one its source left behind when it moved (MF.move keeps it).
+    const src = L.kind === 'spell' ? L.iid : L.src, old = s.cards[src];
+    return { s: s, x: x || null, ctrl: L.ctrl, src: src, L: L, ev: L.ev || null, t: L.t || [], flags: {}, lki: L.lki || (old && old.lki) || null };
   }
   MF.ctxFor = ctxFor;
   // CR 608.2b: a target is legal on resolution only if it still exists in its zone and still fits.
@@ -1030,21 +1092,31 @@
     const s = x.s, L = s.stack[s.stack.length - 1];
     const X = ctxFor(s, L, x);
     if (L.kind === 'spell') {
-      const c = I(s, L.iid), d = def(s, L.iid), ch = chars(s, L.iid);
+      const c = I(s, L.iid), d = L.alt ? def(s, L.iid).alt : def(s, L.iid), ch = chars(s, L.iid);
       const sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
       const slots = sp && sp.tg ? sp.tg : aura ? [{ f: aura.f }] : null;
       const lt = liveTargets(s, L, slots);
       s.stack.pop();
       if (!lt.any) {                                                                          // CR 608.2b, 608.3b
-        log(s, 'fizzle', { who: L.ctrl, c: d.id });
+        log(s, 'fizzle', { who: L.ctrl, c: L.id });
         if (L.copy) { c.zone = 'moved'; c.to = null; } else move(s, L.iid, 'grave');
         afterResolve(s); return;
       }
       X.t = lt.t;
-      log(s, 'resolve', { who: L.ctrl, c: d.id });
+      log(s, 'resolve', { who: L.ctrl, c: L.id, face: L.alt ? d.name : null });
       if (ch.types.includes('Instant') || ch.types.includes('Sorcery')) {
         MF.runOps(X, sp ? sp.ops : []);
-        if (I(s, L.iid).zone === 'stack') { if (L.copy) { I(s, L.iid).zone = 'moved'; I(s, L.iid).to = null; } else move(s, L.iid, 'grave'); }   // CR 608.2n; a copy ceases to exist (CR 704.5e)
+        if (I(s, L.iid).zone === 'stack') {
+          if (L.copy) { I(s, L.iid).zone = 'moved'; I(s, L.iid).to = null; }                 // a copy ceases to exist (CR 704.5e)
+          else if (L.alt === 'omen') {                                                        // CR 720.3d: shuffled into its owner's library
+            const owner = I(s, L.iid).owner, n = move(s, L.iid, 'lib'); MF.shuffle(s, P(s, owner).lib);
+            log(s, 'omenShuffle', { who: owner, c: I(s, n).id });
+          } else if (L.alt === 'adventure') {                                                 // CR 715.3d: exiled; its owner may cast the creature from exile
+            const owner = I(s, L.iid).owner, n = move(s, L.iid, 'exile');
+            s.effects.push({ k: 'mayPlay', iid: n, who: owner, noAlt: true, until: 'exiled' });
+            log(s, 'adventureExile', { who: owner, c: I(s, n).id });
+          } else move(s, L.iid, 'grave');                                                     // CR 608.2n
+        }
       } else {                                                                                // CR 608.3: a permanent spell
         const o = { ctrl: L.ctrl, x: x, spent: L.spent, offspringPaid: !!L.offspring, castFromHand: L.from === 'hand' };
         if (aura) o.att = lt.t[0][0].c;                                                        // CR 608.3c
@@ -1096,7 +1168,7 @@
   }
   function freeze(s) { Object.defineProperty(s, '_frozen', { value: true, enumerable: false, writable: true }); return s; }
 
-  const same = (a, b) => a.type === b.type && a.id === b.id && a.iid === b.iid && a.ab === b.ab && a.col === b.col;
+  const same = (a, b) => a.type === b.type && a.id === b.id && a.iid === b.iid && a.ab === b.ab && a.col === b.col && !!a.alt === !!b.alt;
   MF.apply = function (s0, a) {
     const legal = MF.legalActions(s0);
     if (!legal.some(l => same(l, a))) throw new Error('ILLEGAL action: ' + JSON.stringify(a));
@@ -1109,7 +1181,7 @@
         if (s.passes >= 2) bothPassed(s); else s.priority = 1 - s.priority;
         break;
       case 'land': s.todo.unshift({ t: 'land', iid: a.iid, who: s.priority, answers: [] }); break;
-      case 'cast': s.todo.unshift({ t: 'cast', iid: a.iid, who: s.priority, answers: [] }); break;
+      case 'cast': s.todo.unshift({ t: 'cast', iid: a.iid, alt: !!a.alt, who: s.priority, answers: [] }); break;
       case 'act': s.todo.unshift({ t: 'act', iid: a.iid, ab: a.ab, who: s.priority, answers: [] }); break;
       default: throw new Error('unknown action type ' + a.type);
     }

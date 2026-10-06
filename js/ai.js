@@ -134,7 +134,9 @@
       case 'pay': return 'auto';
       case 'spend': return q.opts[0].id;
       case 'x': return q.opts[q.opts.length - 1].id;
-      case 'offspring': return 'yes';
+      case 'offspring': case 'kicker': return 'yes';
+      case 'chooseKw': return q.opts[0].id;
+      case 'discardUpTo': return 'done';
       case 'trigOrder': return q.opts[0].id;
       case 'legend': return q.opts[0].id;
       case 'scry': { const lands = s.bf.filter(i => I(s, i).ctrl === me && MF.isType(s, i, 'Land')).length; const land = isLand(s, q.opts[0].iid); return (land ? lands < 6 : true) ? 'top' : 'bottom'; }
@@ -174,7 +176,7 @@
     return evalFor(s, me);
   }
   // Kinds where every answer is worth a roll-out when the AI itself is asked.
-  const SEARCH_KINDS = { target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, x: 1, lookTop: 1 };
+  const SEARCH_KINDS = { target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
   function candidates(s, legal) {
     const seen = new Set(), out = [];

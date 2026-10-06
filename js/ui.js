@@ -85,7 +85,10 @@
     } else {
       for (const a of MF.legalActions(s)) {
         if (a.type === 'land') add(a.iid, a, 'Play ' + MF.cards[s.cards[a.iid].id].name);
-        else if (a.type === 'cast') add(a.iid, a, 'Cast ' + MF.cards[s.cards[a.iid].id].name + ' — ' + MF.manaStr(MF.costOf(s, ui.human, a.iid)).replace(/[{}]/g, ' ').trim());
+        else if (a.type === 'cast') {
+          const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt }); delete cost.xs;
+          add(a.iid, a, 'Cast ' + (a.alt ? d.alt.name + ' (' + (d.alt.kind === 'omen' ? 'Omen' : 'Adventure') + ')' : d.name) + ' — ' + MF.manaStr(cost));
+        }
         else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
         else if (a.type === 'pass') btns.push({ a: a, label: T.passLabel(s, ui.human), cls: 'primary' });
       }
@@ -261,7 +264,9 @@
     for (const k in GLOSSARY) if (new RegExp('\\b' + MF.KWNAME[k] + '\\b', 'i').test(d.text)) kwKeys.add(k);
     const help = [...kwKeys].filter(k => GLOSSARY[k]).map(k => `<div class="zkw">${T.symbols(GLOSSARY[k])}</div>`).concat(Object.keys(TEXT_GLOSS).filter(k => d.text.includes(k)).map(k => `<div class="zkw">${TEXT_GLOSS[k]}</div>`)).join('');
     const tokens = [...new Set((JSON.stringify(d.ab).match(/token-[a-z0-9-]+/g) || []))];
-    const text = T.symbols(d.text).replace(/\(([^)]*)\)/g, '<i>($1)</i>').replace(/\n/g, '<br>');
+    const rules = t => T.symbols(t).replace(/\(([^)]*)\)/g, '<i>($1)</i>').replace(/\n/g, '<br>');
+    // An Adventure or Omen card shows both faces (CR 715.2, 720.2).
+    const text = rules(d.text) + (d.alt ? `<div class="zalt"><b>${esc(d.alt.name)}</b> <span class="zcost">${T.symbols(d.alt.mana)}</span><br><i>${esc(d.alt.typeLine)}</i><br>${rules(d.alt.text)}</div>` : '');
     return `<div class="zcard">${face(null, id, { size: 'lg' })}${tokens.map(t => `<div class="ztok">Creates:${face(null, t, { size: 'sm' })}</div>`).join('')}</div>
       <div class="ztext"><div class="zname">${esc(d.name)} <span class="zcost">${T.symbols(d.mana)}</span></div><div class="ztype">${esc(d.typeLine)}</div>
       <div class="zrules">${text || '<i>No rules text.</i>'}</div>

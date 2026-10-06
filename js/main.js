@@ -25,9 +25,15 @@
     const sel = pick[side] === d.id;
     const colors = [...new Set(d.main.flatMap(e => MF.cards[e.id].colors))];
     const star = d.main.map(e => MF.cards[e.id]).filter(c => c.supers.includes('Legendary'))[0] || MF.cards[d.main[0].id];
+    const sub = d.era ? (d.rank ? 'Finished #' + d.rank : d.players + ' top-ranked lists') : esc(d.product) + ' · ' + esc(d.set);
     return `<div class="deckcard ${sel ? 'sel' : ''}" data-pick="${side}:${d.id}">
       <div class="dart" style="background-image:${MF.art.css(star.id)}"></div>
-      <div class="dname">${esc(d.name)}</div><div class="dtype">${colors.map(c => T.sym(c)).join('')} ${esc(d.product)} · ${esc(d.set)}</div></div>`;
+      <div class="dname">${esc(d.name)}</div><div class="dtype">${colors.map(c => T.sym(c)).join('')} ${sub}</div></div>`;
+  }
+  // PLAN D15: the decks come from two Standard eras, plus the Bloomburrow starter decks.
+  const ERAS = [['fin', 'Final Fantasy era — Pro Tour Final Fantasy (June 2025)'], ['hob', 'Hobbit era — top-ranked Arena Standard (Aug–Oct 2026)'], [null, 'Bloomburrow Starter Kit']];
+  function deckRows(decks, side) {
+    return ERAS.map(([era, label]) => { const ds = decks.filter(d => (d.era || null) === era); return ds.length ? `<div class="eralbl">${label}</div><div class="deckrow">${ds.map(d => deckCard(d, side)).join('')}</div>` : ''; }).join('');
   }
   function deckDetail(id) {
     const d = MF.decks[id];
@@ -35,8 +41,10 @@
     const lands = d.main.filter(e => MF.cards[e.id].types.includes('Land')), spells = d.main.filter(e => !MF.cards[e.id].types.includes('Land'));
     const n = d.main.reduce((a, e) => a + e.n, 0);
     return `<div class="ddetail"><h3>${esc(d.name)} — ${n} cards</h3>
-      <p>${esc(d.product)} for <b>${esc(d.set)}</b>, released ${esc(d.released)}. Played as published, all ${n} cards, at 20 life; format: ${esc(d.format)}.</p>
-      <p class="prov">List from MTGJSON: <a href="${esc(d.source)}" target="_blank" rel="noopener">${esc(d.file)}</a> (fetched ${esc(d.fetched)}). Card text is Oracle text.</p>
+      ${d.era ? `<p>${d.rank ? `Played by <b>${esc(d.player)}</b>, who finished <b>#${d.rank}</b> at ${esc(d.product)} (${esc(d.released)}); the best-placed list of its archetype, ${d.players} in the field.` : `The most typical of ${d.players} top-ranked lists in this archetype from ${esc(d.product)}, ${esc(d.released)} (${esc(d.player)}).`} Main deck as published, ${n} cards; sideboard not used (best of one).</p>
+      <p class="prov">List from Wizards' magic.gg: <a href="${esc(d.source)}" target="_blank" rel="noopener">source</a> (fetched ${esc(d.fetched)}). Card text is Oracle text (MTGJSON).</p>`
+      : `<p>${esc(d.product)} for <b>${esc(d.set)}</b>, released ${esc(d.released)}. Played as published, all ${n} cards, at 20 life; format: ${esc(d.format)}.</p>
+      <p class="prov">List from MTGJSON: <a href="${esc(d.source)}" target="_blank" rel="noopener">${esc(d.file)}</a> (fetched ${esc(d.fetched)}). Card text is Oracle text.</p>`}
       <div class="dcols"><div><h4>Spells</h4>${spells.map(row).join('')}</div><div><h4>Lands</h4>${lands.map(row).join('')}${d.tokens.length ? `<h4>Tokens it makes</h4>${d.tokens.map(t => row({ id: t, n: '' })).join('')}` : ''}</div></div></div>`;
   }
   function menu() {
@@ -46,8 +54,8 @@
     app().innerHTML = `<div class="menu">
       <div class="mhead"><h1>MANAFORGE</h1><div class="sub">Magic: The Gathering against the machine · an unofficial fan project</div></div>
       <div class="mcols">
-        <div class="mcol"><h2>Your deck</h2><div class="deckrow">${decks.map(d => deckCard(d, 'me')).join('')}</div>${deckDetail(pick.me)}</div>
-        <div class="mcol"><h2>Opponent</h2><div class="deckrow">${decks.map(d => deckCard(d, 'opp')).join('')}</div>${deckDetail(pick.opp)}</div>
+        <div class="mcol"><h2>Your deck</h2>${deckRows(decks, 'me')}${deckDetail(pick.me)}</div>
+        <div class="mcol"><h2>Opponent</h2>${deckRows(decks, 'opp')}${deckDetail(pick.opp)}</div>
       </div>
       <div class="mstart"><label>Seed <input id="seed" size="8" placeholder="random"></label>
         <button class="btn primary big" data-go="1">Start the game</button><button class="btn" data-howto="1">How to play</button></div>
