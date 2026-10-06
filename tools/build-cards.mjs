@@ -331,8 +331,37 @@ export function build() {
     for (const e of un) { const k = cards[e.id].un.replace(/[0-9]+/g, 'N'); (fails[k] = fails[k] || { decks: new Set(), cards: new Set() }).decks.add(file); fails[k].cards.add(e.id); }
     decks[file] = deck;
   }
+  // Championship decks (PLAN D15): the picks of tools/fetch-championship.mjs, with Oracle text from
+  // MTGJSON AtomicCards. A deck registers only when every card in its main deck compiles in full.
+  const champFiles = fs.readdirSync(path.join(ROOT, 'scratch/data')).filter(f => /^championship-.+\.json$/.test(f));
+  if (champFiles.length) {
+    const atomic = JSON.parse(fs.readFileSync(path.join(ROOT, 'scratch/data/AtomicCards.json'), 'utf8')).data;
+    const byFace = {};
+    for (const k in atomic) { byFace[k] = atomic[k]; for (const f of atomic[k]) if (f.faceName && !byFace[f.faceName]) byFace[f.faceName] = atomic[k]; }
+    for (const f of champFiles) {
+      const ev = JSON.parse(fs.readFileSync(path.join(ROOT, 'scratch/data', f), 'utf8'));
+      for (const pick of ev.picks) {
+        const main = {};
+        for (const e of pick.main) {
+          const faces = byFace[e.name] || byFace[e.name.split(' // ')[0]];
+          if (!faces) throw new Error('card not in AtomicCards: ' + e.name + ' (' + pick.archetype + ')');
+          const face = faces[0], full = faces.length > 1 ? faces.map(x => x.faceName).join(' // ') : face.name;
+          const id = slug(full);
+          if (!cards[id]) cards[id] = compileCard(Object.assign({}, face, { name: full, layout: faces.length > 1 ? face.layout : (face.layout || 'normal') }), mkToken);
+          main[id] = (main[id] || 0) + e.n;
+        }
+        const key = 'champ-' + ev.era + '-' + slug(pick.archetype);
+        const deck = { id: slug(pick.archetype) + '-' + ev.era, file: f, name: pick.archetype, product: ev.name, set: ev.era.toUpperCase(), era: ev.era, released: ev.date, fetched: ev.fetched, source: ev.sources[0], sources: ev.sources, player: pick.player, rank: pick.rank, players: pick.players, registered: true, format: 'Standard — ' + ev.name, min: 60, main: Object.entries(main).map(([id, n]) => ({ id: id, n: n })), side: pick.side };
+        const un = deck.main.filter(e => cards[e.id].un);
+        deck.compiles = !un.length;
+        if (un.length) { deck.registered = false; deck.refused = un.map(e => e.id + ': ' + cards[e.id].un); }
+        for (const e of un) { const k = cards[e.id].un.replace(/[0-9]+/g, 'N'); (fails[k] = fails[k] || { decks: new Set(), cards: new Set() }).decks.add(key); fails[k].cards.add(e.id); }
+        decks[key] = deck;
+      }
+    }
+  }
   for (const id in decks) decks[id].tokens = [...new Set(decks[id].main.flatMap(e => JSON.stringify(cards[e.id].ab).match(/token-[a-z0-9-]+/g) || []))];
-  const byId = {}; for (const k in decks) byId[decks[k].id + '-' + decks[k].set.toLowerCase()] = Object.assign(decks[k], { id: decks[k].id + '-' + decks[k].set.toLowerCase() });
+  const byId = {}; for (const k in decks) { const id = decks[k].era ? decks[k].id : decks[k].id + '-' + decks[k].set.toLowerCase(); byId[id] = Object.assign(decks[k], { id: id }); }
   return { cards: cards, decks: byId, fails: fails };
 }
 

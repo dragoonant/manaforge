@@ -895,5 +895,3280 @@ window.MF.decks = {
   ],
   "compiles": false,
   "tokens": []
+ },
+ "sultai-ardyn-the-usurper-hob": {
+  "id": "sultai-ardyn-the-usurper-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Sultai (Ardyn, the Usurper)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (august-31-2026)",
+  "rank": null,
+  "players": 8,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "starting-town",
+    "n": 4
+   },
+   {
+    "id": "breeding-pool",
+    "n": 4
+   },
+   {
+    "id": "cavern-of-souls",
+    "n": 4
+   },
+   {
+    "id": "overgrown-tomb",
+    "n": 3
+   },
+   {
+    "id": "forest",
+    "n": 2
+   },
+   {
+    "id": "watery-grave",
+    "n": 2
+   },
+   {
+    "id": "wastewood-verge",
+    "n": 2
+   },
+   {
+    "id": "botanical-sanctum",
+    "n": 1
+   },
+   {
+    "id": "superior-spider-man",
+    "n": 4
+   },
+   {
+    "id": "bringer-of-the-last-gift",
+    "n": 4
+   },
+   {
+    "id": "formidable-speaker",
+    "n": 4
+   },
+   {
+    "id": "oblivious-bookworm",
+    "n": 4
+   },
+   {
+    "id": "overlord-of-the-balemurk",
+    "n": 4
+   },
+   {
+    "id": "rapid-rescue",
+    "n": 4
+   },
+   {
+    "id": "town-greeter",
+    "n": 3
+   },
+   {
+    "id": "imodanes-recruiter-train-troops",
+    "n": 3
+   },
+   {
+    "id": "jadzi-steward-of-fate-oracles-gift",
+    "n": 2
+   },
+   {
+    "id": "kiora-the-rising-tide",
+    "n": 2
+   },
+   {
+    "id": "terror-of-the-peaks",
+    "n": 1
+   },
+   {
+    "id": "wistfulness",
+    "n": 1
+   },
+   {
+    "id": "ardyn-the-usurper",
+    "n": 1
+   },
+   {
+    "id": "deceit",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 1,
+    "name": "Swamp"
+   },
+   {
+    "n": 3,
+    "name": "Dragon Sniper"
+   },
+   {
+    "n": 3,
+    "name": "Vicious Rivalry"
+   },
+   {
+    "n": 3,
+    "name": "Strategic Betrayal"
+   },
+   {
+    "n": 2,
+    "name": "Wistfulness"
+   },
+   {
+    "n": 2,
+    "name": "Deceit"
+   },
+   {
+    "n": 1,
+    "name": "Seedship Broodtender"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "starting-town: ability: ~ enters tapped unless it's your first, second, or third turn of the game.",
+   "breeding-pool: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "cavern-of-souls: ability: As ~ enters, choose a creature type.",
+   "overgrown-tomb: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "watery-grave: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "wastewood-verge: effect: Add {B}",
+   "botanical-sanctum: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "superior-spider-man: ability: Mind Swap — You may have ~ enter as a copy of any creature card in a graveyard, except his name is ~ and he's a 4/4 Spider Human Hero in addition to his other types. When you do, exile that card.",
+   "bringer-of-the-last-gift: intervening if: if you cast it, each player sacrifices all other creatures they control. Then each player returns all creature cards from their graveyard that weren't put there this way to the battlefield.",
+   "formidable-speaker: effect: You may discard a card",
+   "oblivious-bookworm: trigger event: the beginning of your end step, you may draw a card. If you do, discard a card unless a permanent entered the battlefield face down under your control this turn or you turned a permanent face up this turn.",
+   "overlord-of-the-balemurk: ability: Impending 5—{1}{B}",
+   "rapid-rescue: effect: Mill two cards",
+   "town-greeter: effect: Mill four cards",
+   "imodanes-recruiter-train-troops: layout adventure is not compiled",
+   "jadzi-steward-of-fate-oracles-gift: layout prepare is not compiled",
+   "kiora-the-rising-tide: effect: Draw two cards, then discard two cards",
+   "terror-of-the-peaks: ability: Spells your opponents cast that target ~ cost an additional 3 life to cast.",
+   "wistfulness: intervening if: if {G}{G} was spent to cast it, exile target artifact or enchantment an opponent controls.",
+   "ardyn-the-usurper: ability: Demons you control have menace, lifelink, and haste.",
+   "deceit: intervening if: if {U}{U} was spent to cast it, return up to one other target nonland permanent to its owner's hand."
+  ],
+  "tokens": []
+ },
+ "boros-d-ins-company-hob": {
+  "id": "boros-d-ins-company-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Boros (Dáin's Company)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (september-28-2026)",
+  "rank": null,
+  "players": 8,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "plains",
+    "n": 5
+   },
+   {
+    "id": "mountain",
+    "n": 5
+   },
+   {
+    "id": "cavern-of-souls",
+    "n": 4
+   },
+   {
+    "id": "the-lonely-mountain",
+    "n": 4
+   },
+   {
+    "id": "sacred-foundry",
+    "n": 4
+   },
+   {
+    "id": "inspiring-vantage",
+    "n": 1
+   },
+   {
+    "id": "d-ins-company",
+    "n": 4
+   },
+   {
+    "id": "lavaspur-boots",
+    "n": 4
+   },
+   {
+    "id": "k-li-the-resourceful",
+    "n": 4
+   },
+   {
+    "id": "thorin-mountain-king",
+    "n": 4
+   },
+   {
+    "id": "leyline-axe",
+    "n": 4
+   },
+   {
+    "id": "dwarven-mauler",
+    "n": 4
+   },
+   {
+    "id": "dwalin-weaponmaster",
+    "n": 3
+   },
+   {
+    "id": "dragonfire-blade",
+    "n": 3
+   },
+   {
+    "id": "basilisk-collar",
+    "n": 2
+   },
+   {
+    "id": "giott-king-of-the-dwarves",
+    "n": 2
+   },
+   {
+    "id": "mabel-heir-to-cragflame",
+    "n": 1
+   },
+   {
+    "id": "d-in-ironfoot",
+    "n": 1
+   },
+   {
+    "id": "doc-ocks-tentacles",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 3,
+    "name": "Rest in Peace"
+   },
+   {
+    "n": 3,
+    "name": "Chainsaw"
+   },
+   {
+    "n": 2,
+    "name": "Anzrag's Rampage"
+   },
+   {
+    "n": 2,
+    "name": "Get Lost"
+   },
+   {
+    "n": 1,
+    "name": "Shattered Acolyte"
+   },
+   {
+    "n": 1,
+    "name": "The Queen of Dale"
+   },
+   {
+    "n": 1,
+    "name": "Erode"
+   },
+   {
+    "n": 1,
+    "name": "Bofur, Reliable Guardian"
+   },
+   {
+    "n": 1,
+    "name": "Dawn's Truce"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "cavern-of-souls: ability: As ~ enters, choose a creature type.",
+   "the-lonely-mountain: ability: ~ enters tapped unless you control an Equipment.",
+   "sacred-foundry: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "inspiring-vantage: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "d-ins-company: ability: ~ has lifelink as long as you control another Dwarf.",
+   "lavaspur-boots: keyword: ward {1}",
+   "k-li-the-resourceful: ability: Storied",
+   "thorin-mountain-king: effect: Attach any number of target Equipment you control to target creature you control",
+   "leyline-axe: ability: If this card is in your opening hand, you may begin the game with it on the battlefield.",
+   "dwarven-mauler: ability: Equip abilities you activate that target ~ cost {2} less to activate.",
+   "dwalin-weaponmaster: trigger event: ~ enters or attacks, put a hone counter on each Equipment you control.",
+   "dragonfire-blade: keyword: hexproof from monocolored",
+   "basilisk-collar: ability: Equipped creature has deathtouch and lifelink.",
+   "giott-king-of-the-dwarves: trigger event: ~ or another Dwarf you control enters and whenever an Equipment you control enters, you may discard a card. If you do, draw a card.",
+   "mabel-heir-to-cragflame: ability: Other Mice you control get +1/+1.",
+   "d-in-ironfoot: trigger event: Dáin enters, create a colorless Equipment artifact token named Axe with \"Equipped creature gets +1/+0\" and equip {2}. When you do, attach it to target creature you control.",
+   "doc-ocks-tentacles: trigger event: a creature you control with mana value 5 or greater enters, you may attach ~ to it."
+  ],
+  "tokens": []
+ },
+ "orzhov-amalia-benavides-aguirre-hob": {
+  "id": "orzhov-amalia-benavides-aguirre-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Orzhov (Amalia Benavides Aguirre)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (august-24-2026)",
+  "rank": null,
+  "players": 8,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "godless-shrine",
+    "n": 4
+   },
+   {
+    "id": "bleachbone-verge",
+    "n": 4
+   },
+   {
+    "id": "concealed-courtyard",
+    "n": 4
+   },
+   {
+    "id": "starting-town",
+    "n": 3
+   },
+   {
+    "id": "plains",
+    "n": 3
+   },
+   {
+    "id": "swamp",
+    "n": 2
+   },
+   {
+    "id": "dalkovan-encampment",
+    "n": 2
+   },
+   {
+    "id": "haliya-guided-by-light",
+    "n": 4
+   },
+   {
+    "id": "essence-channeler",
+    "n": 4
+   },
+   {
+    "id": "hinterland-sanctifier",
+    "n": 4
+   },
+   {
+    "id": "amalia-benavides-aguirre",
+    "n": 4
+   },
+   {
+    "id": "lunar-convocation",
+    "n": 4
+   },
+   {
+    "id": "case-of-the-uneaten-feast",
+    "n": 4
+   },
+   {
+    "id": "moseo-veins-new-dean",
+    "n": 3
+   },
+   {
+    "id": "deep-cavern-bat",
+    "n": 3
+   },
+   {
+    "id": "voice-of-victory",
+    "n": 2
+   },
+   {
+    "id": "aunt-may",
+    "n": 2
+   },
+   {
+    "id": "enduring-innocence",
+    "n": 2
+   },
+   {
+    "id": "starscape-cleric",
+    "n": 2
+   }
+  ],
+  "side": [
+   {
+    "n": 4,
+    "name": "Authority of the Consuls"
+   },
+   {
+    "n": 4,
+    "name": "Leyline of the Void"
+   },
+   {
+    "n": 2,
+    "name": "Ancient Vendetta"
+   },
+   {
+    "n": 2,
+    "name": "Starscape Cleric"
+   },
+   {
+    "n": 1,
+    "name": "Dawn's Truce"
+   },
+   {
+    "n": 1,
+    "name": "Decorum Dissertation"
+   },
+   {
+    "n": 1,
+    "name": "Cathar Commando"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "godless-shrine: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "bleachbone-verge: effect: Add {W}",
+   "concealed-courtyard: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "starting-town: ability: ~ enters tapped unless it's your first, second, or third turn of the game.",
+   "dalkovan-encampment: ability: ~ enters tapped unless you control a Swamp or a Mountain.",
+   "haliya-guided-by-light: trigger event: ~ or another creature or artifact you control enters, you gain 1 life.",
+   "essence-channeler: condition: you've lost life this turn",
+   "amalia-benavides-aguirre: ability: Ward—Pay 3 life.",
+   "lunar-convocation: trigger event: the beginning of your end step, if you gained life this turn, each opponent loses 1 life.",
+   "case-of-the-uneaten-feast: layout case is not compiled",
+   "moseo-veins-new-dean: effect: Create a 1/1 black and green Pest creature token with \"Whenever this token attacks, you gain 1 life.\"",
+   "deep-cavern-bat: effect: Look at target opponent's hand",
+   "voice-of-victory: ability: Mobilize 2",
+   "aunt-may: condition: it's a Spider",
+   "enduring-innocence: trigger event: one or more other creatures you control with power 2 or less enter, draw a card. This ability triggers only once each turn.",
+   "starscape-cleric: ability: ~ can't block."
+  ],
+  "tokens": []
+ },
+ "dimir-bitter-triumph-hob": {
+  "id": "dimir-bitter-triumph-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Dimir (Bitter Triumph)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (august-24-2026)",
+  "rank": null,
+  "players": 8,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "island",
+    "n": 4
+   },
+   {
+    "id": "watery-grave",
+    "n": 4
+   },
+   {
+    "id": "gloomlake-verge",
+    "n": 4
+   },
+   {
+    "id": "swamp",
+    "n": 4
+   },
+   {
+    "id": "hidden-lair",
+    "n": 3
+   },
+   {
+    "id": "soulstone-sanctuary",
+    "n": 2
+   },
+   {
+    "id": "restless-reef",
+    "n": 2
+   },
+   {
+    "id": "requiting-hex",
+    "n": 4
+   },
+   {
+    "id": "dream-beavers",
+    "n": 4
+   },
+   {
+    "id": "spyglass-siren",
+    "n": 4
+   },
+   {
+    "id": "kaito-bane-of-nightmares",
+    "n": 4
+   },
+   {
+    "id": "floodpits-drowner",
+    "n": 4
+   },
+   {
+    "id": "enduring-curiosity",
+    "n": 4
+   },
+   {
+    "id": "tishanas-tidebinder",
+    "n": 2
+   },
+   {
+    "id": "shoot-the-sheriff",
+    "n": 2
+   },
+   {
+    "id": "we-say-thee-nay",
+    "n": 2
+   },
+   {
+    "id": "bitter-triumph",
+    "n": 2
+   },
+   {
+    "id": "the-wondrous-wasp",
+    "n": 2
+   },
+   {
+    "id": "spell-snare",
+    "n": 1
+   },
+   {
+    "id": "wan-shi-tong-librarian",
+    "n": 1
+   },
+   {
+    "id": "spell-pierce",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 4,
+    "name": "Duress"
+   },
+   {
+    "n": 2,
+    "name": "Flashfreeze"
+   },
+   {
+    "n": 2,
+    "name": "Raven Eagle"
+   },
+   {
+    "n": 2,
+    "name": "Strategic Betrayal"
+   },
+   {
+    "n": 2,
+    "name": "Annul"
+   },
+   {
+    "n": 1,
+    "name": "Negate"
+   },
+   {
+    "n": 1,
+    "name": "Tishana's Tidebinder"
+   },
+   {
+    "n": 1,
+    "name": "Disdainful Stroke"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "watery-grave: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "gloomlake-verge: effect: Add {B}",
+   "hidden-lair: effect: Add {U} or {B}",
+   "soulstone-sanctuary: effect: ~ becomes a 3/3 creature with vigilance and all creature types",
+   "restless-reef: effect: Until end of turn, ~ becomes a 4/4 blue and black Shark creature with deathtouch",
+   "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
+   "dream-beavers: effect: Each opponent loses 1 life",
+   "spyglass-siren: effect: Create a Map token",
+   "kaito-bane-of-nightmares: ability: Ninjutsu {1}{U}{B}",
+   "floodpits-drowner: filter qualifier: and put a stun counter on it",
+   "enduring-curiosity: trigger event: a creature you control deals combat damage to a player, draw a card.",
+   "tishanas-tidebinder: effect: Counter up to one target activated or triggered ability",
+   "shoot-the-sheriff: filter noun: non-outlaw creature",
+   "we-say-thee-nay: effect: Teamwork 2",
+   "bitter-triumph: effect: As an additional cost to cast this spell, discard a card or pay 3 life",
+   "the-wondrous-wasp: ability: Wasp's Sting — When ~ enters, tap up to one target creature. It loses all abilities for as long as ~ remains on the battlefield.",
+   "spell-snare: effect: Counter target spell with mana value 2",
+   "wan-shi-tong-librarian: effect: Put X +1/+1 counters on him",
+   "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}"
+  ],
+  "tokens": []
+ },
+ "boros-belladonna-took-hob": {
+  "id": "boros-belladonna-took-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Boros (Belladonna Took)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (september-7-2026)",
+  "rank": null,
+  "players": 7,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "mountain",
+    "n": 6
+   },
+   {
+    "id": "inspiring-vantage",
+    "n": 4
+   },
+   {
+    "id": "sacred-foundry",
+    "n": 4
+   },
+   {
+    "id": "sunbillow-verge",
+    "n": 4
+   },
+   {
+    "id": "dalkovan-encampment",
+    "n": 3
+   },
+   {
+    "id": "fountainport",
+    "n": 2
+   },
+   {
+    "id": "belladonna-took",
+    "n": 4
+   },
+   {
+    "id": "frontline-rush",
+    "n": 4
+   },
+   {
+    "id": "stadium-headliner",
+    "n": 4
+   },
+   {
+    "id": "song-of-totentanz",
+    "n": 4
+   },
+   {
+    "id": "the-last-ronins-technique",
+    "n": 4
+   },
+   {
+    "id": "political-triumph",
+    "n": 4
+   },
+   {
+    "id": "voice-of-victory",
+    "n": 4
+   },
+   {
+    "id": "warleaders-call",
+    "n": 4
+   },
+   {
+    "id": "torch-the-tower",
+    "n": 3
+   },
+   {
+    "id": "hop-to-it",
+    "n": 2
+   }
+  ],
+  "side": [
+   {
+    "n": 3,
+    "name": "Bilbo's Gambit"
+   },
+   {
+    "n": 3,
+    "name": "Pyrrhic Strike"
+   },
+   {
+    "n": 2,
+    "name": "Get Lost"
+   },
+   {
+    "n": 2,
+    "name": "Elspeth, Storm Slayer"
+   },
+   {
+    "n": 2,
+    "name": "Rest in Peace"
+   },
+   {
+    "n": 2,
+    "name": "Lorehold Charm"
+   },
+   {
+    "n": 1,
+    "name": "Torch the Tower"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "inspiring-vantage: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "sacred-foundry: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "sunbillow-verge: effect: Add {R}",
+   "dalkovan-encampment: ability: ~ enters tapped unless you control a Swamp or a Mountain.",
+   "fountainport: cost: Sacrifice a token",
+   "belladonna-took: trigger event: a token you control enters, you gain 1 life if this is the first time this ability has resolved this turn. If it's the second time, draw a card. If it's the third time, put a +1/+1 counter on each creature you control.",
+   "frontline-rush: effect: Choose one —",
+   "stadium-headliner: ability: Mobilize 1",
+   "song-of-totentanz: object: create X 1/1 black Rat creature tokens with \"This token can't block.\" Creatures you control",
+   "the-last-ronins-technique: effect: Sneak {1}{W}",
+   "political-triumph: trigger event: a creature you control enters, scry 1 and put a plan counter on ~.",
+   "voice-of-victory: ability: Mobilize 2",
+   "warleaders-call: ability: Creatures you control get +1/+1.",
+   "torch-the-tower: effect: Bargain"
+  ],
+  "tokens": [
+   "token-rabbit-1-1-w"
+  ]
+ },
+ "mono-green-earthbender-ascension-hob": {
+  "id": "mono-green-earthbender-ascension-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Mono-Green (Earthbender Ascension)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (september-14-2026)",
+  "rank": null,
+  "players": 7,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "forest",
+    "n": 14
+   },
+   {
+    "id": "escape-tunnel",
+    "n": 4
+   },
+   {
+    "id": "fabled-passage",
+    "n": 4
+   },
+   {
+    "id": "ba-sing-se",
+    "n": 3
+   },
+   {
+    "id": "demolition-field",
+    "n": 1
+   },
+   {
+    "id": "icetill-explorer",
+    "n": 4
+   },
+   {
+    "id": "esper-origins-summon-esper-maduin",
+    "n": 4
+   },
+   {
+    "id": "sazhs-chocobo",
+    "n": 4
+   },
+   {
+    "id": "llanowar-elves",
+    "n": 4
+   },
+   {
+    "id": "earthbender-ascension",
+    "n": 4
+   },
+   {
+    "id": "meltstriders-resolve",
+    "n": 3
+   },
+   {
+    "id": "mightform-harmonizer",
+    "n": 3
+   },
+   {
+    "id": "sapling-nursery",
+    "n": 3
+   },
+   {
+    "id": "shared-roots",
+    "n": 2
+   },
+   {
+    "id": "surrak-elusive-hunter",
+    "n": 1
+   },
+   {
+    "id": "keen-eyed-curator",
+    "n": 1
+   },
+   {
+    "id": "lumbering-worldwagon",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 4,
+    "name": "Mossborn Hydra"
+   },
+   {
+    "n": 3,
+    "name": "Origin of Metalbending"
+   },
+   {
+    "n": 1,
+    "name": "Meltstrider's Resolve"
+   },
+   {
+    "n": 1,
+    "name": "Soul-Guide Lantern"
+   },
+   {
+    "n": 1,
+    "name": "Surrak, Elusive Hunter"
+   },
+   {
+    "n": 1,
+    "name": "Torpor Orb"
+   },
+   {
+    "n": 1,
+    "name": "Mightform Harmonizer"
+   },
+   {
+    "n": 1,
+    "name": "Gigantic Big Bear"
+   },
+   {
+    "n": 1,
+    "name": "Ghost Vacuum"
+   },
+   {
+    "n": 1,
+    "name": "Sapling Nursery"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "escape-tunnel: effect: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle",
+   "fabled-passage: effect: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle",
+   "ba-sing-se: ability: ~ enters tapped unless you control a basic land.",
+   "demolition-field: filter noun: nonbasic land an opponent controls",
+   "icetill-explorer: ability: You may play an additional land on each of your turns.",
+   "esper-origins-summon-esper-maduin: layout transform is not compiled",
+   "sazhs-chocobo: ability: Landfall — Whenever a land you control enters, put a +1/+1 counter on ~.",
+   "earthbender-ascension: effect: Earthbend 2",
+   "meltstriders-resolve: ability: Enchant creature you control",
+   "mightform-harmonizer: ability: Landfall — Whenever a land you control enters, double the power of target creature you control until end of turn.",
+   "sapling-nursery: ability: Affinity for Forests",
+   "shared-roots: effect: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle",
+   "surrak-elusive-hunter: ability: This spell can't be countered.",
+   "keen-eyed-curator: condition: there are four or more card types among cards exiled with ~",
+   "lumbering-worldwagon: ability: This Vehicle's power is equal to the number of lands you control."
+  ],
+  "tokens": []
+ },
+ "azorius-perilous-snare-hob": {
+  "id": "azorius-perilous-snare-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Azorius (Perilous Snare)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (october-5-2026)",
+  "rank": null,
+  "players": 7,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "meticulous-archive",
+    "n": 4
+   },
+   {
+    "id": "floodfarm-verge",
+    "n": 4
+   },
+   {
+    "id": "castle-doom",
+    "n": 4
+   },
+   {
+    "id": "hallowed-fountain",
+    "n": 4
+   },
+   {
+    "id": "plains",
+    "n": 3
+   },
+   {
+    "id": "petrified-hamlet",
+    "n": 2
+   },
+   {
+    "id": "starting-town",
+    "n": 1
+   },
+   {
+    "id": "fomori-vault",
+    "n": 1
+   },
+   {
+    "id": "sacred-foundry",
+    "n": 1
+   },
+   {
+    "id": "united-battlefront",
+    "n": 4
+   },
+   {
+    "id": "simulacrum-synthesizer",
+    "n": 4
+   },
+   {
+    "id": "perilous-snare",
+    "n": 4
+   },
+   {
+    "id": "repurposing-bay",
+    "n": 3
+   },
+   {
+    "id": "pinnacle-starcage",
+    "n": 3
+   },
+   {
+    "id": "candy-trail",
+    "n": 3
+   },
+   {
+    "id": "the-mind-stone",
+    "n": 3
+   },
+   {
+    "id": "cryogen-relic",
+    "n": 3
+   },
+   {
+    "id": "spring-loaded-sawblades-bladewheel-chariot",
+    "n": 2
+   },
+   {
+    "id": "authority-of-the-consuls",
+    "n": 2
+   },
+   {
+    "id": "braided-net-braided-quipu",
+    "n": 2
+   },
+   {
+    "id": "dusk-rose-reliquary",
+    "n": 1
+   },
+   {
+    "id": "torpor-orb",
+    "n": 1
+   },
+   {
+    "id": "the-fire-crystal",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 3,
+    "name": "Day of Judgment"
+   },
+   {
+    "n": 3,
+    "name": "Erode"
+   },
+   {
+    "n": 2,
+    "name": "Authority of the Consuls"
+   },
+   {
+    "n": 2,
+    "name": "Disdainful Stroke"
+   },
+   {
+    "n": 2,
+    "name": "Negate"
+   },
+   {
+    "n": 1,
+    "name": "Pinnacle Starcage"
+   },
+   {
+    "n": 1,
+    "name": "Torpor Orb"
+   },
+   {
+    "n": 1,
+    "name": "Rest in Peace"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "meticulous-archive: effect: Surveil 1",
+   "floodfarm-verge: effect: Add {U}",
+   "castle-doom: effect: Add one mana of any color",
+   "hallowed-fountain: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "petrified-hamlet: effect: Choose a land card name",
+   "starting-town: ability: ~ enters tapped unless it's your first, second, or third turn of the game.",
+   "fomori-vault: cost: Discard a card",
+   "sacred-foundry: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "united-battlefront: effect: Look at the top seven cards of your library",
+   "simulacrum-synthesizer: trigger event: another artifact you control with mana value 3 or greater enters, create a 0/0 colorless Construct artifact creature token with \"This token gets +1/+1 for each artifact you control.\"",
+   "perilous-snare: ability: Start your engines!",
+   "repurposing-bay: cost: Sacrifice another artifact",
+   "pinnacle-starcage: effect: Exile all artifacts and creatures with mana value 2 or less until ~ leaves the battlefield",
+   "the-mind-stone: effect: Harness ~",
+   "cryogen-relic: trigger event: ~ enters or leaves the battlefield, draw a card.",
+   "spring-loaded-sawblades-bladewheel-chariot: layout transform is not compiled",
+   "authority-of-the-consuls: ability: Creatures your opponents control enter tapped.",
+   "braided-net-braided-quipu: layout transform is not compiled",
+   "dusk-rose-reliquary: ability: As an additional cost to cast this spell, sacrifice an artifact or creature.",
+   "torpor-orb: ability: Creatures entering don't cause abilities to trigger.",
+   "the-fire-crystal: ability: Red spells you cast cost {1} less to cast."
+  ],
+  "tokens": []
+ },
+ "mardu-bloodghast-hob": {
+  "id": "mardu-bloodghast-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Mardu (Bloodghast)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (september-14-2026)",
+  "rank": null,
+  "players": 7,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "starting-town",
+    "n": 4
+   },
+   {
+    "id": "blood-crypt",
+    "n": 4
+   },
+   {
+    "id": "godless-shrine",
+    "n": 4
+   },
+   {
+    "id": "sacred-foundry",
+    "n": 3
+   },
+   {
+    "id": "inspiring-vantage",
+    "n": 3
+   },
+   {
+    "id": "concealed-courtyard",
+    "n": 2
+   },
+   {
+    "id": "swamp",
+    "n": 1
+   },
+   {
+    "id": "mountain",
+    "n": 1
+   },
+   {
+    "id": "marauding-mako",
+    "n": 4
+   },
+   {
+    "id": "iron-shield-elf",
+    "n": 4
+   },
+   {
+    "id": "moonshadow",
+    "n": 4
+   },
+   {
+    "id": "hardened-academic",
+    "n": 4
+   },
+   {
+    "id": "cool-but-rude",
+    "n": 4
+   },
+   {
+    "id": "bloodghast",
+    "n": 4
+   },
+   {
+    "id": "practiced-offense",
+    "n": 3
+   },
+   {
+    "id": "carnage-crimson-chaos",
+    "n": 2
+   },
+   {
+    "id": "inti-seneschal-of-the-sun",
+    "n": 2
+   },
+   {
+    "id": "requiting-hex",
+    "n": 2
+   },
+   {
+    "id": "tersa-lightshatter",
+    "n": 2
+   },
+   {
+    "id": "erode",
+    "n": 2
+   },
+   {
+    "id": "cecil-dark-knight-cecil-redeemed-paladin",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 2,
+    "name": "Pest Control"
+   },
+   {
+    "n": 2,
+    "name": "Strategic Betrayal"
+   },
+   {
+    "n": 2,
+    "name": "Monument to Endurance"
+   },
+   {
+    "n": 2,
+    "name": "Requiting Hex"
+   },
+   {
+    "n": 2,
+    "name": "Voice of Victory"
+   },
+   {
+    "n": 1,
+    "name": "Deathmark"
+   },
+   {
+    "n": 1,
+    "name": "Shoot the Sheriff"
+   },
+   {
+    "n": 1,
+    "name": "Molten Collapse"
+   },
+   {
+    "n": 1,
+    "name": "Ral Zarek, Guest Lecturer"
+   },
+   {
+    "n": 1,
+    "name": "Pyroclasm"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "starting-town: ability: ~ enters tapped unless it's your first, second, or third turn of the game.",
+   "blood-crypt: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "godless-shrine: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "sacred-foundry: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "inspiring-vantage: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "concealed-courtyard: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "marauding-mako: trigger event: you discard one or more cards, put that many +1/+1 counters on ~.",
+   "iron-shield-elf: ability: Discard a card: ~ gains indestructible until end of turn. Tap it.",
+   "moonshadow: ability: ~ enters with six -1/-1 counters on it.",
+   "hardened-academic: ability: Discard a card: ~ gains lifelink until end of turn.",
+   "cool-but-rude: layout class is not compiled",
+   "bloodghast: ability: ~ can't block.",
+   "practiced-offense: filter qualifier: target player controls",
+   "carnage-crimson-chaos: effect: Return target creature card with mana value 3 or less from your graveyard to the battlefield",
+   "inti-seneschal-of-the-sun: trigger event: you attack, you may discard a card. When you do, put a +1/+1 counter on target attacking creature. It gains trample until end of turn.",
+   "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
+   "tersa-lightshatter: effect: Discard up to two cards, then draw that many cards",
+   "erode: filter qualifier: or planeswalker",
+   "cecil-dark-knight-cecil-redeemed-paladin: layout transform is not compiled"
+  ],
+  "tokens": []
+ },
+ "selesnya-llanowar-elves-hob": {
+  "id": "selesnya-llanowar-elves-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Selesnya (Llanowar Elves)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (august-24-2026)",
+  "rank": null,
+  "players": 7,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "forest",
+    "n": 6
+   },
+   {
+    "id": "hushwood-verge",
+    "n": 4
+   },
+   {
+    "id": "temple-garden",
+    "n": 4
+   },
+   {
+    "id": "abandoned-air-temple",
+    "n": 3
+   },
+   {
+    "id": "multiversal-passage",
+    "n": 2
+   },
+   {
+    "id": "plains",
+    "n": 2
+   },
+   {
+    "id": "ba-sing-se",
+    "n": 1
+   },
+   {
+    "id": "brightglass-gearhulk",
+    "n": 4
+   },
+   {
+    "id": "llanowar-elves",
+    "n": 4
+   },
+   {
+    "id": "practiced-offense",
+    "n": 4
+   },
+   {
+    "id": "tender-wildguide",
+    "n": 4
+   },
+   {
+    "id": "pawpatch-recruit",
+    "n": 4
+   },
+   {
+    "id": "leatherhead-swamp-stalker",
+    "n": 3
+   },
+   {
+    "id": "spider-manifestation",
+    "n": 3
+   },
+   {
+    "id": "ouroboroid",
+    "n": 3
+   },
+   {
+    "id": "surrak-elusive-hunter",
+    "n": 2
+   },
+   {
+    "id": "seam-rip",
+    "n": 2
+   },
+   {
+    "id": "jennifer-walters-the-sensational-she-hulk",
+    "n": 2
+   },
+   {
+    "id": "skateboard",
+    "n": 1
+   },
+   {
+    "id": "meltstriders-resolve",
+    "n": 1
+   },
+   {
+    "id": "outcaster-trailblazer",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 3,
+    "name": "Rest in Peace"
+   },
+   {
+    "n": 3,
+    "name": "Dawn's Truce"
+   },
+   {
+    "n": 3,
+    "name": "Sheltered by Ghosts"
+   },
+   {
+    "n": 2,
+    "name": "Erode"
+   },
+   {
+    "n": 2,
+    "name": "Elspeth, Storm Slayer"
+   },
+   {
+    "n": 1,
+    "name": "Meltstrider's Resolve"
+   },
+   {
+    "n": 1,
+    "name": "Soul-Guide Lantern"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "hushwood-verge: effect: Add {W}",
+   "temple-garden: ability: As ~ enters, you may pay 2 life. If you don't, it enters tapped.",
+   "abandoned-air-temple: ability: ~ enters tapped unless you control a basic land.",
+   "multiversal-passage: ability: As ~ enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters tapped.",
+   "ba-sing-se: ability: ~ enters tapped unless you control a basic land.",
+   "brightglass-gearhulk: effect: You may search your library for up to two artifact, creature, and/or enchantment cards with mana value 1 or less, reveal them, put them into your hand, then shuffle",
+   "practiced-offense: filter qualifier: target player controls",
+   "tender-wildguide: effect: Add one mana of any color",
+   "pawpatch-recruit: trigger event: a creature you control becomes the target of a spell or ability an opponent controls, put a +1/+1 counter on target creature you control other than that creature.",
+   "leatherhead-swamp-stalker: ability: ~ enters with a hexproof counter on her.",
+   "spider-manifestation: trigger event: you cast a spell with mana value 4 or greater, untap ~.",
+   "ouroboroid: trigger event: the beginning of combat on your turn, put X +1/+1 counters on each creature you control, where X is ~'s power.",
+   "surrak-elusive-hunter: ability: This spell can't be countered.",
+   "seam-rip: effect: Exile target nonland permanent an opponent controls with mana value 2 or less until ~ leaves the battlefield",
+   "jennifer-walters-the-sensational-she-hulk: layout modal_dfc is not compiled",
+   "meltstriders-resolve: ability: Enchant creature you control",
+   "outcaster-trailblazer: effect: Add one mana of any color"
+  ],
+  "tokens": []
+ },
+ "mono-black-desolation-prowler-hob": {
+  "id": "mono-black-desolation-prowler-hob",
+  "file": "championship-arena-hob.json",
+  "name": "Mono-Black (Desolation Prowler)",
+  "product": "MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "set": "HOB",
+  "era": "hob",
+  "released": "2026-08-17..2026-10-05",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+  "sources": [
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-17-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-24-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-august-31-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-7-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-14-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-21-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-september-28-2026",
+   "https://magic.gg/decklists/traditional-standard-ranked-decklists-october-5-2026"
+  ],
+  "player": "Platinum–Mythic rank player (september-7-2026)",
+  "rank": null,
+  "players": 6,
+  "registered": false,
+  "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
+  "min": 60,
+  "main": [
+   {
+    "id": "swamp",
+    "n": 18
+   },
+   {
+    "id": "soulstone-sanctuary",
+    "n": 3
+   },
+   {
+    "id": "realm-of-koh",
+    "n": 2
+   },
+   {
+    "id": "iridescent-vinelasher",
+    "n": 4
+   },
+   {
+    "id": "nighthowl-pursuer",
+    "n": 4
+   },
+   {
+    "id": "desolation-prowler",
+    "n": 4
+   },
+   {
+    "id": "shoot-the-sheriff",
+    "n": 4
+   },
+   {
+    "id": "forsaken-miner",
+    "n": 4
+   },
+   {
+    "id": "sunset-saboteur",
+    "n": 4
+   },
+   {
+    "id": "corpses-of-the-lost",
+    "n": 4
+   },
+   {
+    "id": "gollum-riddle-master",
+    "n": 3
+   },
+   {
+    "id": "dark-knights-greatsword",
+    "n": 2
+   },
+   {
+    "id": "requiting-hex",
+    "n": 2
+   },
+   {
+    "id": "dissection-practice",
+    "n": 2
+   }
+  ],
+  "side": [
+   {
+    "n": 3,
+    "name": "Duress"
+   },
+   {
+    "n": 3,
+    "name": "Strategic Betrayal"
+   },
+   {
+    "n": 2,
+    "name": "Ghost Vacuum"
+   },
+   {
+    "n": 2,
+    "name": "Requiting Hex"
+   },
+   {
+    "n": 2,
+    "name": "Torpor Orb"
+   },
+   {
+    "n": 2,
+    "name": "Gollum the Abandoned"
+   },
+   {
+    "n": 1,
+    "name": "Elegy Acolyte"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "soulstone-sanctuary: effect: ~ becomes a 3/3 creature with vigilance and all creature types",
+   "realm-of-koh: ability: ~ enters tapped unless you control a basic land.",
+   "iridescent-vinelasher: ability: Landfall — Whenever a land you control enters, ~ deals 1 damage to target opponent.",
+   "nighthowl-pursuer: ability: Ferocious — Whenever ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn.",
+   "desolation-prowler: ability: Pay 2 life: ~ gets +2/+2 until end of turn. Activate only once each turn.",
+   "shoot-the-sheriff: filter noun: non-outlaw creature",
+   "forsaken-miner: ability: ~ can't block.",
+   "sunset-saboteur: ability: Ward—Discard a card.",
+   "corpses-of-the-lost: ability: Skeletons you control get +1/+0 and have haste.",
+   "gollum-riddle-master: ability: As ~ enters, choose odd or even.",
+   "dark-knights-greatsword: ability: Job select",
+   "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
+   "dissection-practice: effect: Target opponent loses 1 life"
+  ],
+  "tokens": []
+ },
+ "mono-red-aggro-fin": {
+  "id": "mono-red-aggro-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Mono-Red Aggro",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Ken Yukuhiro",
+  "rank": 1,
+  "players": 35,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "magebane-lizard",
+    "n": 3
+   },
+   {
+    "id": "manifold-mouse",
+    "n": 4
+   },
+   {
+    "id": "emberheart-challenger",
+    "n": 4
+   },
+   {
+    "id": "mountain",
+    "n": 16
+   },
+   {
+    "id": "burst-lightning",
+    "n": 4
+   },
+   {
+    "id": "monstrous-rage",
+    "n": 4
+   },
+   {
+    "id": "rockface-village",
+    "n": 4
+   },
+   {
+    "id": "heartfire-hero",
+    "n": 4
+   },
+   {
+    "id": "hired-claw",
+    "n": 4
+   },
+   {
+    "id": "soulstone-sanctuary",
+    "n": 2
+   },
+   {
+    "id": "twinmaw-stormbrood-charring-bite",
+    "n": 4
+   },
+   {
+    "id": "tersa-lightshatter",
+    "n": 1
+   },
+   {
+    "id": "screaming-nemesis",
+    "n": 4
+   },
+   {
+    "id": "self-destruct",
+    "n": 1
+   },
+   {
+    "id": "lightning-strike",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 2,
+    "name": "Soul-Guide Lantern"
+   },
+   {
+    "n": 2,
+    "name": "Suplex"
+   },
+   {
+    "n": 3,
+    "name": "Torch the Tower"
+   },
+   {
+    "n": 2,
+    "name": "Lithomantic Barrage"
+   },
+   {
+    "n": 1,
+    "name": "Magebane Lizard"
+   },
+   {
+    "n": 2,
+    "name": "Case of the Crimson Pulse"
+   },
+   {
+    "n": 3,
+    "name": "Sunspine Lynx"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "magebane-lizard: trigger event: a player casts a noncreature spell, ~ deals damage to that player equal to the number of noncreature spells they've cast this turn.",
+   "manifold-mouse: trigger event: the beginning of combat on your turn, target Mouse you control gains your choice of double strike or trample until end of turn.",
+   "emberheart-challenger: ability: Valiant — Whenever ~ becomes the target of a spell or ability you control for the first time each turn, exile the top card of your library. Until end of turn, you may play that card.",
+   "burst-lightning: effect: Kicker {4}",
+   "monstrous-rage: effect: Create a Monster Role token attached to it",
+   "rockface-village: effect: Add {R}",
+   "heartfire-hero: ability: Valiant — Whenever ~ becomes the target of a spell or ability you control for the first time each turn, put a +1/+1 counter on it.",
+   "hired-claw: trigger event: you attack with one or more Lizards, ~ deals 1 damage to target opponent.",
+   "soulstone-sanctuary: effect: ~ becomes a 3/3 creature with vigilance and all creature types",
+   "twinmaw-stormbrood-charring-bite: layout adventure is not compiled",
+   "tersa-lightshatter: effect: Discard up to two cards, then draw that many cards",
+   "screaming-nemesis: trigger event: ~ is dealt damage, it deals that much damage to any other target. If a player is dealt damage this way, they can't gain life for the rest of the game.",
+   "self-destruct: effect: Target creature you control deals X damage to any other target and X damage to itself, where X is its power"
+  ],
+  "tokens": []
+ },
+ "izzet-prowess-fin": {
+  "id": "izzet-prowess-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Izzet Prowess",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Ian Robb",
+  "rank": 2,
+  "players": 139,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "thundering-falls",
+    "n": 1
+   },
+   {
+    "id": "island",
+    "n": 6
+   },
+   {
+    "id": "opt",
+    "n": 4
+   },
+   {
+    "id": "stormchasers-talent",
+    "n": 4
+   },
+   {
+    "id": "monstrous-rage",
+    "n": 3
+   },
+   {
+    "id": "torch-the-tower",
+    "n": 4
+   },
+   {
+    "id": "vivi-ornitier",
+    "n": 4
+   },
+   {
+    "id": "mountain",
+    "n": 2
+   },
+   {
+    "id": "wild-ride",
+    "n": 2
+   },
+   {
+    "id": "into-the-flood-maw",
+    "n": 2
+   },
+   {
+    "id": "spell-pierce",
+    "n": 1
+   },
+   {
+    "id": "cori-steel-cutter",
+    "n": 4
+   },
+   {
+    "id": "stock-up",
+    "n": 4
+   },
+   {
+    "id": "drake-hatcher",
+    "n": 3
+   },
+   {
+    "id": "riverpyre-verge",
+    "n": 4
+   },
+   {
+    "id": "spirebluff-canal",
+    "n": 4
+   },
+   {
+    "id": "shivan-reef",
+    "n": 4
+   },
+   {
+    "id": "sleight-of-hand",
+    "n": 4
+   }
+  ],
+  "side": [
+   {
+    "n": 1,
+    "name": "Disdainful Stroke"
+   },
+   {
+    "n": 2,
+    "name": "Abrade"
+   },
+   {
+    "n": 1,
+    "name": "Get Out"
+   },
+   {
+    "n": 2,
+    "name": "Spell Pierce"
+   },
+   {
+    "n": 3,
+    "name": "Unable to Scream"
+   },
+   {
+    "n": 2,
+    "name": "Ral, Crackling Wit"
+   },
+   {
+    "n": 2,
+    "name": "Soul-Guide Lantern"
+   },
+   {
+    "n": 2,
+    "name": "Lithomantic Barrage"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "thundering-falls: effect: Surveil 1",
+   "stormchasers-talent: layout class is not compiled",
+   "monstrous-rage: effect: Create a Monster Role token attached to it",
+   "torch-the-tower: effect: Bargain",
+   "vivi-ornitier: effect: Add X mana in any combination of {U} and/or {R}, where X is ~'s power",
+   "wild-ride: effect: Harmonize {4}{R}",
+   "into-the-flood-maw: effect: Gift a tapped Fish",
+   "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}",
+   "cori-steel-cutter: ability: Flurry — Whenever you cast your second spell each turn, create a 1/1 white Monk creature token with prowess. You may attach ~ to it.",
+   "stock-up: effect: Look at the top five cards of your library",
+   "drake-hatcher: trigger event: ~ deals combat damage to a player, put that many incubation counters on it.",
+   "riverpyre-verge: effect: Add {U}",
+   "spirebluff-canal: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "shivan-reef: object: add {U} or {R}. ~",
+   "sleight-of-hand: effect: Look at the top two cards of your library"
+  ],
+  "tokens": []
+ },
+ "domain-overlords-fin": {
+  "id": "domain-overlords-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Domain Overlords",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Edgar Magalhaes",
+  "rank": 9,
+  "players": 14,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "elegant-parlor",
+    "n": 1
+   },
+   {
+    "id": "lush-portico",
+    "n": 4
+   },
+   {
+    "id": "high-noon",
+    "n": 4
+   },
+   {
+    "id": "forest",
+    "n": 1
+   },
+   {
+    "id": "up-the-beanstalk",
+    "n": 4
+   },
+   {
+    "id": "hedge-maze",
+    "n": 4
+   },
+   {
+    "id": "get-lost",
+    "n": 1
+   },
+   {
+    "id": "floodfarm-verge",
+    "n": 4
+   },
+   {
+    "id": "cavern-of-souls",
+    "n": 1
+   },
+   {
+    "id": "beza-the-bounding-spring",
+    "n": 1
+   },
+   {
+    "id": "overlord-of-the-hauntwoods",
+    "n": 4
+   },
+   {
+    "id": "hushwood-verge",
+    "n": 4
+   },
+   {
+    "id": "shadowy-backstreet",
+    "n": 2
+   },
+   {
+    "id": "day-of-judgment",
+    "n": 1
+   },
+   {
+    "id": "wastewood-verge",
+    "n": 2
+   },
+   {
+    "id": "temporary-lockdown",
+    "n": 2
+   },
+   {
+    "id": "overlord-of-the-mistmoors",
+    "n": 4
+   },
+   {
+    "id": "zur-eternal-schemer",
+    "n": 4
+   },
+   {
+    "id": "plains",
+    "n": 1
+   },
+   {
+    "id": "rides-end",
+    "n": 2
+   },
+   {
+    "id": "authority-of-the-consuls",
+    "n": 2
+   },
+   {
+    "id": "leyline-binding",
+    "n": 4
+   },
+   {
+    "id": "razorverge-thicket",
+    "n": 2
+   },
+   {
+    "id": "ultima",
+    "n": 1
+   }
+  ],
+  "side": [
+   {
+    "n": 2,
+    "name": "Change the Equation"
+   },
+   {
+    "n": 1,
+    "name": "Disdainful Stroke"
+   },
+   {
+    "n": 1,
+    "name": "Rest in Peace"
+   },
+   {
+    "n": 2,
+    "name": "Ride's End"
+   },
+   {
+    "n": 1,
+    "name": "Rakshasa's Bargain"
+   },
+   {
+    "n": 1,
+    "name": "Beza, the Bounding Spring"
+   },
+   {
+    "n": 1,
+    "name": "Entity Tracker"
+   },
+   {
+    "n": 1,
+    "name": "Elesh Norn, Mother of Machines"
+   },
+   {
+    "n": 3,
+    "name": "Heritage Reclamation"
+   },
+   {
+    "n": 1,
+    "name": "Voice of Victory"
+   },
+   {
+    "n": 1,
+    "name": "Negate"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "elegant-parlor: effect: Surveil 1",
+   "lush-portico: effect: Surveil 1",
+   "high-noon: ability: Each player can't cast more than one spell each turn.",
+   "up-the-beanstalk: trigger event: ~ enters and whenever you cast a spell with mana value 5 or greater, draw a card.",
+   "hedge-maze: effect: Surveil 1",
+   "get-lost: filter qualifier: , enchantment, or planeswalker",
+   "floodfarm-verge: effect: Add {U}",
+   "cavern-of-souls: ability: As ~ enters, choose a creature type.",
+   "beza-the-bounding-spring: effect: Create a Treasure token if an opponent controls more lands than you",
+   "overlord-of-the-hauntwoods: ability: Impending 4—{1}{G}{G}",
+   "hushwood-verge: effect: Add {W}",
+   "shadowy-backstreet: effect: Surveil 1",
+   "day-of-judgment: object: all creatures",
+   "wastewood-verge: effect: Add {B}",
+   "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
+   "overlord-of-the-mistmoors: ability: Impending 4—{2}{W}{W}",
+   "zur-eternal-schemer: ability: Enchantment creatures you control have deathtouch, lifelink, and hexproof.",
+   "rides-end: condition: it targets a tapped permanent",
+   "authority-of-the-consuls: ability: Creatures your opponents control enter tapped.",
+   "leyline-binding: ability: Domain — This spell costs {1} less to cast for each basic land type among lands you control.",
+   "razorverge-thicket: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "ultima: object: all artifacts and creatures"
+  ],
+  "tokens": []
+ },
+ "azorius-omniscience-fin": {
+  "id": "azorius-omniscience-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Azorius Omniscience",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Shaun Henry",
+  "rank": 10,
+  "players": 66,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "abuelos-awakening",
+    "n": 4
+   },
+   {
+    "id": "fallaji-archaeologist",
+    "n": 2
+   },
+   {
+    "id": "get-lost",
+    "n": 1
+   },
+   {
+    "id": "overlord-of-the-floodpits",
+    "n": 2
+   },
+   {
+    "id": "floodfarm-verge",
+    "n": 4
+   },
+   {
+    "id": "fabled-passage",
+    "n": 1
+   },
+   {
+    "id": "adarkar-wastes",
+    "n": 3
+   },
+   {
+    "id": "island",
+    "n": 4
+   },
+   {
+    "id": "cavern-of-souls",
+    "n": 2
+   },
+   {
+    "id": "roiling-dragonstorm",
+    "n": 4
+   },
+   {
+    "id": "oracle-of-tragedy",
+    "n": 2
+   },
+   {
+    "id": "spell-pierce",
+    "n": 1
+   },
+   {
+    "id": "temporary-lockdown",
+    "n": 4
+   },
+   {
+    "id": "seachrome-coast",
+    "n": 2
+   },
+   {
+    "id": "meticulous-archive",
+    "n": 4
+   },
+   {
+    "id": "stock-up",
+    "n": 2
+   },
+   {
+    "id": "plains",
+    "n": 4
+   },
+   {
+    "id": "scrollshift",
+    "n": 2
+   },
+   {
+    "id": "epharas-dispersal",
+    "n": 3
+   },
+   {
+    "id": "omniscience",
+    "n": 4
+   },
+   {
+    "id": "jace-the-perfected-mind",
+    "n": 1
+   },
+   {
+    "id": "marang-river-regent-coil-and-catch",
+    "n": 4
+   }
+  ],
+  "side": [
+   {
+    "n": 1,
+    "name": "Change the Equation"
+   },
+   {
+    "n": 2,
+    "name": "Get Lost"
+   },
+   {
+    "n": 2,
+    "name": "Kutzil's Flanker"
+   },
+   {
+    "n": 1,
+    "name": "Ghost Vacuum"
+   },
+   {
+    "n": 2,
+    "name": "Beza, the Bounding Spring"
+   },
+   {
+    "n": 2,
+    "name": "No More Lies"
+   },
+   {
+    "n": 2,
+    "name": "Overlord of the Mistmoors"
+   },
+   {
+    "n": 1,
+    "name": "Negate"
+   },
+   {
+    "n": 2,
+    "name": "Voice of Victory"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "abuelos-awakening: effect: Return target artifact or non-Aura enchantment card from your graveyard to the battlefield with X additional +1/+1 counters on it",
+   "fallaji-archaeologist: effect: Mill three cards",
+   "get-lost: filter qualifier: , enchantment, or planeswalker",
+   "overlord-of-the-floodpits: ability: Impending 4—{1}{U}{U}",
+   "floodfarm-verge: effect: Add {U}",
+   "fabled-passage: effect: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle",
+   "adarkar-wastes: object: add {W} or {U}. ~",
+   "cavern-of-souls: ability: As ~ enters, choose a creature type.",
+   "roiling-dragonstorm: trigger event: a Dragon you control enters, return ~ to its owner's hand.",
+   "oracle-of-tragedy: trigger event: ~ enters or dies, choose one —",
+   "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}",
+   "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
+   "seachrome-coast: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "meticulous-archive: effect: Surveil 1",
+   "stock-up: effect: Look at the top five cards of your library",
+   "scrollshift: effect: Exile up to one target artifact, creature, or enchantment you control, then return it to the battlefield under its owner's control",
+   "epharas-dispersal: condition: it targets an attacking creature",
+   "omniscience: ability: You may cast spells from your hand without paying their mana costs.",
+   "jace-the-perfected-mind: ability: Compleated",
+   "marang-river-regent-coil-and-catch: layout adventure is not compiled"
+  ],
+  "tokens": []
+ },
+ "azorius-control-fin": {
+  "id": "azorius-control-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Azorius Control",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Mitchell Tamblyn",
+  "rank": 11,
+  "players": 6,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "negate",
+    "n": 2
+   },
+   {
+    "id": "cathar-commando",
+    "n": 1
+   },
+   {
+    "id": "three-steps-ahead",
+    "n": 2
+   },
+   {
+    "id": "idyllic-beachfront",
+    "n": 3
+   },
+   {
+    "id": "dreams-of-laguna",
+    "n": 3
+   },
+   {
+    "id": "demolition-field",
+    "n": 1
+   },
+   {
+    "id": "fountainport",
+    "n": 3
+   },
+   {
+    "id": "floodfarm-verge",
+    "n": 4
+   },
+   {
+    "id": "kutzils-flanker",
+    "n": 1
+   },
+   {
+    "id": "get-lost",
+    "n": 4
+   },
+   {
+    "id": "island",
+    "n": 4
+   },
+   {
+    "id": "beza-the-bounding-spring",
+    "n": 3
+   },
+   {
+    "id": "no-more-lies",
+    "n": 3
+   },
+   {
+    "id": "lay-down-arms",
+    "n": 3
+   },
+   {
+    "id": "temporary-lockdown",
+    "n": 3
+   },
+   {
+    "id": "meticulous-archive",
+    "n": 4
+   },
+   {
+    "id": "plains",
+    "n": 8
+   },
+   {
+    "id": "stock-up",
+    "n": 3
+   },
+   {
+    "id": "marang-river-regent-coil-and-catch",
+    "n": 3
+   },
+   {
+    "id": "ultima",
+    "n": 2
+   }
+  ],
+  "side": [
+   {
+    "n": 1,
+    "name": "Change the Equation"
+   },
+   {
+    "n": 1,
+    "name": "Ultima"
+   },
+   {
+    "n": 2,
+    "name": "Devout Decree"
+   },
+   {
+    "n": 1,
+    "name": "Cathar Commando"
+   },
+   {
+    "n": 3,
+    "name": "Stoic Sphinx"
+   },
+   {
+    "n": 3,
+    "name": "Tishana's Tidebinder"
+   },
+   {
+    "n": 1,
+    "name": "Elspeth's Smite"
+   },
+   {
+    "n": 1,
+    "name": "Negate"
+   },
+   {
+    "n": 2,
+    "name": "The Filigree Sylex"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "negate: effect: Counter target noncreature spell",
+   "cathar-commando: filter qualifier: or enchantment",
+   "three-steps-ahead: effect: Spree",
+   "dreams-of-laguna: effect: Surveil 1, then draw a card",
+   "demolition-field: filter noun: nonbasic land an opponent controls",
+   "fountainport: cost: Sacrifice a token",
+   "floodfarm-verge: effect: Add {U}",
+   "kutzils-flanker: effect: Choose one —",
+   "get-lost: filter qualifier: , enchantment, or planeswalker",
+   "beza-the-bounding-spring: effect: Create a Treasure token if an opponent controls more lands than you",
+   "no-more-lies: effect: Counter target spell unless its controller pays {3}",
+   "lay-down-arms: effect: Exile target creature with mana value less than or equal to the number of Plains you control",
+   "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
+   "meticulous-archive: effect: Surveil 1",
+   "stock-up: effect: Look at the top five cards of your library",
+   "marang-river-regent-coil-and-catch: layout adventure is not compiled",
+   "ultima: object: all artifacts and creatures"
+  ],
+  "tokens": []
+ },
+ "golgari-roots-fin": {
+  "id": "golgari-roots-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Golgari Roots",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Eli Kassis",
+  "rank": 19,
+  "players": 5,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "swamp",
+    "n": 1
+   },
+   {
+    "id": "agathas-soul-cauldron",
+    "n": 1
+   },
+   {
+    "id": "molt-tender",
+    "n": 4
+   },
+   {
+    "id": "llanowar-elves",
+    "n": 2
+   },
+   {
+    "id": "town-greeter",
+    "n": 2
+   },
+   {
+    "id": "forest",
+    "n": 6
+   },
+   {
+    "id": "coati-scavenger",
+    "n": 1
+   },
+   {
+    "id": "llanowar-wastes",
+    "n": 4
+   },
+   {
+    "id": "scavenging-ooze",
+    "n": 2
+   },
+   {
+    "id": "wastewood-verge",
+    "n": 4
+   },
+   {
+    "id": "blooming-marsh",
+    "n": 4
+   },
+   {
+    "id": "insidious-roots",
+    "n": 4
+   },
+   {
+    "id": "osteomancer-adept",
+    "n": 2
+   },
+   {
+    "id": "tyvar-jubilant-brawler",
+    "n": 4
+   },
+   {
+    "id": "dragon-sniper",
+    "n": 2
+   },
+   {
+    "id": "rubblebelt-maverick",
+    "n": 2
+   },
+   {
+    "id": "disruptive-stormbrood-petty-revenge",
+    "n": 2
+   },
+   {
+    "id": "great-arashin-city",
+    "n": 1
+   },
+   {
+    "id": "cache-grab",
+    "n": 2
+   },
+   {
+    "id": "haywire-mite",
+    "n": 4
+   },
+   {
+    "id": "overlord-of-the-balemurk",
+    "n": 4
+   },
+   {
+    "id": "dredgers-insight",
+    "n": 2
+   }
+  ],
+  "side": [
+   {
+    "n": 3,
+    "name": "Dark Confidant"
+   },
+   {
+    "n": 1,
+    "name": "Skyfisher Spider"
+   },
+   {
+    "n": 2,
+    "name": "Go for the Throat"
+   },
+   {
+    "n": 1,
+    "name": "Coati Scavenger"
+   },
+   {
+    "n": 1,
+    "name": "Ghost Vacuum"
+   },
+   {
+    "n": 1,
+    "name": "Cankerbloom"
+   },
+   {
+    "n": 2,
+    "name": "Souls of the Lost"
+   },
+   {
+    "n": 1,
+    "name": "Voldaren Thrillseeker"
+   },
+   {
+    "n": 2,
+    "name": "Dragon Sniper"
+   },
+   {
+    "n": 1,
+    "name": "Gastal Raider"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "agathas-soul-cauldron: ability: You may spend mana as though it were mana of any color to activate abilities of creatures you control.",
+   "molt-tender: effect: Mill a card",
+   "town-greeter: effect: Mill four cards",
+   "coati-scavenger: ability: Descend 4 — When ~ enters, if there are four or more permanent cards in your graveyard, return target permanent card from your graveyard to your hand.",
+   "llanowar-wastes: object: add {B} or {G}. ~",
+   "scavenging-ooze: effect: Exile target card from a graveyard",
+   "wastewood-verge: effect: Add {B}",
+   "blooming-marsh: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "insidious-roots: cost: Creature tokens you control have \"{T}",
+   "osteomancer-adept: effect: Until end of turn, you may cast creature spells from your graveyard by foraging in addition to paying their other costs",
+   "tyvar-jubilant-brawler: ability: You may activate abilities of creatures you control as though those creatures had haste.",
+   "rubblebelt-maverick: effect: Surveil 2",
+   "disruptive-stormbrood-petty-revenge: layout adventure is not compiled",
+   "great-arashin-city: ability: ~ enters tapped unless you control a Forest or a Plains.",
+   "cache-grab: effect: Mill four cards",
+   "haywire-mite: trigger event: ~ dies, you gain 2 life.",
+   "overlord-of-the-balemurk: ability: Impending 5—{1}{B}",
+   "dredgers-insight: trigger event: one or more artifact and/or creature cards leave your graveyard, you gain 1 life."
+  ],
+  "tokens": []
+ },
+ "orzhov-demons-fin": {
+  "id": "orzhov-demons-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Orzhov Demons",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Luís Gobern",
+  "rank": 28,
+  "players": 1,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "concealed-courtyard",
+    "n": 4
+   },
+   {
+    "id": "elenda-saint-of-dusk",
+    "n": 2
+   },
+   {
+    "id": "bleachbone-verge",
+    "n": 4
+   },
+   {
+    "id": "soulstone-sanctuary",
+    "n": 4
+   },
+   {
+    "id": "bloodletter-of-aclazotz",
+    "n": 4
+   },
+   {
+    "id": "pest-control",
+    "n": 2
+   },
+   {
+    "id": "go-for-the-throat",
+    "n": 4
+   },
+   {
+    "id": "preacher-of-the-schism",
+    "n": 3
+   },
+   {
+    "id": "swamp",
+    "n": 9
+   },
+   {
+    "id": "unholy-annex-ritual-chamber",
+    "n": 4
+   },
+   {
+    "id": "duress",
+    "n": 4
+   },
+   {
+    "id": "cut-down",
+    "n": 4
+   },
+   {
+    "id": "unstoppable-slasher",
+    "n": 4
+   },
+   {
+    "id": "caves-of-koilos",
+    "n": 4
+   },
+   {
+    "id": "cruelclaws-heist",
+    "n": 4
+   }
+  ],
+  "side": [
+   {
+    "n": 2,
+    "name": "Gix's Command"
+   },
+   {
+    "n": 2,
+    "name": "Loran of the Third Path"
+   },
+   {
+    "n": 2,
+    "name": "Legions to Ashes"
+   },
+   {
+    "n": 1,
+    "name": "The End"
+   },
+   {
+    "n": 1,
+    "name": "Anoint with Affliction"
+   },
+   {
+    "n": 2,
+    "name": "Intimidation Tactics"
+   },
+   {
+    "n": 2,
+    "name": "Pest Control"
+   },
+   {
+    "n": 1,
+    "name": "Blot Out"
+   },
+   {
+    "n": 2,
+    "name": "Ghost Vacuum"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "concealed-courtyard: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "elenda-saint-of-dusk: ability: Lifelink, hexproof from instants",
+   "bleachbone-verge: effect: Add {W}",
+   "soulstone-sanctuary: effect: ~ becomes a 3/3 creature with vigilance and all creature types",
+   "bloodletter-of-aclazotz: ability: If an opponent would lose life during your turn, they lose twice that much life instead.",
+   "pest-control: object: all nonland permanents with mana value 1 or less",
+   "preacher-of-the-schism: trigger event: ~ attacks the player with the most life or tied for most life, create a 1/1 white Vampire creature token with lifelink.",
+   "unholy-annex-ritual-chamber: layout split is not compiled",
+   "duress: effect: Target opponent reveals their hand",
+   "cut-down: filter qualifier: with total power and toughness 5 or less",
+   "unstoppable-slasher: trigger event: ~ deals combat damage to a player, they lose half their life, rounded up.",
+   "caves-of-koilos: object: add {W} or {B}. ~",
+   "cruelclaws-heist: effect: Gift a card"
+  ],
+  "tokens": []
+ },
+ "dimir-midrange-fin": {
+  "id": "dimir-midrange-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Dimir Midrange",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Ha Pham",
+  "rank": 33,
+  "players": 11,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "floodpits-drowner",
+    "n": 1
+   },
+   {
+    "id": "vren-the-relentless",
+    "n": 1
+   },
+   {
+    "id": "gixs-command",
+    "n": 1
+   },
+   {
+    "id": "kaito-bane-of-nightmares",
+    "n": 1
+   },
+   {
+    "id": "sheoldred-the-apocalypse",
+    "n": 2
+   },
+   {
+    "id": "cecil-dark-knight-cecil-redeemed-paladin",
+    "n": 2
+   },
+   {
+    "id": "azure-beastbinder",
+    "n": 2
+   },
+   {
+    "id": "darkslick-shores",
+    "n": 4
+   },
+   {
+    "id": "restless-reef",
+    "n": 1
+   },
+   {
+    "id": "go-for-the-throat",
+    "n": 4
+   },
+   {
+    "id": "duress",
+    "n": 3
+   },
+   {
+    "id": "island",
+    "n": 3
+   },
+   {
+    "id": "swamp",
+    "n": 6
+   },
+   {
+    "id": "underground-river",
+    "n": 4
+   },
+   {
+    "id": "enduring-curiosity",
+    "n": 3
+   },
+   {
+    "id": "spell-pierce",
+    "n": 2
+   },
+   {
+    "id": "faerie-mastermind",
+    "n": 1
+   },
+   {
+    "id": "soulstone-sanctuary",
+    "n": 3
+   },
+   {
+    "id": "preacher-of-the-schism",
+    "n": 4
+   },
+   {
+    "id": "gloomlake-verge",
+    "n": 4
+   },
+   {
+    "id": "deep-cavern-bat",
+    "n": 4
+   },
+   {
+    "id": "cut-down",
+    "n": 4
+   }
+  ],
+  "side": [
+   {
+    "n": 1,
+    "name": "Gix's Command"
+   },
+   {
+    "n": 1,
+    "name": "Kaito, Bane of Nightmares"
+   },
+   {
+    "n": 1,
+    "name": "Disdainful Stroke"
+   },
+   {
+    "n": 1,
+    "name": "Vren, the Relentless"
+   },
+   {
+    "n": 1,
+    "name": "Tishana's Tidebinder"
+   },
+   {
+    "n": 1,
+    "name": "Three Steps Ahead"
+   },
+   {
+    "n": 2,
+    "name": "Ghost Vacuum"
+   },
+   {
+    "n": 1,
+    "name": "Faerie Mastermind"
+   },
+   {
+    "n": 1,
+    "name": "Duress"
+   },
+   {
+    "n": 3,
+    "name": "The Filigree Sylex"
+   },
+   {
+    "n": 1,
+    "name": "Anoint with Affliction"
+   },
+   {
+    "n": 1,
+    "name": "Negate"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "floodpits-drowner: filter qualifier: and put a stun counter on it",
+   "vren-the-relentless: ability: Ward {2}",
+   "gixs-command: effect: Choose two —",
+   "kaito-bane-of-nightmares: ability: Ninjutsu {1}{U}{B}",
+   "sheoldred-the-apocalypse: trigger event: you draw a card, you gain 2 life.",
+   "cecil-dark-knight-cecil-redeemed-paladin: layout transform is not compiled",
+   "azure-beastbinder: ability: ~ can't be blocked by creatures with power 2 or greater.",
+   "darkslick-shores: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "restless-reef: effect: Until end of turn, ~ becomes a 4/4 blue and black Shark creature with deathtouch",
+   "duress: effect: Target opponent reveals their hand",
+   "underground-river: object: add {U} or {B}. ~",
+   "enduring-curiosity: trigger event: a creature you control deals combat damage to a player, draw a card.",
+   "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}",
+   "faerie-mastermind: trigger event: an opponent draws their second card each turn, you draw a card.",
+   "soulstone-sanctuary: effect: ~ becomes a 3/3 creature with vigilance and all creature types",
+   "preacher-of-the-schism: trigger event: ~ attacks the player with the most life or tied for most life, create a 1/1 white Vampire creature token with lifelink.",
+   "gloomlake-verge: effect: Add {B}",
+   "deep-cavern-bat: effect: Look at target opponent's hand",
+   "cut-down: filter qualifier: with total power and toughness 5 or less"
+  ],
+  "tokens": []
+ },
+ "golgari-graveyard-fin": {
+  "id": "golgari-graveyard-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Golgari Graveyard",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Jody Keith",
+  "rank": 34,
+  "players": 2,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "swamp",
+    "n": 3
+   },
+   {
+    "id": "diamond-weapon",
+    "n": 3
+   },
+   {
+    "id": "forest",
+    "n": 2
+   },
+   {
+    "id": "huskburster-swarm",
+    "n": 4
+   },
+   {
+    "id": "underground-mortuary",
+    "n": 4
+   },
+   {
+    "id": "qarsi-revenant",
+    "n": 1
+   },
+   {
+    "id": "up-the-beanstalk",
+    "n": 4
+   },
+   {
+    "id": "hollow-marauder",
+    "n": 2
+   },
+   {
+    "id": "town-greeter",
+    "n": 4
+   },
+   {
+    "id": "harvester-of-misery",
+    "n": 2
+   },
+   {
+    "id": "souls-of-the-lost",
+    "n": 3
+   },
+   {
+    "id": "llanowar-wastes",
+    "n": 3
+   },
+   {
+    "id": "blooming-marsh",
+    "n": 4
+   },
+   {
+    "id": "wastewood-verge",
+    "n": 4
+   },
+   {
+    "id": "rubblebelt-maverick",
+    "n": 4
+   },
+   {
+    "id": "overwhelming-remorse",
+    "n": 4
+   },
+   {
+    "id": "gnawing-vermin",
+    "n": 4
+   },
+   {
+    "id": "seed-of-hope",
+    "n": 1
+   },
+   {
+    "id": "overlord-of-the-balemurk",
+    "n": 4
+   }
+  ],
+  "side": [
+   {
+    "n": 1,
+    "name": "Scrapshooter"
+   },
+   {
+    "n": 2,
+    "name": "Cut Down"
+   },
+   {
+    "n": 1,
+    "name": "Dreams of Steel and Oil"
+   },
+   {
+    "n": 1,
+    "name": "Sheoldred, the Apocalypse"
+   },
+   {
+    "n": 1,
+    "name": "Tear Asunder"
+   },
+   {
+    "n": 1,
+    "name": "Garruk's Uprising"
+   },
+   {
+    "n": 2,
+    "name": "Scavenging Ooze"
+   },
+   {
+    "n": 2,
+    "name": "Duress"
+   },
+   {
+    "n": 1,
+    "name": "Glissa Sunslayer"
+   },
+   {
+    "n": 2,
+    "name": "Haywire Mite"
+   },
+   {
+    "n": 1,
+    "name": "Heritage Reclamation"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "diamond-weapon: ability: This spell costs {1} less to cast for each permanent card in your graveyard.",
+   "huskburster-swarm: ability: This spell costs {1} less to cast for each creature card you own in exile and in your graveyard.",
+   "underground-mortuary: effect: Surveil 1",
+   "qarsi-revenant: cost: Renew — {2}{B}",
+   "up-the-beanstalk: trigger event: ~ enters and whenever you cast a spell with mana value 5 or greater, draw a card.",
+   "hollow-marauder: ability: This spell costs {1} less to cast for each creature card in your graveyard.",
+   "town-greeter: effect: Mill four cards",
+   "harvester-of-misery: object: other creatures",
+   "souls-of-the-lost: ability: As an additional cost to cast this spell, discard a card or sacrifice a permanent.",
+   "llanowar-wastes: object: add {B} or {G}. ~",
+   "blooming-marsh: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "wastewood-verge: effect: Add {B}",
+   "rubblebelt-maverick: effect: Surveil 2",
+   "overwhelming-remorse: effect: This spell costs {1} less to cast for each creature card in your graveyard",
+   "gnawing-vermin: effect: Target player mills two cards",
+   "seed-of-hope: effect: Mill two cards",
+   "overlord-of-the-balemurk: ability: Impending 5—{1}{B}"
+  ],
+  "tokens": []
+ },
+ "gruul-delirium-fin": {
+  "id": "gruul-delirium-fin",
+  "file": "championship-pt-fin.json",
+  "name": "Gruul Delirium",
+  "product": "Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "set": "FIN",
+  "era": "fin",
+  "released": "2025-06-20",
+  "fetched": "2026-10-06",
+  "source": "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+  "sources": [
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-a-c",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-d-g",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-h-k",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-l-n",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-o-s",
+   "https://magic.gg/decklists/pro-tour-magic-the-gathering-final-fantasy-standard-decklists-t-z",
+   "https://magic.gg/news/pro-tour-magic-the-gathering-final-fantasy-final-standings"
+  ],
+  "player": "Shintaro Ishimura",
+  "rank": 35,
+  "players": 3,
+  "registered": false,
+  "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
+  "min": 60,
+  "main": [
+   {
+    "id": "patchwork-beastie",
+    "n": 4
+   },
+   {
+    "id": "break-out",
+    "n": 4
+   },
+   {
+    "id": "bushwhack",
+    "n": 4
+   },
+   {
+    "id": "keen-eyed-curator",
+    "n": 4
+   },
+   {
+    "id": "forest",
+    "n": 7
+   },
+   {
+    "id": "mountain",
+    "n": 1
+   },
+   {
+    "id": "wildfire-wickerfolk",
+    "n": 4
+   },
+   {
+    "id": "thornspire-verge",
+    "n": 3
+   },
+   {
+    "id": "fear-of-missing-out",
+    "n": 4
+   },
+   {
+    "id": "tersa-lightshatter",
+    "n": 4
+   },
+   {
+    "id": "commercial-district",
+    "n": 2
+   },
+   {
+    "id": "violent-urge",
+    "n": 4
+   },
+   {
+    "id": "copperline-gorge",
+    "n": 4
+   },
+   {
+    "id": "seed-of-hope",
+    "n": 4
+   },
+   {
+    "id": "karplusan-forest",
+    "n": 4
+   },
+   {
+    "id": "overprotect",
+    "n": 3
+   }
+  ],
+  "side": [
+   {
+    "n": 1,
+    "name": "Scrapshooter"
+   },
+   {
+    "n": 1,
+    "name": "Pick Your Poison"
+   },
+   {
+    "n": 1,
+    "name": "Sunspine Lynx"
+   },
+   {
+    "n": 2,
+    "name": "Wrenn and Realmbreaker"
+   },
+   {
+    "n": 3,
+    "name": "Pawpatch Formation"
+   },
+   {
+    "n": 2,
+    "name": "Twinmaw Stormbrood"
+   },
+   {
+    "n": 2,
+    "name": "Pyroclasm"
+   },
+   {
+    "n": 1,
+    "name": "Soul-Guide Lantern"
+   },
+   {
+    "n": 2,
+    "name": "Lithomantic Barrage"
+   }
+  ],
+  "compiles": false,
+  "refused": [
+   "patchwork-beastie: ability: Delirium — ~ can't attack or block unless there are four or more card types among cards in your graveyard.",
+   "break-out: effect: Look at the top six cards of your library",
+   "bushwhack: effect: Choose one —",
+   "keen-eyed-curator: condition: there are four or more card types among cards exiled with ~",
+   "wildfire-wickerfolk: ability: Delirium — ~ gets +1/+1 and has trample as long as there are four or more card types among cards in your graveyard.",
+   "thornspire-verge: effect: Add {G}",
+   "fear-of-missing-out: effect: Discard a card, then draw a card",
+   "tersa-lightshatter: effect: Discard up to two cards, then draw that many cards",
+   "commercial-district: effect: Surveil 1",
+   "violent-urge: object: delirium — If there are four or more card types among cards in your graveyard, that creature",
+   "copperline-gorge: ability: ~ enters tapped unless you control two or fewer other lands.",
+   "seed-of-hope: effect: Mill two cards",
+   "karplusan-forest: object: add {R} or {G}. ~"
+  ],
+  "tokens": []
  }
 };
