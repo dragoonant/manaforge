@@ -15,7 +15,7 @@
     const w = [];
     if (f.other) w.push('other');
     if (f.notTypes) w.push('non' + f.notTypes.join('/').toLowerCase());
-    w.push(f.types ? f.types.join('/').toLowerCase() : f.subtypes ? f.subtypes.join('/') : f.tok ? 'token' : 'permanent');
+    w.push(f.subtypes ? f.subtypes.join('/') + (f.types && !f.types.includes('Creature') ? ' ' + f.types.join('/').toLowerCase() : '') : f.types ? f.types.join('/').toLowerCase() : f.tok ? 'token' : 'permanent');   // "Lizard, Mouse, Otter, or Raccoon you control"
     if (f.ctrl === 'you') w.push('you control'); if (f.ctrl === 'opp') w.push('an opponent controls');
     if (f.powLE != null) w.push('with power ' + f.powLE + ' or less');
     if (f.powGE != null) w.push('with power ' + f.powGE + ' or greater');
@@ -29,7 +29,7 @@
     return w.join(' ');
   }
   MF.describeFilter = filt;
-  let curTg = [];
+  let curTg = [], named = new Set();
   function ref(r) {
     if (r === 'self') return 'this';
     if (r === 'enchanted') return 'the enchanted creature';
@@ -39,12 +39,14 @@
     if (r === 'eachOpp') return 'each opponent';
     if (r === 'you') return 'you';
     if (r === 'evPlayer') return 'that player';
+    if (r.t != null && named.has(r.t)) return 'it [' + (r.t + 1) + ']';
+    if (r.t != null) named.add(r.t);
     if (r.t != null) { const sl = curTg[r.t] || {}; return (sl.upTo ? 'up to ' + sl.n + ' ' : '') + (sl.f && sl.f.any ? 'any target' : 'target ' + filt(sl.f)) + ' [' + (r.t + 1) + ']'; }
     if (r.each) return 'each ' + filt(r.each);
     return JSON.stringify(r);
   }
   const C = {
-    control: c => 'you control ' + (c.n > 1 ? c.n + ' or more ' : 'a ') + filt(c.f),
+    control: c => 'you control ' + (c.n > 1 ? c.n + ' or more ' + filt(c.f) : (/^[aeiou]/i.test(filt(c.f)) ? 'an ' : 'a ') + filt(c.f)),
     totalPower: c => 'creatures you control have total power ' + c.n + ' or greater',
     did: () => 'you did',
     enteredOther: () => 'another creature entered the battlefield under your control this turn',
@@ -81,7 +83,7 @@
     gain: op => 'gain ' + N(op.n) + ' life',
     lookTop: op => 'look at the top card of your library; if it is a ' + op.type.toLowerCase() + ', you may put it onto the battlefield tapped, otherwise put it into your hand',
     revealUntil: op => 'reveal from the top until a ' + op.type.toLowerCase() + '; put it onto the battlefield tapped, the rest on the bottom in a random order',
-    impulse: () => 'exile the top card of your library; you may play it until the end of your next turn',
+    impulse: op => 'exile the top card of your library; you may play it ' + (op.until === 'eot' ? 'until end of turn' : 'until the end of your next turn'),
     attach: op => 'attach this to ' + ref(op.on),
     may: op => 'you may: ' + ops(op.ops),
     if: op => 'if ' + cond(op.cond) + ': ' + ops(op.ops) + (op.else ? '; otherwise: ' + ops(op.else) : ''),
@@ -109,14 +111,15 @@
   const sgn = v => v == null ? '+0' : typeof v === 'number' ? (v >= 0 ? '+' + v : String(v)) : '+' + N(v);
   function ops(list) { return (list || []).map(op => D[op.o](op)).join('; then '); }
   const EV = { enters: 'enters', attacks: 'attacks', cast: 'you cast', dealsDamage: 'deals damage', sacrificed: 'you sacrifice it', beginStep: 'at the beginning of', dies: 'dies', dealtDamage: 'is dealt damage', targeted: 'becomes the target of a spell or ability you control for the first time each turn' };
-  function who(w) { if (w === 'self') return 'this'; if (w && w.or) return w.or.map(who).join(' or '); return 'a ' + filt(w); }
+  const art = t => (/^[aeiou]/i.test(t) ? 'an ' : 'a ') + t;
+  function who(w) { if (w === 'self') return 'this'; if (w && w.or) return w.or.map(who).join(' or '); return art(filt(w)); }
   MF.describeAbility = function (a) {
-    curTg = a.tg || [];
+    curTg = a.tg || []; named = new Set();
     switch (a.k) {
       case 'mana': return [a.cost.tap ? '{T}' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': add ' + (a.cols.length === 5 ? 'one mana of any color' : a.cols.map(c => '{' + c + '}').join(' or ')) + (a.only ? ' (spend only on a creature spell)' : '') + (a.cond ? ' — only if ' + cond(a.cond) : '') + (a.selfDamage ? '; this deals ' + a.selfDamage + ' damage to you' : '');
       case 'etbPayOrTap': return 'as this enters, you may pay ' + a.life + ' life; if you don’t, it enters tapped';
       case 'act': if (a.cycling) return 'cycling ' + a.cost.mana + ' (' + a.cost.mana + ', discard this card from your hand: draw a card)';
-        return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '');
+        return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
       case 'hexproofFrom': return 'hexproof from ' + a.types.map(x => x.toLowerCase() + 's').join(' and ');
       case 'lifeLossDouble': return 'if an opponent would lose life during your turn, they lose twice that much life instead';
       case 'gift': return 'gift a ' + a.what + ' (you may promise an opponent a gift as you cast this; if you do, they draw a card before its other effects)';

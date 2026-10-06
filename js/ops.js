@@ -54,7 +54,7 @@
   // -------------------------------------------------------------------------------------------
   const CONDS = {
     control: (x, c, table) => countMine(x.s, x.ctrl, c.f, x.src, table) >= (c.n || 1),
-    totalPower: x => x.s.bf.filter(i => I(x.s, i).ctrl === x.ctrl && MF.isType(x.s, i, 'Creature')).reduce((a, i) => a + Math.max(0, MF.chars(x.s, i).p), 0) >= x.c.n,
+    totalPower: x => x.s.bf.filter(i => I(x.s, i).ctrl === x.ctrl && MF.isType(x.s, i, 'Creature')).reduce((a, i) => a + MF.chars(x.s, i).p, 0) >= x.c.n,   // CR 107.1b: negative power counts as negative
     did: x => !!x.flags.did,
     enteredOther: x => (P(x.s, x.ctrl).h.enteredIids || []).some(i => i !== x.src),
     offspringPaid: x => { const c = I(x.s, x.src); return !!(c && c.offspringPaid); },
@@ -207,8 +207,9 @@
       for (const i of MF.resolveRefs(x, op.on)) {
         const c = I(x.s, i), n = c.ctr[op.kind] || 0;
         if (!n) continue;
-        c.ctr[op.kind] = 2 * n;
+        c.ctr[op.kind] = 2 * n;                                                                    // its ruling: that many more are put on it
         log(x.s, 'counter', { who: c.ctrl, c: c.id, n: n, kind: op.kind, src: x.L.srcId });
+        MF.emit(x.s, { t: 'counterPut', iid: i, n: n, kind: op.kind });
       }
     },
     tap(x, op) { for (const i of MF.resolveRefs(x, op.on)) { const c = I(x.s, i); if (!c.tapped) { c.tapped = true; log(x.s, 'tapped', { who: c.ctrl, c: c.id }); } } },
@@ -354,7 +355,8 @@
       if (!look.length) return;
       const opts = look.filter(i => MF.def(s, i).types.includes(op.type)).map(i => ({ id: i, iid: i }));
       opts.push({ id: 'none' });
-      const pick = MF.ask(x.x, { who: x.ctrl, kind: 'dig', src: x.src, n: look.length, type: op.type, look: look, opts: opts });
+      // Nothing of the type among them: looking is not a choice (CLAUDE.md rule 11); the look is logged, shown only to its player.
+      const pick = opts.length > 1 ? MF.ask(x.x, { who: x.ctrl, kind: 'dig', src: x.src, n: look.length, type: op.type, look: look, opts: opts }) : (log(s, 'lookedAt', { who: x.ctrl, cs: look.map(i => I(s, i).id), type: op.type }), 'none');
       const rest = look.filter(i => i !== pick);
       if (pick !== 'none') {
         const d = MF.def(s, pick);
@@ -436,7 +438,7 @@
       if (d.types.includes(op.type)) {
         const a = MF.ask(x.x, { who: x.ctrl, kind: 'lookTop', src: x.src, opts: [{ id: 'yes', iid: top }, { id: 'no', iid: top }] });
         if (a === 'yes') { log(s, 'putOnto', { who: x.ctrl, c: d.id, tapped: true, from: 'library' }); MF.move(s, top, 'bf', { ctrl: x.ctrl, tapped: true, x: x.x }); }
-        else log(s, 'lookedKept', { who: x.ctrl });
+        else { log(s, 'toHand', { who: x.ctrl, c: d.id, revealed: false, from: 'library' }); MF.move(s, top, 'hand'); }   // "Otherwise, put it into your hand" covers a land not put onto the battlefield (its ruling)
       } else { log(s, 'toHand', { who: x.ctrl, c: d.id, revealed: false, from: 'library' }); MF.move(s, top, 'hand'); }
     },
     // Clifftop Lookout: "reveal cards from the top of your library until you reveal a land card.
@@ -467,6 +469,7 @@
     attach(x, op) {                                                                            // CR 701.3, 702.6a
       const src = I(x.s, x.src), to = MF.resolveRefs(x, op.on)[0];
       if (!src || src.zone !== 'bf' || to == null) return;
+      if (src.att === to) return;                                                                // CR 701.3b: attaching to what it is already attached to does nothing
       src.att = to; src.ts = x.s.ts++;                                                          // CR 613.7e
       log(x.s, 'attach', { who: x.ctrl, c: src.id, to: I(x.s, to).id });
     },
@@ -511,20 +514,34 @@
     },
     // Alania: "copy that spell. You may choose new targets for the copy." (CR 707.10, 707.10c)
     copySpell(x, op) {
-      const s = x.s, L0 = s.stack.find(L => L.lid === x.ev.lid);
-      if (!L0) { log(s, 'copyGone', { who: x.ctrl }); return; }                               // the spell has left the stack: there is nothing to copy (CR 707.10: last known information is not used for a copy of a spell that is gone in this engine — see DEVIATIONS)
-      const c0 = I(s, L0.iid), iid = s.nid++;
-      s.cards[iid] = { iid: iid, id: c0.id, owner: x.ctrl, ctrl: x.ctrl, zone: 'stack', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, copySpell: true };
-      const L = { lid: s.lid++, kind: 'spell', ctrl: x.ctrl, iid: iid, id: c0.id, t: JSON.parse(JSON.stringify(L0.t)), x: L0.x, mode: L0.mode, copy: true, spent: 0, from: 'copy' };   // CR 707.10: the copy has the same mode
-      if (L0.gift != null) L.gift = L0.gift;                                                   // a copy's gift was promised too (Gift rulings)
-      const d = MF.cards[c0.id], sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
+      // The spell on the stack, or — if it has left — the spell as it last existed there (Alania's
+      // rulings: the copy is made even if the original was countered before her ability resolved).
+      const s = x.s, live = s.stack.find(L => L.lid === x.ev.lid);
+      const L0 = live ? { id: live.id, t: live.t, x: live.x, mode: live.mode, alt: live.alt, door: live.door, kicked: live.kicked, offspring: live.offspring, gift: live.gift } : x.ev.spell;
+      if (!L0) throw new Error('copySpell: the cast event carries no spell');
+      const iid = s.nid++;
+      s.cards[iid] = { iid: iid, id: L0.id, owner: x.ctrl, ctrl: x.ctrl, zone: 'stack', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, copySpell: true };
+      if (L0.alt) s.cards[iid].asAlt = true;
+      if (L0.door != null) s.cards[iid].asDoor = L0.door;
+      // CR 707.10: the copy has the same mode, X and targets; effects of additional costs paid for the original are copied (its ruling): kicker, offspring, gift.
+      const L = { lid: s.lid++, kind: 'spell', ctrl: x.ctrl, iid: iid, id: L0.id, t: JSON.parse(JSON.stringify(L0.t)), x: L0.x, mode: L0.mode, copy: true, spent: 0, from: 'copy', alt: L0.alt || null, kicked: !!L0.kicked, offspring: !!L0.offspring };
+      if (L0.door != null) L.door = L0.door;
+      if (L0.gift != null) L.gift = L0.gift;
+      const d = MF.faceDef(s, iid, !!L0.alt, L0.door), sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
       const slots = sp && sp.modes ? (sp.modes[L0.mode].tg || []) : sp && sp.tg ? sp.tg : aura ? [{ f: aura.f }] : [];
-      if (slots.length) {
-        const a = MF.ask(x.x, { who: x.ctrl, kind: 'newTargets', src: iid, opts: [{ id: 'keep' }, { id: 'new' }] });
-        if (a === 'new') L.t = MF.chooseTargets(x.x, x.ctrl, iid, slots, 'copy', false);
-      }
+      // CR 707.10c: new targets may be chosen for each target; one with no legal new choice stays unchanged (its ruling), even if illegal.
+      slots.forEach((slot, si) => {
+        const alone = Object.assign({}, slot); delete alone.diff;
+        if (!MF.targetOptions(s, alone, x.ctrl, iid, []).length) return;
+        const a = MF.ask(x.x, { who: x.ctrl, kind: 'newTargets', src: iid, slot: si, slots: slots.length, opts: [{ id: 'keep' }, { id: 'new' }] });
+        if (a !== 'new') return;
+        let pick;
+        try { pick = MF.chooseTargets(x.x, x.ctrl, iid, [alone], 'copy', false)[0]; } catch (e) { if (e instanceof MF.Illegal) return; throw e; }
+        if (slot.diff != null && pick.some(r => (L.t[slot.diff] || []).some(q => q.p === r.p && q.c === r.c))) return;   // "any other target": the change would not be legal; it stays
+        L.t[si] = pick;
+      });
       s.stack.push(L);
-      log(s, 'copy', { who: x.ctrl, c: c0.id, tg: L.t.map(sl => sl.map(r => MF.refLabel(s, r))) });
+      log(s, 'copy', { who: x.ctrl, c: L0.id, gone: !live, tg: L.t.map(sl => sl.map(r => MF.refLabel(s, r))) });
     },
   };
   // CR 702.174e: "Gift a card" — the chosen player draws a card.

@@ -241,6 +241,10 @@
       if (ex.kw) for (const k of ex.kw) kw[k] = (kw[k] || 0) + 1;
       if (ex.pt) { p = ex.pt[0]; t = ex.pt[1]; }
     }
+    if (c.zone !== 'bf') for (const a of ab) if (a.k === 'cda') {                             // CR 604.3: a characteristic-defining ability works in every zone (on the battlefield, layer 7a does it)
+      const v = MF.vals[a.v.v]({ s: s, ctrl: c.ctrl, src: iid }, a.v, null);
+      if (a.p) p = v; if (a.t) t = v;
+    }
     return { iid: iid, name: name, types: types, subtypes: subtypes, supers: supers, colors: colors, p: p, t: t, ab: ab, kw: kw, mana: mana, mv: MF.manaValue(MF.parseMana(mana)), ctrl: c.ctrl, owner: c.owner, tok: !!c.tok };   // CR 709.4b: a split card's mana value is that of its combined costs
   }
   function computeBF(s) {
@@ -314,7 +318,8 @@
     } else {
       const c = I(s, o.to.c);
       c.dmg += n;                                                                            // CR 120.3e
-      emit(s, { t: 'dealtDamage', iid: o.to.c, n: n, src: sc.iid });                          // "whenever this creature is dealt damage"
+      if (o.batch) o.batch[o.to.c] = (o.batch[o.to.c] || 0) + n;                               // combat damage is one event (CR 510.2): emitted once per creature by combatDamage
+      else emit(s, { t: 'dealtDamage', iid: o.to.c, n: n, src: sc.iid });                     // "whenever this creature is dealt damage"
       if (sc.kw.deathtouch) c.dt = true;                                                     // CR 702.2b
       log(s, 'damageCreature', { who: c.ctrl, n: n, src: sc.name, srcId: sc.id, c: c.id, combat: !!o.combat });
     }
@@ -349,6 +354,7 @@
         if (a.k !== 'trig' || a.on !== ev.t) continue;
         if (!!a.lookBack !== !!lki) continue;                                                 // CR 603.10a: leaves-the-battlefield triggers look back in time
         if (!MF.trigMatch(s, iid, src, a, ev)) continue;
+        if (a.cond && !MF.cond(ctxFor(s, { kind: 'trig', ctrl: src.ctrl, src: iid, ev: ev, lki: lki || null, t: [] }), a.cond)) continue;   // CR 603.4: an intervening "if" is checked as the event happens
         s.trigs.push({ src: iid, ab: i, ctrl: src.ctrl, ev: ev, lki: lki || null });
       }
       if (ev.t === 'cast' && !lki && src.kw && src.kw.prowess && ev.ctrl === src.ctrl && !ev.types.includes('Creature') && src.types.includes('Creature')) {
@@ -395,20 +401,23 @@
     const pips = []; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) for (let i = 0; i < rem[k]; i++) pips.push(k);
     // Fewest-colour sources first: they are the least useful to keep.
     const order = srcs.slice().sort((a, b) => a.cols.length - b.cols.length);
-    const used = new Array(order.length).fill(false), taps = [];
+    // A permanent taps once (CR 106.1, 605): a land with two mana abilities is one source, so
+    // "used" is kept per permanent, not per ability.
+    const usedIid = new Set(), taps = [];
     function fill(pi) {
       if (pi === pips.length) {
-        const free = order.map((o, i) => i).filter(i => !used[i]);
+        const free = [], seen = new Set();
+        for (const o of order) if (!usedIid.has(o.iid) && !seen.has(o.iid)) { seen.add(o.iid); free.push(o); }
         if (free.length < g0) return false;
-        for (let k = 0; k < g0; k++) taps.push({ iid: order[free[k]].iid, ab: order[free[k]].ab, col: order[free[k]].cols[0] });
+        for (let k = 0; k < g0; k++) taps.push({ iid: free[k].iid, ab: free[k].ab, col: free[k].cols[0] });
         return true;
       }
       const col = pips[pi];
       for (let i = 0; i < order.length; i++) {
-        if (used[i] || !order[i].cols.includes(col)) continue;
-        used[i] = true; taps.push({ iid: order[i].iid, ab: order[i].ab, col: col });
+        if (usedIid.has(order[i].iid) || !order[i].cols.includes(col)) continue;
+        usedIid.add(order[i].iid); taps.push({ iid: order[i].iid, ab: order[i].ab, col: col });
         if (fill(pi + 1)) return true;
-        used[i] = false; taps.pop();
+        usedIid.delete(order[i].iid); taps.pop();
       }
       return false;
     }
@@ -419,7 +428,7 @@
   const usablePool = (p, ctx) => { if (ctx && ctx.creature) return Object.assign({}, p.pool); const u = {}; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) u[k] = p.pool[k] - ((p.poolCre && p.poolCre[k]) || 0); return u; };
   const canPayMana = MF.canPayMana = (s, who, need, ctx) => !!solve(usablePool(P(s, who), ctx), manaSources(s, who, ctx), need);
   // How much mana a player could make right now: pool plus untapped sources (for the X question).
-  MF.manaAvailable = (s, who, ctx) => poolTotal(usablePool(P(s, who), ctx)) + manaSources(s, who, ctx).length;
+  MF.manaAvailable = (s, who, ctx) => poolTotal(usablePool(P(s, who), ctx)) + new Set(manaSources(s, who, ctx).map(m => m.iid)).size;   // one mana per permanent
 
   function activateMana(s, who, iid, abIdx, col) {
     const c = I(s, iid), a = chars(s, iid).ab[abIdx];
@@ -739,7 +748,9 @@
     if (first) { cb.fsDone = true; for (const a of cb.attackers.concat(Object.keys(cb.blocks).map(Number))) if (strikes(a)) cb.dealtFirst.push(a); }
     // CR 510.2: dealt simultaneously. Each source's characteristics are read now, before any of it is dealt.
     const srcChars = {}; for (const as of assigns) srcChars[as.src] = Object.assign({ id: I(s, as.src).id }, chars(s, as.src));
-    for (const as of assigns) dealDamage(s, { srcChars: srcChars[as.src], to: as.to, n: as.n, combat: true });
+    const batch = {};
+    for (const as of assigns) dealDamage(s, { srcChars: srcChars[as.src], to: as.to, n: as.n, combat: true, batch: batch });
+    for (const k in batch) emit(s, { t: 'dealtDamage', iid: +k, n: batch[k], combat: true });   // Screaming Nemesis: one trigger for the total (its ruling, CR 603.2c)
     setPriority(s, s.ap);                                                                     // CR 510.3
   });
   // Lethal damage for assignment (CR 702.19b, 702.2c): toughness minus damage already marked
@@ -854,7 +865,6 @@
       for (const t of order) {
         const ab = trigAbility(s, t);
         const L = { lid: s.lid++, kind: 'trig', ctrl: t.ctrl, src: t.src, ab: t.ab, inl: t.inl || null, ev: t.ev, lki: t.lki, srcId: t.lki ? t.lki.id : I(s, t.src).id, t: [] };
-        if (ab.cond && !MF.cond(ctxFor(s, L), ab.cond)) { continue; }                          // CR 603.4: an intervening "if" checked as it triggers
         if (ab.tg && ab.tg.length) {
           try { L.t = chooseTargets(x, t.ctrl, t.src, ab.tg, 'trig', false); }
           catch (e) { if (e instanceof Illegal) { log(s, 'trigNoTarget', { who: t.ctrl, c: L.srcId }); continue; } throw e; }   // CR 603.3d
@@ -872,7 +882,9 @@
     return src[t.ab];
   }
   MF.trigAbility = trigAbility;
-  function trigKey(s, t) { return (t.lki ? t.lki.id : I(s, t.src).id) + '#' + t.ab + '#' + (t.inl ? (typeof t.inl === 'string' ? t.inl : JSON.stringify(t.inl)) : '') + '#' + JSON.stringify(t.ev.iid != null && t.ev.iid !== t.src ? t.ev.iid : null); }
+  function trigKey(s, t) { return (t.lki ? t.lki.id : I(s, t.src).id) + '#' + t.ab + '#' + (t.inl ? (typeof t.inl === 'string' ? t.inl : JSON.stringify(t.inl)) : '') + '#' + JSON.stringify(t.ev.iid != null && t.ev.iid !== t.src ? evLook(s, t.ev.iid) : null); }
+  // The event's object as a player can tell it apart: identical new tokens are indistinguishable (CLAUDE.md rule 11).
+  function evLook(s, iid) { const c = s.cards[iid]; return c ? [c.id, !!c.tok, c.ctrl, c.tapped, c.ctr, c.copy || null] : iid; }
   function trigLabelData(s, t) { return { src: t.lki ? t.lki.id : I(s, t.src).id, ab: t.ab, inl: typeof t.inl === 'string' ? t.inl : null, ev: t.ev.t }; }
   const refLabel = MF.refLabel = (s, r) => r.p != null ? { p: r.p } : { c: I(s, r.c).id, iid: r.c };
 
@@ -1094,7 +1106,9 @@
     const ctx = { creature: d.types.includes('Creature') };                                   // what the mana is spent on (CR 106.6)
     const costRaw = MF.parseMana(d.mana);
     if (costRaw.x) {                                                                           // CR 601.2b, 107.3a: X is announced
-      const max = Math.max(0, MF.manaAvailable(s, who, ctx) - MF.manaValue(spellCost(s, who, iid, { x: 0, anyMana: anyMana })));
+      // The largest X whose total cost (reductions included, CR 601.2f) the player could pay.
+      const avail = MF.manaAvailable(s, who, ctx);
+      let max = 0; while (max < 99 && MF.manaValue(spellCost(s, who, iid, { x: max + 1, anyMana: anyMana })) <= avail) max++;
       const opts = []; for (let n = 0; n <= max; n++) opts.push({ id: n });
       L.x = ask(x, { who: who, kind: 'x', src: iid, opts: opts, cancel: true });
     }
@@ -1136,7 +1150,9 @@
     (p.h.castList = p.h.castList || []).push({ lid: L.lid, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice() });   // turn history: "the first instant spell ... you've cast this turn"
     L.nth = { cast: p.h.cast, instant: ch.types.includes('Instant') ? p.h.castInstant : 0, sorcery: ch.types.includes('Sorcery') ? p.h.castSorcery : 0, otter: ch.subtypes.includes('Otter') ? p.h.castOtter : 0 };
     log(s, 'cast', { who: who, c: card.id, face: alt || door != null ? d.name : null, alt: alt ? d.kind : door != null ? 'door' : null, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring, kicked: !!L.kicked, gift: L.gift != null });
-    emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid });   // CR 601.2i
+    // The spell as cast travels with the event: a copy made after it has left the stack is made from it as it last existed (Alania's rulings, CR 707.10).
+    const spell = { id: card.id, t: JSON.parse(JSON.stringify(L.t)), x: L.x, mode: L.mode, alt: L.alt, door: L.door, kicked: !!L.kicked, offspring: !!L.offspring, gift: L.gift };
+    emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid, spell: spell });   // CR 601.2i
     emitTargeted(s, L.t, who);
     setPriority(s, who);                                                                      // CR 117.3c
   });
@@ -1261,6 +1277,7 @@
   // The loop. CR 117.5 / 704.3: each time a player would receive priority, state-based actions
   // are performed until none apply, then triggered abilities go on the stack, then priority.
   // -------------------------------------------------------------------------------------------
+  const PLAYER_ACTS = { cast: 1, act: 1, land: 1, unlock: 1, manaAb: 1 };
   function run(s) {
     for (let guard = 0; guard < 2000; guard++) {
       if (s.winner != null) { s.pending = null; s.priority = null; s.todo = []; return freeze(s); }
@@ -1272,7 +1289,8 @@
         try { EXEC[inv.t](x); s = c; }
         catch (e) {
           if (e instanceof Ask) { s.pending = { q: e.ask }; c.log = c.log.slice(); Object.defineProperty(s.pending, 'view', { value: freeze(c), enumerable: false }); return freeze(s); }
-          if (e instanceof Illegal) { s.todo.shift(); log(s, 'undone', { who: inv.who, why: e.illegal }); continue; }   // CR 733.1: the action is reversed
+          if (e instanceof Illegal && PLAYER_ACTS[inv.t]) { s.todo.shift(); log(s, 'undone', { who: inv.who, why: e.illegal }); continue; }   // CR 733.1: the action is reversed
+          if (e instanceof Illegal) throw new Error('an illegal step inside ' + inv.t + ' (only a player\'s action can be reversed): ' + e.illegal);
           throw e;
         }
         continue;

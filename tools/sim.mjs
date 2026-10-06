@@ -30,7 +30,7 @@ const pick = s => {
   // A sim policy never picks cancel or undo: those loop.
   const ok = legal.filter(l => l.type !== 'cancel' && l.id !== 'undo');
   const np = ok.filter(l => l.type !== 'pass' && l.id !== 'done' && l.id !== 'no');
-  return (np.length && rnd(3) > 0) ? np[rnd(np.length)] : ok.find(l => l.type === 'pass' || l.id === 'done') || ok[rnd(ok.length)];
+  return (np.length && rnd(3) > 0) ? np[rnd(np.length)] : ok.find(l => l.type === 'pass' || l.id === 'done') || ok[rnd(ok.length)] || legal[0];   // only "undo" is legal (a lone blocker on a menace attacker)
 };
 const t0 = Date.now(); const wins = {}; let steps = 0, turns = 0, capped = 0;
 for (let g = 0; g < games; g++) {

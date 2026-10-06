@@ -109,6 +109,10 @@
     for (const o of q.opts) {
       if (o.iid == null) continue;
       const b = MF.chars(s, o.iid), a = MF.chars(s, o.att);
+      if (a.kw.menace) {                                                                       // CR 702.111b: only worth starting if a second blocker can join
+        const others = q.opts.filter(x => x.att === o.att && x.iid !== o.iid).length + Object.values(q.assign).filter(t => t === o.att).length;
+        if (others < 1) continue;
+      }
       const dies = a.p >= b.t || (a.kw.deathtouch && a.p > 0), kills = b.p >= a.t || (b.kw.deathtouch && b.p > 0);
       let v = 0;
       if (!dies && kills) v = 6 + permValue(s, o.att);
@@ -119,7 +123,9 @@
       if (v > bs) { bs = v; best = o.id; }
     }
     if (best) return best;
-    return q.opts.some(o => o.id === 'done') ? 'done' : q.opts.find(o => o.id !== 'undo').id;
+    if (q.opts.some(o => o.id === 'done')) return 'done';
+    const any = q.opts.find(o => o.id !== 'undo');
+    return any ? any.id : 'undo';                                                              // a lone blocker on a menace attacker: take it back
   }
   function policyAnswer(s0, q) {
     const me = q.who, s = MF.view(s0);

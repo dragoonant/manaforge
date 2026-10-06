@@ -74,7 +74,7 @@
         if (q.kind === 'pay' && o.iid != null) { add(o.iid, a, 'Tap for ' + MF.COLOR_NAME[o.col] + ' mana'); continue; }
         if (o.seat != null) { add('p' + o.seat, a, prompt.labels[o.id] || 'Choose'); btns.push({ a: a, label: prompt.labels[o.id] || 'Choose', cls: '' }); continue; }
         if (o.iid != null) {
-          const label = prompt.labels[o.id] || (q.kind === 'scry' ? (o.id === 'top' ? 'Keep on top' : 'Put on the bottom') : q.kind === 'lookTop' ? (o.id === 'yes' ? 'Put it onto the battlefield tapped' : 'Leave it on top') : q.kind === 'attack' ? 'Attack with this' : q.kind === 'target' ? 'Target this' : q.kind === 'trigOrder' ? 'Put this on the stack next' : q.kind === 'bottom' ? 'Put on the bottom' : (q.kind === 'discard' || q.kind === 'discardHand') ? 'Discard this' : 'Choose');
+          const label = prompt.labels[o.id] || (q.kind === 'scry' ? (o.id === 'top' ? 'Keep on top' : 'Put on the bottom') : q.kind === 'lookTop' ? (o.id === 'yes' ? 'Put it onto the battlefield tapped' : 'Put it into my hand') : q.kind === 'attack' ? 'Attack with this' : q.kind === 'target' ? 'Target this' : q.kind === 'trigOrder' ? 'Put this on the stack next' : q.kind === 'bottom' ? 'Put on the bottom' : (q.kind === 'discard' || q.kind === 'discardHand') ? 'Discard this' : 'Choose');
           add(o.iid, a, label);
           const c = v.cards[o.iid];
           const onBoard = c && (c.zone === 'bf' || (c.zone === 'hand' && c.owner === ui.human));

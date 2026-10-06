@@ -53,6 +53,7 @@
     surveil: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'surveil', 'surveils')} ${e.n}: ${e.top} kept on top${e.grave.length ? ', ' + list(e.grave) + ' to the graveyard' : ''}.`,
     searchNothing: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'search', 'searches')} and ${V(e.who, v, 'find', 'finds')} nothing to take.`,
     untapped: (e) => `${tag(e.c)} untaps.`,
+    lookedAt: (e, v) => e.who === v ? `You look at ${list(e.cs)} — no ${e.type.toLowerCase()} card among them.` : `The opponent looks at the top ${plural(e.cs.length, 'card')} of their library and reveals no ${e.type.toLowerCase()} card.`,
     mill: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'mill', 'mills')} ${list(e.cs)}.`,
     extraCombatAdded: (e, v) => `There will be an additional combat phase after this one.`,
     extraCombat: (e, v) => `<span class="turnline">Additional combat phase</span>`,
@@ -95,14 +96,12 @@
     tokenCopy: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'create', 'creates')} a 1/1 token copy of ${tag(e.c)}.`,
     noSource: () => `<span class="notice">The damage source is gone; no damage is dealt.</span>`,
     putOnto: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${tag(e.c)} onto the battlefield${e.tapped ? ' tapped' : ''} from the ${e.from}${e.ctr ? ' with ' + Object.entries(e.ctr).map(([k, n]) => n + ' ' + k + ' counter' + (n === 1 ? '' : 's')).join(', ') : ''}.`,
-    lookedKept: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'leave', 'leaves')} the top card where it is.`,
     toHand: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${e.who === v || e.revealed ? tag(e.c) : 'the card'} into ${T.whose(e.who, v)} hand.`,
     reveal: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'reveal', 'reveals')} ${list(e.cs)}.`,
     toBottom: (e, v) => `${plural(e.n, 'card')} ${e.n === 1 ? 'goes' : 'go'} to the bottom of ${T.whose(e.who, v)} library${e.random ? ' in a random order' : ''}.`,
     impulse: (e, v) => e.from === 'graveyard' ? `${W(e.who, v)} ${V(e.who, v, 'exile', 'exiles')} ${tag(e.c)} at random from the graveyard and may play it this turn.` : `${W(e.who, v)} ${V(e.who, v, 'exile', 'exiles')} ${tag(e.c)} from the top of the library and may play it ${e.until === e.turn ? 'this turn' : 'until the end of ' + (e.who === v ? 'your' : 'their') + ' next turn'}.`,
     attach: (e) => `${tag(e.c)} is attached to ${tag(e.to)}.`,
-    copy: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'copy', 'copies')} ${tag(e.c)}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
-    copyGone: () => `<span class="notice">The spell to copy has left the stack; nothing is copied.</span>`,
+    copy: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'copy', 'copies')} ${tag(e.c)}${e.gone ? ' (as it last existed on the stack)' : ''}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
     enterAsCopy: (e) => `${tag(e.c)} enters as a copy of ${tag(e.of)}.`,
   };
   T.lines = LINES;
@@ -155,13 +154,13 @@
     offspring: (s, q) => ({ title: `Pay offspring ${symbols(q.cost)} for ${C(s, q.src)}?`, body: 'If you pay it, when this creature enters you create a 1/1 token copy of it.', labels: { yes: 'Pay offspring ' + q.cost.replace(/[{}]/g, ''), no: 'Don’t pay it' } }),
     scry: (s, q) => ({ title: `Scry ${q.n}: card ${q.k} of ${q.n}`, body: 'Only you see these. Put the card shown on the top or the bottom of your library.', labels: { top: 'Keep it on top', bottom: 'Put it on the bottom' } }),
     scryOrder: (s, q) => ({ title: `Order the cards going to the ${q.where}`, body: q.where === 'top' ? 'Click the card you will draw first.' : 'Click the card that goes deepest first.', labels: {} }),
-    lookTop: (s, q) => ({ title: `${C(s, q.src)}: the top card is a land`, body: 'You may put it onto the battlefield tapped. If you don’t, it stays on top of your library.', labels: { yes: 'Put it onto the battlefield tapped', no: 'Leave it on top' } }),
+    lookTop: (s, q) => ({ title: `${C(s, q.src)}: the top card is a land`, body: 'You may put it onto the battlefield tapped. If you don’t, it goes into your hand.', labels: { yes: 'Put it onto the battlefield tapped', no: 'Put it into my hand' } }),
     may: (s, q) => q.what === 'oppDrawCopy'
       ? ({ title: `${C(s, q.src)}: copy that spell?`, body: 'If you let the opponent draw a card, you copy the spell, and may choose new targets for the copy.', labels: { yes: 'Opponent draws a card — copy it', no: 'Don’t copy' } })
       : q.what === 'mill' ? ({ title: `${C(s, q.src)}: mill a card?`, body: `You may put the top card of your library into your graveyard.${oracle(s, q.src)}`, labels: { yes: 'Mill the top card', no: 'Don’t mill' } })
       : q.what === 'digOnto' ? ({ title: `Put ${tag(q.c)} onto the battlefield?`, body: 'Its mana value is low enough: it may go onto the battlefield and gain haste until end of turn. Otherwise it goes into your hand.', labels: { yes: 'Onto the battlefield, with haste', no: 'Into my hand' } })
       : ({ title: `${C(s, q.src)}`, body: oracle(s, q.src), labels: { yes: 'Yes', no: 'No' } }),
-    newTargets: (s, q) => ({ title: `Choose new targets for the copy of ${C(s, q.src)}?`, body: 'You may keep the original targets or choose new ones (CR 707.10c).', labels: { keep: 'Keep the same targets', new: 'Choose new targets' } }),
+    newTargets: (s, q) => ({ title: `Change ${q.slots > 1 ? 'target ' + (q.slot + 1) + ' of ' + q.slots : 'the target'} of the copy of ${C(s, q.src)}?`, body: 'You may keep the original target or choose a new one (CR 707.10c). A target with no legal new choice stays as it is.', labels: { keep: 'Keep this target', new: 'Choose a new target' } }),
     enterAsCopy: (s, q) => ({ title: `${C(s, q.src)}: enter as a copy?`, body: `It may enter as a copy of a creature with mana value ${q.spent} or less (the mana spent to cast it), and it is also a Bird with flying. Click a glowing creature, or decline.`, labels: { no: 'Enter as itself' } }),
   };
   const poolStr = p => p ? ['W', 'U', 'B', 'R', 'G', 'C'].map(k => sym(k).repeat(p[k] || 0)).join('') : '';
