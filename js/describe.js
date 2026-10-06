@@ -49,6 +49,10 @@
     kicked: () => 'this spell was kicked',
     graveCount: c => 'there are ' + c.n + ' or more cards in your graveyard',
     oppLostLife: () => 'an opponent lost life this turn',
+    controlAtMost: c => 'you control ' + (c.n === 2 ? 'two' : c.n) + ' or fewer ' + filt(c.f) + 's',
+    earlyTurn: c => 'it is your first, second, or third turn of the game',
+    enteredThisTurn: () => 'this land entered this turn',
+    any: c => c.of.map(cond).join(' or '),
   };
   const cond = c => (C[c.c] ? C[c.c](c) : c.c);
   MF.describeCond = cond;
@@ -79,6 +83,9 @@
     discardUpTo: op => 'discard up to ' + op.n + ' cards, then draw that many',
     graveImpulse: () => 'exile a card at random from your graveyard; you may play it this turn',
     noLifeGain: op => 'a player dealt damage this way can’t gain life for the rest of the game',
+    surveil: op => 'surveil ' + N(op.n),
+    searchBasic: op => 'search your library for a basic land card, put it onto the battlefield' + (op.tapped ? ' tapped' : '') + ', then shuffle',
+    untapIt: () => 'untap that land',
   };
   const sgn = v => v == null ? '+0' : typeof v === 'number' ? (v >= 0 ? '+' + v : String(v)) : '+' + N(v);
   function ops(list) { return (list || []).map(op => D[op.o](op)).join('; then '); }
@@ -87,7 +94,8 @@
   MF.describeAbility = function (a) {
     curTg = a.tg || [];
     switch (a.k) {
-      case 'mana': return (a.cost.tap ? '{T}' : '') + ': add ' + a.cols.map(c => '{' + c + '}').join(' or ');
+      case 'mana': return [a.cost.tap ? '{T}' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': add ' + (a.cols.length === 5 ? 'one mana of any color' : a.cols.map(c => '{' + c + '}').join(' or ')) + (a.only ? ' (spend only on a creature spell)' : '') + (a.cond ? ' — only if ' + cond(a.cond) : '') + (a.selfDamage ? '; this deals ' + a.selfDamage + ' damage to you' : '');
+      case 'etbPayOrTap': return 'as this enters, you may pay ' + a.life + ' life; if you don’t, it enters tapped';
       case 'act': return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '');
       case 'trig': {
         let e;
@@ -102,7 +110,7 @@
       case 'static': return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + (typeof a.affects === 'string' ? (a.affects === 'self' ? 'this' : 'the ' + a.affects + ' creature') : 'each ' + filt(a.affects)) + (a.p || a.t ? ' gets ' + sgn(a.p) + '/' + sgn(a.t) : '') + (a.grant ? ' has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
       case 'cda': return 'power and toughness each equal ' + N(a.v);
       case 'noUntap': return 'the enchanted creature doesn’t untap during its controller’s untap step';
-      case 'etbTapped': return 'enters tapped';
+      case 'etbTapped': return 'enters tapped' + (a.unless ? ' unless ' + cond(a.unless) : '');
       case 'enchant': return 'enchant ' + filt(a.f);
       case 'costLess': return 'costs {' + a.n + '} less if ' + cond(a.cond);
       case 'costLessFor': return a.spell.types.join(' and ').toLowerCase() + ' spells you cast cost {' + a.n + '} less';

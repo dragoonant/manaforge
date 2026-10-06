@@ -136,6 +136,9 @@
       case 'x': return q.opts[q.opts.length - 1].id;
       case 'offspring': case 'kicker': return 'yes';
       case 'chooseKw': return q.opts[0].id;
+      case 'payLifeOrTap': return P(s, me).life > 8 ? 'pay' : 'tapped';
+      case 'surveil': { const lands = s.bf.filter(i => I(s, i).ctrl === me && MF.isType(s, i, 'Land')).length; const land = MF.def(s, q.opts[0].iid).types.includes('Land'); return land && lands >= 5 ? 'grave' : 'top'; }
+      case 'search': return q.opts[0].id;
       case 'discardUpTo': return 'done';
       case 'trigOrder': return q.opts[0].id;
       case 'legend': return q.opts[0].id;

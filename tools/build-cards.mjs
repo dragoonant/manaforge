@@ -34,6 +34,7 @@ export function parseFilter(str) {
   let s = str.trim(); const f = {};
   let m;
   if ((m = s.match(/^(another|other) (.*)$/))) { f.other = true; s = m[2]; }
+  if ((m = s.match(/^basic (.*)$/))) { f.supers = ['Basic']; s = m[1]; }                                // CR 205.4a
   if ((m = s.match(/^non(land|creature|artifact) (.*)$/))) { f.notTypes = [m[1][0].toUpperCase() + m[1].slice(1)]; s = m[2]; }
   if ((m = s.match(/^(creature|creatures|land|lands|artifact|enchantment|permanent|permanents)\b ?(.*)$/))) { if (NOUN[m[1]]) f.types = NOUN[m[1]]; s = m[2]; }
   else if ((m = s.match(/^([A-Z][a-z]+(?:-[a-z]+)?)\b ?(.*)$/))) { f.subtypes = [m[1].replace(/(?<=[^s])s$/, '').replace(/ves$/, 'f')]; s = m[2]; }   // a creature type, singular or plural ("Mouse", "Lizards", "Elves")
@@ -100,6 +101,11 @@ function parseValueWhere(w) {
 }
 export function parseCond(str, ctx) {
   const c = str.trim(); let m;
+  if ((m = c.match(/^you control an? (\w+) or an? (\w+)$/))) return { c: 'control', f: { subtypes: [m[1], m[2]] }, n: 1 };   // "a Swamp or a Mountain" (land types, CR 205.3i)
+  if (c === 'you control two or fewer other lands') return { c: 'controlAtMost', f: { types: ['Land'], other: true }, n: 2 };
+  if (c === "it's your first, second, or third turn of the game") return { c: 'earlyTurn', n: 3 };
+  if (c === '~ entered this turn or if you control a basic land') return { c: 'any', of: [{ c: 'enteredThisTurn' }, { c: 'control', f: { supers: ['Basic'], types: ['Land'] }, n: 1 }] };
+  if ((m = c.match(/^you control (four|five|six|seven) or more lands$/))) return { c: 'control', f: { types: ['Land'] }, n: numOf(m[1]) };
   if ((m = c.match(/^you control (a|an|ten or more|two or more) (.+)$/))) { const n = m[1] === 'ten or more' ? 10 : m[1] === 'two or more' ? 2 : 1; return { c: 'control', f: parseFilter(m[2].replace(/^lands$/, 'land')), n: n }; }
   if ((m = c.match(/^creatures you control have total power (\d+) or greater$/))) return { c: 'totalPower', n: +m[1] };
   if (c === 'another creature entered the battlefield under your control this turn') return { c: 'enteredOther' };
@@ -128,6 +134,9 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^(.+?) gains your choice of (.+) until end of turn$/))) return [{ o: 'pumpChoice', on: parseRef(T, ctx, m[1]), kws: kwList(m[2].replace(/ or /g, ', ')) }];
   if ((m = s.match(/^(.+?) gains? (.+) until end of turn$/))) return [{ o: 'pump', on: parseRef(T, ctx, m[1]), grant: kwList(m[2]) }];
   if ((m = s.match(/^[Ss]cry (\d+)$/))) return [{ o: 'scry', n: +m[1] }];
+  if ((m = s.match(/^[Ss]urveil (\d+)$/))) return [{ o: 'surveil', n: +m[1] }];                         // CR 701.25
+  if ((m = s.match(/^[Ss]earch your library for a basic land card, put it onto the battlefield( tapped)?, then shuffle$/))) return [{ o: 'searchBasic', tapped: !!m[1] }];   // CR 701.23
+  if ((m = s.match(/^[Uu]ntap that land$/))) return [{ o: 'untapIt' }];
   if ((m = s.match(/^[Cc]reate (a|an|one|two|three|\d+) (\d+)\/(\d+) (white|blue|black|red|green|colorless) (\w+) creature tokens?$/))) {
     const id = ctx.token({ p: +m[2], t: +m[3], color: m[4], sub: m[5] });
     return [{ o: 'token', id: id, n: numOf(m[1]) }];
@@ -202,6 +211,7 @@ function parseCost(str) {
     if (/^(\{[0-9WUBRGCX]\})+$/.test(p)) cost.mana += p;
     else if (p === '{T}') cost.tap = true;
     else if (p === 'Sacrifice ~') cost.sacSelf = true;
+    else if (/^Pay (\d+) life$/.test(p)) cost.life = +p.match(/\d+/)[0];                             // CR 119.4
     else throw new Fail('cost: ' + p);
   }
   return cost;
@@ -257,6 +267,8 @@ function parseTrigger(line, ctx, out) {
 function parseStatic(line, ctx, out, d) {
   let m;
   if (line === '~ enters tapped.') { out.push({ k: 'etbTapped' }); return true; }
+  if ((m = line.match(/^~ enters tapped unless (.+)\.$/))) { out.push({ k: 'etbTapped', unless: parseCond(m[1], ctx) }); return true; }   // CR 614.1c
+  if ((m = line.match(/^As ~ enters, you may pay (\d+) life\. If you don't, it enters tapped\.$/))) { out.push({ k: 'etbPayOrTap', life: +m[1] }); return true; }   // CR 614.12a: a choice made as it enters
   if ((m = line.match(/^Enchant (creature)\.?$/))) { out.push({ k: 'enchant', f: parseFilter(m[1]) }); return true; }
   if ((m = line.match(/^Enchanted creature doesn't untap during its controller's untap step\.$/))) { out.push({ k: 'noUntap', affects: 'enchanted' }); return true; }
   if ((m = line.match(/^(Enchanted|Equipped) creature gets (\S+?)(?: and has (.+))?\.$/))) {
@@ -300,6 +312,9 @@ function parseLine(line, ctx, d, kw, ab) {
     let mm, body = m[2];
     if ((mm = body.match(/^Add \{([WUBRGC])\}(?: or \{([WUBRGC])\})?\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1]].concat(mm[2] ? [mm[2]] : []) }); return; }   // CR 605.1a
     if ((mm = body.match(/^Add \{([WUBRGC])\}\. Spend this mana only to cast a creature spell\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1]], only: 'creature' }); return; }   // CR 106.6
+    if ((mm = body.match(/^Add \{([WUBRGC])\}(?: or \{([WUBRGC])\})?\. Activate only if (.+)\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1]].concat(mm[2] ? [mm[2]] : []), cond: parseCond(mm[3], ctx) }); return; }   // the Verges (CR 602.5b)
+    if ((mm = body.match(/^Add \{([WUBRGC])\} or \{([WUBRGC])\}\. ~ deals (\d+) damage to you\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1], mm[2]], selfDamage: +mm[3] }); return; }   // pain lands: the damage is part of the effect
+    if (body === 'Add one mana of any color.') { ab.push({ k: 'mana', cost: cost, cols: ['W', 'U', 'B', 'R', 'G'] }); return; }
     // Activation restrictions (CR 602.5): "Activate only as a sorcery.", "... only once each turn.", "Activate only if <cond>."
     const act = { k: 'act', cost: cost };
     for (;;) {

@@ -136,9 +136,27 @@
   };
   // "Enters tapped" and other self-replacement effects (CR 614.1c, 614.12). A replacement that
   // offers a choice (Mockingbird) is asked by its resolver before the move, not here.
+  // CR 614.1c, 614.12: "enters tapped", "enters tapped unless ...", and "As this land enters, you may
+  // pay 2 life. If you don't, it enters tapped." — a choice made before it enters (614.12a), so the
+  // move needs the invocation (o.x) to ask; every caller that puts a land onto the battlefield passes it.
   function enterReplacements(s, n, o) {
-    for (const a of baseChars(s, n).ab) if (a.k === 'etbTapped') I(s, n).tapped = true;
+    const c = I(s, n);
+    for (const a of baseChars(s, n).ab) {
+      if (a.k === 'etbTapped' && !(a.unless && MF.cond({ s: s, ctrl: c.ctrl, src: n, flags: {} }, a.unless))) c.tapped = true;
+      if (a.k === 'etbPayOrTap' && !o.tapped) {                                                // put onto the battlefield tapped anyway: paying could change nothing, so nothing is asked
+        if (!o.x) throw new Error('a land with an entering choice was moved without the invocation to ask: ' + c.id);
+        const p = P(s, c.ctrl);
+        const can = p.life >= a.life;                                                          // CR 119.4: a player can pay life only if they have that much
+        const ans = can ? ask(o.x, { who: c.ctrl, kind: 'payLifeOrTap', c: c.id, life: a.life, opts: [{ id: 'pay' }, { id: 'tapped' }] }) : 'tapped';
+        if (ans === 'pay') MF.loseLife(s, c.ctrl, a.life, 'pay', c.id); else c.tapped = true;
+      }
+    }
   }
+  // Losing life (paying it, or "loses N life") is not damage (CR 119.3, 119.4).
+  MF.loseLife = function (s, who, n, why, cid) {
+    const p = P(s, who); p.life -= n; p.h.lostLife = (p.h.lostLife || 0) + n;
+    log(s, 'lifeLoss', { who: who, n: n, why: why || null, c: cid || null, life: p.life });
+  };
   function snapshot(s, iid) {
     const c = I(s, iid), ch = chars(s, iid);
     return { iid: iid, id: c.id, owner: c.owner, ctrl: c.ctrl, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), p: ch.p, t: ch.t, kw: Object.assign({}, ch.kw), ab: ch.ab, ctr: Object.assign({}, c.ctr), tok: !!c.tok };
@@ -325,6 +343,8 @@
       ch.ab.forEach((a, i) => {
         if (a.k !== 'mana') return;
         if (a.only === 'creature' && !(ctx && ctx.creature)) return;
+        if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid, flags: {} }, a.cond)) return;        // the Verges: "Activate only if you control ..."
+        if (a.cost.life && P(s, who).life < a.cost.life) return;                                 // CR 119.4
         if (ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn)) return;
         out.push({ iid: iid, ab: i, cols: a.cols, name: ch.name, id: c.id });
       });
@@ -377,7 +397,9 @@
     const p = P(s, who);
     p.pool[col]++;
     if (a.only === 'creature') { p.poolCre = p.poolCre || emptyPool(); p.poolCre[col]++; }   // CR 106.6: mana with a spending restriction
+    if (a.cost.life) MF.loseLife(s, who, a.cost.life, 'pay', c.id);                         // CR 119.4: paying life is part of the cost
     log(s, 'mana', { who: who, c: c.id, col: col, only: a.only || null });
+    if (a.selfDamage && col !== 'C') dealDamage(s, { srcChars: Object.assign({ id: c.id }, chars(s, iid)), to: { p: who }, n: a.selfDamage });   // pain lands: "deals 1 damage to you" (the {C} ability is the other one)
   }
   // Ways to spend the pool on a cost that it covers: the coloured pips are forced; the generic
   // part is a choice when the pool holds more than one kind of mana beyond the pips.
@@ -984,7 +1006,7 @@
     const from = c.zone;
     log(s, 'land', { who: who, c: c.id, from: from });
     P(s, who).landsPlayed++;
-    move(s, iid, 'bf', { ctrl: who });
+    move(s, iid, 'bf', { ctrl: who, x: x });
     setPriority(s, who);                                                                      // CR 117.3c
   });
   EXEC_DEF('cast', function (x) {

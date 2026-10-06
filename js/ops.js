@@ -19,6 +19,7 @@
     if (f.player) return false;
     if (f.types && !f.types.some(t => ch.types.includes(t))) return false;
     if (f.notTypes && f.notTypes.some(t => ch.types.includes(t))) return false;
+    if (f.supers && !f.supers.every(t => ch.supers.includes(t))) return false;                  // "basic land" (CR 205.4a)
     if (f.subtypes && !(ch.allCreatureTypes && ch.types.includes('Creature')) && !f.subtypes.some(t => ch.subtypes.includes(t))) return false;   // CR 205.3m: "all creature types"
     if (f.ctrl === 'you' && ch.ctrl !== who) return false;
     if (f.ctrl === 'opp' && ch.ctrl === who) return false;
@@ -69,6 +70,10 @@
       return false;
     },
     kicked: x => !!(x.L && x.L.kicked),                                                         // CR 702.33d
+    controlAtMost: (x, c, table) => countMine(x.s, x.ctrl, c.f, x.src, table) <= c.n,           // "unless you control two or fewer other lands"
+    earlyTurn: (x, c) => { const n = x.s.log.filter(e => e.t === 'turn' && e.who === x.ctrl).length; return n <= c.n; },   // "your first, second, or third turn of the game"
+    enteredThisTurn: x => { const o = I(x.s, x.src); return !!o && o.ctlTurn === x.s.turn; },
+    any: (x, c) => c.of.some(k => MF.cond(x, k)),
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
   };
@@ -256,6 +261,37 @@
       for (const seat of players(x, op.to)) if (MF.dealDamage(x.s, { srcChars: sc, to: { p: seat }, n: n }) > 0) (x.flags.dealtTo = x.flags.dealtTo || []).push(seat);
       if (!PLAYER_REFS.includes(op.to)) for (const i of MF.resolveRefs(x, op.to)) MF.dealDamage(x.s, { srcChars: sc, to: { c: i }, n: n });
     },
+    // CR 701.25a: look at the top N; any number go to the graveyard, the rest back on top in any order.
+    surveil(x, op) {
+      const s = x.s, p = P(s, x.ctrl), n = Math.min(num(x, op.n), p.lib.length);
+      if (n <= 0) return;
+      const look = p.lib.slice(0, n), keep = [], yard = [];
+      for (const iid of look) {
+        const a = MF.ask(x.x, { who: x.ctrl, kind: 'surveil', n: n, k: look.indexOf(iid) + 1, src: x.src, opts: [{ id: 'top', iid: iid }, { id: 'grave', iid: iid }] });
+        (a === 'top' ? keep : yard).push(iid);
+      }
+      const order = [], left = keep.slice();
+      while (left.length > 1 && new Set(left.map(i => I(s, i).id)).size > 1) {
+        const a = MF.ask(x.x, { who: x.ctrl, kind: 'scryOrder', where: 'top', opts: left.map(i => ({ id: i, iid: i })) });
+        order.push(a); left.splice(left.indexOf(a), 1);
+      }
+      p.lib.splice(0, n);
+      p.lib.unshift.apply(p.lib, order.concat(left));
+      for (const iid of yard) { p.lib.unshift(iid); MF.move(s, iid, 'grave'); }               // milled cards are public: named in the log (CLAUDE.md rule 12)
+      log(s, 'surveil', { who: x.ctrl, n: n, top: keep.length, grave: yard.map(i => I(s, i).id) });
+    },
+    // CR 701.23: search the library for a basic land card (the player chooses; finding nothing is allowed, 701.23b), put it onto the battlefield, shuffle.
+    searchBasic(x, op) {
+      const s = x.s, p = P(s, x.ctrl);
+      const opts = p.lib.filter(i => { const d = MF.def(s, i); return d.types.includes('Land') && d.supers.includes('Basic'); }).map(i => ({ id: i, iid: i }));
+      const seen = new Set(), uniq = opts.filter(o => { const id = I(s, o.iid).id; if (seen.has(id)) return false; seen.add(id); return true; });   // identical basics are one choice
+      uniq.push({ id: 'none' });
+      const a = MF.ask(x.x, { who: x.ctrl, kind: 'search', src: x.src, what: 'basic land', opts: uniq });
+      if (a !== 'none') { const n = MF.move(s, a, 'bf', { ctrl: x.ctrl, tapped: !!op.tapped, x: x.x }); x.it = n; log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: !!op.tapped, from: 'library' }); }
+      else log(s, 'searchNothing', { who: x.ctrl });
+      MF.shuffle(s, p.lib);
+    },
+    untapIt(x) { const c = x.it != null ? I(x.s, x.it) : null; if (c && c.zone === 'bf' && c.tapped) { c.tapped = false; log(x.s, 'untapped', { c: c.id }); } },
     // Manifold Mouse: "gains your choice of double strike or trample until end of turn" — chosen on resolution (CR 608.2d).
     pumpChoice(x, op) {
       const iids = MF.resolveRefs(x, op.on); if (!iids.length) return;
@@ -322,7 +358,7 @@
       const top = p.lib[0], d = MF.def(s, top);
       if (d.types.includes(op.type)) {
         const a = MF.ask(x.x, { who: x.ctrl, kind: 'lookTop', src: x.src, opts: [{ id: 'yes', iid: top }, { id: 'no', iid: top }] });
-        if (a === 'yes') { log(s, 'putOnto', { who: x.ctrl, c: d.id, tapped: true, from: 'library' }); MF.move(s, top, 'bf', { ctrl: x.ctrl, tapped: true }); }
+        if (a === 'yes') { log(s, 'putOnto', { who: x.ctrl, c: d.id, tapped: true, from: 'library' }); MF.move(s, top, 'bf', { ctrl: x.ctrl, tapped: true, x: x.x }); }
         else log(s, 'lookedKept', { who: x.ctrl });
       } else { log(s, 'toHand', { who: x.ctrl, c: d.id, revealed: false, from: 'library' }); MF.move(s, top, 'hand'); }
     },
@@ -334,7 +370,7 @@
       for (const iid of p.lib) { shown.push(iid); if (MF.def(s, iid).types.includes(op.type)) { hit = iid; break; } }
       log(s, 'reveal', { who: x.ctrl, cs: shown.map(i => I(s, i).id) });
       const rest = shown.filter(i => i !== hit);
-      if (hit != null) { const n = MF.move(s, hit, 'bf', { ctrl: x.ctrl, tapped: true }); log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: true, from: 'library' }); }
+      if (hit != null) { const n = MF.move(s, hit, 'bf', { ctrl: x.ctrl, tapped: true, x: x.x }); log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: true, from: 'library' }); }
       for (const i of rest) p.lib.splice(p.lib.indexOf(i), 1);
       MF.shuffle(s, rest);
       p.lib.push.apply(p.lib, rest);
@@ -433,7 +469,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
