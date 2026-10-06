@@ -60,6 +60,16 @@
     "negativeExtra": ""
   },
   {
+    "key": "burst-lightning",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a jagged bolt of red lightning blasting an armoured soldier off his feet, sparks and shrapnel flying, in a storm-dark mountain pass. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a jagged bolt of red lightning blasting an armoured soldier off his feet, sparks and shrapnel flying",
+    "setting": "in a storm-dark mountain pass",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "byrke-long-ear-of-the-law",
     "land": false,
     "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a grim veteran rabbit knight-commander with long battle-torn ears and a scarred muzzle, dented steel plate armour, round iron shield and a long spear, roaring an order with the spear levelled at the enemy, on a battlefield beneath giant oak roots, arrows and embers in the air, smoke behind. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
@@ -130,6 +140,16 @@
     "negativeExtra": ""
   },
   {
+    "key": "emberheart-challenger",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a fiery mouse champion in scorched plate armour charging with a blazing longsword raised overhead, through flames and flying embers. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a fiery mouse champion in scorched plate armour charging with a blazing longsword raised overhead",
+    "setting": "through flames and flying embers",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "fecund-greenshell",
     "land": false,
     "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a massive ancient war-turtle with a mossy spiked shell like a fortress, scarred beak, standing its ground, in a churned muddy river ford under a grey sky. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
@@ -180,6 +200,26 @@
     "negativeExtra": ""
   },
   {
+    "key": "heartfire-hero",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a young mouse knight with a burning heart glowing through cracked breastplate, raising a flaming blade in defiance, on a scorched hilltop at night. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a young mouse knight with a burning heart glowing through cracked breastplate, raising a flaming blade in defiance",
+    "setting": "on a scorched hilltop at night",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "hired-claw",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a cold-eyed lizard mercenary with a curved blade and a coin pouch, mid-strike, in a ruined border fort, smoke and sparks. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a cold-eyed lizard mercenary with a curved blade and a coin pouch, mid-strike",
+    "setting": "in a ruined border fort, smoke and sparks",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "hop-to-it",
     "land": false,
     "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a pair of young rabbit recruits in mismatched armour charging out of a burrow with spears, grim faces, into a smoky battlefield at dusk, drifting smoke behind. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
@@ -200,6 +240,36 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "lightning-strike",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a bolt of crackling red lightning striking a charging armoured beast, blinding flash, on a stormy mountain ridge. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a bolt of crackling red lightning striking a charging armoured beast, blinding flash",
+    "setting": "on a stormy mountain ridge",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "magebane-lizard",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a scarred lizard warrior in spiked leather armour, flames crawling across its scales, lashing out with a burning claw at a mage mid-spell, among smouldering ruins at dusk. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a scarred lizard warrior in spiked leather armour, flames crawling across its scales, lashing out with a burning claw at a mage mid-spell",
+    "setting": "among smouldering ruins at dusk",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "manifold-mouse",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a battle-hardened mouse soldier in dented armour twirling two short swords, eyes burning with fury, on a smoky battlefield of trampled grass. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a battle-hardened mouse soldier in dented armour twirling two short swords, eyes burning with fury",
+    "setting": "on a smoky battlefield of trampled grass",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "mind-spring",
     "land": false,
     "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, an otter sorcerer half submerged in a glowing pool, eyes burning blue as torrents of arcane knowledge pour into its skull, in a dark flooded cavern. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
@@ -215,6 +285,16 @@
     "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a sinister grey mockingbird spy in a ragged cloak, its silhouette warping into the shape of a larger predator, perched on a broken fence post in fog at night. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
     "subject": "a sinister grey mockingbird spy in a ragged cloak, its silhouette warping into the shape of a larger predator",
     "setting": "perched on a broken fence post in fog at night",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "monstrous-rage",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a mouse warrior swelling with monstrous fury, muscles bulging, a red-eyed beast-mask snarling over its face, roaring, in a smoky war camp lit by fire. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a mouse warrior swelling with monstrous fury, muscles bulging, a red-eyed beast-mask snarling over its face, roaring",
+    "setting": "in a smoky war camp lit by fire",
     "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
     "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
     "negativeExtra": ""
@@ -310,6 +390,36 @@
     "negativeExtra": ""
   },
   {
+    "key": "rockface-village",
+    "land": true,
+    "prompt": "landscape painting, scenery, a fortified village carved into a red rock cliff face, rope bridges and watchtowers, smoke from chimneys, at dusk under a smoky orange sky. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a fortified village carved into a red rock cliff face, rope bridges and watchtowers, smoke from chimneys",
+    "setting": "at dusk under a smoky orange sky",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "screaming-nemesis",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a howling spirit of rage wreathed in red fire, a skeletal face screaming, hurling its own wounds back as blazing bolts, over a scorched wasteland under a black sky. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a howling spirit of rage wreathed in red fire, a skeletal face screaming, hurling its own wounds back as blazing bolts",
+    "setting": "over a scorched wasteland under a black sky",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "self-destruct",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, an armoured goblin warrior engulfed in an exploding blast of fire, the shockwave tearing outward, on a rocky battlefield, debris flying. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "an armoured goblin warrior engulfed in an exploding blast of fire, the shockwave tearing outward",
+    "setting": "on a rocky battlefield, debris flying",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "serra-redeemer",
     "land": false,
     "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a stern armoured war-angel with battle-scarred white wings and a burning sword, descending to shield a wounded rabbit soldier, through smoke and ash over a ruined battlefield, harsh light breaking through clouds. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
@@ -318,6 +428,16 @@
     "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
     "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "soulstone-sanctuary",
+    "land": true,
+    "prompt": "landscape painting, scenery, an ancient ruined stone sanctuary of towering monoliths with a glowing soulstone at its heart, on a misty highland at twilight. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "an ancient ruined stone sanctuary of towering monoliths with a glowing soulstone at its heart",
+    "setting": "on a misty highland at twilight",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "stormcatch-mentor",
@@ -350,6 +470,16 @@
     "negativeExtra": ""
   },
   {
+    "key": "tersa-lightshatter",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a fierce orc battle-wizard woman with tusks and wild braided hair, hurling shattered shards of red light from both hands, on a cliff above a burning valley. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a fierce orc battle-wizard woman with tusks and wild braided hair, hurling shattered shards of red light from both hands",
+    "setting": "on a cliff above a burning valley",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "thieving-otter",
     "land": false,
     "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a ruthless otter thief in a dark hood slipping away with a stolen jewelled dagger, a knife held back in warning, along a moonlit riverbank market, lanterns and shadows. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
@@ -375,6 +505,16 @@
     "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a scarred frog warrior and an armoured rabbit warrior back to back with shields locked, weapons raised against unseen attackers, beneath an enormous ancient tree, falling leaves and drifting smoke. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
     "subject": "a scarred frog warrior and an armoured rabbit warrior back to back with shields locked, weapons raised against unseen attackers",
     "setting": "beneath an enormous ancient tree, falling leaves and drifting smoke",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "twinmaw-stormbrood-charring-bite",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a menacing two-headed storm dragon with white scales, one head breathing searing fire onto a fleeing soldier, over a burning battlefield under storm clouds. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a menacing two-headed storm dragon with white scales, one head breathing searing fire onto a fleeing soldier",
+    "setting": "over a burning battlefield under storm clouds",
     "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
     "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
     "negativeExtra": ""
