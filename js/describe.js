@@ -25,6 +25,7 @@
     if (f.counter) w.push('with a ' + f.counter + ' counter');
     if (f.kw) w.push('with ' + KWNAME[f.kw]); if (f.notKw) w.push('without ' + KWNAME[f.notKw]);
     if (f.tokOrSub) w.push('that is a token or a ' + f.tokOrSub);
+    if (f.tok && f.types) w.push('token');
     if (f.mvLE != null) w.push('with mana value ' + f.mvLE + ' or less');
     if (f.ptSumLE != null) w.push('with total power and toughness ' + f.ptSumLE + ' or less');
     return w.join(' ');
@@ -66,6 +67,7 @@
     giftPromised: () => 'the gift was promised',
     noCounters: () => 'it had no counters on it',
     bargained: () => 'this spell was bargained',
+    sneakPaid: () => 'this spell’s sneak cost was paid',
     yourTurn: () => 'it is your turn',
   };
   const cond = c => (C[c.c] ? C[c.c](c) : c.c);
@@ -77,7 +79,7 @@
     pump: op => { const pt = (op.p != null || op.t != null) && (op.p !== 0 || op.t !== 0); return ref(op.on) + (pt ? ' gets ' + sgn(op.p) + '/' + sgn(op.t) : '') + (op.grant ? (pt ? ' and' : '') + ' gains ' + op.grant.map(k => KWNAME[k]).join(', ') : '') + ' until end of turn'; },
     unblockable: op => ref(op.on) + ' can’t be blocked this turn',
     scry: op => 'scry ' + N(op.n),
-    token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); return 'create ' + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : ''); },
+    token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); if (!d.types.includes('Creature')) return 'create ' + N(op.n) + ' ' + d.name + ' token' + (op.n === 1 ? '' : 's') + (d.text ? ' (“' + d.text + '”)' : ''); return 'create ' + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : '') + (d.text && !kws.length ? ' with “' + d.text + '”' : '') + (op.attacking ? ' that are tapped and attacking' : '') + (op.attackingIf ? '; if ' + cond(op.attackingIf) + ', they enter tapped and attacking' : '') + (op.sacEnd ? '; sacrifice them at the beginning of the next end step' : ''); },
     tokenCopy: op => 'create a token copy of ' + ref(op.of) + (op.except && op.except.pt ? ', except it is ' + op.except.pt.join('/') : ''),
     destroy: op => 'destroy ' + ref(op.on),
     damage: op => ref(op.from) + ' deals ' + N(op.n) + ' damage to ' + ref(op.to),
@@ -97,6 +99,10 @@
     counterUnless: op => 'counter ' + ref(op.on) + ' unless its controller pays ' + op.pay,
     lookPick: op => 'look at the top ' + op.n + ' cards of your library; put ' + op.take + ' of them into your hand and the rest on the bottom in any order',
     dieExile: () => 'if a permanent dealt damage by this would die this turn, exile it instead',
+    delayed: op => (op.on === 'attackWith' ? 'whenever you attack' : 'at ' + op.on) + (op.duration === 'turn' ? ' this turn' : '') + ': ' + ops(op.ops),
+    sacThese: () => 'sacrifice them',
+    sacrificeSelf: () => 'sacrifice this',
+    nthResolution: op => op.branches.map((b, i) => ['the first', 'the second', 'the third'][i] + ' time this ability resolves this turn: ' + ops(b)).join('; '),
     levelUp: op => 'this Class becomes level ' + op.n,
     returnFromGrave: op => 'return it from the graveyard to the battlefield' + (op.tapped ? ' tapped' : '') + ' under its owner’s control' + (op.ctr ? ' with ' + Object.entries(op.ctr).map(([k, n]) => n + ' ' + k + ' counters').join(', ') + ' on it' : ''),
     copySpell: () => 'copy that spell; you may choose new targets for the copy',
@@ -132,7 +138,9 @@
       case 'act': if (a.levelUp) return a.cost.mana + ': Level ' + a.levelUp + ' (as a sorcery, only while level ' + (a.levelUp - 1) + ')';
         if (a.cost.removeCtr) return 'remove ' + a.cost.removeCtr.n + ' ' + a.cost.removeCtr.kind + ' counters from this: ' + ops(a.ops);
         if (a.cycling) return 'cycling ' + a.cost.mana + ' (' + a.cost.mana + ', discard this card from your hand: draw a card)';
-        return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
+        return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
+      case 'sneak': return 'sneak ' + a.cost + ' (you may cast this for ' + a.cost + ' during your declare blockers step by returning an unblocked attacker you control to its owner’s hand)';
+      case 'oppNoCast': return 'your opponents can’t cast spells during your turn';
       case 'bargain': return 'bargain (you may sacrifice an artifact, enchantment or token as you cast this)';
       case 'harmonize': return 'harmonize ' + a.cost + ' (you may cast this from your graveyard for ' + a.cost + ', tapping up to one creature you control to reduce the generic cost by its power; then exile it)';
       case 'hexproofFrom': return 'hexproof from ' + a.types.map(x => x.toLowerCase() + 's').join(' and ');
@@ -145,6 +153,8 @@
         else if (a.on === 'attackWith') e = 'Whenever you attack with one or more ' + a.sub + 's';
         else if (a.on === 'dealsDamage') e = 'Whenever this deals ' + (a.combat ? 'combat ' : '') + 'damage' + (a.toOpp ? ' to an opponent' : a.toPlayer ? ' to a player' : '');
         else if (a.on === 'unlock') e = 'When you unlock this door';
+        else if (a.mobilize) e = 'Mobilize ' + a.mobilize + ' — whenever this attacks';
+        else if (a.on === 'counterPut' && a.nth) e = 'When the ' + ['first', 'second', 'third', 'fourth', 'fifth'][a.nth - 1] + ' ' + a.ctrKind + ' counter is put on this';
         else if (a.on === 'levelUp') e = 'When this Class becomes level ' + a.level;
         else if (a.on === 'cast' && a.nth) e = 'Whenever you cast your second spell each turn';
         else if (a.on === 'cast' && a.spell && a.spell.types) e = 'Whenever you cast ' + (/^[aeiou]/i.test(a.spell.types[0]) ? 'an ' : 'a ') + a.spell.types.join(' or ').toLowerCase() + ' spell';

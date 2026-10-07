@@ -150,6 +150,7 @@
       case 'discardUpTo': return 'done';
       case 'gift': return q.opts.some(o => o.id === 'no') ? 'no' : q.opts[0].id;
       case 'bargain': return 'none';
+      case 'sneakReturn': case 'sacToken': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
       case 'harmonizeTap': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => b.p - a.p)[0]; return c ? c.id : 'none'; }
       case 'manaCombo': return q.opts[0].id;
       case 'payOrCounter': return 'pay';

@@ -35,19 +35,21 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-06 — the championship decks (D15) under way: 4 of 20 registered; a per-card audit done.**
+**2026-10-06 — the championship decks (D15) under way: 5 of 20 registered; a per-card audit done.**
 
 - Registered: Mono-Red Aggro (PT Final Fantasy #1), Gruul Delirium (#35), Orzhov Demons (#28) and Izzet
-  Prowess (#2), beside the two Starter Kits. Izzet brought Class levels (CR 716), bargain (702.166),
+  Prowess (#2); from the Hobbit era, Boros (Belladonna Took) — beside the two Starter Kits. Boros
+  brought delayed triggers (CR 603.7), mobilize (702.181), creatures entering attacking (508.4),
+  sneak (702.190), Treasure (111.10a), "can't cast spells" (601.3), plan counters. Izzet brought Class levels (CR 716), bargain (702.166),
   harmonize (702.180), counterspells, X-mana abilities, flurry, gift-dependent targets. Orzhov brought Rooms (CR 709.5), stun counters (122.1d), gift
   (702.174), cycling (702.29), hexproof from (702.11d), a life-loss replacement, hand reveals. Gruul brought modal spells (CR 700.2), fight (701.14), extra
   combat phases (500.8), linked exile, mill/surveil, "can't attack or block unless".
-- Gates: `tools/test.mjs` 116/116; audit 95 cards 0 FAIL / 0 WARN; check-pages clean (85 log types,
-  37 question kinds); `tools/sim.mjs` 90 mixed games, 0 violations.
+- Gates: `tools/test.mjs` 128/128; audit 108 cards 0 FAIL / 0 WARN; check-pages clean (88 log types,
+  39 question kinds); `tools/sim.mjs` 105 mixed games, 0 violations.
 - Audit (2026-10-06): all 83 cards then registered checked against Oracle text, rulings and the CR;
   13 defects fixed, each with a test (tests/08); DEVIATIONS V3 closed, V4 opened.
-- Art: all 102 keys painted in the fifteen-style mix (D17), reviewed on contact sheets.
-- Next: the remaining 6 Pro Tour Final Fantasy archetypes, then the 10 Hobbit-era Arena lists.
+- Art: all 120 keys painted in the fifteen-style mix (D17), reviewed on contact sheets.
+- Next: the remaining 6 Pro Tour Final Fantasy and 9 Hobbit-era archetypes, closest first.
 
 **2026-10-03, end of the first session — playable against the AI, private and local.**
 

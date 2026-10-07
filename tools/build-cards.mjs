@@ -164,11 +164,20 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Dd]iscard a card, then draw a card$/))) return [{ o: 'discard', n: 1 }, { o: 'draw', n: 1 }];
   if ((m = s.match(/^[Ss]earch your library for a basic land card, put it onto the battlefield( tapped)?, then shuffle$/))) return [{ o: 'searchBasic', tapped: !!m[1] }];   // CR 701.23
   if ((m = s.match(/^[Uu]ntap that land$/))) return [{ o: 'untapIt' }];
-    if ((m = s.match(/^[Cc]reate (a|an|one|two|three|\d+) (\d+)\/(\d+) ((?:white|blue|black|red|green|colorless)(?: and (?:white|blue|black|red|green))?) (\w+) creature tokens?(?: with (.+))?$/))) {
+  if ((m = s.match(/^[Cc]reate (a|an|one|two|three|X|\d+) (\d+)\/(\d+) ((?:white|blue|black|red|green|colorless)(?: and (?:white|blue|black|red|green))?) ((?:[A-Z][a-z]+ ?)+?) creature tokens?(?: with ("[^"]+"|.+?))?( that are tapped and attacking)?$/))) {
     ctx.madeToken = true;
-    const id = ctx.token({ p: +m[2], t: +m[3], color: m[4], sub: m[5], kw: m[6] ? kwList(m[6]) : [] });
-    return [{ o: 'token', id: id, n: numOf(m[1]) }];
+    const quoted = m[6] && m[6][0] === '"' ? m[6].slice(1, -1) : null;
+    const TOKEN_AB = { "This token can't block.": [{ k: 'restrict', block: true }] };                 // a token's own rules text, quoted on the card
+    if (quoted && !TOKEN_AB[quoted]) throw new Fail('token ability: ' + quoted);
+    const id = ctx.token({ p: +m[2], t: +m[3], color: m[4], sub: m[5], kw: m[6] && !quoted ? kwList(m[6]) : [], ab: quoted ? TOKEN_AB[quoted] : null, abText: quoted });
+    return [Object.assign({ o: 'token', id: id, n: numOf(m[1]) }, m[7] ? { tapped: true, attacking: true } : {})];
   }
+  if ((m = s.match(/^[Cc]reate (a|an|one|two|three|\d+) Treasure tokens?$/))) return [{ o: 'token', id: ctx.token.treasure(), n: numOf(m[1]) }];
+  if (/^[Ss]acrifice (it|~)$/.test(s) && ctx.it === 'self') return [{ o: 'sacrificeSelf' }];
+  if ((m = s.match(/^([Ss]cry \d+) and (put .+)$/))) return parseEffect(T, ctx, m[1]).concat(parseEffect(T, ctx, cap(m[2])));
+  if ((m = s.match(/^[Pp]ut (a|an|one|two|three|\d+) ([a-z]+) counters? on (.+)$/))) return [{ o: 'counter', on: parseRef(T, ctx, m[3]), n: numOf(m[1]), kind: m[2] }];
+  if ((m = s.match(/^(.+?) gets \+X\/\+X until end of turn, where X is (.+)$/))) { const on = parseRef(T, ctx, m[1]), x = parseValueWhere(m[2]); return [{ o: 'pump', on: on, p: x, t: x }]; }
+  if ((m = s.match(/^(?:It|~) deals damage equal to (the number of creatures you control) to (.+)$/))) return [{ o: 'damage', from: 'self', n: parseValueWhere(m[1]), to: parseRef(T, ctx, m[2]) }];
   if ((m = s.match(/^[Dd]estroy (.+)$/))) return [{ o: 'destroy', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^~ deals damage to that player equal to the number of noncreature spells they've cast this turn$/))) return [{ o: 'damage', from: 'self', n: { v: 'castNoncreature', of: 'evPlayer' }, to: 'evPlayer' }];
   if ((m = s.match(/^(.+?) gains your choice of (.+) until end of turn$/))) return [{ o: 'pumpChoice', on: parseRef(T, ctx, m[1]), kws: kwList(m[2].replace(/ or /g, ', ')) }];
@@ -195,6 +204,7 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^([Tt]hey|[Tt]hat player) loses? half their life, rounded up$/)) && ctx.evPlayer) return [{ o: 'loseLife', who: 'evPlayer', half: 'up' }];   // CR 107.1a
   if ((m = s.match(/^[Rr]eturn it to the battlefield( tapped)? under its owner's control(?: with (\w+) stun counters on it)?$/)) && ctx.it === 'self') return [Object.assign({ o: 'returnFromGrave', tapped: !!m[1] }, m[2] ? { ctr: { stun: numOf(m[2]) } } : {})];   // CR 122.1d
   if ((m = s.match(/^(.+?) can't be blocked this turn$/))) return [{ o: 'unblockable', on: parseRef(T, ctx, m[1]) }];
+  if ((m = s.match(/^(.+), (.+), and (.+)$/))) return [m[1], m[2], m[3]].flatMap(p => parseEffect(T, ctx, cap(p)));
   throw new Fail('effect: ' + s);
 }
 const cap = s => s[0].toUpperCase() + s.slice(1);
@@ -226,6 +236,12 @@ function parseEffects(T, ctx, text) {
     const who = parseRef(T, ctx, m[1]);
     return [{ o: 'may', what: 'oppDrawCopy', ops: [{ o: 'draw', n: 1, who: who }] }, { o: 'if', cond: { c: 'did' }, ops: [{ o: 'copySpell' }] }];
   }
+  // Belladonna Took: "... if this is the first time this ability has resolved this turn. If it's the second time, ... If it's the third time, ..."
+  if ((m = t.match(/^(.+) if this is the first time this ability has resolved this turn\. If it's the second time, (.+)\. If it's the third time, (.+)$/i))) return [{ o: 'nthResolution', branches: [parseEffect(T, ctx, cap(m[1])), parseEffect(T, ctx, cap(m[2])), parseEffect(T, ctx, cap(m[3]))] }];
+  // The Last Ronin's Technique: "Create ... tokens. If this spell's sneak cost was paid, they enter tapped and attacking." (CR 702.190)
+  if ((m = t.match(/^(create .+ creature tokens)\. If this spell's sneak cost was paid, they enter tapped and attacking$/i))) { const ops = parseEffect(T, ctx, cap(m[1])); ops[0].attackingIf = { c: 'sneakPaid' }; return ops; }
+  // Dalkovan Encampment: a delayed trigger for the rest of the turn (CR 603.7b), whose tokens are sacrificed at the next end step.
+  if ((m = t.match(/^whenever you attack this turn, (create .+ that are tapped and attacking)\. Sacrifice them at the beginning of the next end step$/i))) { const ops = parseEffect(T, ctx, cap(m[1])); ops[0].sacEnd = true; return [{ o: 'delayed', on: 'attackWith', duration: 'turn', ops: ops }]; }
   // Stock Up / Sleight of Hand: look at the top N, put some into your hand, the rest on the bottom.
   if ((m = t.match(/^look at the top (\w+) cards of your library\. Put (\w+) of them into your hand and the (?:rest|other) on the bottom of your library(?: in any order)?$/i))) return [{ o: 'lookPick', n: numOf(m[1]), take: numOf(m[2]) }];
   // Torch the Tower: bargained instead deals 3 and scry 1 (CR 702.166c).
@@ -243,7 +259,7 @@ function parseEffects(T, ctx, text) {
     const who = parseRef(T, ctx, m[1].toLowerCase());
     return [{ o: 'handPick', who: who, f: { notTypes: ['Land'] }, then: 'exile', castIfGift: true }];   // CR 609.4b
   }
-  const sentences = t.split(/\. (?=[A-Z])/);
+  const sentences = t.split(/(?<=\.") (?=[A-Z])|\. (?=[A-Z])/);                                   // a quoted ability ends its sentence inside the quotes
   const ops = [];
   for (const sn of sentences) {
     // "X. Then it deals ..." — "it" is the object the previous sentence acted on.
@@ -266,6 +282,7 @@ function parseCost(str) {
     if (/^(\{[0-9WUBRGCX]\})+$/.test(p)) cost.mana += p;
     else if (p === '{T}') cost.tap = true;
     else if (p === 'Sacrifice ~') cost.sacSelf = true;
+    else if (p === 'Sacrifice a token') cost.sacToken = true;
     else if (/^Pay (\d+) life$/.test(p)) cost.life = +p.match(/\d+/)[0];                             // CR 119.4
     else if (/^Remove (\w+) (\w+) counters from ~$/.test(p)) { const r = p.match(/^Remove (\w+) (\w+) counters from ~$/); cost.removeCtr = { n: numOf(r[1]), kind: r[2] }; }   // CR 118.3
     else throw new Fail('cost: ' + p);
@@ -288,6 +305,8 @@ const EVENTS = [
   [/^~ deals combat damage to a player$/, () => [{ on: 'dealsDamage', combat: true, toPlayer: true }]],
   [/^the beginning of your upkeep$/, () => [{ on: 'beginStep', step: 'upkeep', yours: true }]],                       // CR 503.1a
   [/^(a creature you control.*) attacks$/, m => [{ on: 'attacks', who: parseFilter(m[1].replace(/^a /, '')) }]],
+  [/^an? ((?:creature|token) you control.*) enters$/, m => [{ on: 'enters', who: parseFilter(m[1]) }]],
+  [/^the (first|second|third|fourth|fifth) ([a-z]+) counter is put on ~$/, m => [{ on: 'counterPut', who: 'self', ctrKind: m[2], nth: { first: 1, second: 2, third: 3, fourth: 4, fifth: 5 }[m[1]] }]],
   [/^you cast a noncreature spell$/, () => [{ on: 'cast', spell: { notTypes: ['Creature'] } }]],
   [/^you cast an instant or sorcery spell$/, () => [{ on: 'cast', spell: { types: ['Instant', 'Sorcery'] } }]],
   [/^you cast your second spell each turn$/, () => [{ on: 'cast', spell: null, nth: 2 }]],                                  // flurry (an ability word, CR 207.2c)
@@ -325,7 +344,7 @@ function parseTrigger(line, ctx, out) {
         if (tr.on === 'dealsDamage' && tr.toPlayer) { c2.evPlayer = true; c2.evAmount = true; }
         if (tr.door) { if (ctx.door == null) throw new Fail('"unlock this door" on a card that is not a Room'); tr.door = ctx.door; }
         const ops = parseEffects(T, c2, cap(eff.replace(/^this creature\b/, '~')));
-        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level']) if (tr[k] != null) extra[k] = tr[k];
+        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind']) if (tr[k] != null) extra[k] = tr[k];
         out.push(Object.assign({ k: 'trig', on: tr.on, ops: ops }, tr.who ? { who: tr.who } : {}, tr.spell !== undefined ? { spell: tr.spell } : {}, tr.toOpp ? { toOpp: true } : {}, tr.lookBack ? { lookBack: true } : {}, T.length ? { tg: T } : {}, cond ? { cond: cond } : {}, extra));
       }
       return true;
@@ -350,6 +369,8 @@ function parseStatic(line, ctx, out, d) {
   if ((m = line.match(/^(Enchanted|Equipped) creature gets (\S+?)(?: and has (.+))?\.$/))) {
     const pt = pumpOf(m[2]); out.push(Object.assign({ k: 'static', affects: m[1].toLowerCase(), p: pt.p, t: pt.t }, m[3] ? { grant: kwList(m[3]) } : {})); return true;
   }
+  if ((m = line.match(/^(Other creatures you control|Creatures you control) get (\S+)\.$/))) { const pt = pumpOf(m[2]); out.push({ k: 'static', affects: parseFilter(m[1].toLowerCase()), p: pt.p, t: pt.t }); return true; }
+  if (line === "Your opponents can't cast spells during your turn.") { out.push({ k: 'oppNoCast' }); return true; }   // CR 601.3
   if ((m = line.match(/^(Other creatures you control|Creatures you control) have (.+)\.$/))) { out.push({ k: 'static', affects: parseFilter(m[1].toLowerCase()), grant: kwList(m[2]) }); return true; }
   if ((m = line.match(/^As long as (.+?), (.+)\.$/))) {
     const cond = parseCond(m[1], ctx), body = m[2]; let b;
@@ -378,6 +399,12 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(/^Cycling (\{[^ ]+\})$/))) { ab.push({ k: 'act', zone: 'hand', cycling: true, cost: { mana: m[1], tap: false, sacSelf: false, discardSelf: true }, ops: [{ o: 'draw', n: 1 }] }); return; }   // CR 702.29a
   if ((m = line.match(/^Gift a card$/))) { ab.push({ k: 'gift', what: 'card' }); return; }
   if (line === 'Gift a tapped Fish') { ab.push({ k: 'gift', what: 'tappedFish', token: ctx.token({ p: 1, t: 1, color: 'blue', sub: 'Fish' }) }); return; }   // CR 702.174f
+  if ((m = line.match(/^Mobilize (\d+)$/))) {                                                     // CR 702.181a
+    const id = ctx.token({ p: 1, t: 1, color: 'red', sub: 'Warrior', kw: [] });
+    ab.push({ k: 'trig', on: 'attacks', who: 'self', mobilize: +m[1], ops: [{ o: 'token', id: id, n: +m[1], tapped: true, attacking: true, sacEnd: true }] });
+    return;
+  }
+  if ((m = line.match(/^Sneak (\{[^ ]+\})$/))) { ab.push({ k: 'sneak', cost: m[1] }); return; }   // CR 702.190a
   if (line === 'Bargain') { ab.push({ k: 'bargain' }); return; }                                   // CR 702.166a
   if ((m = line.match(/^Harmonize (\{[^ ]+\})$/))) { ab.push({ k: 'harmonize', cost: m[1] }); return; }   // CR 702.180a       // CR 702.174a, e
   if ((m = line.match(/^Kicker (\{[^ ]+\})$/))) { ab.push({ k: 'kicker', cost: m[1] }); return; }      // CR 702.33a
@@ -525,9 +552,15 @@ function tokenMaker(pack) {
   const mk = function (t) {
     const kws = t.kw || [];
     const cols = t.color.split(' and ').map(c => COLOR[c]).filter(Boolean);
-    const id = 'token-' + t.sub.toLowerCase() + '-' + t.p + '-' + t.t + '-' + (cols.join('') || 'c').toLowerCase() + kws.map(k => '-' + k.toLowerCase()).join('');
+    const id = 'token-' + t.sub.trim().toLowerCase().replace(/ /g, '-') + '-' + t.p + '-' + t.t + '-' + (cols.join('') || 'c').toLowerCase() + kws.map(k => '-' + k.toLowerCase()).join('');
     const KWTEXT = { flying: 'Flying', lifelink: 'Lifelink', haste: 'Haste', vigilance: 'Vigilance', trample: 'Trample', deathtouch: 'Deathtouch', menace: 'Menace', reach: 'Reach', prowess: 'Prowess' };
-    if (!pack[id]) pack[id] = { id: id, name: t.sub, token: true, mana: '', colors: cols, types: ['Creature'], subtypes: [t.sub], supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub, text: kws.map(k => KWTEXT[k]).join(', '), kw: Object.fromEntries(kws.map(k => [k, 1])), ab: [], layout: 'token' };
+    if (t.ab) { const id2 = id + '-' + t.abText.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, ''); if (!pack[id2]) pack[id2] = { id: id2, name: t.sub.trim(), token: true, mana: '', colors: cols, types: ['Creature'], subtypes: t.sub.trim().split(' '), supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub.trim(), text: t.abText, kw: {}, ab: t.ab, layout: 'token' }; return id2; }
+    if (!pack[id]) pack[id] = { id: id, name: t.sub.trim(), token: true, mana: '', colors: cols, types: ['Creature'], subtypes: t.sub.trim().split(' '), supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub.trim(), text: kws.map(k => KWTEXT[k]).join(', '), kw: Object.fromEntries(kws.map(k => [k, 1])), ab: [], layout: 'token' };
+    return id;
+  };
+  mk.treasure = function () {                                                                     // CR 111.10a
+    const id = 'token-treasure';
+    if (!pack[id]) pack[id] = { id: id, name: 'Treasure', token: true, mana: '', colors: [], types: ['Artifact'], subtypes: ['Treasure'], supers: [], power: null, toughness: null, typeLine: 'Token Artifact — Treasure', text: '{T}, Sacrifice this token: Add one mana of any color.', kw: {}, ab: [{ k: 'mana', cost: { tap: true, sacSelf: true }, cols: ['W', 'U', 'B', 'R', 'G'] }], layout: 'token' };
     return id;
   };
   mk.role = function (name) {

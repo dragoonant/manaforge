@@ -79,6 +79,7 @@
     exiledWithTypes: (x, c) => { const o = I(x.s, x.src); return cardTypes(x.s, ((o && o.exiled) || []).filter(i => I(x.s, i) && I(x.s, i).zone === 'exile')) >= c.n; },   // CR 607.2a
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
+    sneakPaid: x => !!(x.L && x.L.sneak),                                                      // CR 702.190b
     lifeOverStart: (x, c) => P(x.s, x.ctrl).life - P(x.s, x.ctrl).startLife >= c.n,            // "greater than your starting life total" (n 1), "at least 10 greater" (n 10) — CR 119.1
     giftPromised: x => !!(x.L && x.L.gift != null),                                            // CR 702.174k
     bargained: x => !!(x.L && x.L.bargained),                                                  // CR 702.166b
@@ -137,7 +138,8 @@
       }
       case 'enters': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid) && (!a.firstEachTurn || ev.first);
       case 'unlock': return ev.iid === iid && ev.door === a.door;                                // "When you unlock this door" (CR 709.5h)
-      case 'levelUp': return ev.iid === iid && ev.level === a.level;                               // "When this Class becomes level N" (CR 716.2a)
+      case 'levelUp': return ev.iid === iid && ev.level === a.level;
+      case 'counterPut': return ev.iid === iid && (!a.ctrKind || ev.kind === a.ctrKind) && (!a.nth || (ev.before < a.nth && ev.after >= a.nth));   // "When the fourth plan counter is put on this"                               // "When this Class becomes level N" (CR 716.2a)
       case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
       case 'dealsDamage': return ev.src === iid && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);
       case 'sacrificed': case 'dies': case 'leaves': return ev.iid === iid;
@@ -145,7 +147,7 @@
       case 'gainLife': return ev.who === src.ctrl;
       // Valiant: "becomes the target of a spell or ability you control for the first time each turn".
       case 'targeted': return ev.iid === iid && (!a.byYou || ev.by === src.ctrl) && (!a.firstEachTurn || ev.firstThisTurn);
-      case 'attackWith': return ev.ctrl === src.ctrl && (ev.subtypes.includes(a.sub) || ev.anyType);   // CR 508.3c: once for the declaration; "all creature types" counts (CR 205.3m)
+      case 'attackWith': return ev.ctrl === src.ctrl && (!a.sub || ev.subtypes.includes(a.sub) || ev.anyType);   // CR 508.3c: once for the declaration; "all creature types" counts (CR 205.3m)
       case 'dealtDamage': return ev.iid === iid;
       default: return false;
     }
@@ -202,18 +204,20 @@
     counter(x, op) {                                                                           // CR 122.1
       for (const i of MF.resolveRefs(x, op.on)) {
         const c = I(x.s, i); const n = num(x, op.n);
-        c.ctr[op.kind] = (c.ctr[op.kind] || 0) + n;
+        const before = c.ctr[op.kind] || 0;
+        c.ctr[op.kind] = before + n;
         log(x.s, 'counter', { who: c.ctrl, c: c.id, n: n, kind: op.kind, src: x.L ? x.L.srcId || I(x.s, x.src).id : null });
-        MF.emit(x.s, { t: 'counterPut', iid: i, n: n, kind: op.kind });
+        MF.emit(x.s, { t: 'counterPut', iid: i, n: n, kind: op.kind, before: before, after: c.ctr[op.kind] });
       }
     },
     doubleCounters(x, op) {                                                                    // "double the number of +1/+1 counters on it" (CR 701.10e: put that many more)
       for (const i of MF.resolveRefs(x, op.on)) {
         const c = I(x.s, i), n = c.ctr[op.kind] || 0;
         if (!n) continue;
-        c.ctr[op.kind] = 2 * n;                                                                    // its ruling: that many more are put on it
+        c.ctr[op.kind] = 2 * n;
+        const before = n;                                                                    // its ruling: that many more are put on it
         log(x.s, 'counter', { who: c.ctrl, c: c.id, n: n, kind: op.kind, src: x.L.srcId });
-        MF.emit(x.s, { t: 'counterPut', iid: i, n: n, kind: op.kind });
+        MF.emit(x.s, { t: 'counterPut', iid: i, n: n, kind: op.kind, before: before, after: 2 * n });
       }
     },
     tap(x, op) { for (const i of MF.resolveRefs(x, op.on)) { const c = I(x.s, i); if (!c.tapped) { c.tapped = true; log(x.s, 'tapped', { who: c.ctrl, c: c.id }); } } },
@@ -257,9 +261,16 @@
         s.bf.push(iid);
         noteEntered(s, iid);
         x.it = iid;                                                                              // "You may attach this Equipment to it"
-        log(s, 'token', { who: x.ctrl, c: op.id });
+        // "tapped and attacking" (CR 508.4); The Last Ronin's Technique: only if the sneak cost was paid.
+        const atk = (op.attacking || op.attackingIf) && (!op.attackingIf || MF.cond(x, op.attackingIf));
+        if (op.tapped || atk) s.cards[iid].tapped = true;
+        const attacking = atk ? MF.enterAttacking(s, iid) : false;
+        (x.made = x.made || []).push(iid);
+        log(s, 'token', { who: x.ctrl, c: op.id, tapped: !!s.cards[iid].tapped, attacking: attacking });
         MF.emit(s, { t: 'enters', iid: iid, ctrl: x.ctrl });
       }
+      // "Sacrifice them at the beginning of the next end step": a delayed trigger (CR 603.7), made after the tokens.
+      if (op.sacEnd && x.made && n > 0) (s.delayed = s.delayed || []).push({ src: x.src, ctrl: x.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', ops: [{ o: 'sacThese', iids: x.made.slice(-n) }] } });
     },
     // Offspring (CR 702.175a): "create a token that's a copy of it, except it's 1/1".
     tokenCopy(x, op) {
@@ -510,6 +521,21 @@
         }
       }
     },
+    // CR 603.7: "Whenever you attack this turn, ..." — a delayed triggered ability with a duration.
+    delayed(x, op) {
+      (x.s.delayed = x.s.delayed || []).push({ src: x.src, ctrl: x.ctrl, until: op.duration === 'turn' ? 'eot' : null, once: op.duration !== 'turn', ab: { k: 'trig', on: op.on, ops: op.ops } });
+      log(x.s, 'delayedMade', { who: x.ctrl, c: x.L ? (x.L.srcId || x.L.id) : null, on: op.on });
+    },
+    sacThese(x, op) { for (const i of op.iids) { const c = I(x.s, i); if (c && c.zone === 'bf' && c.ctrl === x.ctrl) MF.sacrifice(x.s, i); } },   // CR 603.7c: only if still there
+    sacrificeSelf(x) { const c = I(x.s, x.src); if (c && c.zone === 'bf') MF.sacrifice(x.s, x.src); },
+    // Belladonna Took: what happens depends on how many times this ability has resolved this turn.
+    nthResolution(x, op) {
+      const c = I(x.s, x.src), key = 'res' + (x.L ? x.L.ab : 0);
+      const r = c[key] && c[key].turn === x.s.turn ? c[key] : (c[key] = { turn: x.s.turn, n: 0 });
+      r.n++;
+      log(x.s, 'nthResolution', { who: x.ctrl, c: c.id, n: r.n });
+      if (op.branches[r.n - 1]) MF.runOps(x, op.branches[r.n - 1]);                            // beyond the third: nothing (its ruling)
+    },
     // "Return target creature ... to its owner's hand" (CR 400.7: a new object there).
     bounce(x, op) {
       for (const i of MF.resolveRefs(x, op.on)) { const c = I(x.s, i); log(x.s, 'bounce', { who: c.owner, c: c.id }); MF.move(x.s, i, 'hand'); }
@@ -673,7 +699,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

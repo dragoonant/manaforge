@@ -29,6 +29,7 @@ export const STYLE = 'grim dark fantasy painting, muted earthy palette, gritty t
 export const SHORT = 'super deformed grim warrior, stocky three heads tall, scarred and armoured, ';
 export const LAND_STYLE = 'grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland';
 export const LAND_SHORT = 'landscape painting, scenery, ';
+export const OBJECT_SHORT = 'fantasy still life painting of a single object, ';
 // For lands, everything living goes in the negative prompt (owner, 2026-10-04: no characters in lands).
 export const LAND_NEGATIVE = 'person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village';
 
@@ -74,10 +75,11 @@ for (const key of keys) {
   if (e.who && !WHO[e.who]) { unknown.push(`${key} (who "${e.who}")`); continue; }
   const subject = e.who ? `${WHO[e.who]}, ${e.subject}` : e.subject;
   const sid = styleFor(key), st = STYLES[sid];
-  const land = !!e.land, style = land ? st.land : st.style, short = land ? LAND_SHORT : st.short;
+  // An object card (a Treasure, an Equipment shown alone) takes the style but no figure: the style's character lead-in would put a warrior in front of it.
+  const land = !!e.land, object = !!e.object, style = land ? st.land : st.style, short = land ? LAND_SHORT : object ? OBJECT_SHORT : st.short;
   // The parts travel too: SDXL reads 77 tokens per text encoder; tools/gen-art-sdxl.py leads both
   // encoders with `short` + subject and gives the second the setting and the full style (PLAN D13).
-  prompts.push({ key, styleId: sid, land, prompt: `${short}${subject}, ${e.setting}. ${style}.`, subject, setting: e.setting, style, short, negativeExtra: land ? LAND_NEGATIVE : '' });
+  prompts.push({ key, styleId: sid, land, prompt: `${short}${subject}, ${e.setting}. ${style}.`, subject, setting: e.setting, style, short, negativeExtra: land || object ? LAND_NEGATIVE : '' });
 }
 if (missing.length || unknown.length) {
   if (missing.length) console.error(`${missing.length} wanted key(s) have no CARDS entry in tools/art-identity.mjs:\n  ` + missing.join('\n  '));

@@ -1219,7 +1219,7 @@ window.MF.decks = {
    "giott-king-of-the-dwarves: trigger event: ~ or another Dwarf you control enters and whenever an Equipment you control enters, you may discard a card. If you do, draw a card.",
    "mabel-heir-to-cragflame: ability: Other Mice you control get +1/+1.",
    "d-in-ironfoot: trigger event: Dáin enters, create a colorless Equipment artifact token named Axe with \"Equipped creature gets +1/+0\" and equip {2}. When you do, attach it to target creature you control.",
-   "doc-ocks-tentacles: trigger event: a creature you control with mana value 5 or greater enters, you may attach ~ to it."
+   "doc-ocks-tentacles: filter qualifier: with mana value 5 or greater"
   ],
   "tokens": []
  },
@@ -1359,20 +1359,20 @@ window.MF.decks = {
   ],
   "compiles": false,
   "refused": [
-   "dalkovan-encampment: effect: Whenever you attack this turn, create two 1/1 red Warrior creature tokens that are tapped and attacking",
    "haliya-guided-by-light: trigger event: ~ or another creature or artifact you control enters, you gain 1 life.",
    "essence-channeler: condition: you've lost life this turn",
    "amalia-benavides-aguirre: ability: Ward—Pay 3 life.",
    "lunar-convocation: intervening if: if you gained life this turn, each opponent loses 1 life.",
    "case-of-the-uneaten-feast: layout case is not compiled",
-   "moseo-veins-new-dean: keyword: \"Whenever this token attacks",
+   "moseo-veins-new-dean: token ability: Whenever this token attacks, you gain 1 life.",
    "deep-cavern-bat: effect: Look at target opponent's hand",
-   "voice-of-victory: ability: Mobilize 2",
    "aunt-may: condition: it's a Spider",
    "enduring-innocence: trigger event: one or more other creatures you control with power 2 or less enter, draw a card. This ability triggers only once each turn.",
    "starscape-cleric: trigger event: you gain life, each opponent loses 1 life."
   ],
-  "tokens": []
+  "tokens": [
+   "token-warrior-1-1-r"
+  ]
  },
  "dimir-bitter-triumph-hob": {
   "id": "dimir-bitter-triumph-hob",
@@ -1561,7 +1561,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (september-7-2026)",
   "rank": null,
   "players": 7,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -1660,20 +1660,14 @@ window.MF.decks = {
     "name": "Torch the Tower"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "dalkovan-encampment: effect: Whenever you attack this turn, create two 1/1 red Warrior creature tokens that are tapped and attacking",
-   "fountainport: cost: Sacrifice a token",
-   "belladonna-took: trigger event: a token you control enters, you gain 1 life if this is the first time this ability has resolved this turn. If it's the second time, draw a card. If it's the third time, put a +1/+1 counter on each creature you control.",
-   "frontline-rush: effect: Target creature gets +X/+X until end of turn, where X is the number of creatures you control",
-   "stadium-headliner: ability: Mobilize 1",
-   "song-of-totentanz: object: create X 1/1 black Rat creature tokens with \"This token can't block.\" Creatures you control",
-   "the-last-ronins-technique: effect: Sneak {1}{W}",
-   "political-triumph: trigger event: a creature you control enters, scry 1 and put a plan counter on ~.",
-   "voice-of-victory: ability: Mobilize 2",
-   "warleaders-call: ability: Creatures you control get +1/+1."
-  ],
+  "compiles": true,
   "tokens": [
+   "token-warrior-1-1-r",
+   "token-fish-1-1-u",
+   "token-treasure",
+   "token-goblin-1-1-r",
+   "token-rat-1-1-b-this-token-can-t-block",
+   "token-ninja-turtle-spirit-1-1-w",
    "token-rabbit-1-1-w"
   ]
  },
@@ -2453,7 +2447,7 @@ window.MF.decks = {
   ],
   "compiles": false,
   "refused": [
-   "realm-of-koh: keyword: \"This token can't block or be blocked by non-Spirit creatures.\"",
+   "realm-of-koh: token ability: This token can't block or be blocked by non-Spirit creatures.",
    "iridescent-vinelasher: trigger event: a land you control enters, ~ deals 1 damage to target opponent.",
    "nighthowl-pursuer: trigger event: ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn.",
    "desolation-prowler: ability: Pay 2 life: ~ gets +2/+2 until end of turn. Activate only once each turn.",
@@ -3239,7 +3233,6 @@ window.MF.decks = {
    "three-steps-ahead: effect: Spree",
    "dreams-of-laguna: effect: Surveil 1, then draw a card",
    "demolition-field: filter noun: nonbasic land an opponent controls",
-   "fountainport: cost: Sacrifice a token",
    "kutzils-flanker: effect: Choose one —",
    "get-lost: filter qualifier: , enchantment, or planeswalker",
    "beza-the-bounding-spring: effect: Create a Treasure token if an opponent controls more lands than you",
@@ -3249,7 +3242,10 @@ window.MF.decks = {
    "marang-river-regent-coil-and-catch: effect: Return up to two other target nonland permanents to their owners' hands",
    "ultima: filter noun: artifacts and creatures"
   ],
-  "tokens": []
+  "tokens": [
+   "token-fish-1-1-u",
+   "token-treasure"
+  ]
  },
  "golgari-roots-fin": {
   "id": "golgari-roots-fin",
