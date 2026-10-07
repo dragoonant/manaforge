@@ -104,3 +104,12 @@ test('Surrak: can’t be countered (CR 113.6g); draws when an opponent targets m
   s = cast(s, 'lightning-strike', tgt(find(s, 'surrak-elusive-hunter'))); s = resolveAll(s);
   eq(s.players[0].hand.length, 1, 'drew a card');
 });
+test('Meltstriders Resolve: a second blocker for the enchanted creature is never offered; undo removes the last one declared', () => {
+  let s = setup({ me: { bf: ['surrak-elusive-hunter', { id: 'meltstriders-resolve', att: 0 }] }, opp: { bf: ['warren-elder', 'warren-elder', 'warren-elder'] } });
+  const su = find(s, 'surrak-elusive-hunter'), we = findAll(s, 'warren-elder');
+  s = toStep(s, 'attackers'); s = answer(s, [su, 'done']); s = toStep(s, 'blockers');
+  eq(s.pending.q.kind, 'block');
+  s = answer(s, [we[2] + '>' + su]);
+  ok(!s.pending.q.opts.some(o => o.att === su), 'no second blocker offered'); ok(s.pending.q.opts.some(o => o.id === 'done'), 'one blocker is legal');
+  s = answer(s, ['undo']); eq(Object.keys(s.pending.q.assign).length, 0, 'undone');
+});

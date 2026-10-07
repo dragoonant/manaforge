@@ -1945,7 +1945,7 @@ window.MF.decks = {
   ],
   "compiles": false,
   "refused": [
-   "castle-doom: effect: Add one mana of any color",
+   "castle-doom: effect: Spend this mana only to cast an artifact spell",
    "petrified-hamlet: effect: Choose a land card name",
    "fomori-vault: effect: Look at the top X cards of your library, where X is the number of artifacts you control",
    "united-battlefront: effect: Look at the top seven cards of your library",
@@ -2144,7 +2144,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (august-24-2026)",
   "rank": null,
   "players": 7,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -2263,18 +2263,7 @@ window.MF.decks = {
     "name": "Soul-Guide Lantern"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "multiversal-passage: ability: As ~ enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters tapped.",
-   "brightglass-gearhulk: effect: You may search your library for up to two artifact, creature, and/or enchantment cards with mana value 1 or less, reveal them, put them into your hand, then shuffle",
-   "pawpatch-recruit: trigger event: a creature you control becomes the target of a spell or ability an opponent controls, put a +1/+1 counter on target creature you control other than that creature.",
-   "leatherhead-swamp-stalker: ability: ~ enters with a hexproof counter on her.",
-   "spider-manifestation: trigger event: you cast a spell with mana value 4 or greater, untap ~.",
-   "ouroboroid: filter qualifier: , where X is ~'s power",
-   "seam-rip: effect: Exile target nonland permanent an opponent controls with mana value 2 or less until ~ leaves the battlefield",
-   "jennifer-walters-the-sensational-she-hulk: layout modal_dfc is not compiled",
-   "outcaster-trailblazer: effect: Add one mana of any color"
-  ],
+  "compiles": true,
   "tokens": []
  },
  "mono-black-desolation-prowler-hob": {

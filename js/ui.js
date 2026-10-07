@@ -28,7 +28,8 @@
       if (c.ctr.loyalty != null) badges += `<div class="badge b-loy" title="Loyalty (CR 306.5c)">${c.ctr.loyalty}</div>`;
       if (c.transformed) badges += `<div class="badge b-copy" title="Transformed: its back face is up (CR 712); front: ${esc(MF.cards[c.id].name)}">transformed</div>`;
       for (const k of Object.keys(c.ctr)) if (c.ctr[k] > 0 && !['+1/+1', '-1/-1', 'loyalty', 'stun'].includes(k)) badges += `<div class="badge b-ctr" title="${esc(k)} counters">${c.ctr[k]} ${esc(k)}</div>`;
-      if (c.dmg) badges += `<div class="badge b-dmg">${c.dmg} dmg</div>`;
+      if (c.chosen) badges += `<div class="badge b-kw" title="Chosen as it entered (CR 614.12a)">chosen: ${esc(c.chosen)}</div>`;
+      if (c.dmg) badges +=`<div class="badge b-dmg">${c.dmg} dmg</div>`;
       if (ch.types.includes('Creature') && c.ctrl === v.ap && !ch.kw.haste && !(c.ctlTurn < v.turn)) badges += `<div class="badge b-sick" title="Summoning sick: it came under your control this turn (CR 302.6)">zzz</div>`;
       if (ch.noUntap) badges += `<div class="badge b-lock" title="Doesn’t untap during its controller’s untap step">locked</div>`;
       if (ch.unblockable) badges += `<div class="badge b-unb">unblockable</div>`;
@@ -98,8 +99,9 @@
           if (a.via === 'warp') { add(a.iid, a, 'Cast ' + d.name + ' for its warp cost — ' + MF.manaStr(cost) + ' (exiled at end step; recast later)'); continue; }
           if (a.via === 'sneak') { add(a.iid, a, 'Cast ' + d.name + ' for its sneak cost — ' + MF.manaStr(cost) + ' (return an unblocked attacker)'); continue; }
           if (a.via === 'harmonize') { add(a.iid, a, 'Cast ' + d.name + ' with harmonize — ' + MF.manaStr(cost) + ' (tap a creature to reduce it)'); if (!tray.includes(a.iid)) tray.push(a.iid); continue; }
-          add(a.iid, a, 'Cast ' + (a.door != null ? d.doors[a.door].name + ' (door)' : a.alt ? d.alt.name + ' (' + (d.alt.kind === 'omen' ? 'Omen' : 'Adventure') + ')' : d.name) + ' — ' + MF.manaStr(cost));
+          add(a.iid, a, 'Cast ' + (a.door != null ? d.doors[a.door].name + ' (door)' : a.alt ? d.alt.name + ' (' + (d.alt.kind === 'omen' ? 'Omen' : d.alt.kind === 'mdfc' ? 'back face' : 'Adventure') + ')' : d.name) + ' — ' + (MF.isPlotted(s, a.iid) ? 'free (plotted)' : MF.manaStr(cost)));
         }
+        else if (a.type === 'plot') { const p = MF.cards[s.cards[a.iid].id].ab.find(x => x.k === 'plot'); add(a.iid, a, 'Plot ' + MF.cards[s.cards[a.iid].id].name + ' — ' + MF.manaStr(MF.parseMana(p.cost)) + ' (cast it free on a later turn)'); }
         else if (a.type === 'unlock') { const f = MF.cards[s.cards[a.iid].id].doors[a.door]; add(a.iid, a, 'Unlock ' + f.name + ' — ' + f.mana); }
         else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : ab.levelUp ? 'Level ' + ab.levelUp + ' — ' + ab.cost.mana : ab.loyalty != null ? MF.describeAbility(ab) : ab.ninjutsu ? 'Ninjutsu — ' + ab.cost.mana + ', return an unblocked attacker' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
         else if (a.type === 'pass') btns.push({ a: a, label: T.passLabel(s, ui.human), cls: 'primary' });

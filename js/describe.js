@@ -130,6 +130,11 @@
     exileTransformOnto: op => 'if this spell was cast from a graveyard, exile it, then put it onto the battlefield transformed with ' + Object.keys(op.ctr).map(k => 'a ' + k + ' counter').join(' and ') + ' on it',
     revealTopToHand: () => 'reveal the top card of your library; if it’s a permanent card, put it into your hand',
     addMana: op => 'add ' + ('{' + op.col + '}').repeat(op.n),
+    exileUntilLeaves: op => 'exile ' + ref(op.on) + ' until this leaves the battlefield',
+    tutorUpTo: op => 'search your library for up to ' + N(op.n) + ' ' + op.f.types.join(', ').toLowerCase() + ' cards with mana value ' + op.f.mvLE + ' or less, reveal them, put them into your hand, then shuffle',
+    mayRemoveAnyCounter: op => 'you may remove a counter of any kind from this; when you do: ' + MF.describeAbility(Object.assign({}, op.then.ab, { k: 'reflexiveBody' })),
+    mayOnce: op => 'you may (only once each turn): ' + ops(op.ops),
+    addManaAny: () => 'add one mana of any color',
     becomeCreature: () => 'this becomes an artifact creature until end of turn',
     reflexive: op => 'when you do: ' + MF.describeAbility(Object.assign({}, op.ab, { k: 'reflexiveBody' })),
     counterTarget: op => 'counter ' + ref(op.on),
@@ -195,7 +200,7 @@
         return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.discard ? 'discard a card' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : '', a.cost.exileSelf ? 'exile this' : '', a.cost.crew ? 'crew ' + a.cost.crew + ' (tap any number of other untapped creatures you control with total power ' + a.cost.crew + ' or more)' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
       case 'evasion': return a.blockerNot.notSubtypes ? 'this can’t be blocked by non-' + a.blockerNot.notSubtypes.join('/') + ' creatures' : 'this can’t be blocked by ' + filt(Object.assign({ types: ['Creature'] }, a.blockerNot)).replace('creature', 'creatures');
       case 'oppDieExile': return 'if a creature an opponent controls would die, exile it instead';
-      case 'enterChoice': return 'as this enters, choose odd or even';
+      case 'enterChoice': return 'as this enters, choose ' + (a.what === 'basicType' ? 'a basic land type' : 'odd or even');
       case 'reflexiveBody': return (a.cond ? 'if ' + cond(a.cond) + ', ' : '') + ops(a.ops);
       case 'etbCounters': return 'this enters with ' + a.n + ' ' + a.kind + ' counters on it';
       case 'flashback': return 'flashback ' + a.cost + ' (you may cast this from your graveyard for ' + a.cost + '; then exile it)';
@@ -214,7 +219,7 @@
         if (a.ward) return 'ward — ' + ops(a.ops);
         if (a.solveTrig) return 'to solve — ' + cond(a.cond.of[0]) + ' (checked at the beginning of your end step)';
         let e;
-        if (a.on === 'cast') e = 'Whenever ' + (a.anyPlayer ? 'a player casts' : 'you cast') + ' a ' + (a.spell && a.spell.notTypes ? 'non' + a.spell.notTypes.join('').toLowerCase() + ' ' : '') + 'spell';
+        if (a.on === 'cast') e = 'Whenever ' + (a.anyPlayer ? 'a player casts' : 'you cast') + ' a ' + (a.spell && a.spell.notTypes ? 'non' + a.spell.notTypes.join('').toLowerCase() + ' ' : '') + 'spell' + (a.spell && a.spell.mvGE != null ? ' with mana value ' + a.spell.mvGE + ' or greater' : '');
         else if (a.on === 'beginStep') e = 'At the beginning of ' + (a.yours ? 'your ' : '') + ({ boc: 'combat', upkeep: 'upkeep', end: 'end step' }[a.step] || a.step);
         else if (a.on === 'attackWith') e = 'Whenever you attack with one or more ' + a.sub + 's';
         else if (a.on === 'dealsDamage') e = 'Whenever this deals ' + (a.combat ? 'combat ' : '') + 'damage' + (a.toOpp ? ' to an opponent' : a.toPlayer ? ' to a player' : '');
@@ -251,6 +256,8 @@
         if (a.pv) return 'this gets +1/+1 for each other ' + filt(a.pv.f).replace(' you control', '') + ' you control';
         return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + (typeof a.affects === 'string' ? (a.affects === 'self' ? 'this' : 'the ' + a.affects + ' creature') : 'each ' + filt(a.affects)) + (a.p || a.t ? ' gets ' + sgn(a.p) + '/' + sgn(a.t) : '') + (a.grant ? (a.p || a.t ? ' and' : '') + ' has ' + a.grant.map(k => KWNAME[k]).join(', ') : '') + (a.grantAb ? ' and ' + a.grantAb.map(g => MF.describeAbility(g)).join(', ') : '');
       case 'cda': return (a.t === false ? 'power is equal to ' : 'power and toughness each equal ') + N(a.v);
+      case 'chosenLandType': return 'this is the chosen basic land type (and taps for its color)';
+      case 'plot': return 'plot ' + a.cost + ' (exile it from your hand for this cost as a sorcery; on a later turn, cast it as a sorcery without paying its mana cost)';
       case 'extraLand': return 'you may play ' + a.n + ' additional land on each of your turns';
       case 'landsFromGrave': return 'you may play lands from your graveyard';
       case 'uncounterable': return 'this spell can’t be countered';

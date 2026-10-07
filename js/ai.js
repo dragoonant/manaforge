@@ -151,7 +151,17 @@
       case 'discardUpTo': return 'done';
       case 'gift': return q.opts.some(o => o.id === 'no') ? 'no' : q.opts[0].id;
       case 'bargain': return 'none';
-      case 'enterChoice': return 'odd';
+      case 'enterChoice': {
+        if (q.what !== 'basicType') return 'odd';
+        const need = { W: 0, U: 0, B: 0, R: 0, G: 0 };                                        // the color its hand and library ask for most
+        for (const i of P(s, me).hand.concat(P(s, me).lib)) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\{' + k + '\}', 'g')) || []).length;
+        const best = Object.keys(need).sort((a, b) => need[b] - need[a])[0];
+        return { W: 'Plains', U: 'Island', B: 'Swamp', R: 'Mountain', G: 'Forest' }[best];
+      }
+      case 'hybrid': return q.opts[q.opts.length - 1].id;
+      case 'manaColor': { const need = { W: 0, U: 0, B: 0, R: 0, G: 0 }; for (const i of P(s, me).hand) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\\{' + k + '\\}', 'g')) || []).length; return Object.keys(need).sort((a, b) => need[b] - need[a])[0]; }   // the color its hand asks for most
+      case 'tutorUpTo': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }
+      case 'removeCounterKind': { const o = q.opts.find(o2 => o2.id !== 'none' && o2.id !== '+1/+1') || q.opts.find(o2 => o2.id !== 'none'); return o ? o.id : 'none'; }
       case 'mayPay': return 'yes';
       case 'addCostYes': return 'no';
       case 'blightOn': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;

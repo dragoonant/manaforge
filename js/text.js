@@ -9,6 +9,7 @@
   // Mana symbols, drawn by this project in CSS (docs/rights.md rule 1).
   const sym = t => {
     if (t === 'T') return '<span class="ms ms-T" title="tap">⟳</span>';
+    if (/^[WUBRG]\/[WUBRG]$/.test(t)) { const v = k => 'var(--m' + k + ')'; return `<span class="ms ms-h" style="--h1:${v(t[0])};--h2:${v(t[2])}" title="${MF.COLOR_NAME[t[0]]} or ${MF.COLOR_NAME[t[2]]}"></span>`; }   // CR 107.4e
     if (/^[WUBRGC]$/.test(t)) return `<span class="ms ms-${t}" title="${MF.COLOR_NAME[t]}">${t === 'C' ? '◇' : ''}</span>`;
     return `<span class="ms ms-N">${esc(t)}</span>`;
   };
@@ -85,7 +86,9 @@
     solved: (e, v) => `${tag(e.c)} is solved.`,
     graveCastable: (e, v) => `${W(e.who, v)} may cast creature cards from ${T.whose(e.who, v)} graveyard this turn (${plural(e.n, 'card')}).`,
     wardPaid: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'pay', 'pays')} the ward cost of ${tag(e.c)}.`,
-    returnFromExile: (e, v) => `${tag(e.c)} returns from exile to ${T.whose(e.who, v)} hand.`,
+    returnFromExile: (e, v) => e.to === 'bf' ? `${tag(e.c)} returns from exile to the battlefield under ${T.whose(e.who, v)} control.` : `${tag(e.c)} returns from exile to ${T.whose(e.who, v)} hand.`,
+    plot: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'plot', 'plots')} ${tag(e.c)}: it is exiled face up, to be cast on a later turn without paying its mana cost.`,
+    onceDone: (e, v) => `${tag(e.c)} has already done this this turn.`,
     nthResolution: (e, v) => `${tag(e.c)}’s ability has resolved ${['once', 'twice', 'three times'][e.n - 1] || e.n + ' times'} this turn${e.n > 3 ? ' — no further effect' : ''}.`,
     sneakReturn: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'return', 'returns')} the unblocked ${tag(e.c)} to hand to pay the sneak cost.`,
     delayedMade: (e, v) => `${tag(e.c)}: ${e.on === 'attackWith' ? 'whenever ' + (e.who === v ? 'you attack' : 'the opponent attacks') + ' this turn, it makes attacking Warriors' : 'a delayed ability is set'}.`,
@@ -185,11 +188,17 @@
     lookPick: (s, q) => ({ title: `${C(s, q.src)}: choose a card for your hand (${q.k} of ${q.take})`, body: `Only you see these ${q.n} cards. The ones you don’t take go to the bottom of your library.`, labels: {} }),
     sneakReturn: (s, q) => ({ title: `Sneak ${C(s, q.src)}: return an unblocked attacker`, body: 'To pay the sneak cost, return one of your unblocked attacking creatures to your hand (CR 702.190). Click a glowing creature.', labels: {} }),
     sacToken: (s, q) => ({ title: `${C(s, q.src)}: sacrifice a token`, body: 'Sacrificing a token is part of the cost. Click a glowing token.', labels: {} }),
-    enterChoice: (s, q) => ({ title: `${tag(q.c)} is entering: choose odd or even`, body: 'Zero is even. Its ability refers to the quality you choose.', labels: { odd: 'Odd', even: 'Even' } }),
+    enterChoice: (s, q) => q.what === 'basicType'
+      ? ({ title: `${tag(q.c)} is entering: choose a basic land type`, body: 'It becomes that land type and taps for its colour (CR 305.7). Then you may pay 2 life, or it enters tapped.', labels: Object.fromEntries(q.opts.map(o => [o.id, o.id + ' (' + { Plains: 'white', Island: 'blue', Swamp: 'black', Mountain: 'red', Forest: 'green' }[o.id] + ')'])) })
+      : ({ title: `${tag(q.c)} is entering: choose odd or even`, body: 'Zero is even. Its ability refers to the quality you choose.', labels: { odd: 'Odd', even: 'Even' } }),
     mayPay: (s, q) => ({ title: `${C(s, q.src)}: pay ${q.mana ? symbols(q.mana) : q.life + ' life'}?`, body: `If you pay, the rest happens.${oracle(s, q.src)}`, labels: { yes: 'Pay ' + (q.mana ? q.mana.replace(/[{}]/g, '') : q.life + ' life'), no: 'Don’t pay' } }),
     addCostYes: (s, q) => ({ title: `${C(s, q.src)}: pay the additional cost?`, body: q.what === 'blight' ? `You may blight ${q.n}: put ${q.n} -1/-1 counter on a creature you control (CR 701.68).${oracle(s, q.src)}` : `Teamwork ${q.n}: you may tap creatures you control with total power ${q.n} or more (CR 702.194).${oracle(s, q.src)}`, labels: { yes: q.what === 'blight' ? 'Blight ' + q.n : 'Use teamwork', no: 'Don’t pay it' } }),
     blightOn: (s, q) => ({ title: `Blight ${q.n}: which creature gets the -1/-1 counter?`, body: 'Click one of your glowing creatures.', labels: {} }),
     crewTap: (s, q) => ({ title: `Crew ${q.n} ${C(s, q.src)}: tap creatures (total power ${q.total} so far)`, body: `Tap other untapped creatures you control with total power ${q.n} or more (CR 702.122). Click a glowing creature.`, labels: { done: 'Done — crew it' } }),
+    hybrid: (s, q) => ({ title: `${C(s, q.src)}: pay ${symbols('{' + q.sym[0] + '/' + q.sym[1] + '}')} with which colour?`, body: `A hybrid symbol is paid with either colour; you announce which before paying (CR 601.2b). Only the colours your mana can pay are offered.${q.n > 1 ? ' Symbol ' + q.k + ' of ' + q.n + '.' : ''}`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'Pay it with ' + MF.COLOR_NAME[o.id]])) }),
+    manaColor: (s, q) => ({ title: `${C(s, q.src)}: add one mana of which color?`, body: 'The mana goes into your mana pool; it empties as the step ends.', labels: Object.fromEntries(q.opts.map(o => [o.id, 'Add ' + MF.COLOR_NAME[o.id]])) }),
+    tutorUpTo: (s, q) => ({ title: `${C(s, q.src)}: choose card ${q.k} of up to ${q.n}`, body: 'Only you see your library. Click a glowing card; the ones you take are revealed and go into your hand, then your library is shuffled.', labels: { done: 'Done searching' } }),
+    removeCounterKind: (s, q) => ({ title: `${C(s, q.src)}: remove a counter?`, body: `If you remove one, its reflexive ability triggers.${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, o.id === 'none' ? 'Remove nothing' : 'Remove a ' + o.id + ' counter (' + o.n + ' on it)'])) }),
     teamworkTap: (s, q) => ({ title: `Teamwork ${q.n}: tap creatures (total power ${q.total} so far)`, body: `Tap creatures you control until their total power is ${q.n} or more.`, labels: { done: 'Done tapping' } }),
     discardOrLife: (s, q) => ({ title: `${C(s, q.src)}: discard a card or pay ${q.life} life`, body: `An additional cost to cast it. Your life: ${s.players[q.who].life}.`, labels: { discard: 'Discard a card', life: 'Pay ' + q.life + ' life' } }),
     attackWhom: (s, q) => ({ title: `${C(s, q.src)} attacks whom?`, body: 'The defending player controls a planeswalker. Choose the player or a planeswalker for this attacker (CR 508.1b).', labels: Object.fromEntries(q.opts.map(o => [o.id, o.seat != null ? 'Attack the opponent' : 'Attack ' + MF.cards[MF.view(s).cards[o.iid].id].name])) }),
@@ -218,6 +227,8 @@
       : q.what === 'discard' ? ({ title: `${C(s, q.src)}: discard a card?`, body: `You may discard a card.${oracle(s, q.src)}`, labels: { yes: 'Discard a card', no: 'Don’t discard' } })
       : q.what === 'returnFromGrave' ? ({ title: `${C(s, q.src)}: return it from your graveyard?`, body: `You may return this card from your graveyard to the battlefield.${oracle(s, q.src)}`, labels: { yes: 'Return it to the battlefield', no: 'Leave it' } })
       : q.what === 'search' ? ({ title: `${C(s, q.src)}: search for a basic land?`, body: 'You may search your library for a basic land card and put it onto the battlefield tapped, then shuffle.', labels: { yes: 'Search', no: 'Don’t search' } })
+      : q.what === 'onceEachTurn' ? ({ title: `${C(s, q.src)}: deal ${q.n} damage${q.tgt ? ' to ' + (q.tgt.p != null ? (q.tgt.p === q.who ? 'yourself' : 'the opponent') : tag(MF.view(s).cards[q.tgt.c].id)) : ''}?`, body: `You may do this only once each turn. If you decline, you can still do it later this turn.${oracle(s, q.src)}`, labels: { yes: `Deal ${q.n} damage`, no: 'Not now' } })
+      : q.what === 'searchCards' ? ({ title: `${C(s, q.src)}: search your library?`, body: `You may search for the cards it names, reveal them and put them into your hand, then shuffle.${oracle(s, q.src)}`, labels: { yes: 'Search', no: 'Don’t search' } })
       : q.what === 'mill' ? ({ title: `${C(s, q.src)}: mill a card?`, body: `You may put the top card of your library into your graveyard.${oracle(s, q.src)}`, labels: { yes: 'Mill the top card', no: 'Don’t mill' } })
       : q.what === 'digOnto' ? ({ title: `Put ${tag(q.c)} onto the battlefield?`, body: 'Its mana value is low enough: it may go onto the battlefield and gain haste until end of turn. Otherwise it goes into your hand.', labels: { yes: 'Onto the battlefield, with haste', no: 'Into my hand' } })
       : ({ title: `${C(s, q.src)}`, body: oracle(s, q.src), labels: { yes: 'Yes', no: 'No' } }),

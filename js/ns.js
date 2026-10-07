@@ -29,16 +29,24 @@ window.MF = {};
       if (/^\d+$/.test(t)) c.g += +t;
       else if (t === 'X') c.x++;
       else if (c[t] != null && t !== 'g' && t !== 'x') c[t]++;
+      else if (/^[WUBRG]\/[WUBRG]$/.test(t)) (c.h = c.h || []).push(t[0] + t[2]);            // CR 107.4e: a hybrid symbol, paid with either colour
       else throw new Error('mana symbol not supported: {' + t + '}');
     }
     return c;
   };
-  MF.manaValue = c => c.g + c.W + c.U + c.B + c.R + c.G + c.C;
+  MF.hybridWays = function (c) {
+    if (!c.h || !c.h.length) return [c];
+    let ways = [Object.assign({}, c, { h: [] })];
+    for (const h of c.h) ways = ways.flatMap(w => [h[0], h[1]].map(k => Object.assign({}, w, { [k]: w[k] + 1 })));
+    return ways;
+  };
+  MF.manaValue = c => c.g + c.W + c.U + c.B + c.R + c.G + c.C + (c.h ? c.h.length : 0);   // CR 202.3f: each hybrid symbol counts one
   MF.manaStr = function (c) {
     let s = '';
     for (let i = 0; i < c.x; i++) s += '{X}';
     if (c.g || (!c.x && !MF.manaValue(c))) s += '{' + c.g + '}';
     for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) for (let i = 0; i < c[k]; i++) s += '{' + k + '}';
+    for (const h of c.h || []) s += '{' + h[0] + '/' + h[1] + '}';
     return s;
   };
 })();

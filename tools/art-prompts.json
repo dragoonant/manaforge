@@ -1,5 +1,16 @@
 [
   {
+    "key": "abandoned-air-temple",
+    "styleId": "J",
+    "land": true,
+    "prompt": "landscape painting, scenery, a ruined mountaintop monastery of pale stone with sweeping curved roofs, wind-torn prayer cloths, above a sea of clouds at dawn. modern digital environment concept art, cinematic volumetric lighting, atmospheric haze, epic scale, teal and orange palette.",
+    "subject": "a ruined mountaintop monastery of pale stone with sweeping curved roofs, wind-torn prayer cloths",
+    "setting": "above a sea of clouds at dawn",
+    "style": "modern digital environment concept art, cinematic volumetric lighting, atmospheric haze, epic scale, teal and orange palette",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "alania-divergent-storm",
     "styleId": "E",
     "land": false,
@@ -173,6 +184,17 @@
     "setting": "over a black storm-tossed river, spray and lightning",
     "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
     "short": "master grade super deformed infernal warrior, three heads tall, horned black armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "brightglass-gearhulk",
+    "styleId": "F",
+    "land": false,
+    "prompt": "master grade super deformed fighter, stocky three heads tall, battle-scarred, a towering construct of polished brass and glowing green glass panels, gears turning inside its chest, striding forward, in a sunlit crystal workshop. loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy.",
+    "subject": "a towering construct of polished brass and glowing green glass panels, gears turning inside its chest, striding forward",
+    "setting": "in a sunlit crystal workshop",
+    "style": "loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy",
+    "short": "master grade super deformed fighter, stocky three heads tall, battle-scarred, ",
     "negativeExtra": ""
   },
   {
@@ -891,6 +913,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "hushwood-verge",
+    "styleId": "C",
+    "land": true,
+    "prompt": "landscape painting, scenery, the edge of a quiet ancient forest opening onto a sunlit meadow, tall grass and white wildflowers, in soft golden afternoon light. action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour.",
+    "subject": "the edge of a quiet ancient forest opening onto a sunlit meadow, tall grass and white wildflowers",
+    "setting": "in soft golden afternoon light",
+    "style": "action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "icetill-explorer",
     "styleId": "K",
     "land": false,
@@ -968,6 +1001,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "jennifer-walters-the-sensational-she-hulk",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a towering green-skinned woman warrior in heavy battered plate armour and a torn cloak, fists raised, cracked pavement beneath her, in a ruined city street. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a towering green-skinned woman warrior in heavy battered plate armour and a torn cloak, fists raised, cracked pavement beneath her",
+    "setting": "in a ruined city street",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "kaito-bane-of-nightmares",
     "styleId": "I",
     "land": false,
@@ -998,6 +1042,17 @@
     "setting": "in a dim museum vault",
     "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
     "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "leatherhead-swamp-stalker",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a hulking crocodile warrior with scarred hide and a leather harness, rising from murky swamp water, jaws open, in a dark mangrove swamp. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a hulking crocodile warrior with scarred hide and a leather harness, rising from murky swamp water, jaws open",
+    "setting": "in a dark mangrove swamp",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
   },
   {
@@ -1166,6 +1221,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "multiversal-passage",
+    "styleId": "F",
+    "land": true,
+    "prompt": "landscape painting, scenery, a towering stone archway standing alone in a field, a shimmering portal of distant landscapes inside it, under a strange twilight sky. loose ink and watercolour landscape, bleeding pigment washes, deep indigo and rust, splattered paint, brooding sky.",
+    "subject": "a towering stone archway standing alone in a field, a shimmering portal of distant landscapes inside it",
+    "setting": "under a strange twilight sky",
+    "style": "loose ink and watercolour landscape, bleeding pigment washes, deep indigo and rust, splattered paint, brooding sky",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "nighthowl-pursuer",
     "styleId": "J",
     "land": false,
@@ -1188,6 +1254,28 @@
     "negativeExtra": ""
   },
   {
+    "key": "ouroboroid",
+    "styleId": "D",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a colossal serpent of living vines and bark coiled in a great ring, biting its own tail, leaves sprouting along its body, in an overgrown jungle clearing. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a colossal serpent of living vines and bark coiled in a great ring, biting its own tail, leaves sprouting along its body",
+    "setting": "in an overgrown jungle clearing",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "outcaster-trailblazer",
+    "styleId": "J",
+    "land": false,
+    "prompt": "master grade super deformed soldier, stocky three heads tall, layered armour, a rugged frontier druid in a dusty duster coat with a staff of twisted wood, green light at his feet, on a desert trail at sunset. modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment.",
+    "subject": "a rugged frontier druid in a dusty duster coat with a staff of twisted wood, green light at his feet",
+    "setting": "on a desert trail at sunset",
+    "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
+    "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "overprotect",
     "styleId": "E",
     "land": false,
@@ -1207,6 +1295,17 @@
     "setting": "in a gloomy overgrown graveyard at night",
     "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
     "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "pawpatch-recruit",
+    "styleId": "H",
+    "land": false,
+    "prompt": "super deformed dark knight, stocky three heads tall, spiked plate armour, a scarred rabbit warrior in patched leather armour holding a short spear, standing guard, at a fortified burrow in a forest. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "a scarred rabbit warrior in patched leather armour holding a short spear, standing guard",
+    "setting": "at a fortified burrow in a forest",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "super deformed dark knight, stocky three heads tall, spiked plate armour, ",
     "negativeExtra": ""
   },
   {
@@ -1441,6 +1540,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "seam-rip",
+    "styleId": "A",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a jagged glowing white tear hanging in the air, its edges peeling away like torn cloth, in an empty stone courtyard. oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood.",
+    "subject": "a jagged glowing white tear hanging in the air, its edges peeling away like torn cloth",
+    "setting": "in an empty stone courtyard",
+    "style": "oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "seed-of-hope",
     "styleId": "C",
     "land": false,
@@ -1518,6 +1628,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "skateboard",
+    "styleId": "D",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a battered wooden skateboard with scuffed wheels resting on cracked concrete, in a rainy city alley at night. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a battered wooden skateboard with scuffed wheels resting on cracked concrete",
+    "setting": "in a rainy city alley at night",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "sleight-of-hand",
     "styleId": "M",
     "land": false,
@@ -1571,6 +1692,17 @@
     "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
     "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "spider-manifestation",
+    "styleId": "A",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a giant spider made of glowing red and green light, legs spread across a shining web between ruined pillars, in a misty jungle ruin. oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood.",
+    "subject": "a giant spider made of glowing red and green light, legs spread across a shining web between ruined pillars",
+    "setting": "in a misty jungle ruin",
+    "style": "oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "spirebluff-canal",
@@ -1724,6 +1856,28 @@
     "setting": "on a burned battlefield at night, embers rising",
     "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
     "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "temple-garden",
+    "styleId": "C",
+    "land": true,
+    "prompt": "landscape painting, scenery, an overgrown sacred garden with white marble columns wrapped in vines and blossoming trees, in warm morning sunlight. action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour.",
+    "subject": "an overgrown sacred garden with white marble columns wrapped in vines and blossoming trees",
+    "setting": "in warm morning sunlight",
+    "style": "action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "tender-wildguide",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a scarred old possum druid with grey fur and a long bare tail, in a weathered hooded cloak, leaning on a gnarled staff with a glowing seed, in a twilight forest. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a scarred old possum druid with grey fur and a long bare tail, in a weathered hooded cloak, leaning on a gnarled staff with a glowing seed",
+    "setting": "in a twilight forest",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
     "negativeExtra": ""
   },
   {

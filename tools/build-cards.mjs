@@ -154,6 +154,7 @@ export function parseCond(str, ctx) {
 // One effect sentence (no trailing period) → ops.
 function parseEffect(T, ctx, sentence) {
   let s = sentence.trim(), m;
+  if ((m = s.match(/^[Pp]ut a \+1\/\+1 counter on target creature you control other than that creature$/))) { T.push({ f: { types: ['Creature'], ctrl: 'you' }, notEv: true }); return [{ o: 'counter', on: { t: T.length - 1 }, n: 1, kind: '+1/+1' }]; }
   if ((m = s.match(/^Treefolk and Forests you control gain (\w+) until end of turn$/))) return [{ o: 'pump', on: { each: { subtypes: ['Treefolk', 'Forest'], ctrl: 'you' } }, grant: kwList(m[1]) }];
   if ((m = s.match(/^[Tt]ap (.+) and put (a|an|one|two) stun counters? on it$/))) { const on = parseRef(T, ctx, m[1]); return [{ o: 'tap', on: on }, { o: 'counter', on: on, n: numOf(m[2]), kind: 'stun' }]; }
   if (/^Creature cards in your graveyard gain "You may cast this card from your graveyard" until end of turn$/.test(s)) return [{ o: 'graveCastable', types: ['Creature'] }];
@@ -183,6 +184,16 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may (mill a card|mill \w+ cards)$/))) return [{ o: 'may', what: 'mill', ops: parseEffect(T, ctx, cap(m[1])) }];
   if ((m = s.match(/^[Yy]ou may put a (permanent|creature|land) card from among the milled cards into your hand$/))) return [{ o: 'pickMilled', type: m[1] }];   // CR 701.17c
   if ((m = s.match(/^[Uu]ntap (target .+)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
+  if (/^[Uu]ntap ~$/.test(s)) return [{ o: 'untap', on: 'self' }];
+  if (/^[Tt]ransform ~$/.test(s)) return [{ o: 'transform' }];                                      // CR 701.27a
+  if (/^[Aa]dd one mana of any color$/.test(s)) return [{ o: 'addManaAny' }];                       // a triggered ability that adds mana is not a mana ability unless it triggers from one (CR 605.1b)
+  // Ouroboroid: X is fixed once, as the ability resolves.
+  if ((m = s.match(/^[Pp]ut X \+1\/\+1 counters on (each creature you control), where X is ~'s power$/))) return [{ o: 'counter', on: { each: parseFilter(m[1].replace(/^each /, '')) }, n: { v: 'power', of: 'self' }, kind: '+1/+1', once: true }];
+  // Seam Rip: CR 610.3 — returns to the battlefield when ~ leaves.
+  if ((m = s.match(/^[Ee]xile (target .+) until ~ leaves the battlefield$/))) return [{ o: 'exileUntilLeaves', on: parseRef(T, ctx, m[1]) }];
+  // Pawpatch Recruit: "target creature you control other than that creature"
+  // Brightglass Gearhulk
+  if ((m = s.match(/^[Yy]ou may search your library for up to (one|two|three) (artifact, creature, and\/or enchantment) cards with mana value (\d+) or less, reveal them, put them into your hand, then shuffle$/))) return [{ o: 'may', what: 'searchCards', ops: [{ o: 'tutorUpTo', n: numOf(m[1]), f: { types: ['Artifact', 'Creature', 'Enchantment'], mvLE: +m[3] }, reveal: true }] }];
   if (/^After this phase, there is an additional combat phase$/.test(s)) return [{ o: 'extraCombat' }];   // CR 500.8
   if ((m = s.match(/^(.+?) fights (.+)$/))) return [{ o: 'fight', a: parseRef(T, ctx, m[1]), b: parseRef(T, ctx, m[2]) }];   // CR 701.14
   if ((m = s.match(/^[Ee]xile target card from a graveyard$/))) { T.push({ f: { card: 'grave' } }); return [{ o: 'exile', on: { t: T.length - 1 }, link: true }]; }   // CR 607.2a: linked to "exiled with"
@@ -326,6 +337,10 @@ function parseEffects(T, ctx, text) {
   // Earthbender Ascension: "put a quest counter on ~. When you do, if it has four or more quest counters on it, ..." — a reflexive trigger with an intervening "if"
   if ((m = t.match(/^(put a \w+ counter on ~)\. When you do, if (it has \w+ or more \w+ counters on it), (.+)$/i))) { const T2 = []; const ops = parseEffects(T2, Object.assign({}, ctx, { it: null }), cap(m[3])); return parseEffect(T, ctx, cap(m[1])).concat([{ o: 'reflexive', ab: Object.assign({ k: 'trig', on: 'reflexive', cond: parseCond(m[2], ctx), ops: ops }, T2.length ? { tg: T2 } : {}) }]); }
   if (/^reveal the top card of your library\. If it's a permanent card, put it into your hand$/i.test(t)) return [{ o: 'revealTopToHand', type: 'permanent' }];
+  // Leatherhead: "you may remove a counter from ~. When you do, destroy target artifact or enchantment that player controls." In a two-player game the damaged player is the opponent.
+  if ((m = t.match(/^you may remove a counter from (?:~|her|him|it)\. When you do, destroy target artifact or enchantment that player controls$/i)) && ctx.evPlayer) return [{ o: 'mayRemoveAnyCounter', then: { o: 'reflexive', ab: { k: 'trig', on: 'reflexive', tg: [{ f: { types: ['Artifact', 'Enchantment'], ctrl: 'opp' } }], ops: [{ o: 'destroy', on: { t: 0 } }] } } }];
+  // The Sensational She-Hulk: "you may have ~ deal that much damage to any target. Do this only once each turn."
+  if ((m = t.match(/^you may have ~ deal that much damage to any target\. Do this only once each turn$/i)) && ctx.evAmount) { T.push({ f: { any: true } }); return [{ o: 'mayOnce', ops: [{ o: 'damage', from: 'self', to: { t: T.length - 1 }, n: { v: 'evAmount' } }] }]; }
   // Gix's Command: "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn." — chosen on resolution (its ruling)
   if ((m = t.match(/^put (\w+) \+1\/\+1 counters on up to one creature\. It gains (\w+) until end of turn$/i))) return [{ o: 'choose', f: { types: ['Creature'] }, upTo: true }, { o: 'counter', on: 'it', n: numOf(m[1]), kind: '+1/+1' }, { o: 'pump', on: 'it', grant: kwList(m[2]) }];
   // Azure Beastbinder: loses all abilities and becomes 2/2 until your next turn (layers 6 and 7b)
@@ -404,6 +419,9 @@ const EVENTS = [
   [/^one or more cards leave your graveyard$/, () => [{ on: 'leftGraveBatch', you: true }]],
   [/^one or more permanent cards are put into your graveyard from anywhere while ~ has an? (-1\/-1|\+1\/\+1) counter on it$/, m => [{ on: 'toGraveBatch', you: true, evCond: { c: 'hasCounter', kind: m[1] } }]],
   [/^you attack$/, () => [{ on: 'attackWith' }]],
+  [/^a creature you control becomes the target of a spell or ability an opponent controls$/, () => [{ on: 'targeted', ownCreature: true, byOpp: true, permOnly: true }]],
+  [/^you cast a spell with mana value (\d+) or greater$/, m => [{ on: 'cast', spell: { mvGE: +m[1] } }]],
+  [/^a creature you control is dealt damage$/, () => [{ on: 'dealtDamage', who: { types: ['Creature'], ctrl: 'you' } }]],
   [/^~ enters or attacks$/, () => [{ on: 'enters', who: 'self' }, { on: 'attacks', who: 'self' }]],
   [/^a creature you control or a creature spell you control becomes the target of a spell or ability an opponent controls$/, () => [{ on: 'targeted', ownCreature: true, byOpp: true }]],
   [/^you commit a crime$/, () => [{ on: 'crime', you: true }]],                                                         // CR 700.13
@@ -467,9 +485,10 @@ function parseTrigger(line, ctx, out) {
         if (tr.on === 'dealsDamage') { c2.evAmount = true; if (tr.toPlayer) c2.evPlayer = true; }
         if (tr.on === 'drawCard' && tr.opp) c2.evPlayer = true;
         if (tr.on === 'discardBatch') c2.evAmount = true;
+        if (tr.on === 'dealtDamage') c2.evAmount = true;
         if (tr.door) { if (ctx.door == null) throw new Fail('"unlock this door" on a card that is not a Room'); tr.door = ctx.door; }
         const ops = parseEffects(T, c2, cap(eff.replace(/^this creature\b/, '~')));
-        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind', 'you', 'opp', 'evCond', 'oppOnly', 'chosenParity', 'ownCreature', 'byOpp']) if (tr[k] != null) extra[k] = tr[k];
+        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind', 'you', 'opp', 'evCond', 'oppOnly', 'chosenParity', 'ownCreature', 'byOpp', 'permOnly']) if (tr[k] != null) extra[k] = tr[k];
         out.push(Object.assign({ k: 'trig', on: tr.on, ops: ops }, tr.who ? { who: tr.who } : {}, tr.spell !== undefined ? { spell: tr.spell } : {}, tr.toOpp ? { toOpp: true } : {}, tr.lookBack ? { lookBack: true } : {}, T.length ? { tg: T } : {}, cond ? { cond: cond } : {}, oncePerTurn ? { oncePerTurn: true } : {}, JSON.stringify(ops).includes('selfFromGrave') ? { zone: 'grave' } : {}, extra));   // CR 113.6m: returns this card from the graveyard, so it functions there
       }
       return true;
@@ -503,6 +522,9 @@ function parseStatic(line, ctx, out, d) {
   if (line === 'If a creature an opponent controls would die, exile it instead.') { out.push({ k: 'oppDieExile' }); return true; }   // CR 614.1a
   if ((m = line.match(/^([A-Z][a-z]+s you control) get (\S+) and have (.+)\.$/)) && !/^Creatures/.test(m[1])) { const pt = pumpOf(m[2]); out.push({ k: 'static', affects: Object.assign(parseFilter(m[1].replace(/ you control$/, '')), { ctrl: 'you' }), p: pt.p, t: pt.t, grant: kwList(m[3]) }); return true; }
   if ((m = line.match(/^Equipped creature gets (\S+) and is an? (\w+) in addition to its other types\.$/))) { const pt = pumpOf(m[1]); out.push({ k: 'static', affects: 'equipped', p: pt.p, t: pt.t, addSubtypes: [m[2]] }); return true; }   // layer 4 and 7c
+  if (line === "As ~ enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters tapped.") { out.push({ k: 'enterChoice', what: 'basicType' }, { k: 'etbPayOrTap', life: 2 }); return true; }   // CR 614.12a
+  if (line === '~ is the chosen type.') { out.push({ k: 'chosenLandType' }); return true; }                                        // CR 305.7
+  if ((m = line.match(/^~ enters with an? (flying|first strike|deathtouch|haste|hexproof|indestructible|lifelink|menace|reach|trample|vigilance) counter on (?:it|him|her|them)\.$/))) { out.push({ k: 'etbCounters', n: 1, kind: m[1] }); return true; }   // CR 122.1b
   if (line === 'You may play an additional land on each of your turns.') { out.push({ k: 'extraLand', n: 1 }); return true; }   // CR 305.2
   if (line === 'You may play lands from your graveyard.') { out.push({ k: 'landsFromGrave' }); return true; }
   if (line === "This spell can't be countered.") { out.push({ k: 'uncounterable' }); return true; }        // CR 113.6g
@@ -565,6 +587,7 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(/^Warp (\{[^ ]+\})$/))) { ab.push({ k: 'warp', cost: m[1] }); return; }        // CR 702.185a
   if ((m = line.match(/^To solve — (.+)\.$/))) { ab.push({ k: 'trig', on: 'beginStep', step: 'end', yours: true, cond: { c: 'all', of: [parseCond(m[1].replace(/^You/, 'you'), ctx), { c: 'notSolved' }] }, solveTrig: true, ops: [{ o: 'solve' }] }); return; }   // CR 719.3a
   if ((m = line.match(/^Solved — (.+)$/))) { const n0 = ab.length; parseLine(m[1], ctx, d, kw, ab); for (let k = n0; k < ab.length; k++) ab[k].solved = true; return; }   // CR 719.3c
+  if ((m = line.match(/^Plot (\{[^ ]+\})$/))) { ab.push({ k: 'plot', cost: m[1] }); return; }   // CR 702.170a
   if ((m = line.match(/^Crew (\d+)$/))) { ab.push({ k: 'act', crew: +m[1], cost: { mana: '', tap: false, sacSelf: false, crew: +m[1] }, ops: [{ o: 'becomeCreature' }] }); return; }   // CR 702.122a
   if ((m = line.match(/^(I|II|III|IV|V) — (.+)$/))) { const n = ['I', 'II', 'III', 'IV', 'V'].indexOf(m[1]) + 1, T = []; const ops = parseEffects(T, Object.assign({}, ctx, { it: 'self' }), m[2]); ab.push(Object.assign({ k: 'trig', on: 'lore', who: 'self', chapter: n, ops: ops }, T.length ? { tg: T } : {})); return; }   // CR 714.2b
   if ((m = line.match(/^Flashback (\{[^ ]+\})$/))) { ab.push({ k: 'flashback', cost: m[1] }); return; }   // CR 702.34a
@@ -675,6 +698,15 @@ export function compileCard(c, tokens, alt, room) {
     dd.back = { name: back.name, colors: alt.colorIndicator || back.colors, types: back.types, subtypes: back.subtypes, supers: back.supers, power: back.power, toughness: back.toughness, typeLine: back.typeLine, text: back.text, kw: back.kw, ab: back.ab };
     if (back.un && !dd.un) dd.un = alt.faceName + ': ' + back.un;
     if (dd.un) { dd.ab = []; dd.kw = {}; dd.back.ab = []; }
+    return dd;
+  }
+  if (c.layout === 'modal_dfc' && alt) {                                                           // CR 712.3, 712.8f
+    const front = compileCard(Object.assign({}, c, { name: faceName, layout: 'normal' }), tokens), back = compileCard(Object.assign({}, alt, { name: alt.faceName, layout: 'normal' }), tokens);
+    const dd = Object.assign(front, { id: slug(c.name), layout: 'modal_dfc' });
+    dd.back = { name: back.name, mana: back.mana, colors: back.colors, types: back.types, subtypes: back.subtypes, supers: back.supers, power: back.power, toughness: back.toughness, typeLine: back.typeLine, text: back.text, kw: back.kw, ab: back.ab };
+    dd.alt = Object.assign({ kind: 'mdfc' }, dd.back);
+    if (back.un && !dd.un) dd.un = alt.faceName + ': ' + back.un;
+    if (dd.un) { dd.ab = []; dd.kw = {}; dd.back.ab = []; dd.alt.ab = []; }
     return dd;
   }
   if (c.layout !== 'normal' && c.layout !== 'class' && c.layout !== 'case' && !twoPart) { d.un = 'layout ' + c.layout + ' is not compiled'; return d; }

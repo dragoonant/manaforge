@@ -26,6 +26,7 @@
     if (f.ctrl === 'you' && ch.ctrl !== who) return false;
     if (f.ctrl === 'opp' && ch.ctrl === who) return false;
     if (f.other && iid === srcIid) return false;
+    if (f.notIid != null && iid === f.notIid) return false;                                       // "other than that creature"
     if (f.kw && !ch.kw[f.kw]) return false;
     if (f.notKw && ch.kw[f.notKw]) return false;
     if (f.powLE != null && !(ch.p <= f.powLE)) return false;
@@ -170,17 +171,18 @@
       case 'search': return a.opp ? ev.who !== src.ctrl : ev.who === src.ctrl;
       case 'drawCard': return (!a.you || ev.who === src.ctrl) && (!a.opp || ev.who !== src.ctrl) && (!a.nth || ev.nth === a.nth);
       case 'counterPut': return ev.iid === iid && (!a.ctrKind || ev.kind === a.ctrKind) && (!a.nth || (ev.before < a.nth && ev.after >= a.nth));   // "When the fourth plan counter is put on this"                               // "When this Class becomes level N" (CR 716.2a)
-      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.oppOnly || ev.ctrl !== src.ctrl) && (!a.chosenParity || (s.cards[iid].chosen && ((ev.mv % 2 === 0) === (s.cards[iid].chosen === 'even')))) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
+      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.oppOnly || ev.ctrl !== src.ctrl) && (!a.chosenParity || (s.cards[iid].chosen && ((ev.mv % 2 === 0) === (s.cards[iid].chosen === 'even')))) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t))) && (a.spell.mvGE == null || ev.mv >= a.spell.mvGE)));
       case 'dealsDamage': return (a.who && a.who !== 'self' ? (ev.srcCtrl === src.ctrl && (!a.who.types || a.who.types.some(ty => (ev.srcTypes || []).includes(ty)))) : ev.src === iid) && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);
       case 'sacrificed': case 'dies': return ev.iid === iid;
       case 'beginStep': return ev.step === a.step && (!a.yours || ev.ap === src.ctrl);
       case 'gainLife': return ev.who === src.ctrl;
       // Valiant: "becomes the target of a spell or ability you control for the first time each turn".
-      case 'targeted': if (a.ownCreature) { const tc = s.cards[ev.iid]; return !!tc && (tc.zone === 'bf' || tc.zone === 'stack') && tc.ctrl === src.ctrl && MF.chars(s, ev.iid).types.includes('Creature') && ev.by !== src.ctrl; }   // Surrak
+      case 'targeted': if (a.ownCreature) { const tc = s.cards[ev.iid]; return !!tc && (tc.zone === 'bf' || (tc.zone === 'stack' && !a.permOnly)) && tc.ctrl === src.ctrl && MF.chars(s, ev.iid).types.includes('Creature') && ev.by !== src.ctrl; }   // Surrak
         return ev.iid === iid && (!a.byYou || ev.by === src.ctrl) && (!a.byOpp || ev.by !== src.ctrl) && (!a.firstEachTurn || ev.firstThisTurn);
       case 'reflexive': return false;
       case 'attackWith': return ev.ctrl === src.ctrl && (!a.sub || ev.subtypes.includes(a.sub) || ev.anyType);   // CR 508.3c: once for the declaration; "all creature types" counts (CR 205.3m)
-      case 'dealtDamage': return ev.iid === iid;
+      case 'dealtDamage': if (a.who && a.who !== 'self') { const dc = s.cards[ev.iid]; return !!dc && dc.zone === 'bf' && MF.matchChars(s, ev.iid, MF.chars(s, ev.iid), a.who, src.ctrl, iid); }
+        return ev.iid === iid;
       default: return false;
     }
   };
@@ -236,8 +238,9 @@
   // -------------------------------------------------------------------------------------------
   const OPS = {
     counter(x, op) {                                                                           // CR 122.1
+      const n = num(x, op.n);                                                                 // fixed once as it resolves (Ouroboroid's X, its ruling)
       for (const i of MF.resolveRefs(x, op.on)) {
-        const c = I(x.s, i); const n = num(x, op.n);
+        const c = I(x.s, i);
         const before = c.ctr[op.kind] || 0;
         c.ctr[op.kind] = before + n;
         log(x.s, 'counter', { who: c.ctrl, c: c.id, n: n, kind: op.kind, src: x.L ? x.L.srcId || I(x.s, x.src).id : null });
@@ -665,6 +668,51 @@
     },
     addMana(x, op) { const p = P(x.s, x.ctrl); p.pool[op.col] += op.n; log(x.s, 'addMana', { who: x.ctrl, col: op.col, n: op.n, c: x.L ? x.L.srcId : null }); },
     becomeCreature(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'bf') return; s.effects.push({ k: 'addTypes', iid: x.src, types: ['Creature'], until: 'eot', ts: s.ts++ }); log(s, 'crewed', { who: x.ctrl, c: c.id }); },
+    // "Add one mana of any color" as a triggered ability's effect: the color is chosen as it resolves.
+    addManaAny(x) { const col = MF.ask(x.x, { who: x.ctrl, kind: 'manaColor', src: x.src, opts: ['W', 'U', 'B', 'R', 'G'].map(k => ({ id: k })) }); P(x.s, x.ctrl).pool[col] += 1; log(x.s, 'addMana', { who: x.ctrl, col: col, n: 1, c: x.L ? x.L.srcId : null }); },
+    // Brightglass Gearhulk: search for up to N cards matching, reveal them, put them into your hand, shuffle.
+    tutorUpTo(x, op) {
+      const s = x.s, p = P(s, x.ctrl), got = [];
+      MF.emit(s, { t: 'search', who: x.ctrl });
+      for (let k = 0; k < op.n; k++) {
+        const fit = p.lib.filter(i => !got.includes(i) && MF.matchChars(s, i, MF.chars(s, i), op.f, x.ctrl, x.src));
+        const seen = new Set(), opts = fit.filter(i => { const id = I(s, i).id; if (seen.has(id)) return false; seen.add(id); return true; }).map(i => ({ id: i, iid: i }));   // identical cards are one choice
+        if (!opts.length) break;
+        opts.push({ id: 'done' });
+        const a = MF.ask(x.x, { who: x.ctrl, kind: 'tutorUpTo', src: x.src, n: op.n, k: k + 1, opts: opts });
+        if (a === 'done') break;
+        got.push(a);
+      }
+      if (got.length) log(s, 'reveal', { who: x.ctrl, cs: got.map(i => I(s, i).id) }); else log(s, 'searchNothing', { who: x.ctrl });
+      for (const i of got) { const id = I(s, i).id; MF.move(s, i, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'library' }); }
+      MF.shuffle(s, p.lib);
+    },
+    // Leatherhead: "you may remove a counter from her" — of any kind; "When you do, ..." (CR 603.12)
+    mayRemoveAnyCounter(x, op) {
+      const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'bf') return;
+      const kinds = Object.keys(c.ctr).filter(k => c.ctr[k] > 0); if (!kinds.length) return;
+      const a = MF.ask(x.x, { who: x.ctrl, kind: 'removeCounterKind', src: x.src, opts: kinds.map(k => ({ id: k, n: c.ctr[k] })).concat([{ id: 'none' }]) });
+      if (a === 'none') return;
+      c.ctr[a] -= 1; log(s, 'removeCounters', { who: c.ctrl, c: c.id, n: 1, ctr: a });
+      MF.runOps(x, [op.then]);
+    },
+    // "Do this only once each turn": the ability still triggers; the optional action is offered only if not yet taken this turn.
+    mayOnce(x, op) {
+      const s = x.s, c = I(s, x.src); if (c && c.onceTurn === s.turn) { log(s, 'onceDone', { who: x.ctrl, c: c.id }); return; }
+      if (MF.ask(x.x, { who: x.ctrl, kind: 'may', src: x.src, what: 'onceEachTurn', n: x.ev ? x.ev.n : null, tgt: x.t && x.t[0] && x.t[0][0] ? x.t[0][0] : null, opts: [{ id: 'yes' }, { id: 'no' }] }) !== 'yes') return;
+      if (c) c.onceTurn = s.turn;
+      MF.runOps(x, op.ops);
+    },
+    // Seam Rip: CR 610.3, 610.3b — if ~ has already left, nothing is exiled; otherwise it returns to the battlefield when ~ leaves.
+    exileUntilLeaves(x, op) {
+      const s = x.s, sc = I(s, x.src); if (!sc || sc.zone !== 'bf') return;
+      for (const r of (x.t[op.on.t] || [])) {
+        if (!r || r.c == null) continue; const c = I(s, r.c); if (!c || c.zone !== 'bf') continue;
+        const id = c.id, n = MF.move(s, r.c, 'exile');
+        s.effects.push({ k: 'exileUntil', src: x.src, iid: n, back: 'bf' });
+        log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null, until: true });
+      }
+    },
     // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
     selfFromGrave(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'grave') return; const n = MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); log(s, 'putOnto', { who: c.owner, c: I(s, n).id, tapped: false, from: 'graveyard' }); },
     removeCounter(x, op) { const c = I(x.s, x.src); if (!c || c.zone !== 'bf' || !(c.ctr[op.kind] > 0)) return; c.ctr[op.kind] = Math.max(0, c.ctr[op.kind] - op.n); log(x.s, 'removeCounters', { who: c.ctrl, c: c.id, n: op.n, ctr: op.kind }); },
@@ -935,7 +983,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

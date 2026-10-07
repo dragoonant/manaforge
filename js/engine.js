@@ -154,7 +154,7 @@
       for (const e of s.effects.filter(e => e.k === 'exileUntil' && e.src === iid)) {           // CR 610.3: the exiled card returns, to its owner's hand
         s.effects.splice(s.effects.indexOf(e), 1);
         const ec = I(s, e.iid);
-        if (ec && ec.zone === 'exile') { log(s, 'returnFromExile', { who: ec.owner, c: ec.id, to: 'hand' }); move(s, e.iid, 'hand'); }
+        if (ec && ec.zone === 'exile') { const to = e.back || 'hand'; log(s, 'returnFromExile', { who: ec.owner, c: ec.id, to: to }); move(s, e.iid, to, to === 'bf' ? { ctrl: ec.owner, x: e.x } : undefined); }   // 610.3c: under its owner's control
       }
       if (zone === 'grave' && lki.types.includes('Creature')) { emit(s, { t: 'dies', iid: iid, lki: lki, to: n }); P(s, lki.ctrl).h.died++; s.diedThisTurn = (s.diedThisTurn || 0) + 1; }
     }
@@ -180,7 +180,8 @@
       if (a.k === 'etbCounters') c.ctr[a.kind] = (c.ctr[a.kind] || 0) + a.n;
       if (a.k === 'enterChoice') {
         if (!o.x) throw new Error('a permanent with an entering choice was moved without the invocation to ask: ' + c.id);
-        c.chosen = ask(o.x, { who: c.ctrl, kind: 'enterChoice', c: c.id, what: a.what, opts: [{ id: 'odd' }, { id: 'even' }] });
+        const opts = a.what === 'basicType' ? ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'] : ['odd', 'even'];
+        c.chosen = ask(o.x, { who: c.ctrl, kind: 'enterChoice', c: c.id, what: a.what, opts: opts.map(v => ({ id: v })) });
         log(s, 'chose', { who: c.ctrl, c: c.id, choice: c.chosen });
       }
       if (a.k === 'etbTapped' && !(a.unless && MF.cond({ s: s, ctrl: c.ctrl, src: n, flags: {} }, a.unless))) c.tapped = true;
@@ -278,7 +279,8 @@
     let d = def(s, iid);
     let name = d.name, types = d.types.slice(), subtypes = d.subtypes.slice(), supers = d.supers.slice(), colors = d.colors.slice(), p = d.power, t = d.toughness, ab = d.ab, kw = Object.assign({}, d.kw), mana = d.mana;
     if (d.back && c.transformed && c.zone === 'bf') {                                          // CR 712.8e: the back face's characteristics; mana value from the front
-      const b = d.back; name = b.name; types = b.types.slice(); subtypes = b.subtypes.slice(); supers = b.supers.slice(); colors = b.colors.slice(); p = b.power; t = b.toughness; ab = b.ab; kw = Object.assign({}, b.kw);
+      const b = d.back; if (d.layout === 'modal_dfc') mana = b.mana;                              // CR 712.8f: a modal double-faced permanent has only the face that's up
+      name = b.name; types = b.types.slice(); subtypes = b.subtypes.slice(); supers = b.supers.slice(); colors = b.colors.slice(); p = b.power; t = b.toughness; ab = b.ab; kw = Object.assign({}, b.kw);
     }
     if (d.layout === 'case' && c.zone === 'bf' && !c.solved) ab = d.ab.map(a => a.solved ? LOCKED : a);   // CR 719.3c
     if (d.layout === 'class' && c.zone === 'bf') { const lv = c.level || 1; ab = d.ab.map(a => (a.level || 1) <= lv ? a : LOCKED); }   // CR 716.2a, 716.2d
@@ -328,6 +330,10 @@
       return s.bf.filter(i => MF.matchChars(s, i, out[i], a.affects, st.src == null ? st.ctrl : out[st.src].ctrl, st.src));
     };
     for (const e of s.effects) if (e.k === 'addTypes' && out[e.iid]) for (const ty of e.types) if (!out[e.iid].types.includes(ty)) out[e.iid].types.push(ty);   // crew (CR 702.122a)
+    for (const i of s.bf) if (out[i] && I(s, i).chosen && out[i].ab.some(a => a.k === 'chosenLandType')) {
+      const ty = I(s, i).chosen, col = { Plains: 'W', Island: 'U', Swamp: 'B', Mountain: 'R', Forest: 'G' }[ty];
+      if (col && !out[i].subtypes.includes(ty)) { out[i].subtypes.push(ty); out[i].ab = out[i].ab.concat([{ k: 'mana', cost: { tap: true }, cols: [col] }]); }
+    }
     for (const st of statics) if (st.a.addSubtypes) for (const i of affected(st)) for (const sub of st.a.addSubtypes) if (!out[i].subtypes.includes(sub)) out[i].subtypes.push(sub);
     for (const st of statics) if (st.a.setTypes) for (const i of affected(st)) { out[i].types = st.a.setTypes.types.slice(); out[i].subtypes = st.a.setTypes.subtypes.slice(); }   // layer 4: Kaito "is a 3/4 Ninja creature"
     for (const e of s.effects) if (e.k === 'color' && out[e.iid]) out[e.iid].colors = e.colors.slice();                                                 // layer 5
@@ -339,6 +345,8 @@
     for (const st of statics) if (st.a.k === 'static' && st.a.grantAb) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) out[i].ab = out[i].ab.concat(st.a.grantAb); } });
     for (const e of s.effects) if (e.k === 'grantAb' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].ab = out[e.iid].ab.concat(e.abs); } });
     for (const e of s.effects) if (e.k === 'loseAll' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].kw = {}; out[e.iid].ab = out[e.iid].ab.map(() => LOCKED); lost.add(e.iid); } });   // Azure Beastbinder: "loses all abilities"
+    const KWC = { flying: 'flying', 'first strike': 'firstStrike', 'double strike': 'doubleStrike', deathtouch: 'deathtouch', haste: 'haste', hexproof: 'hexproof', indestructible: 'indestructible', lifelink: 'lifelink', menace: 'menace', reach: 'reach', trample: 'trample', vigilance: 'vigilance' };
+    for (const i of s.bf) if (out[i]) for (const k in I(s, i).ctr) if (KWC[k] && I(s, i).ctr[k] > 0) l6.push({ ts: I(s, i).ts, run: () => { out[i].kw[KWC[k]] = (out[i].kw[KWC[k]] || 0) + 1; } });
     l6.sort((x, y) => x.ts - y.ts); for (const op of l6) op.run();
     // Layer 7a: characteristic-defining abilities.
     for (const st of statics) if (st.a.k === 'cda') { const o = out[st.src]; const v = MF.valueStatic(s, st.src, st.a.v, out); if (st.a.p) o.p = v; if (st.a.t) o.t = v; }
@@ -523,7 +531,7 @@
   const poolTotal = p => p.W + p.U + p.B + p.R + p.G + p.C;
   // The pool that may pay this cost: creature-only mana (p.poolCre, a part of p.pool) only for a creature spell.
   const usablePool = (p, ctx) => { if (ctx && ctx.creature) return Object.assign({}, p.pool); const u = {}; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) u[k] = p.pool[k] - ((p.poolCre && p.poolCre[k]) || 0); return u; };
-  const canPayMana = MF.canPayMana = (s, who, need, ctx) => !!solve(usablePool(P(s, who), ctx), manaSources(s, who, ctx), need);
+  const canPayMana = MF.canPayMana = (s, who, need, ctx) => MF.hybridWays(need).some(w => !!solve(usablePool(P(s, who), ctx), manaSources(s, who, ctx), w));
   // How much mana a player could make right now: pool plus untapped sources (for the X question).
   MF.manaAvailable = (s, who, ctx) => { const per = new Map(); for (const m of manaSources(s, who, ctx)) per.set(m.iid, Math.max(per.get(m.iid) || 0, m.amount || 1)); let n = 0; for (const v of per.values()) n += v; return poolTotal(usablePool(P(s, who), ctx)) + n; };   // one activation per permanent
 
@@ -571,6 +579,16 @@
   const payMana = MF.payMana = function (x, who, need, srcIid, cancel, ctx) {
     const s = x.s, p = P(s, who);
     if (MF.manaValue(need) === 0) return;
+    if (need.h && need.h.length) {                                                             // CR 601.2b: announce the nonhybrid equivalent, one symbol at a time
+      const fixed = Object.assign({}, need, { h: [] });
+      need.h.forEach((h, i) => {
+        const rest = need.h.slice(i + 1), opts = [h[0], h[1]].filter(k => canPayMana(s, who, Object.assign({}, fixed, { [k]: fixed[k] + 1, h: rest }), ctx)).map(k => ({ id: k }));
+        if (!opts.length) throw new Illegal('the cost can’t be paid');
+        const k = ask(x, { who: who, kind: 'hybrid', src: srcIid, sym: h, k: i + 1, n: need.h.length, opts: opts, cancel: cancel });
+        fixed[k]++;
+      });
+      need = fixed;
+    }
     for (let guard = 0; guard < 60; guard++) {
       const pool = usablePool(p, ctx);
       const covered = ['W', 'U', 'B', 'R', 'G', 'C'].every(k => pool[k] >= need[k]) && poolTotal(pool) >= MF.manaValue(need);
@@ -616,7 +634,8 @@
   const spellCost = MF.spellCost = function (s, who, iid, o) {
     const ch = faceChars(s, iid, o && o.alt, o && o.door);
     const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
-    const c = MF.parseMana(hz ? hz.cost : ch.mana);                                           // CR 702.180a: an alternative cost
+    const plotted = (o && o.free) || MF.isPlotted(s, iid);                                    // CR 702.170d: without paying its mana cost
+    const c = MF.parseMana(plotted ? '' : hz ? hz.cost : ch.mana);                            // CR 702.180a: an alternative cost
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
     if (o && o.extra) { const e = o.extra; for (const k in e) c[k] += e[k]; }
     for (const f of MF.costMods) f(s, who, iid, ch, c);
@@ -834,18 +853,19 @@
     return true;
   }
   EXEC_DEF('declareBlockers', function (x) {                                                 // CR 509.1
-    const s = x.s, who = x.inv.who, cb = s.combat, assign = {};
+    const s = x.s, who = x.inv.who, cb = s.combat, assign = {}, order = [];
+    const full = a => { const n = order.filter(b => assign[b] === a).length; return chars(s, a).ab.some(ab => ab.k === 'maxBlockers' && n >= ab.n); };   // CR 509.1b: one more could never be legal
     for (;;) {
       const opts = [];
-      for (const b of s.bf) if (assign[b] == null) for (const a of cb.attackers) if (canBlock(s, b, a)) opts.push({ id: b + '>' + a, iid: b, att: a });
+      for (const b of s.bf) if (assign[b] == null) for (const a of cb.attackers) if (canBlock(s, b, a) && !full(a)) opts.push({ id: b + '>' + a, iid: b, att: a });
       if (!opts.length && !Object.keys(assign).length) break;
       if (blockLegal(s, assign)) opts.push({ id: 'done' });
       if (Object.keys(assign).length) opts.push({ id: 'undo' });
       const ans = ask(x, { who: who, kind: 'block', assign: Object.assign({}, assign), opts: opts });
       if (ans === 'done') break;
-      if (ans === 'undo') { const ks = Object.keys(assign); delete assign[ks[ks.length - 1]]; continue; }
+      if (ans === 'undo') { delete assign[order.pop()]; continue; }                             // the last one declared
       const [b, a] = ans.split('>').map(Number);
-      assign[b] = a;
+      assign[b] = a; order.push(b);
     }
     for (const b in assign) {
       const a = assign[b];
@@ -1021,7 +1041,8 @@
           so.modesUsed = used.concat([L.mode]);
         }
         if (ab.tg && ab.tg.length) {
-          try { L.t = chooseTargets(x, t.ctrl, t.src, ab.tg, 'trig', false); }
+          const tg = ab.tg.map(sl => sl.notEv && t.ev && t.ev.iid != null ? Object.assign({}, sl, { f: Object.assign({}, sl.f, { notIid: t.ev.iid }) }) : sl);
+          try { L.t = chooseTargets(x, t.ctrl, t.src, tg, 'trig', false); }
           catch (e) { if (e instanceof Illegal) { log(s, 'trigNoTarget', { who: t.ctrl, c: L.srcId }); continue; } throw e; }   // CR 603.3d
         }
         s.stack.push(L);
@@ -1076,11 +1097,12 @@
     const d0 = def(s, iid);
     if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
     if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;
+    if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.plotted != null) && !sorceryTiming(s, who)) return false;   // CR 702.170d: main phase, empty stack
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrLife' && P(s, who).hand.filter(i => i !== iid).length === 0 && P(s, who).life < a.life) return false;   // a mandatory additional cost that can't be paid   // CR 702.185a: from your hand
     if ((via === 'flashback' || via === 'mayhem') && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === via) || (via === 'mayhem' && I(s, iid).discardedTurn !== s.turn))) return false;
     if (via === 'harmonize' && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === 'harmonize'))) return false;
     if (via === 'sneak' && !(d0.ab.some(a => a.k === 'sneak') && sneakWindow(s, who))) return false;
-    if (s.bf.some(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); })) return false;   // Voice of Victory
+    if (s.bf.some(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); })) return false;   // "Your opponents can't cast spells during your turn" (CR 601.3)
     if (d0.doors && door == null) return false;                                              // CR 709.3: a split card is cast as one of its halves
     const ch = faceChars(s, iid, alt, door), d = faceDef(s, iid, alt, door);
     if (ch.types.includes('Land')) return false;
@@ -1156,11 +1178,17 @@
       for (let i = 0; i < ab.length; i++) if (ab[i].k === 'act' && canActivate(s, who, iid, i)) out.push({ type: 'act', iid: iid, ab: i });
       for (const k of canUnlock(s, who, iid)) out.push({ type: 'unlock', iid: iid, door: k });
     }
+    for (const iid of P(s, who).hand) if (canPlot(s, who, iid)) out.push({ type: 'plot', iid: iid });   // CR 702.170a, 116.2k
     out.push({ type: 'pass' });
     return out;
   };
   // CR 709.5e, 116.2m: paying a locked door's mana cost unlocks it — a special action, any time the
   // player has priority with the stack empty in a main phase of their turn.
+  MF.isPlotted = (s, iid) => I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.plotted != null);
+  const canPlot = MF.canPlot = function (s, who, iid) {
+    const a = def(s, iid).ab.find(a2 => a2.k === 'plot');
+    return !!a && I(s, iid).zone === 'hand' && sorceryTiming(s, who) && s.priority === who && canPayMana(s, who, MF.parseMana(a.cost));
+  };
   const canUnlock = MF.canUnlock = function (s, who, iid) {
     const c = I(s, iid), d = def(s, iid);
     if (!d.doors || c.ctrl !== who || !sorceryTiming(s, who) || s.priority !== who) return [];
@@ -1184,7 +1212,7 @@
     if (doors ? doors.some((f, k) => canCast(s, who, iid, false, k)) : canCast(s, who, iid)) return null;
     if (P(s, who).hand.includes(iid) && chars(s, iid).ab.some((a, i) => a.k === 'act' && a.zone === 'hand' && canActivate(s, who, iid, i))) return null;   // it can be cycled
     if (s.priority !== who) return 'You do not have priority.';
-    if (s.bf.some(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); })) return 'Voice of Victory: you can’t cast spells during the opponent’s turn.';
+    { const nc = s.bf.find(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); }); if (nc != null) return chars(s, nc).name + ': you can’t cast spells during the opponent’s turn.'; }
     const instant = ch.types.includes('Instant') || ch.kw.flash;
     if (!instant) {
       if (s.ap !== who) return 'Only instants and cards with flash can be cast on the opponent’s turn.';
@@ -1285,7 +1313,7 @@
   EXEC_DEF('cast', function (x) {
     const s = x.s, who = x.inv.who, iid0 = x.inv.iid, c0 = I(s, iid0), from = c0.zone, alt = !!x.inv.alt, door = x.inv.door, via = x.inv.via || null;
     const card = def(s, iid0), d = faceDef(s, iid0, alt, door);                               // CR 715.3b, 720.3b, 709.3b: as an Adventure, Omen or door it has only that face
-    const anyMana = anyManaFor(s, iid0);
+    const anyMana = anyManaFor(s, iid0), plotted = MF.isPlotted(s, iid0);                      // CR 702.170d: decided before it moves
     const iid = move(s, iid0, 'stack', { ctrl: who });                                        // CR 601.2a
     const L = { lid: s.lid++, kind: 'spell', ctrl: who, iid: iid, id: card.id, t: [], x: 0, from: from, alt: alt ? d.kind : null };
     if (door != null) L.door = door;
@@ -1302,7 +1330,7 @@
     if (costRaw.x) {                                                                           // CR 601.2b, 107.3a: X is announced
       // The largest X whose total cost (reductions included, CR 601.2f) the player could pay.
       const avail = MF.manaAvailable(s, who, ctx);
-      let max = 0; while (max < 99 && MF.manaValue(spellCost(s, who, iid, { x: max + 1, anyMana: anyMana })) <= avail) max++;
+      let max = 0; while (!plotted && max < 99 && MF.manaValue(spellCost(s, who, iid, { x: max + 1, anyMana: anyMana })) <= avail) max++;   // CR 107.3b: cast without paying its mana cost, X is 0
       const opts = []; for (let n = 0; n <= max; n++) opts.push({ id: n });
       L.x = ask(x, { who: who, kind: 'x', src: iid, opts: opts, cancel: true });
     }
@@ -1360,7 +1388,7 @@
     }
     // Optional additional costs are announced now (CR 601.2b): offspring (702.175a), kicker (702.33a).
     for (const a of d.ab) if (a.k === 'offspring' || a.k === 'kicker') {
-      const add = MF.parseMana(a.cost), tot = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana });
+      const add = MF.parseMana(a.cost), tot = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana, free: plotted });
       for (const k of ['W', 'U', 'B', 'R', 'G', 'C', 'g']) tot[k] += add[k];
       if (!canPayMana(s, who, tot, ctx)) continue;                                           // it cannot be paid: not a choice
       const yn = [{ id: 'yes' }, { id: 'no' }];
@@ -1384,7 +1412,7 @@
     const part = sp && !sp.modes ? spellPart(sp, L) : null;
     if (part && part.tg) L.t = chooseTargets(x, who, iid, part.tg, 'spell', true);           // CR 601.2c
     if (aura) L.t = chooseTargets(x, who, iid, [{ f: aura.f }], 'aura', true);                 // CR 303.4a
-    const cost = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana, via: via, reduce: reduce });   // CR 601.2f
+    const cost = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana, via: via, reduce: reduce, free: plotted });   // CR 601.2f
     if (hzTap != null) { I(s, hzTap).tapped = true; log(s, 'tapped', { who: who, c: I(s, hzTap).id }); }   // CR 702.180b
     if (L.bargainSac != null) MF.sacrifice(s, L.bargainSac);
     for (const f of addPay) f();
@@ -1458,6 +1486,14 @@
     emitTargeted(s, L.t, who, L.lid);
     setPriority(s, who);
   });
+  EXEC_DEF('plot', function (x) {                                                            // CR 702.170a-b, 116.2k: a special action — no stack
+    const s = x.s, who = x.inv.who, iid = x.inv.iid, a = def(s, iid).ab.find(a2 => a2.k === 'plot');
+    payMana(x, who, MF.parseMana(a.cost), iid, true);
+    const id = I(s, iid).id, n = move(s, iid, 'exile');
+    s.effects.push({ k: 'mayPlay', iid: n, who: who, castOnly: true, afterTurn: s.turn, plotted: s.turn, until: 'exiled' });
+    log(s, 'plot', { who: who, c: id });
+    setPriority(s, who);
+  });
   EXEC_DEF('unlock', function (x) {                                                          // CR 709.5e, 116.2m: a special action — no stack
     const s = x.s, who = x.inv.who, iid = x.inv.iid, k = x.inv.door, c = I(s, iid), f = def(s, iid).doors[k];
     payMana(x, who, MF.parseMana(f.mana), iid, true);
@@ -1529,6 +1565,7 @@
         const o = { ctrl: L.ctrl, x: x, spent: L.spent, offspringPaid: !!L.offspring, castFromHand: L.from === 'hand' };
         if (L.door != null) o.door = L.door;                                                   // CR 709.5d
         if (L.warp) o.warp = true;
+        if (L.alt === 'mdfc') o.transformed = true;
         if (L.x) o.xPaid = L.x;
         if (aura) o.att = lt.t[0][0].c;                                                        // CR 608.3c
         for (const a of d.ab) if (a.k === 'enterAsCopy') { const cp = MF.askEnterAsCopy(X, a, L); if (cp) o.copy = cp; }   // CR 614.1c, 707: a replacement with a choice, asked as it would enter
@@ -1558,7 +1595,7 @@
   // The loop. CR 117.5 / 704.3: each time a player would receive priority, state-based actions
   // are performed until none apply, then triggered abilities go on the stack, then priority.
   // -------------------------------------------------------------------------------------------
-  const PLAYER_ACTS = { cast: 1, act: 1, land: 1, unlock: 1, manaAb: 1 };
+  const PLAYER_ACTS = { cast: 1, act: 1, land: 1, unlock: 1, plot: 1, manaAb: 1 };
   function run(s) {
     for (let guard = 0; guard < 2000; guard++) {
       if (s.winner != null) { s.pending = null; s.priority = null; s.todo = []; return freeze(s); }
@@ -1602,6 +1639,7 @@
       case 'land': s.todo.unshift({ t: 'land', iid: a.iid, who: s.priority, answers: [] }); break;
       case 'cast': s.todo.unshift(Object.assign({ t: 'cast', iid: a.iid, alt: !!a.alt, who: s.priority, answers: [] }, a.door != null ? { door: a.door } : {}, a.via ? { via: a.via } : {})); break;
       case 'unlock': s.todo.unshift({ t: 'unlock', iid: a.iid, door: a.door, who: s.priority, answers: [] }); break;
+      case 'plot': s.todo.unshift({ t: 'plot', iid: a.iid, who: s.priority, answers: [] }); break;
       case 'act': s.todo.unshift({ t: 'act', iid: a.iid, ab: a.ab, who: s.priority, answers: [] }); break;
       default: throw new Error('unknown action type ' + a.type);
     }
