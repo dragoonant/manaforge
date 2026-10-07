@@ -62,6 +62,7 @@ export function parseFilter(str) {
     if ((m = s.match(/^with power or toughness (\d+) or greater\b ?(.*)$/))) { f.ptGE = +m[1]; s = m[2]; continue; }
     if ((m = s.match(/^with toughness greater than its power\b ?(.*)$/))) { f.touGtPow = true; s = m[1]; continue; }
     if ((m = s.match(/^with mana value (\d+) or less\b ?(.*)$/))) { f.mvLE = +m[1]; s = m[2]; continue; }                 // CR 202.3
+    if ((m = s.match(/^with mana value (\d+) or greater\b ?(.*)$/))) { f.mvGE = +m[1]; s = m[2]; continue; }
     if ((m = s.match(/^with mana value less than or equal to the number of (Plains|Islands|Swamps|Mountains|Forests) you control\b ?(.*)$/))) { f.mvLEv = { v: 'countYou', f: { subtypes: [m[1].replace(/s$/, '').replace(/^Plain$/, 'Plains')] } }; s = m[2]; continue; }
     if ((m = s.match(/^with total power and toughness (\d+) or less\b ?(.*)$/))) { f.ptSumLE = +m[1]; s = m[2]; continue; }
     if ((m = s.match(/^with an? (\+1\/\+1|[a-z]+) counter on it\b ?(.*)$/))) { f.counter = m[1]; s = m[2]; continue; }
@@ -155,6 +156,7 @@ export function parseCond(str, ctx) {
   if (c === 'you descended this turn') return { c: 'descended' };
   if (c === 'this spell was cast from a graveyard') return { c: 'castFromGrave' };
   if (c === 'you cast it') return { c: 'wasCast' };
+  if ((m = c.match(/^you control another ([A-Z][a-z]+)$/))) return { c: 'control', f: { subtypes: [m[1]], other: true }, n: 1 };
   if ((m = c.match(/^there are (four|eight) or more permanent cards in your graveyard$/))) return { c: 'gravePermCount', n: numOf(m[1]) };   // descend (CR 700.11)                                                                       // CR 603.4
   if ((m = c.match(/^\{([WUBRG])\}\{\1\} was spent to cast it$/))) return { c: 'spent', col: m[1], n: 2 };              // CR 601.2h
   if ((m = c.match(/^it has (\w+) or more (\w+) counters on it$/))) return { c: 'counterAtLeast', kind: m[2], n: numOf(m[1]) };                                    // CR 700.11                   // CR 601.2b
@@ -171,6 +173,7 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Pp]ut a \+1\/\+1 counter on ~ for each creature that left the battlefield under your control this turn$/))) return [{ o: 'counter', on: 'self', n: { v: 'creLeftYou' }, kind: '+1/+1' }];
   if ((m = s.match(/^(.+) if an opponent (controls more lands|has more life|controls more creatures|has more cards in hand) than you$/))) { const what = { 'controls more lands': 'lands', 'has more life': 'life', 'controls more creatures': 'creatures', 'has more cards in hand': 'hand' }[m[2]]; return [{ o: 'if', cond: { c: 'oppMore', what: what }, ops: parseEffect(T, ctx, m[1]) }]; }   // Beza: each clause checked as it resolves
   if ((m = s.match(/^[Cc]reate a token that's a copy of (target .+)$/))) return [{ o: 'tokenCopy', of: parseRef(T, ctx, m[1]), targeted: true }];   // CR 707.2
+  if (/^[Ee]ach equipped attacking creature gains double strike until end of turn$/.test(s)) return [{ o: 'pump', on: { each: { types: ['Creature'], attacking: true, equipped: true } }, grant: ['doubleStrike'] }];
   if ((m = s.match(/^Treefolk and Forests you control gain (\w+) until end of turn$/))) return [{ o: 'pump', on: { each: { subtypes: ['Treefolk', 'Forest'], ctrl: 'you' } }, grant: kwList(m[1]) }];
   if ((m = s.match(/^[Tt]ap (.+) and put (a|an|one|two) stun counters? on it$/))) { const on = parseRef(T, ctx, m[1]); return [{ o: 'tap', on: on }, { o: 'counter', on: on, n: numOf(m[2]), kind: 'stun' }]; }
   if (/^Creature cards in your graveyard gain "You may cast this card from your graveyard" until end of turn$/.test(s)) return [{ o: 'graveCastable', types: ['Creature'] }];
@@ -201,6 +204,8 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may put a (permanent|creature|land) card from among the milled cards into your hand$/))) return [{ o: 'pickMilled', type: m[1] }];   // CR 701.17c
   if ((m = s.match(/^[Uu]ntap (target .+)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
   if (/^[Uu]ntap ~$/.test(s)) return [{ o: 'untap', on: 'self' }];
+  if (/^[Yy]ou may attach ~ to it$/.test(s) && ctx.it === 'ev') return [{ o: 'may', what: 'attach', ops: [{ o: 'attachSelfTo', on: 'ev' }] }];
+  if (/^[Cc]reate a (2)\/(2) red Dwarf creature token$/.test(s)) return [{ o: 'token', id: ctx.token({ sub: 'Dwarf', p: 2, t: 2, color: 'red' }), n: 1 }];
   if ((m = s.match(/^[Uu]ntap (up to one target creature)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
   if (/^[Mm]ill a card$/.test(s)) return [{ o: 'mill', n: 1 }];
   if (/^[Cc]reate a 0\/1 green Plant creature token, then put a \+1\/\+1 counter on each Plant you control$/.test(s)) return [{ o: 'token', id: ctx.token({ sub: 'Plant', p: 0, t: 1, color: 'green' }), n: 1 }, { o: 'counter', on: { each: { subtypes: ['Plant'], ctrl: 'you' } }, n: 1, kind: '+1/+1' }];
@@ -420,6 +425,17 @@ function parseEffects(T, ctx, text) {
   if (/^mill four cards\. You may put a permanent card from among the cards milled this way into your hand\. If you control a Squirrel or returned a Squirrel card to your hand this way, create a Food token$/i.test(t)) return [{ o: 'mill', n: 4 }, { o: 'pickMilled', type: 'permanent', squirrelFood: ctx.token.food() }];
   // Dredger's Insight
   if (/^mill four cards\. You may put an artifact, creature, or land card from among the milled cards into your hand$/i.test(t)) return [{ o: 'mill', n: 4 }, { o: 'pickMilled', type: 'artCreLand' }];
+  // Dáin's Company: look at four, may reveal a Dwarf or Equipment card, the rest on the bottom at random.
+  if (/^look at the top four cards of your library\. You may reveal a Dwarf or Equipment card from among them and put it into your hand\. Put the rest on the bottom of your library in a random order$/i.test(t)) return [{ o: 'dig', n: 4, subs: ['Dwarf', 'Equipment'], type: 'Dwarf or Equipment', rest: 'bottomRandom' }];
+  // Thorin: attach any number of target Equipment you control to target creature you control; when one or more become attached this way, that creature deals damage equal to its power to up to one target creature.
+  if (/^attach any number of target Equipment you control to target creature you control\. When one or more Equipment become attached to that creature this way, that creature deals damage equal to its power to up to one target creature$/i.test(t)) {
+    T.push({ f: { subtypes: ['Equipment'], ctrl: 'you' }, n: 99, upTo: true }, { f: { types: ['Creature'], ctrl: 'you' } });
+    return [{ o: 'attachMany', eq: { t: T.length - 2 }, to: { t: T.length - 1 } }, { o: 'reflexive', ab: { k: 'trig', on: 'reflexive', cond: { c: 'attachedSome' }, tg: [{ f: { types: ['Creature'] }, n: 1, upTo: true }], ops: [{ o: 'damage', from: { flag: 'attachedTo' }, to: { t: 0 }, n: { v: 'power', of: { flag: 'attachedTo' } } }] } }];
+  }
+  // Mabel: "create Cragflame, a legendary colorless Equipment artifact token with "Equipped creature gets +1/+1 and has vigilance, trample, and haste" and equip {2}"
+  if (/^create Cragflame, a legendary colorless Equipment artifact token with "Equipped creature gets \+1\/\+1 and has vigilance, trample, and haste" and equip \{2\}$/i.test(t)) return [{ o: 'token', id: ctx.token.equipment({ name: 'Cragflame', legendary: true, text: 'Equipped creature gets +1/+1 and has vigilance, trample, and haste.\nEquip {2}', st: { k: 'static', affects: 'equipped', p: 1, t: 1, grant: ['vigilance', 'trample', 'haste'] }, equip: '{2}' }), n: 1 }];
+  // Dáin Ironfoot: an Axe, then a reflexive attach
+  if (/^create a colorless Equipment artifact token named Axe with "Equipped creature gets \+1\/\+0" and equip \{2\}\. When you do, attach it to target creature you control$/i.test(t)) return [{ o: 'token', id: ctx.token.equipment({ name: 'Axe', legendary: false, text: 'Equipped creature gets +1/+0.\nEquip {2}', st: { k: 'static', affects: 'equipped', p: 1, t: 0 }, equip: '{2}' }), n: 1 }, { o: 'reflexive', ab: { k: 'trig', on: 'reflexive', tg: [{ f: { types: ['Creature'], ctrl: 'you' } }], ops: [{ o: 'attachMade', to: { t: 0 } }] } }];
   // Gix's Command: "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn." — chosen on resolution (its ruling)
   if ((m = t.match(/^put (\w+) \+1\/\+1 counters on up to one creature\. It gains (\w+) until end of turn$/i))) return [{ o: 'choose', f: { types: ['Creature'] }, upTo: true }, { o: 'counter', on: 'it', n: numOf(m[1]), kind: '+1/+1' }, { o: 'pump', on: 'it', grant: kwList(m[2]) }];
   // Azure Beastbinder: loses all abilities and becomes 2/2 until your next turn (layers 6 and 7b)
@@ -504,6 +520,9 @@ const EVENTS = [
   [/^one or more artifact and\/or creature cards leave your graveyard$/, () => [{ on: 'leftGraveArtCreBatch', you: true }]],
   [/^one or more permanent cards are put into your graveyard from anywhere while ~ has an? (-1\/-1|\+1\/\+1) counter on it$/, m => [{ on: 'toGraveBatch', you: true, evCond: { c: 'hasCounter', kind: m[1] } }]],
   [/^you attack$/, () => [{ on: 'attackWith' }]],
+  [/^another Dwarf or Equipment you control enters$/, () => [{ on: 'enters', who: { subtypes: ['Dwarf', 'Equipment'], other: true, ctrl: 'you' } }]],
+  [/^~ or another Dwarf you control enters and whenever an Equipment you control enters$/, () => [{ on: 'enters', who: { or: ['self', { subtypes: ['Dwarf'], other: true, ctrl: 'you' }] } }, { on: 'enters', who: { subtypes: ['Equipment'], ctrl: 'you' } }]],
+  [/^a creature you control with mana value (\d+) or greater enters$/, m => [{ on: 'enters', who: { types: ['Creature'], ctrl: 'you', mvGE: +m[1] } }]],
   [/^an? ([A-Z][a-z]+) you control enters$/, m => [{ on: 'enters', who: { subtypes: [m[1]], ctrl: 'you' } }]],
   [/^~ enters or dies$/, () => [{ on: 'enters', who: 'self' }, { on: 'dies', who: 'self', lookBack: true }]],
   [/^a creature an opponent controls enters$/, () => [{ on: 'enters', who: { types: ['Creature'], ctrl: 'opp' } }]],
@@ -587,6 +606,8 @@ function parseTrigger(line, ctx, out) {
 }
 function parseStatic(line, ctx, out, d) {
   let m;
+  if (line === 'Equipped creature gets +1/+0 and has haste and ward {1}.') { out.push({ k: 'static', affects: 'equipped', p: 1, t: 0, grant: ['haste'], grantAb: [{ k: 'trig', on: 'targeted', who: 'self', byOpp: true, ward: true, ops: [{ o: 'wardCounter', life: null, mana: '{1}' }] }] }); return true; }   // CR 702.21a: ward, granted
+  if (line === 'Equipped creature gets +2/+2 and has hexproof from monocolored.') { out.push({ k: 'static', affects: 'equipped', p: 2, t: 2, grantAb: [{ k: 'hexproofFrom', types: [], mono: true }] }); return true; }   // CR 702.11d
   if (line === '~ enters tapped.') { out.push({ k: 'etbTapped' }); return true; }
   if ((m = line.match(/^~ enters tapped unless (.+)\.$/))) { out.push({ k: 'etbTapped', unless: parseCond(m[1], ctx) }); return true; }   // CR 614.1c
   if ((m = line.match(/^As ~ enters, you may pay (\d+) life\. If you don't, it enters tapped\.$/))) { out.push({ k: 'etbPayOrTap', life: +m[1] }); return true; }   // CR 614.12a: a choice made as it enters
@@ -637,6 +658,13 @@ function parseStatic(line, ctx, out, d) {
   if (line === 'Creatures you control with +1/+1 counters on them have all activated abilities of all creature cards exiled with ~.') { out.push({ k: 'cauldronGrant' }); return true; }   // CR 607.2a: linked
   if (line === 'You may activate abilities of creatures you control as though those creatures had haste.') { out.push({ k: 'abilitiesHaste' }); return true; }   // CR 302.6
   if (line === 'Creature tokens you control have "{T}: Add one mana of any color."') { out.push({ k: 'static', affects: { tok: true, types: ['Creature'], ctrl: 'you' }, grantAb: [{ k: 'mana', cost: { mana: '', tap: true, sacSelf: false }, cols: ['W', 'U', 'B', 'R', 'G'] }] }); return true; }
+  if ((m = line.match(/^Equipped creature has (.+)\.$/))) { out.push({ k: 'static', affects: 'equipped', p: 0, t: 0, grant: kwList(m[1]) }); return true; }
+  if (line === '~ has lifelink as long as you control another Dwarf.') { out.push({ k: 'static', affects: 'self', p: 0, t: 0, grant: ['lifelink'], cond: { c: 'control', f: { subtypes: ['Dwarf'], other: true }, n: 1 } }); return true; }
+  if (line === 'Storied') { out.push({ k: 'storied' }); return true; }                                                   // CR 702.195a
+  if (line === 'As long as you have an enduring story, you may pay {0} rather than pay the equip cost of the first equip ability you activate each turn.') { out.push({ k: 'freeEquipOnce' }); return true; }   // CR 118.9
+  if (line === 'If this card is in your opening hand, you may begin the game with it on the battlefield.') { out.push({ k: 'leyline' }); return true; }   // CR 103.6a
+  if ((m = line.match(/^Equip abilities you activate that target ~ cost \{(\d+)\} less to activate\.$/))) { out.push({ k: 'equipDiscountTarget', n: +m[1] }); return true; }
+  if ((m = line.match(/^Other (Mice) you control get \+(\d+)\/\+(\d+)\.$/))) { out.push({ k: 'static', affects: { subtypes: ['Mouse'], other: true, ctrl: 'you' }, p: +m[2], t: +m[3] }); return true; }
   if (line === 'You may play an additional land on each of your turns.') { out.push({ k: 'extraLand', n: 1 }); return true; }   // CR 305.2
   if (line === 'You may play lands from your graveyard.') { out.push({ k: 'landsFromGrave' }); return true; }
   if (line === "This spell can't be countered.") { out.push({ k: 'uncounterable' }); return true; }        // CR 113.6g
@@ -722,6 +750,10 @@ function parseLine(line, ctx, d, kw, ab) {
     ab.push({ k: 'trig', on: 'enters', who: 'self', cond: { c: 'offspringPaid' }, ops: [{ o: 'tokenCopy', of: 'self', except: { pt: [1, 1] } }] });
     return;
   }
+  if ((m = line.match(/^Equip (\{[^ ]+\})\. This ability costs \{1\} less to activate for each color of the creature it targets\.$/))) {   // CR 702.6a, 601.2f
+    ab.push({ k: 'act', cost: { mana: m[1], tap: false, sacSelf: false }, sorcery: true, tg: [{ f: { types: ['Creature'], ctrl: 'you' } }], ops: [{ o: 'attach', on: { t: 0 } }], equip: true, lessPerTargetColor: 1 });
+    return;
+  }
   if ((m = line.match(/^Equip (\{[^ ]+\})$/))) {                                                  // CR 702.6a
     ab.push({ k: 'act', cost: { mana: m[1], tap: false, sacSelf: false }, sorcery: true, tg: [{ f: { types: ['Creature'], ctrl: 'you' } }], ops: [{ o: 'attach', on: { t: 0 } }], equip: true });
     return;
@@ -745,6 +777,7 @@ function parseLine(line, ctx, d, kw, ab) {
     if (cost.zone) { act.zone = cost.zone; delete cost.zone; }
     for (;;) {
       if ((mm = body.match(/^(.+?)\s*Activate only as a sorcery\.$/))) { act.sorcery = true; body = mm[1]; continue; }
+      if ((mm = body.match(/^(.+?)\s*This ability costs \{1\} less to activate for each (Equipment) you control\.$/))) { act.lessPer = { subtypes: [mm[2]], ctrl: 'you' }; body = mm[1]; continue; }
       if ((mm = body.match(/^(.+?)\s*Activate only once each turn\.$/))) { act.oncePerTurn = true; body = mm[1]; continue; }
       if ((mm = body.match(/^(.+?)\s*Activate only if (.+?) and only once each turn\.$/))) { act.cond = parseCond(mm[2], ctx); act.oncePerTurn = true; body = mm[1]; continue; }
       if ((mm = body.match(/^(.+?)\s*Activate only if (.+?)\.$/))) { act.cond = parseCond(mm[2], ctx); body = mm[1]; continue; }
@@ -778,8 +811,8 @@ function parseLine(line, ctx, d, kw, ab) {
 // A card
 // ---------------------------------------------------------------------------------------------
 const BASIC_MANA = { Plains: 'W', Island: 'U', Swamp: 'B', Mountain: 'R', Forest: 'G' };
-export function normalize(text, name) {
-  const short = name.includes(',') ? name.split(',')[0] : null;
+export function normalize(text, name, legendary) {
+  const short = name.includes(',') ? name.split(',')[0] : legendary && / /.test(name) && !/^The /.test(name) ? name.split(' ')[0] : null;
   let t = text.replace(/\s*\([^)]*\)/g, '');                                                       // reminder text is display-only (CLAUDE.md regime 3)
   t = t.split(name).join('~'); if (short) t = t.replace(new RegExp('\\b' + short + '\\b(?!,)', 'g'), '~');
   t = t.replace(/\b[Tt]his (creature|artifact|land|Aura|enchantment|permanent|Equipment|Class|Case|Vehicle|Saga)\b/g, '~');
@@ -841,7 +874,7 @@ export function compileCard(c, tokens, alt, room) {
   const ctx = { token: tokens, name: faceName, door: room ? room.door : null };
   try {
     for (const st of d.subtypes) if (BASIC_MANA[st]) d.ab.push({ k: 'mana', cost: { tap: true }, cols: [BASIC_MANA[st]] });   // CR 305.6: intrinsic
-    const lines = normalize(d.text, faceName);
+    const lines = normalize(d.text, faceName, d.supers.includes('Legendary'));
     for (let i = 0; i < lines.length; i++) {
       // A modal spell: "Choose one —" then bullet lines, one mode each (CR 700.2).
       const mm = lines[i].match(/^Choose (one|two|one or both) —$/);
@@ -936,6 +969,11 @@ function tokenMaker(pack) {
   mk.named = function (o) {                                                                        // "create <Name>, a legendary 8/8 blue Octopus creature token"
     const id = 'token-' + o.name.toLowerCase().replace(/[^a-z]+/g, '-');
     if (!pack[id]) pack[id] = { id: id, name: o.name, token: true, mana: '', colors: o.colors, types: ['Creature'], subtypes: o.subtypes, supers: o.supers, power: o.p, toughness: o.t, typeLine: 'Token ' + o.supers.join(' ') + ' Creature — ' + o.subtypes.join(' '), text: '', kw: {}, ab: [], layout: 'token' };
+    return id;
+  };
+  mk.equipment = function (o) {                                                                    // "a colorless Equipment artifact token named Axe with ... and equip {2}"
+    const id = 'token-' + o.name.toLowerCase().replace(/[^a-z]+/g, '-');
+    if (!pack[id]) pack[id] = { id: id, name: o.name, token: true, mana: '', colors: [], types: ['Artifact'], subtypes: ['Equipment'], supers: o.legendary ? ['Legendary'] : [], power: null, toughness: null, typeLine: 'Token ' + (o.legendary ? 'Legendary ' : '') + 'Artifact — Equipment', text: o.text, kw: {}, ab: [o.st, { k: 'act', cost: { mana: o.equip, tap: false, sacSelf: false }, sorcery: true, tg: [{ f: { types: ['Creature'], ctrl: 'you' } }], ops: [{ o: 'attach', on: { t: 0 } }], equip: true }], layout: 'token' };
     return id;
   };
   mk.food = function () {                                                                          // CR 111.10b

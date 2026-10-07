@@ -1070,7 +1070,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (september-28-2026)",
   "rank": null,
   "players": 8,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -1189,23 +1189,12 @@ window.MF.decks = {
     "name": "Dawn's Truce"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "the-lonely-mountain: effect: This ability costs {1} less to activate for each Equipment you control",
-   "d-ins-company: condition: you control another Dwarf",
-   "lavaspur-boots: keyword: ward {1}",
-   "k-li-the-resourceful: ability: Storied",
-   "thorin-mountain-king: effect: Attach any number of target Equipment you control to target creature you control",
-   "leyline-axe: ability: If this card is in your opening hand, you may begin the game with it on the battlefield.",
-   "dwarven-mauler: ability: Equip abilities you activate that target ~ cost {2} less to activate.",
-   "dragonfire-blade: keyword: hexproof from monocolored",
-   "basilisk-collar: ability: Equipped creature has deathtouch and lifelink.",
-   "giott-king-of-the-dwarves: trigger event: ~ or another Dwarf you control enters and whenever an Equipment you control enters, you may discard a card. If you do, draw a card.",
-   "mabel-heir-to-cragflame: ability: Other Mice you control get +1/+1.",
-   "d-in-ironfoot: trigger event: Dáin enters, create a colorless Equipment artifact token named Axe with \"Equipped creature gets +1/+0\" and equip {2}. When you do, attach it to target creature you control.",
-   "doc-ocks-tentacles: filter qualifier: with mana value 5 or greater"
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-dwarf-2-2-r",
+   "token-cragflame",
+   "token-axe"
+  ]
  },
  "orzhov-amalia-benavides-aguirre-hob": {
   "id": "orzhov-amalia-benavides-aguirre-hob",

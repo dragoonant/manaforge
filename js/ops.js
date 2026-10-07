@@ -18,7 +18,9 @@
     if (f.any) return (!f.other || iid !== srcIid) && ch.types.some(t => t === 'Creature' || t === 'Planeswalker' || t === 'Battle');   // CR 115.4: "any target"; "any other target"
     if (f.player) return false;
     if (f.types && !f.types.some(t => ch.types.includes(t))) return false;
-    if (f.allTypes && !f.allTypes.every(t => ch.types.includes(t))) return false;               // "enchantment creatures"
+    if (f.allTypes && !f.allTypes.every(t => ch.types.includes(t))) return false;
+    if (f.equipped && !s.bf.some(e => s.cards[e].att === iid && MF.chars(s, e).subtypes.includes('Equipment'))) return false;   // "each equipped attacking creature"
+    if (f.mvGE != null && !(ch.mv >= f.mvGE)) return false;               // "enchantment creatures"
     if (f.typesOrSub && !(f.typesOrSub.types.some(t => ch.types.includes(t)) || f.typesOrSub.subtypes.some(t => ch.subtypes.includes(t)))) return false;   // "creature or Vehicle"
     if (f.notTypes && f.notTypes.some(t => ch.types.includes(t))) return false;
     if (f.notSupers && f.notSupers.some(t => ch.supers.includes(t))) return false;   // "nonbasic"
@@ -95,6 +97,7 @@
     spent: (x, c) => { const o = I(x.s, x.src); return !!o && !!o.spentCols && (o.spentCols[c.col] || 0) >= c.n; },
     evoked: x => { const c = I(x.s, x.src); return !!c && !!c.evoked; },
     faceDownThisTurn: () => false,                                                               // nothing in this engine turns a permanent face down or face up
+    attachedSome: x => !!x.flags.attachedSome,
     exiledCreature: x => !!x.flags.exiledCreature,
     gravePermCount: (x, c) => P(x.s, x.ctrl).grave.filter(i => MF.def(x.s, i).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))).length >= c.n,   // descend (CR 700.11)
     impendingTime: x => { const c = I(x.s, x.src); return !!c && !!c.impended && (c.ctr.time || 0) > 0; },   // CR 702.176a's intervening "if"
@@ -223,6 +226,7 @@
     if (r === 'ev') return onBf(x.ev && x.ev.iid) ? [x.ev.iid] : [];
     if (r === 'it') return x.it != null ? [x.it] : [];
     if (r.t != null) return (x.t[r.t] || []).filter(q => q && q.c != null).map(q => q.c);
+    if (r.flag != null) { const v = x.flags[r.flag] != null ? x.flags[r.flag] : x.L && x.L.inl && x.L.inl.bound ? x.L.inl.bound[r.flag] : null; return onBf(v) ? [v] : []; }   // a value bound as a reflexive ability triggered
     if (r.each && r.each.ctrlOfT != null) { const ps = (x.t[r.each.ctrlOfT] || []).filter(q => q && q.p != null).map(q => q.p); return s.bf.filter(i => ps.includes(MF.chars(s, i).ctrl) && MF.matchChars(s, i, MF.chars(s, i), Object.assign({}, r.each, { ctrlOfT: undefined }), x.ctrl, x.src)); }   // "each creature target player controls"
     if (r.each) return s.bf.filter(i => MF.matchChars(s, i, MF.chars(s, i), r.each, x.ctrl, x.src));
     throw new Error('unknown reference ' + JSON.stringify(r));
@@ -449,7 +453,7 @@
     dig(x, op) {
       const s = x.s, p = P(s, x.ctrl), look = p.lib.slice(0, op.n);
       if (!look.length) return;
-      const opts = look.filter(i => MF.def(s, i).types.includes(op.type)).map(i => ({ id: i, iid: i }));
+      const opts = look.filter(i => op.subs ? op.subs.some(st => MF.def(s, i).subtypes.includes(st)) : MF.def(s, i).types.includes(op.type)).map(i => ({ id: i, iid: i }));
       opts.push({ id: 'none' });
       // Nothing of the type among them: looking is not a choice (CLAUDE.md rule 11); the look is logged, shown only to its player.
       const pick = opts.length > 1 ? MF.ask(x.x, { who: x.ctrl, kind: 'dig', src: x.src, n: look.length, type: op.type, look: look, opts: opts }) : (log(s, 'lookedAt', { who: x.ctrl, cs: look.map(i => I(s, i).id), type: op.type }), 'none');
@@ -848,6 +852,24 @@
       MF.emit(s, { t: 'enters', iid: k, ctrl: x.ctrl });
     },
     forageCast(x) { x.s.effects.push({ k: 'forageCast', who: x.ctrl, until: 'eot' }); log(x.s, 'forageCast', { who: x.ctrl, c: x.L ? x.L.srcId : null }); },   // Osteomancer Adept
+    // Thorin: attach any number of target Equipment you control to target creature you control (CR 701.3)
+    attachMany(x, op) {
+      const s = x.s, to = MF.resolveRefs(x, op.to)[0]; if (to == null) return;
+      for (const e of MF.resolveRefs(x, op.eq)) { const c = I(s, e); if (!c || c.zone !== 'bf' || c.ctrl !== x.ctrl) continue; if (c.att === to) continue; c.att = to; log(s, 'attach', { who: x.ctrl, c: c.id, to: I(s, to).id }); x.flags.attachedSome = true; }
+      if (x.flags.attachedSome) x.flags.attachedTo = to;
+    },
+    // Dáin Ironfoot: "When you do, attach it to target creature you control" — the Axe made as it triggered
+    attachMade(x, op) {
+      const s = x.s, e = x.L && x.L.inl && x.L.inl.bound ? x.L.inl.bound.made : null, to = MF.resolveRefs(x, op.to)[0];
+      if (e == null || to == null || !I(s, e) || I(s, e).zone !== 'bf') return;
+      I(s, e).att = to; log(s, 'attach', { who: x.ctrl, c: I(s, e).id, to: I(s, to).id });
+    },
+    // Doc Ock's Tentacles: "you may attach this Equipment to it"
+    attachSelfTo(x, op) {
+      const s = x.s, e = I(s, x.src), to = MF.resolveRefs(x, op.on)[0];
+      if (!e || e.zone !== 'bf' || to == null || !MF.chars(s, to).types.includes('Creature')) return;
+      e.att = to; log(s, 'attach', { who: x.ctrl, c: e.id, to: I(s, to).id });
+    },
     // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
     selfFromGrave(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'grave') return; const n = MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); log(s, 'putOnto', { who: c.owner, c: I(s, n).id, tapped: false, from: 'graveyard' }); },
     removeCounter(x, op) { const c = I(x.s, x.src); if (!c || c.zone !== 'bf' || !(c.ctr[op.kind] > 0)) return; c.ctr[op.kind] = Math.max(0, c.ctr[op.kind] - op.n); log(x.s, 'removeCounters', { who: c.ctrl, c: c.id, n: op.n, ctr: op.kind }); },
@@ -873,7 +895,7 @@
     // CR 603.12: a reflexive triggered ability — triggers at once; its targets are chosen as it goes on the stack.
     reflexive(x, op) {
       if (op.ab.cond && !MF.cond(x, op.ab.cond)) return;                                          // "When you do, if ..." — checked as it triggers (CR 603.4)
-      const inl = Object.assign({}, op.ab); delete inl.cond;                                            // its condition was checked as it triggered; the flag it read is gone by resolution
+      const inl = Object.assign({}, op.ab, { bound: { attachedTo: x.flags.attachedTo, made: x.made ? x.made[x.made.length - 1] : null } }); delete inl.cond;                                            // its condition was checked as it triggered; the flag it read is gone by resolution
       x.s.trigs.push({ src: x.src, ab: -1, inl: inl, ctrl: x.ctrl, ev: x.ev || { t: 'reflexive' }, lki: x.lki || null }); },
     // CR 603.7: "Whenever you attack this turn, ..." — a delayed triggered ability with a duration.
     delayed(x, op) {
@@ -1138,7 +1160,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste', 'storied', 'freeEquipOnce', 'leyline', 'equipDiscountTarget', 'hexproofFrom'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

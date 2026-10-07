@@ -56,6 +56,7 @@
     if (r.t != null) { const sl = curTg[r.t] || {}; return (sl.upTo ? 'up to ' + sl.n + ' ' : '') + (sl.f && sl.f.any ? 'any target' : 'target ' + filt(sl.f)) + ' [' + (r.t + 1) + ']'; }
     if (r.each && r.each.ctrlOfT != null) return 'each creature target player [' + (r.each.ctrlOfT + 1) + '] controls';
     if (r.each) return 'each ' + filt(r.each);
+    if (r.flag === 'attachedTo') return 'that creature';
     return JSON.stringify(r);
   }
   const C = {
@@ -128,6 +129,9 @@
     exileCard: () => 'exile that card',
     exileCopyToken: op => 'exile ' + ref(op.on) + '; if you exiled a card this way, create a token that’s a copy of it, except it’s a ' + op.except.pt.join('/') + ' black ' + op.except.setSubtypes.join(' '),
     forageCast: () => 'until end of turn, you may cast creature spells from your graveyard by foraging (exile three other cards from your graveyard or sacrifice a Food) in addition to their other costs; such a creature enters with a finality counter',
+    attachMany: op => 'attach ' + ref(op.eq) + ' to ' + ref(op.to),
+    attachMade: op => 'attach that token to ' + ref(op.to),
+    attachSelfTo: () => 'attach this Equipment to it',
     exileGrave: op => 'exile ' + ref(op.who) + '’s graveyard',
     endTurn: () => 'end the turn (exile everything on the stack, including this; skip to the cleanup step)',
     lookTop: op => 'look at the top card of your library; if it is a ' + op.type.toLowerCase() + ', you may put it onto the battlefield tapped, otherwise put it into your hand',
@@ -200,7 +204,7 @@
     flicker: op => 'exile ' + ref(op.on) + ', then return it to the battlefield under its owner’s control',
     pickMilled: op => 'you may put a ' + (op.type === 'noncreatureNonland' ? 'noncreature, nonland' : op.type === 'artCreLand' ? 'artifact, creature, or land' : op.type) + ' card from among the milled cards into your hand' + (op.ifSub ? '; if it’s a ' + op.ifSub.sub + ' card, you gain ' + op.ifSub.gain + ' life' : '') + (op.elseOps ? '; if you don’t: ' + ops(op.elseOps) : '') + (op.squirrelFood ? '; if you control a Squirrel or returned a Squirrel card this way, create a Food token' : ''),
     exile: op => 'exile ' + ref(op.on) + (op.link ? ' (linked: cards exiled with this)' : ''),
-    dig: op => 'look at the top ' + op.n + ' cards; you may reveal a ' + op.type.toLowerCase() + ' card; if its mana value is ' + op.bfMvMax + ' or less you may put it onto the battlefield (it gains ' + (op.grant || []).map(k => KWNAME[k]).join(', ') + ' until end of turn), otherwise into your hand; the rest on the bottom in a random order',
+    dig: op => op.subs ? 'look at the top ' + op.n + ' cards of your library; you may reveal a ' + op.subs.join(' or ') + ' card from among them and put it into your hand; put the rest on the bottom of your library in a random order' : 'look at the top ' + op.n + ' cards; you may reveal a ' + op.type.toLowerCase() + ' card; if its mana value is ' + op.bfMvMax + ' or less you may put it onto the battlefield (it gains ' + (op.grant || []).map(k => KWNAME[k]).join(', ') + ' until end of turn), otherwise into your hand; the rest on the bottom in a random order',
     untap: op => 'untap ' + ref(op.on),
     extraCombat: () => 'after this phase, there is an additional combat phase',
     fight: op => ref(op.a) + ' fights ' + ref(op.b),
@@ -224,8 +228,9 @@
         if (a.levelUp) return a.cost.mana + ': Level ' + a.levelUp + ' (as a sorcery, only while level ' + (a.levelUp - 1) + ')';
         if (a.cost.removeCtr) return 'remove ' + a.cost.removeCtr.n + ' ' + a.cost.removeCtr.kind + ' counters from this: ' + ops(a.ops);
         if (a.cycling) return 'cycling ' + a.cost.mana + ' (' + a.cost.mana + ', discard this card from your hand: draw a card)';
+        if (a.equip && a.lessPerTargetColor) return 'equip ' + a.cost.mana + ' (as a sorcery); this ability costs {1} less to activate for each color of the creature it targets';
         if (a.equip && a.cost.life) return 'equip — pay ' + a.cost.life + ' life (only once each turn, as a sorcery)';
-        return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.discard ? 'discard a card' : '', a.cost.discardSelf ? 'discard this card' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : '', a.cost.exileSelf ? (a.zone === 'grave' ? 'exile this card from your graveyard' : 'exile this') : '', a.cost.exileGrave ? 'exile a ' + (a.cost.exileGrave.types ? a.cost.exileGrave.types.join('/').toLowerCase() + ' ' : '') + 'card from your graveyard' : '', a.cost.crew ? 'crew ' + a.cost.crew + ' (tap any number of other untapped creatures you control with total power ' + a.cost.crew + ' or more)' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
+        return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.discard ? 'discard a card' : '', a.cost.discardSelf ? 'discard this card' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : '', a.cost.exileSelf ? (a.zone === 'grave' ? 'exile this card from your graveyard' : 'exile this') : '', a.cost.exileGrave ? 'exile a ' + (a.cost.exileGrave.types ? a.cost.exileGrave.types.join('/').toLowerCase() + ' ' : '') + 'card from your graveyard' : '', a.cost.crew ? 'crew ' + a.cost.crew + ' (tap any number of other untapped creatures you control with total power ' + a.cost.crew + ' or more)' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.lessPer ? '; this ability costs {1} less to activate for each ' + filt(a.lessPer) : '') + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
       case 'evasion': return a.blockerNot.notSubtypes ? 'this can’t be blocked by non-' + a.blockerNot.notSubtypes.join('/') + ' creatures' : 'this can’t be blocked by ' + filt(Object.assign({ types: ['Creature'] }, a.blockerNot)).replace('creature', 'creatures');
       case 'oppDieExile': return 'if a creature an opponent controls would die, exile it instead';
       case 'enterChoice': return 'as this enters, choose ' + (a.what === 'basicType' ? 'a basic land type' : a.what === 'creatureType' ? 'a creature type' : 'odd or even');
@@ -242,7 +247,11 @@
       case 'oppNoCast': return 'your opponents can’t cast spells during your turn';
       case 'bargain': return 'bargain (you may sacrifice an artifact, enchantment or token as you cast this)';
       case 'harmonize': return 'harmonize ' + a.cost + ' (you may cast this from your graveyard for ' + a.cost + ', tapping up to one creature you control to reduce the generic cost by its power; then exile it)';
-      case 'hexproofFrom': return 'hexproof from ' + a.types.map(x => x.toLowerCase() + 's').join(' and ');
+      case 'hexproofFrom': return a.mono ? 'hexproof from monocolored' : 'hexproof from ' + a.types.map(x => x.toLowerCase() + 's').join(' and ');
+      case 'storied': return 'storied (once you control three or more artifacts, legendaries and/or Sagas, you have an enduring story for the rest of the game)';
+      case 'freeEquipOnce': return 'as long as you have an enduring story, you may pay {0} rather than pay the equip cost of the first equip ability you activate each turn';
+      case 'leyline': return 'if this card is in your opening hand, you may begin the game with it on the battlefield';
+      case 'equipDiscountTarget': return 'equip abilities you activate that target this cost {' + a.n + '} less to activate';
       case 'lifeLossDouble': return 'if an opponent would lose life during your turn, they lose twice that much life instead';
       case 'gift': return 'gift a ' + a.what + ' (you may promise an opponent a gift as you cast this; if you do, they draw a card before its other effects)';
       case 'trig': {

@@ -35,8 +35,14 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-06 — the championship decks (D15) under way: 18 of 20 registered; a per-card audit done.**
+**2026-10-06 — the championship decks (D15) under way: 19 of 20 registered; a per-card audit done.**
 
+- Boros (Dáin's Company) brought activated-ability cost changes (per Equipment, per target colour,
+  "equip abilities that target this", Kíli's {0} equip with an enduring story), storied (CR 702.195),
+  opening-hand actions (103.6a, Leyline Axe), hone counters (122.1j), hexproof from monocolored
+  (702.11d), ward granted by Equipment, Equipment tokens defined by their creator's text, attaching
+  any number of Equipment with a reflexive trigger bound to that creature, a legendary's short name
+  in its own text.
 - Golgari Roots (Eli Kassis, #19) brought Agatha's Soul Cauldron (linked exile, activated abilities
   granted in layer 6, mana of any colour for creatures' abilities, 609.4b), forage (701.61), costs
   that exile a chosen graveyard card — inside a mana ability's payment too —, "as though they had
@@ -91,7 +97,7 @@ Deck count, never quality. A deck that does not compile in full is not registere
   closed), ninjutsu (702.49), transforming double-faced cards (712), emblems (114), layer 6 in
   timestamp order with "loses all abilities", "until your next turn", choose-two modes, draw events.
 - Registered: Mono-Red Aggro (PT Final Fantasy #1), Gruul Delirium (#35), Orzhov Demons (#28), Izzet
-  Prowess (#2), Dimir Midrange, Golgari Graveyard (#34), Azorius Control (#11), Domain Overlords (#9), Azorius Omniscience (#10) and Golgari Roots (#19); from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler), Mono-Green (Earthbender Ascension), Selesnya (Llanowar Elves) and Sultai (Ardyn, the Usurper) — beside the two Starter Kits. Boros
+  Prowess (#2), Dimir Midrange, Golgari Graveyard (#34), Azorius Control (#11), Domain Overlords (#9), Azorius Omniscience (#10) and Golgari Roots (#19); from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler), Mono-Green (Earthbender Ascension), Selesnya (Llanowar Elves), Sultai (Ardyn, the Usurper) and Boros (Dáin's Company) — beside the two Starter Kits. Boros
   brought delayed triggers (CR 603.7), mobilize (702.181), creatures entering attacking (508.4),
   sneak (702.190), Treasure (111.10a), "can't cast spells" (601.3), plan counters. Orzhov (Amalia) brought ward (702.21), explore (701.44), warp (702.185), Cases
   (719), exile-until-it-leaves (610.3), returning as a non-creature, life-gained/lost conditions. Izzet brought Class levels (CR 716), bargain (702.166),

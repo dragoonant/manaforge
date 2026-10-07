@@ -401,6 +401,7 @@
     l7b.sort((x, y) => x.ts - y.ts); for (const op of l7b) op.run();
     // Layer 7c: modifications, and counters.
     for (const st of statics) if (st.a.k === 'static' && (st.a.p || st.a.t)) for (const i of affected(st)) { out[i].p += st.a.p || 0; out[i].t += st.a.t || 0; }
+    for (const e of s.bf) { const ec = I(s, e); if (ec.ctr.hone > 0 && ec.att != null && out[ec.att] && out[ec.att].p != null && out[e] && out[e].subtypes.includes('Equipment')) out[ec.att].p += ec.ctr.hone; }   // CR 122.1j
     for (const st of statics) if (st.a.k === 'static' && st.a.pv) for (const i of affected(st)) { const v = MF.valueStatic(s, st.src, st.a.pv, out); out[i].p += v; out[i].t += v; }   // "+1/+1 for each other Rat you control"
     for (const e of s.effects) if (e.k === 'pt' && out[e.iid]) { out[e.iid].p += e.p; out[e.iid].t += e.t; }
     for (const iid of s.bf) { const c = I(s, iid), o = out[iid]; const n = (c.ctr['+1/+1'] || 0) - (c.ctr['-1/-1'] || 0); if (o.p != null) { o.p += n; o.t += n; } }
@@ -752,6 +753,7 @@
     if (ch.ctrl !== who && srcIid != null && s.cards[srcIid]) {                               // CR 702.11d: "hexproof from [quality]" — spells, and abilities from sources, of that quality
       const sc = s.cards[srcIid], sch = sc.zone === 'moved' ? sc.lki : chars(s, srcIid);   // a source that has left: its last known information (CR 608.2h)
       if (sch && ch.ab.some(a => a.k === 'hexproofFrom' && a.types.some(ty => sch.types.includes(ty)))) return false;
+      if (sch && sch.colors.length === 1 && ch.ab.some(a => a.k === 'hexproofFrom' && a.mono)) return false;   // "hexproof from monocolored"
     }
     return MF.matchChars(s, ref.c, ch, slot.f, who, srcIid);
   };
@@ -1052,6 +1054,7 @@
         else if (c.dt && c.dmg > 0 && !ch.kw.indestructible) out.push({ k: 'destroy', iid: iid, why: 'deathtouch' });   // CR 704.5h
       }
       if (ch.subtypes.includes('Saga') && ch.ab.some(a => a.chapter) && (c.ctr.lore || 0) >= Math.max(...ch.ab.filter(a => a.chapter).map(a => a.chapter)) && !s.stack.some(L => L.kind === 'trig' && L.src === iid) && !s.trigs.some(tg => tg.src === iid)) out.push({ k: 'sagaSac', iid: iid });   // CR 714.4
+      if (ch.ab.some(a => a.k === 'storied') && !P(s, c.ctrl).enduring && s.bf.filter(i => I(s, i).ctrl === c.ctrl && (chars(s, i).types.includes('Artifact') || chars(s, i).subtypes.includes('Saga') || chars(s, i).supers.includes('Legendary'))).length >= 3 && !out.some(o => o.k === 'enduring' && o.who === c.ctrl)) out.push({ k: 'enduring', who: c.ctrl });
       if (ch.types.includes('Planeswalker') && !(c.ctr.loyalty > 0)) out.push({ k: 'grave', iid: iid, why: 'loyalty' });   // CR 704.5i
       if (ch.supers.includes('Legendary')) { const key = c.ctrl + '|' + ch.name; (legends[key] = legends[key] || []).push(iid); }
       if (ch.subtypes.includes('Aura')) {                                                     // CR 704.5m, 303.4c
@@ -1084,6 +1087,7 @@
         case 'tokenGone': { const c = I(s, a.iid); if (c.zone === 'moved') break; zoneArr(s, c).splice(zoneArr(s, c).indexOf(a.iid), 1); c.zone = 'moved'; c.to = null; log(s, 'tokenGone', { c: c.id }); break; }
         case 'grave': if (I(s, a.iid).zone === 'bf') { log(s, 'sbaGrave', { c: I(s, a.iid).id, why: a.why, who: I(s, a.iid).ctrl }); move(s, a.iid, 'grave'); } break;
         case 'destroy': if (I(s, a.iid).zone === 'bf') MF.destroy(s, a.iid, a.why); break;
+        case 'enduring': P(s, a.who).enduring = true; log(s, 'enduring', { who: a.who }); break;   // CR 702.195a
         case 'sagaSac': if (I(s, a.iid).zone === 'bf') { log(s, 'sagaDone', { who: I(s, a.iid).ctrl, c: I(s, a.iid).id }); MF.sacrifice(s, a.iid); } break;
         case 'unattach': I(s, a.iid).att = null; log(s, 'unattach', { c: I(s, a.iid).id }); break;
         case 'counters': { const c = I(s, a.iid); const n = Math.min(c.ctr['+1/+1'], c.ctr['-1/-1']); c.ctr['+1/+1'] -= n; c.ctr['-1/-1'] -= n; break; }
@@ -1230,6 +1234,19 @@
     if (!(I(s, iid).zone === 'bf' && chars(s, iid).types.includes('Creature') && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'anyColorCreatureAbilities')))) return need;
     const c = Object.assign({}, need); for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) { c.g += c[k]; c[k] = 0; } return c;
   }
+  const abilityCost = MF.abilityCost = function (s, who, iid, a, targets) {
+    const c = MF.parseMana(a.cost.mana || '');
+    if (a.lessPer) c.g -= s.bf.filter(i => I(s, i).ctrl === who && MF.matchChars(s, i, chars(s, i), a.lessPer, who, iid)).length;   // The Lonely Mountain
+    const tc = targets && targets[0] && targets[0][0] && targets[0][0].c != null ? targets[0][0].c : null;
+    if (a.equip && tc != null) {
+      for (const b of chars(s, tc).ab) if (b.k === 'equipDiscountTarget') c.g -= b.n;          // Dwarven Mauler
+      if (a.lessPerTargetColor) c.g -= chars(s, tc).colors.length;                             // Dragonfire Blade
+    }
+    c.g = Math.max(0, c.g);
+    return anyColorForAb(s, who, iid, c);
+  };
+  // Kíli: with an enduring story, the first equip ability each turn may cost {0} instead (CR 118.9)
+  const freeEquip = MF.freeEquip = (s, who, a) => !!a.equip && !!P(s, who).enduring && !(P(s, who).h.equips > 0) && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(b => b.k === 'freeEquipOnce'));
   const canActivate = MF.canActivate = function (s, who, iid, i) {                            // CR 602.5
     const c = I(s, iid), ch = chars(s, iid), a = ch.ab[i];
     if (c.ctrl !== who || a.k !== 'act' || s.priority !== who) return false;
@@ -1250,7 +1267,9 @@
     if (a.cost.crew && s.bf.filter(i => i !== iid && I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature')).reduce((t, i) => t + Math.max(0, chars(s, i).p), 0) < a.cost.crew) return false;
     if (a.cost.sacToken && !s.bf.some(i => I(s, i).ctrl === who && I(s, i).tok)) return false;
     if (a.oncePerTurn && c.actTurn && c.actTurn[i] === s.turn) return false;                  // CR 602.5b: "Activate only once each turn"
-    const need = anyColorForAb(s, who, iid, MF.parseMana(a.cost.mana || ''));
+    let need = abilityCost(s, who, iid, a, null);
+    if (a.equip && freeEquip(s, who, a)) need = MF.parseMana('');
+    else if (a.equip && a.tg) { for (const r of MF.targetOptions(s, a.tg[0], who, iid, [])) { const n2 = abilityCost(s, who, iid, a, [[r]]); if (MF.manaValue(n2) < MF.manaValue(need)) need = n2; } }   // priced with its cheapest target
     if (a.cost.tap && MF.manaValue(need)) {                                                   // the source taps for its own cost: it cannot also pay mana
       const pool = usablePool(P(s, who), null), srcs = manaSources(s, who).filter(m => m.iid !== iid);
       return !!solve(pool, srcs, need);
@@ -1391,9 +1410,19 @@
       }
     }
     if (again) s.todo.push({ t: 'mulligan', answers: [] });
-    else { s.turn = 1; s.step = 'untap'; s.sub = 0; s.firstTurn = true; for (const k in s.cards) s.cards[k].ctlTurn = 0; }   // CR 103.8
+    else s.todo.push({ t: 'openingHand', answers: [] });
   });
 
+  EXEC_DEF('openingHand', function (x) {                                                     // CR 103.6a: Leyline Axe
+    const s = x.s;
+    for (const seat of [s.ap, 1 - s.ap]) {
+      for (const iid of P(s, seat).hand.slice()) {
+        if (!def(s, iid).ab.some(a => a.k === 'leyline')) continue;
+        if (ask(x, { who: seat, kind: 'leyline', c: I(s, iid).id, opts: [{ id: 'yes' }, { id: 'no' }] }) === 'yes') { const n = move(s, iid, 'bf', { ctrl: seat, x: x }); log(s, 'leyline', { who: seat, c: I(s, n).id }); }
+      }
+    }
+    s.turn = 1; s.step = 'untap'; s.sub = 0; s.firstTurn = true; for (const k in s.cards) s.cards[k].ctlTurn = 0;   // CR 103.8
+  });
   // CR 514.1-2: discard to hand size, then damage is removed and "until end of turn" effects end.
   EXEC_DEF('cleanup', function (x) {
     const s = x.s, who = s.ap, p = P(s, who);
@@ -1643,7 +1672,10 @@
       const g = ask(x, { who: who, kind: 'exileFromGrave', src: iid, opts: opts, cancel: true });
       log(s, 'exiledCost', { who: who, c: I(s, g).id, from: 'graveyard' }); move(s, g, 'exile');
     }
-    payMana(x, who, anyColorForAb(s, who, iid, MF.parseMana(a.cost.mana || '')), iid, true);
+    let acost = abilityCost(s, who, iid, a, L.t);
+    if (a.equip && freeEquip(s, who, a) && MF.manaValue(acost) > 0 && ask(x, { who: who, kind: 'freeEquip', src: iid, cost: MF.manaStr(acost), opts: [{ id: 'free' }, { id: 'pay' }], cancel: true }) === 'free') acost = MF.parseMana('');
+    payMana(x, who, acost, iid, true);
+    if (a.equip) P(s, who).h.equips = (P(s, who).h.equips || 0) + 1;                          // "the first equip ability you activate each turn"
     if (a.once) c.usedOnce = true;
     if (a.oncePerTurn) { c.actTurn = c.actTurn || {}; c.actTurn[x.inv.ab] = s.turn; }
     L.lki = snapshot(s, iid);
