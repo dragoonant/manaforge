@@ -150,6 +150,8 @@
       case 'discardUpTo': return 'done';
       case 'gift': return q.opts.some(o => o.id === 'no') ? 'no' : q.opts[0].id;
       case 'bargain': return 'none';
+      case 'exploreGrave': return MF.def(s, q.card).types.includes('Land') ? 'top' : keepValue(s, q.card) < 3 ? 'grave' : 'top';
+      case 'wardPay': return P(s, me).life > (q.life || 0) + 5 ? 'pay' : 'decline';
       case 'sneakReturn': case 'sacToken': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
       case 'harmonizeTap': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => b.p - a.p)[0]; return c ? c.id : 'none'; }
       case 'manaCombo': return q.opts[0].id;
@@ -195,7 +197,7 @@
     return evalFor(s, me);
   }
   // Kinds where every answer is worth a roll-out when the AI itself is asked.
-  const SEARCH_KINDS = { bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
+  const SEARCH_KINDS = { wardPay: 1, bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
   function candidates(s, legal) {
     const seen = new Set(), out = [];

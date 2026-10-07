@@ -80,6 +80,13 @@
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
     sneakPaid: x => !!(x.L && x.L.sneak),                                                      // CR 702.190b
+    gainedAtLeast: (x, c) => (P(x.s, x.ctrl).h.gained || 0) >= c.n,                            // "if you gained life this turn", "3 or more life"
+    lostLifeThisTurn: x => (P(x.s, x.ctrl).h.lostLife || 0) > 0,
+    all: (x, c) => c.of.every(k => MF.cond(x, k)),
+    evIs: (x, c) => { const i = x.ev && x.ev.iid; return i != null && x.s.cards[i] && x.s.cards[i].zone === 'bf' && MF.matchChars(x.s, i, MF.chars(x.s, i), c.f, x.ctrl, x.src); },   // "If it's a Spider"
+    lkiType: (x, c) => !!(x.lki && x.lki.types.includes(c.type)),                             // "if it was a creature"
+    selfPowerIs: (x, c) => { const o = I(x.s, x.src); const p = o && o.zone === 'bf' ? MF.chars(x.s, x.src).p : x.lki ? x.lki.p : null; return p === c.n; },   // Amalia: checked once, last known if gone
+    notSolved: x => { const o = I(x.s, x.src); return !!o && !o.solved; },
     lifeOverStart: (x, c) => P(x.s, x.ctrl).life - P(x.s, x.ctrl).startLife >= c.n,            // "greater than your starting life total" (n 1), "at least 10 greater" (n 10) — CR 119.1
     giftPromised: x => !!(x.L && x.L.gift != null),                                            // CR 702.174k
     bargained: x => !!(x.L && x.L.bargained),                                                  // CR 702.166b
@@ -109,7 +116,8 @@
     power: (x, v) => { const r = MF.resolveRefs(x, v.of)[0]; if (r != null) return MF.chars(x.s, r).p; if (v.of === 'self' && x.lki) return x.lki.p; return 0; },
     castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
     evAmount: x => x.ev.n,                                                                      // "that much damage"
-    kicked: (x, v) => x.L && x.L.kicked ? v.yes : v.no,                                        // CR 702.33e
+    kicked: (x, v) => x.L && x.L.kicked ? v.yes : v.no,
+    gainedThisTurn: x => P(x.s, x.ctrl).h.gained || 0,                                        // CR 702.33e
   };
   MF.vals = VALS;
   const num = MF.num = function (x, v) { if (typeof v === 'number') return v; const f = VALS[v.v]; if (!f) throw new Error('no value: ' + v.v); return f(x, v, null); };
@@ -146,7 +154,7 @@
       case 'beginStep': return ev.step === a.step && (!a.yours || ev.ap === src.ctrl);
       case 'gainLife': return ev.who === src.ctrl;
       // Valiant: "becomes the target of a spell or ability you control for the first time each turn".
-      case 'targeted': return ev.iid === iid && (!a.byYou || ev.by === src.ctrl) && (!a.firstEachTurn || ev.firstThisTurn);
+      case 'targeted': return ev.iid === iid && (!a.byYou || ev.by === src.ctrl) && (!a.byOpp || ev.by !== src.ctrl) && (!a.firstEachTurn || ev.firstThisTurn);
       case 'attackWith': return ev.ctrl === src.ctrl && (!a.sub || ev.subtypes.includes(a.sub) || ev.anyType);   // CR 508.3c: once for the declaration; "all creature types" counts (CR 205.3m)
       case 'dealtDamage': return ev.iid === iid;
       default: return false;
@@ -508,12 +516,20 @@
       const s = x.s;
       for (const who of players(x, op.who)) {
         const p = P(s, who);
-        log(s, 'revealHand', { who: who, cs: p.hand.map(i => I(s, i).id) });
+        log(s, op.look ? 'lookHand' : 'revealHand', { who: who, by: x.ctrl, cs: p.hand.map(i => I(s, i).id) });   // "look at": only the looker sees it
         const fit = i => { const d = MF.def(s, i); return !(op.f.notTypes || []).some(ty => d.types.includes(ty)); };
         const opts = p.hand.filter(fit).map(i => ({ id: i, iid: i }));
         if (!opts.length) { log(s, 'handPickNone', { who: x.ctrl }); continue; }
+        if (op.then === 'exileUntil') { const sc = I(s, x.src); if (!sc || sc.zone !== 'bf') continue; }   // Deep-Cavern Bat's ruling: gone already, nothing is exiled
+        if (op.may) opts.push({ id: 'none' });
         const a = MF.ask(x.x, { who: x.ctrl, kind: 'handPick', src: x.src, from: who, then: op.then, opts: opts });
+        if (a === 'none') continue;
         if (op.then === 'discard') MF.discard(s, a);
+        else if (op.then === 'exileUntil') {
+          const id = I(s, a).id, n = MF.move(s, a, 'exile');
+          s.effects.push({ k: 'exileUntil', src: x.src, iid: n });
+          log(s, 'exiledFromHand', { who: who, c: id, by: x.L ? (x.L.srcId || x.L.id) : null, until: true });
+        }
         else {
           const id = I(s, a).id, n = MF.move(s, a, 'exile');
           log(s, 'exiledFromHand', { who: who, c: id, by: x.L ? (x.L.srcId || x.L.id) : null });
@@ -535,6 +551,51 @@
       r.n++;
       log(x.s, 'nthResolution', { who: x.ctrl, c: c.id, n: r.n });
       if (op.branches[r.n - 1]) MF.runOps(x, op.branches[r.n - 1]);                            // beyond the third: nothing (its ruling)
+    },
+    // CR 701.44a: explore — reveal the top card; a land goes to hand; otherwise a +1/+1 counter, and the card may go to the graveyard.
+    explore(x) {
+      const s = x.s, p = P(s, x.ctrl), here = I(s, x.src) && I(s, x.src).zone === 'bf', id0 = x.L ? (x.L.srcId || x.L.id) : null;
+      if (!p.lib.length) { if (here) OPS.counter(x, { on: 'self', n: 1, kind: '+1/+1' }); log(s, 'explore', { who: x.ctrl, c: id0, card: null }); return; }   // its ruling: nothing revealed, still a counter
+      const top = p.lib[0], d = MF.def(s, top);
+      log(s, 'explore', { who: x.ctrl, c: id0, card: d.id, land: d.types.includes('Land') });
+      if (d.types.includes('Land')) { MF.move(s, top, 'hand'); return; }
+      if (here) OPS.counter(x, { on: 'self', n: 1, kind: '+1/+1' });
+      if (MF.ask(x.x, { who: x.ctrl, kind: 'exploreGrave', src: x.src, card: top, opts: [{ id: 'grave', iid: top }, { id: 'top', iid: top }] }) === 'grave') { MF.move(s, top, 'grave'); log(s, 'mill', { who: x.ctrl, cs: [d.id] }); }
+    },
+    // Essence Channeler: "put its counters on target creature you control" — the same number of each kind it had (its rulings).
+    moveCounters(x, op) {
+      const ctr = (x.lki && x.lki.ctr) || {};
+      for (const k in ctr) if (ctr[k] > 0) { const put = { on: op.to, n: ctr[k] }; put.kind = k; OPS.counter(x, put); }
+    },
+    // Moseo: "return up to one target creature card ... from your graveyard to the battlefield".
+    graveToBattlefield(x, op) {
+      for (const q of (x.t[op.on.t] || [])) { if (!q || q.c == null) continue; const c = I(x.s, q.c); if (c.zone !== 'grave') continue; const n = MF.move(x.s, q.c, 'bf', { ctrl: x.ctrl, x: x.x }); log(x.s, 'putOnto', { who: x.ctrl, c: I(x.s, n).id, tapped: false, from: 'graveyard' }); }
+    },
+    // Case of the Uneaten Feast: "Creature cards in your graveyard gain 'You may cast this card from your graveyard' until end of turn."
+    graveCastable(x, op) {
+      const s = x.s;
+      for (const i of P(s, x.ctrl).grave) if (op.types.some(ty => MF.def(s, i).types.includes(ty))) s.effects.push({ k: 'mayPlay', iid: i, who: x.ctrl, castOnly: true, until: 'eot' });
+      log(s, 'graveCastable', { who: x.ctrl, n: P(s, x.ctrl).grave.filter(i => op.types.some(ty => MF.def(s, i).types.includes(ty))).length });
+    },
+    solve(x) { const c = I(x.s, x.src); if (!c || c.zone !== 'bf') return; c.solved = true; log(x.s, 'solved', { who: x.ctrl, c: c.id }); },   // CR 719.3a
+    // Warp (CR 702.185a): exiled at the next end step; its owner may cast it after this turn while it stays exiled.
+    warpExile(x, op) {
+      const s = x.s, c = I(s, op.iid); if (!c || c.zone !== 'bf') return;
+      const owner = c.owner, n = MF.move(s, op.iid, 'exile');
+      s.effects.push({ k: 'mayPlay', iid: n, who: owner, castOnly: true, afterTurn: s.turn, until: 'exiled' });
+      log(s, 'warpExile', { who: owner, c: I(s, n).id });
+    },
+    // Ward (CR 702.21a): "counter that spell or ability unless that player pays [cost]".
+    wardCounter(x, op) {
+      const s = x.s, L = s.stack.find(l => l.lid === x.ev.lid); if (!L) return;
+      const who = L.ctrl, need = op.mana ? MF.parseMana(op.mana) : null;
+      const can = op.life != null ? P(s, who).life >= op.life : MF.canPayMana(s, who, need);
+      if (can && MF.ask(x.x, { who: who, kind: 'wardPay', src: x.src, life: op.life, mana: op.mana, target: L.kind === 'spell' ? L.iid : L.src, opts: [{ id: 'pay' }, { id: 'decline' }] }) === 'pay') {
+        if (op.life != null) MF.loseLife(s, who, op.life, 'pay', I(s, x.src).id); else MF.payMana(x.x, who, need, x.src, false);
+        log(s, 'wardPaid', { who: who, c: I(s, x.src).id }); return;
+      }
+      if (L.kind === 'spell') MF.counterSpell(s, L, I(s, x.src).id);
+      else { s.stack.splice(s.stack.indexOf(L), 1); log(s, 'countered', { who: L.ctrl, c: L.srcId, by: I(s, x.src).id, ab: true }); }   // an ability countered: removed from the stack (CR 701.6a)
     },
     // "Return target creature ... to its owner's hand" (CR 400.7: a new object there).
     bounce(x, op) {
@@ -589,6 +650,7 @@
       const s = x.s, g = x.ev && x.ev.to != null ? I(s, x.ev.to) : null;
       if (!g || g.zone !== 'grave') { log(s, 'returnGone', { c: x.L.srcId }); return; }           // CR 400.7: it is a new object once it has left the graveyard
       const n = MF.move(s, x.ev.to, 'bf', { ctrl: g.owner, tapped: !!op.tapped, ctr: op.ctr || null, x: x.x });
+      if (op.asEnchantment) s.effects.push({ k: 'types', iid: n, types: ['Enchantment'], subtypes: [], ts: s.ts++ });   // "It's an enchantment. (It's not a creature.)" — creature types go too (its ruling)
       log(s, 'putOnto', { who: g.owner, c: I(s, n).id, tapped: !!op.tapped, from: 'graveyard', ctr: op.ctr || null });
     },
     // Alania: "copy that spell. You may choose new targets for the copy." (CR 707.10, 707.10c)
@@ -699,7 +761,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

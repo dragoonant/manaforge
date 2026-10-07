@@ -1246,7 +1246,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (august-24-2026)",
   "rank": null,
   "players": 8,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -1357,21 +1357,11 @@ window.MF.decks = {
     "name": "Cathar Commando"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "haliya-guided-by-light: trigger event: ~ or another creature or artifact you control enters, you gain 1 life.",
-   "essence-channeler: condition: you've lost life this turn",
-   "amalia-benavides-aguirre: ability: Ward—Pay 3 life.",
-   "lunar-convocation: intervening if: if you gained life this turn, each opponent loses 1 life.",
-   "case-of-the-uneaten-feast: layout case is not compiled",
-   "moseo-veins-new-dean: token ability: Whenever this token attacks, you gain 1 life.",
-   "deep-cavern-bat: effect: Look at target opponent's hand",
-   "aunt-may: condition: it's a Spider",
-   "enduring-innocence: trigger event: one or more other creatures you control with power 2 or less enter, draw a card. This ability triggers only once each turn.",
-   "starscape-cleric: trigger event: you gain life, each opponent loses 1 life."
-  ],
+  "compiles": true,
   "tokens": [
-   "token-warrior-1-1-r"
+   "token-warrior-1-1-r",
+   "token-bat-1-1-b-flying",
+   "token-pest-1-1-bg-whenever-this-token-attacks-you-gain-life"
   ]
  },
  "dimir-bitter-triumph-hob": {
@@ -3723,7 +3713,7 @@ window.MF.decks = {
   "compiles": false,
   "refused": [
    "floodpits-drowner: filter qualifier: and put a stun counter on it",
-   "vren-the-relentless: ability: Ward {2}",
+   "vren-the-relentless: ability: If a creature an opponent controls would die, exile it instead.",
    "gixs-command: modal \"choose two\" is not compiled",
    "kaito-bane-of-nightmares: ability: Ninjutsu {1}{U}{B}",
    "sheoldred-the-apocalypse: trigger event: you draw a card, you gain 2 life.",
@@ -3731,8 +3721,7 @@ window.MF.decks = {
    "azure-beastbinder: ability: ~ can't be blocked by creatures with power 2 or greater.",
    "restless-reef: effect: Until end of turn, ~ becomes a 4/4 blue and black Shark creature with deathtouch",
    "enduring-curiosity: trigger event: a creature you control deals combat damage to a player, draw a card.",
-   "faerie-mastermind: trigger event: an opponent draws their second card each turn, you draw a card.",
-   "deep-cavern-bat: effect: Look at target opponent's hand"
+   "faerie-mastermind: trigger event: an opponent draws their second card each turn, you draw a card."
   ],
   "tokens": [
    "token-vampire-1-1-w-lifelink"

@@ -22,6 +22,28 @@
     "negativeExtra": ""
   },
   {
+    "key": "amalia-benavides-aguirre",
+    "styleId": "G",
+    "land": false,
+    "prompt": "master grade super deformed brawler, three heads tall, heavy armour, snarling, a pale vampire explorer woman in a dark coat and wide hat, a blood-red blade in hand, stepping out of a jungle cave, in an overgrown cavern lit by red light. gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action.",
+    "subject": "a pale vampire explorer woman in a dark coat and wide hat, a blood-red blade in hand, stepping out of a jungle cave",
+    "setting": "in an overgrown cavern lit by red light",
+    "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
+    "short": "master grade super deformed brawler, three heads tall, heavy armour, snarling, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "aunt-may",
+    "styleId": "J",
+    "land": false,
+    "prompt": "master grade super deformed soldier, stocky three heads tall, layered armour, a fierce grey-haired old woman in a battered coat swinging a cast-iron skillet at a masked intruder, mid-strike, in a dim city apartment at night. modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment.",
+    "subject": "a fierce grey-haired old woman in a battered coat swinging a cast-iron skillet at a masked intruder, mid-strike",
+    "setting": "in a dim city apartment at night",
+    "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
+    "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "belladonna-took",
     "styleId": "D",
     "land": false,
@@ -151,6 +173,17 @@
     "setting": "inside a dim canvas field tent lit by a single lantern",
     "style": "oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood",
     "short": "master grade super deformed warrior, three heads tall, heroic armoured figure, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "case-of-the-uneaten-feast",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a grim investigator in a long coat examining a lavish untouched banquet table surrounded by dead guests, in a candlelit manor dining hall. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a grim investigator in a long coat examining a lavish untouched banquet table surrounded by dead guests",
+    "setting": "in a candlelit manor dining hall",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
   },
   {
@@ -286,6 +319,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "deep-cavern-bat",
+    "styleId": "D",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a huge leathery bat diving with glowing eyes, clutching a stolen glowing spell in its claws, in a deep cavern of stalactites. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a huge leathery bat diving with glowing eyes, clutching a stolen glowing spell in its claws",
+    "setting": "in a deep cavern of stalactites",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "drake-hatcher",
     "styleId": "K",
     "land": false,
@@ -338,6 +382,28 @@
     "setting": "through flames and flying embers",
     "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
     "short": "master grade super deformed infernal warrior, three heads tall, horned black armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "enduring-innocence",
+    "styleId": "F",
+    "land": false,
+    "prompt": "master grade super deformed fighter, stocky three heads tall, battle-scarred, a fierce armoured ram spirit of blazing white light, horns lowered, charging into a dark knight, in a misty meadow at dawn. loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy.",
+    "subject": "a fierce armoured ram spirit of blazing white light, horns lowered, charging into a dark knight",
+    "setting": "in a misty meadow at dawn",
+    "style": "loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy",
+    "short": "master grade super deformed fighter, stocky three heads tall, battle-scarred, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "essence-channeler",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a bat-winged cleric drawing glowing life essence out of a wounded knight into its own hands, in a dim crypt. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a bat-winged cleric drawing glowing life essence out of a wounded knight into its own hands",
+    "setting": "in a dim crypt",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
   },
   {
@@ -440,6 +506,28 @@
     "negativeExtra": ""
   },
   {
+    "key": "godless-shrine",
+    "styleId": "N",
+    "land": true,
+    "prompt": "landscape painting, scenery, a ruined white marble shrine overgrown with black thorns, a dark pool before its altar, at twilight. infernal fantasy landscape painting, rivers of fire, black smoke and embers, demonic red and gold sky.",
+    "subject": "a ruined white marble shrine overgrown with black thorns, a dark pool before its altar",
+    "setting": "at twilight",
+    "style": "infernal fantasy landscape painting, rivers of fire, black smoke and embers, demonic red and gold sky",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "haliya-guided-by-light",
+    "styleId": "J",
+    "land": false,
+    "prompt": "master grade super deformed soldier, stocky three heads tall, layered armour, a determined soldier woman in white plate armour, a beam of light falling on her raised spear, on the deck of a starship at war. modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment.",
+    "subject": "a determined soldier woman in white plate armour, a beam of light falling on her raised spear",
+    "setting": "on the deck of a starship at war",
+    "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
+    "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "heartfire-hero",
     "styleId": "I",
     "land": false,
@@ -448,6 +536,17 @@
     "setting": "on a scorched hilltop at night",
     "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
     "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "hinterland-sanctifier",
+    "styleId": "F",
+    "land": false,
+    "prompt": "master grade super deformed fighter, stocky three heads tall, battle-scarred, a rabbit cleric in white robes blessing a battered soldier with glowing hands, in a ruined field chapel. loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy.",
+    "subject": "a rabbit cleric in white robes blessing a battered soldier with glowing hands",
+    "setting": "in a ruined field chapel",
+    "style": "loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy",
+    "short": "master grade super deformed fighter, stocky three heads tall, battle-scarred, ",
     "negativeExtra": ""
   },
   {
@@ -539,6 +638,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "lunar-convocation",
+    "styleId": "L",
+    "land": false,
+    "prompt": "master grade super deformed knight, three heads tall, frost-rimed steel armour, a circle of hooded vampire priests raising a chalice of blood beneath a huge pale moon, on a ruined hilltop at night. cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war.",
+    "subject": "a circle of hooded vampire priests raising a chalice of blood beneath a huge pale moon",
+    "setting": "on a ruined hilltop at night",
+    "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
+    "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "magebane-lizard",
     "styleId": "G",
     "land": false,
@@ -591,6 +701,17 @@
     "setting": "in a smoky war camp lit by fire",
     "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
     "short": "master grade super deformed brawler, three heads tall, heavy armour, snarling, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "moseo-veins-new-dean",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a skeletal bird warlock in scholar robes raising dead creatures with a crooked staff, in a gothic academy graveyard at night. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a skeletal bird warlock in scholar robes raising dead creatures with a crooked staff",
+    "setting": "in a gothic academy graveyard at night",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
     "negativeExtra": ""
   },
   {
@@ -913,6 +1034,28 @@
     "negativeExtra": ""
   },
   {
+    "key": "starscape-cleric",
+    "styleId": "K",
+    "land": false,
+    "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a bat-winged cleric casting a curse of starlight that drains a soldier’s life, under a star-filled night sky. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a bat-winged cleric casting a curse of starlight that drains a soldier’s life",
+    "setting": "under a star-filled night sky",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "starting-town",
+    "styleId": "L",
+    "land": true,
+    "prompt": "landscape painting, scenery, a small walled frontier town of stone houses on a river bend, smoke rising from chimneys, at dawn. cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation.",
+    "subject": "a small walled frontier town of stone houses on a river bend, smoke rising from chimneys",
+    "setting": "at dawn",
+    "style": "cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "stock-up",
     "styleId": "L",
     "land": false,
@@ -1045,6 +1188,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "token-bat-1-1-b-flying",
+    "styleId": "G",
+    "land": false,
+    "prompt": "master grade super deformed brawler, three heads tall, heavy armour, snarling, a black bat with red eyes swooping with fangs bared, against a dark moonlit sky. gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action.",
+    "subject": "a black bat with red eyes swooping with fangs bared",
+    "setting": "against a dark moonlit sky",
+    "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
+    "short": "master grade super deformed brawler, three heads tall, heavy armour, snarling, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "token-demon-6-6-b-flying",
     "styleId": "O",
     "land": false,
@@ -1119,6 +1273,17 @@
     "setting": "on a rain-soaked riverbank",
     "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
     "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "token-pest-1-1-bg-whenever-this-token-attacks-you-gain-life",
+    "styleId": "M",
+    "land": false,
+    "prompt": "super deformed hooded raider, stocky three heads tall, crude weapons, a snarling green and black beetle pest with jagged mandibles, in a rotting garden. matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace.",
+    "subject": "a snarling green and black beetle pest with jagged mandibles",
+    "setting": "in a rotting garden",
+    "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
+    "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
     "negativeExtra": ""
   },
   {

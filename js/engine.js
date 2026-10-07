@@ -122,7 +122,8 @@
       if (o.castFromHand) nc.castFromHand = true;
       if (o.att != null) nc.att = o.att;
       if (o.ctr) nc.ctr = Object.assign({}, o.ctr);                                           // "enters with N counters" (CR 122.6)
-      if (o.door != null) nc.unlocked = [o.door === 0, o.door === 1];                         // CR 709.5d: the half that was cast enters unlocked
+      if (o.door != null) nc.unlocked = [o.door === 0, o.door === 1];
+      if (o.warp) (s.delayed = s.delayed || []).push({ src: n, ctrl: nc.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', ops: [{ o: 'warpExile', iid: n }] } });   // CR 702.185a                         // CR 709.5d: the half that was cast enters unlocked
       enterReplacements(s, n, o);
     }
     const to = zoneArr(s, nc);
@@ -131,6 +132,11 @@
       for (const k of s.bf) { const a = I(s, k); if (a.att === iid) a.att = -1; }            // what was attached to it is now attached to nothing (SBA 704.5m/n)
       if (s.combat) removeFromCombat(s, iid);                                                // CR 506.4
       emit(s, { t: 'leaves', iid: iid, to: zone, lki: lki });
+      for (const e of s.effects.filter(e => e.k === 'exileUntil' && e.src === iid)) {           // CR 610.3: the exiled card returns, to its owner's hand
+        s.effects.splice(s.effects.indexOf(e), 1);
+        const ec = I(s, e.iid);
+        if (ec && ec.zone === 'exile') { log(s, 'returnFromExile', { who: ec.owner, c: ec.id, to: 'hand' }); move(s, e.iid, 'hand'); }
+      }
       if (zone === 'grave' && lki.types.includes('Creature')) { emit(s, { t: 'dies', iid: iid, lki: lki, to: n }); P(s, lki.ctrl).h.died++; s.diedThisTurn = (s.diedThisTurn || 0) + 1; }
     }
     if (zone === 'bf') {
@@ -241,6 +247,7 @@
     if (c.asDoor != null && c.zone === 'stack') return faceChars(s, iid, false, c.asDoor);
     let d = def(s, iid);
     let name = d.name, types = d.types.slice(), subtypes = d.subtypes.slice(), supers = d.supers.slice(), colors = d.colors.slice(), p = d.power, t = d.toughness, ab = d.ab, kw = Object.assign({}, d.kw), mana = d.mana;
+    if (d.layout === 'case' && c.zone === 'bf' && !c.solved) ab = d.ab.map(a => a.solved ? LOCKED : a);   // CR 719.3c
     if (d.layout === 'class' && c.zone === 'bf') { const lv = c.level || 1; ab = d.ab.map(a => (a.level || 1) <= lv ? a : LOCKED); }   // CR 716.2a, 716.2d
     if (d.doors && c.zone === 'bf') {                                                         // CR 709.5: a Room has the name, mana cost and rules text of its unlocked doors only
       const u = c.unlocked || [false, false], open = d.doors.filter((f, i) => u[i]);
@@ -340,7 +347,7 @@
       if (sc.kw.deathtouch) c.dt = true;                                                     // CR 702.2b
       log(s, 'damageCreature', { who: c.ctrl, n: n, src: sc.name, srcId: sc.id, c: c.id, combat: !!o.combat });
     }
-    if (sc.kw.lifelink) gainLife(s, sc.ctrl, n, sc);                                         // CR 702.15b
+    if (sc.kw.lifelink) { if (o.gainBatch) { const g = o.gainBatch[sc.iid] || (o.gainBatch[sc.iid] = { sc: sc, n: 0 }); g.n += n; } else gainLife(s, sc.ctrl, n, sc); }   // CR 702.15b
     emit(s, { t: 'dealsDamage', src: sc.iid, srcCtrl: sc.ctrl, to: o.to, n: n, combat: !!o.combat });
     return n;
   };
@@ -372,6 +379,7 @@
         if (!!a.lookBack !== !!lki) continue;                                                 // CR 603.10a: leaves-the-battlefield triggers look back in time
         if (!MF.trigMatch(s, iid, src, a, ev)) continue;
         if (a.cond && !MF.cond(ctxFor(s, { kind: 'trig', ctrl: src.ctrl, src: iid, ev: ev, lki: lki || null, t: [] }), a.cond)) continue;   // CR 603.4: an intervening "if" is checked as the event happens
+        if (a.oncePerTurn) { const oc = s.cards[iid]; if (oc.trigTurn && oc.trigTurn[i] === s.turn) continue; oc.trigTurn = oc.trigTurn || {}; oc.trigTurn[i] = s.turn; }   // "This ability triggers only once each turn"
         s.trigs.push({ src: iid, ab: i, ctrl: src.ctrl, ev: ev, lki: lki || null });
       }
       if (ev.t === 'cast' && !lki && src.kw && src.kw.prowess && ev.ctrl === src.ctrl && !ev.types.includes('Creature') && src.types.includes('Creature')) {
@@ -550,7 +558,7 @@
   MF.costMods = [];          // (s, who, iid, d, cost) => void: js/ops.js registers "costs {1} less"
   const spellCost = MF.spellCost = function (s, who, iid, o) {
     const ch = faceChars(s, iid, o && o.alt, o && o.door);
-    const hz = o && (o.via === 'harmonize' || o.via === 'sneak') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
+    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
     const c = MF.parseMana(hz ? hz.cost : ch.mana);                                           // CR 702.180a: an alternative cost
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
     if (o && o.extra) { const e = o.extra; for (const k in e) c[k] += e[k]; }
@@ -570,7 +578,7 @@
   const targetable = MF.targetable = function (s, ref, slot, who, srcIid) {
     if (ref.p != null) return MF.matchPlayer(s, ref.p, slot.f, who);
     const c = s.cards[ref.c];
-    if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card && (!slot.f.own || c.owner === who) && (!slot.f.types || slot.f.types.some(ty => def(s, ref.c).types.includes(ty)));   // a card in a graveyard: its own characteristics
+    if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card && (!slot.f.own || c.owner === who) && (!slot.f.types || slot.f.types.some(ty => def(s, ref.c).types.includes(ty))) && (!slot.f.mvLEv || chars(s, ref.c).mv <= MF.num({ s: s, ctrl: who, src: srcIid }, slot.f.mvLEv));   // a card in a graveyard: its own characteristics
     if (slot.f && slot.f.spell) {                                                             // a spell on the stack (CR 115.1); not itself (115.5)
       if (!c || c.zone !== 'stack' || ref.c === srcIid || !s.stack.some(L => L.kind === 'spell' && L.iid === ref.c)) return false;
       const ch = chars(s, ref.c);
@@ -806,8 +814,9 @@
     if (first) { cb.fsDone = true; for (const a of cb.attackers.concat(Object.keys(cb.blocks).map(Number))) if (strikes(a)) cb.dealtFirst.push(a); }
     // CR 510.2: dealt simultaneously. Each source's characteristics are read now, before any of it is dealt.
     const srcChars = {}; for (const as of assigns) srcChars[as.src] = Object.assign({ id: I(s, as.src).id }, chars(s, as.src));
-    const batch = {};
-    for (const as of assigns) dealDamage(s, { srcChars: srcChars[as.src], to: as.to, n: as.n, combat: true, batch: batch });
+    const batch = {}, gainBatch = {};
+    for (const as of assigns) dealDamage(s, { srcChars: srcChars[as.src], to: as.to, n: as.n, combat: true, batch: batch, gainBatch: gainBatch });
+    for (const k in gainBatch) gainLife(s, gainBatch[k].sc.ctrl, gainBatch[k].n, gainBatch[k].sc);   // one life-gain event per source
     for (const k in batch) emit(s, { t: 'dealtDamage', iid: +k, n: batch[k], combat: true });   // Screaming Nemesis: one trigger for the total (its ruling, CR 603.2c)
     setPriority(s, s.ap);                                                                     // CR 510.3
   });
@@ -929,7 +938,7 @@
         }
         s.stack.push(L);
         log(s, 'trigger', { who: t.ctrl, c: L.srcId, ab: t.ab, inl: t.inl || null, tg: L.t.map(sl => sl.map(r => refLabel(s, r))) });
-        emitTargeted(s, L.t, t.ctrl);
+        emitTargeted(s, L.t, t.ctrl, L.lid);
       }
     }
   });
@@ -955,7 +964,7 @@
   function playableZones(s, who) {
     const out = P(s, who).hand.slice();
     for (const iid of P(s, who).grave) if (def(s, iid).ab.some(a => a.k === 'harmonize')) out.push(iid);   // CR 702.180a
-    for (const e of s.effects) if (e.k === 'mayPlay' && e.who === who && I(s, e.iid) && I(s, e.iid).zone === 'exile') out.push(e.iid);
+    for (const e of s.effects) if (e.k === 'mayPlay' && e.who === who && I(s, e.iid) && (I(s, e.iid).zone === 'exile' || I(s, e.iid).zone === 'grave') && !(e.afterTurn != null && s.turn <= e.afterTurn) && !out.includes(e.iid)) out.push(e.iid);
     return out;
   }
   const canPlayLand = MF.canPlayLand = function (s, who, iid) {                              // CR 305.1-2, 116.2a
@@ -972,7 +981,8 @@
   const sneakWindow = (s, who) => s.ap === who && s.step === 'blockers' && s.priority === who && unblockedAttackers(s, who).length > 0;
   const canCast = MF.canCast = function (s, who, iid, alt, door, via) {                      // CR 601.2e
     const d0 = def(s, iid);
-    if (I(s, iid).zone === 'grave' && via !== 'harmonize') return false;
+    if (I(s, iid).zone === 'grave' && via !== 'harmonize' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
+    if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;   // CR 702.185a: from your hand
     if (via === 'harmonize' && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === 'harmonize'))) return false;
     if (via === 'sneak' && !(d0.ab.some(a => a.k === 'sneak') && sneakWindow(s, who))) return false;
     if (s.bf.some(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); })) return false;   // Voice of Victory
@@ -1030,7 +1040,8 @@
       const d = def(s, iid);
       if (canPlayLand(s, who, iid)) out.push({ type: 'land', iid: iid });
       else if (d.doors) { for (let k = 0; k < d.doors.length; k++) if (canCast(s, who, iid, false, k)) out.push({ type: 'cast', iid: iid, door: k }); }   // CR 709.3
-      else if (I(s, iid).zone === 'grave') { if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); }
+      else if (I(s, iid).zone === 'grave') { if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
+      else if (d.ab.some(a => a.k === 'warp') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'warp')) out.push({ type: 'cast', iid: iid, via: 'warp' }); }
       else if (d.ab.some(a => a.k === 'sneak') && canCast(s, who, iid, false, null, 'sneak')) { out.push({ type: 'cast', iid: iid, via: 'sneak' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }
       else if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid });
       // CR 715.3, 720.3: an Adventure or Omen card may be cast as that spell — not again from exile after its Adventure (715.3d)
@@ -1179,6 +1190,7 @@
     if (door != null) L.door = door;
     if (via === 'harmonize') L.harmonize = true;
     if (via === 'sneak') L.sneak = true;
+    if (via === 'warp') L.warp = true;
     s.stack.push(L);
     const c = I(s, iid);
     if (alt) c.asAlt = true;
@@ -1250,22 +1262,22 @@
     if (ch.subtypes.includes('Otter')) p.h.castOtter++;
     (p.h.castList = p.h.castList || []).push({ lid: L.lid, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice() });   // turn history: "the first instant spell ... you've cast this turn"
     L.nth = { cast: p.h.cast, instant: ch.types.includes('Instant') ? p.h.castInstant : 0, sorcery: ch.types.includes('Sorcery') ? p.h.castSorcery : 0, otter: ch.subtypes.includes('Otter') ? p.h.castOtter : 0 };
-    log(s, 'cast', { who: who, c: card.id, face: alt || door != null ? d.name : null, alt: alt ? d.kind : door != null ? 'door' : null, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring, kicked: !!L.kicked, gift: L.gift != null, bargained: !!L.bargained, harmonize: !!L.harmonize, sneak: !!L.sneak });
+    log(s, 'cast', { who: who, c: card.id, face: alt || door != null ? d.name : null, alt: alt ? d.kind : door != null ? 'door' : null, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring, kicked: !!L.kicked, gift: L.gift != null, bargained: !!L.bargained, harmonize: !!L.harmonize, sneak: !!L.sneak, warp: !!L.warp });
     // The spell as cast travels with the event: a copy made after it has left the stack is made from it as it last existed (Alania's rulings, CR 707.10).
     const spell = { id: card.id, t: JSON.parse(JSON.stringify(L.t)), x: L.x, mode: L.mode, alt: L.alt, door: L.door, kicked: !!L.kicked, offspring: !!L.offspring, gift: L.gift, bargained: !!L.bargained };
     emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid, spell: spell, nth: p.h.cast });   // CR 601.2i
-    emitTargeted(s, L.t, who);
+    emitTargeted(s, L.t, who, L.lid);
     setPriority(s, who);                                                                      // CR 117.3c
   });
   // "Becomes the target of a spell or ability you control for the first time each turn" (valiant):
   // each object records, per controller, the turn it was last targeted (CR 603.2e: "becomes").
-  function emitTargeted(s, t, by) {
+  function emitTargeted(s, t, by, lid) {
     const seen = new Set();
     for (const sl of t || []) for (const r of sl) {
       if (!r || r.c == null || seen.has(r.c)) continue; seen.add(r.c);
       const c = I(s, r.c), key = 'tgtBy' + by, first = c[key] !== s.turn;
       c[key] = s.turn;
-      emit(s, { t: 'targeted', iid: r.c, by: by, firstThisTurn: first });
+      emit(s, { t: 'targeted', iid: r.c, by: by, firstThisTurn: first, lid: lid });
     }
   }
   MF.emitTargeted = emitTargeted;
@@ -1287,7 +1299,7 @@
     if (a.cost.sacSelf) MF.sacrifice(s, iid);
     if (a.cost.discardSelf) MF.discard(s, iid);                                               // "[Cost], Discard this card" — part of the cost (CR 601.2h)
     s.stack.push(L);
-    emitTargeted(s, L.t, who);
+    emitTargeted(s, L.t, who, L.lid);
     setPriority(s, who);
   });
   EXEC_DEF('unlock', function (x) {                                                          // CR 709.5e, 116.2m: a special action — no stack
@@ -1360,6 +1372,7 @@
       } else {                                                                                // CR 608.3: a permanent spell
         const o = { ctrl: L.ctrl, x: x, spent: L.spent, offspringPaid: !!L.offspring, castFromHand: L.from === 'hand' };
         if (L.door != null) o.door = L.door;                                                   // CR 709.5d
+        if (L.warp) o.warp = true;
         if (aura) o.att = lt.t[0][0].c;                                                        // CR 608.3c
         for (const a of d.ab) if (a.k === 'enterAsCopy') { const cp = MF.askEnterAsCopy(X, a, L); if (cp) o.copy = cp; }   // CR 614.1c, 707: a replacement with a choice, asked as it would enter
         move(s, L.iid, 'bf', o);
