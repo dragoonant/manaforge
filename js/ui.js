@@ -17,7 +17,8 @@
   // ---------------------------------------------------------------------------------------------
   function face(v, id, o) {
     o = o || {};
-    const d = MF.cards[id];
+    const up = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone === 'bf' && v.cards[o.iid].transformed && MF.cards[id].back;   // CR 712.8e: the back face's characteristics
+    const d = up ? Object.assign({}, MF.cards[id], MF.cards[id].back, { mana: '' }) : MF.cards[id];
     let p = d.power, t = d.toughness, badges = '', cls = ['card', 'sz-' + (o.size || 'md')];
     if (o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone === 'bf') {
       const c = v.cards[o.iid], ch = MF.chars(v, o.iid);
@@ -25,7 +26,8 @@
       if (c.ctr['+1/+1']) badges += `<div class="badge b-ctr">+${c.ctr['+1/+1']}</div>`;
       if (c.ctr['-1/-1']) badges += `<div class="badge b-ctrm">−${c.ctr['-1/-1']}</div>`;
       if (c.ctr.loyalty != null) badges += `<div class="badge b-loy" title="Loyalty (CR 306.5c)">${c.ctr.loyalty}</div>`;
-      if (c.transformed) badges += `<div class="badge b-copy" title="Transformed: its back face is up (CR 712)">${esc(MF.cards[c.id].back.name)}</div>`;
+      if (c.transformed) badges += `<div class="badge b-copy" title="Transformed: its back face is up (CR 712); front: ${esc(MF.cards[c.id].name)}">transformed</div>`;
+      for (const k of Object.keys(c.ctr)) if (c.ctr[k] > 0 && !['+1/+1', '-1/-1', 'loyalty', 'stun'].includes(k)) badges += `<div class="badge b-ctr" title="${esc(k)} counters">${c.ctr[k]} ${esc(k)}</div>`;
       if (c.dmg) badges += `<div class="badge b-dmg">${c.dmg} dmg</div>`;
       if (ch.types.includes('Creature') && c.ctrl === v.ap && !ch.kw.haste && !(c.ctlTurn < v.turn)) badges += `<div class="badge b-sick" title="Summoning sick: it came under your control this turn (CR 302.6)">zzz</div>`;
       if (ch.noUntap) badges += `<div class="badge b-lock" title="Doesn’t untap during its controller’s untap step">locked</div>`;
@@ -41,7 +43,7 @@
       if (c.ctr.stun) badges += `<div class="badge b-stun" title="Stun counters: when it would untap, a counter is removed instead (CR 122.1d)">${c.ctr.stun} stun</div>`;
     }
     const shownId = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].copy ? v.cards[o.iid].copy.id : id;
-    const sd = MF.cards[shownId];
+    const sd = shownId === id ? d : MF.cards[shownId];
     if (o.acts && o.acts.length) cls.push('legal');
     if (o.cls) cls.push(o.cls);
     const pt = p != null ? `<div class="pt ${p > d.power || t > d.toughness ? 'up' : ''} ${(typeof d.power === 'number' && p < d.power) || (typeof d.toughness === 'number' && t < d.toughness) ? 'down' : ''}">${p}/${t}</div>` : '';

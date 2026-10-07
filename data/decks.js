@@ -1051,7 +1051,6 @@ window.MF.decks = {
    "oblivious-bookworm: effect: You may draw a card",
    "overlord-of-the-balemurk: ability: Impending 5—{1}{B}",
    "town-greeter: effect: You may put a land card from among them into your hand",
-   "imodanes-recruiter-train-troops: object: creatures you control get +1/+0 and",
    "jadzi-steward-of-fate-oracles-gift: layout prepare is not compiled",
    "kiora-the-rising-tide: effect: Draw two cards, then discard two cards",
    "terror-of-the-peaks: ability: Spells your opponents cast that target ~ cost an additional 3 life to cast.",
@@ -1213,7 +1212,6 @@ window.MF.decks = {
    "thorin-mountain-king: effect: Attach any number of target Equipment you control to target creature you control",
    "leyline-axe: ability: If this card is in your opening hand, you may begin the game with it on the battlefield.",
    "dwarven-mauler: ability: Equip abilities you activate that target ~ cost {2} less to activate.",
-   "dwalin-weaponmaster: trigger event: ~ enters or attacks, put a hone counter on each Equipment you control.",
    "dragonfire-blade: keyword: hexproof from monocolored",
    "basilisk-collar: ability: Equipped creature has deathtouch and lifelink.",
    "giott-king-of-the-dwarves: trigger event: ~ or another Dwarf you control enters and whenever an Equipment you control enters, you may discard a card. If you do, draw a card.",
@@ -1671,7 +1669,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (september-14-2026)",
   "rank": null,
   "players": 7,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -1786,20 +1784,10 @@ window.MF.decks = {
     "name": "Sapling Nursery"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "ba-sing-se: effect: Earthbend 2",
-   "demolition-field: filter noun: nonbasic land an opponent controls",
-   "icetill-explorer: ability: You may play an additional land on each of your turns.",
-   "esper-origins-summon-esper-maduin: condition: this spell was cast from a graveyard",
-   "earthbender-ascension: effect: Earthbend 2",
-   "meltstriders-resolve: ability: Enchant creature you control",
-   "mightform-harmonizer: effect: Double the power of target creature you control until end of turn",
-   "sapling-nursery: ability: Affinity for Forests",
-   "surrak-elusive-hunter: ability: This spell can't be countered.",
-   "lumbering-worldwagon: ability: This Vehicle's power is equal to the number of lands you control."
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-treefolk-3-4-g-reach"
+  ]
  },
  "azorius-perilous-snare-hob": {
   "id": "azorius-perilous-snare-hob",
@@ -2278,16 +2266,13 @@ window.MF.decks = {
   "compiles": false,
   "refused": [
    "multiversal-passage: ability: As ~ enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters tapped.",
-   "ba-sing-se: effect: Earthbend 2",
    "brightglass-gearhulk: effect: You may search your library for up to two artifact, creature, and/or enchantment cards with mana value 1 or less, reveal them, put them into your hand, then shuffle",
    "pawpatch-recruit: trigger event: a creature you control becomes the target of a spell or ability an opponent controls, put a +1/+1 counter on target creature you control other than that creature.",
    "leatherhead-swamp-stalker: ability: ~ enters with a hexproof counter on her.",
    "spider-manifestation: trigger event: you cast a spell with mana value 4 or greater, untap ~.",
    "ouroboroid: filter qualifier: , where X is ~'s power",
-   "surrak-elusive-hunter: ability: This spell can't be countered.",
    "seam-rip: effect: Exile target nonland permanent an opponent controls with mana value 2 or less until ~ leaves the battlefield",
    "jennifer-walters-the-sensational-she-hulk: layout modal_dfc is not compiled",
-   "meltstriders-resolve: ability: Enchant creature you control",
    "outcaster-trailblazer: effect: Add one mana of any color"
   ],
   "tokens": []
@@ -3182,7 +3167,6 @@ window.MF.decks = {
    "cathar-commando: filter qualifier: or enchantment",
    "three-steps-ahead: effect: Spree",
    "dreams-of-laguna: effect: Surveil 1, then draw a card",
-   "demolition-field: filter noun: nonbasic land an opponent controls",
    "kutzils-flanker: effect: Choose one —",
    "get-lost: filter qualifier: , enchantment, or planeswalker",
    "beza-the-bounding-spring: effect: Create a Treasure token if an opponent controls more lands than you",

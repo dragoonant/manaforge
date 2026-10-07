@@ -7,7 +7,7 @@
   const KWNAME = { flying: 'flying', reach: 'reach', firstStrike: 'first strike', doubleStrike: 'double strike', deathtouch: 'deathtouch', lifelink: 'lifelink', trample: 'trample', vigilance: 'vigilance', haste: 'haste', menace: 'menace', defender: 'defender', flash: 'flash', hexproof: 'hexproof', indestructible: 'indestructible', prowess: 'prowess', shroud: 'shroud' };
   MF.KWNAME = KWNAME;
   const VN = { halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control' };
-  const N = n => typeof n === 'number' ? String(n) : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
+  const N = n => typeof n === 'number' ? String(n) : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'lands' ? 'the number of lands you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
   function filt(f) {
     if (!f) return 'anything';
     if (f.any) return 'any target';
@@ -19,6 +19,7 @@
     const w = [];
     if (f.other) w.push('other');
     if (f.notTypes) w.push('non' + f.notTypes.join('/').toLowerCase());
+    if (f.supers) w.push(f.supers.join(' ').toLowerCase()); if (f.notSupers) w.push('non' + f.notSupers.join('').toLowerCase());
     w.push(f.subtypes ? f.subtypes.join('/') + (f.types && !f.types.includes('Creature') ? ' ' + f.types.join('/').toLowerCase() : '') : f.types ? f.types.join('/').toLowerCase() : f.tok ? 'token' : 'permanent');   // "Lizard, Mouse, Otter, or Raccoon you control"
     if (f.ctrl === 'you') w.push('you control'); if (f.ctrl === 'opp') w.push('an opponent controls');
     if (f.powLE != null) w.push('with power ' + f.powLE + ' or less');
@@ -82,6 +83,8 @@
     selfPowerIs: c => 'its power is exactly ' + c.n,
     notSolved: () => 'this Case is not solved',
     descended: () => 'you descended this turn',
+    castFromGrave: () => 'this spell was cast from a graveyard',
+    counterAtLeast: c => 'it has ' + (['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][c.n] || c.n) + ' or more ' + c.kind + ' counters on it',
     oppLifeLE: c => 'an opponent has ' + c.n + ' or less life',
     addCostPaid: () => 'this spell’s additional cost was paid',
     hasCounter: c => 'it has one or more ' + c.kind + ' counters',
@@ -94,7 +97,7 @@
     counter: op => 'put ' + (op.n && op.n.v === 'evAmount' ? 'that many' : N(op.n)) + ' ' + op.kind + ' counter' + (op.n === 1 ? '' : 's') + ' on ' + ref(op.on),
     doubleCounters: op => 'double the ' + op.kind + ' counters on ' + ref(op.on),
     tap: op => 'tap ' + ref(op.on),
-    pump: op => { const pt = (op.p != null || op.t != null) && (op.p !== 0 || op.t !== 0); return ref(op.on) + (pt ? ' gets ' + sgn(op.p) + '/' + sgn(op.t) : '') + (op.grant ? (pt ? ' and' : '') + ' gains ' + op.grant.map(k => KWNAME[k]).join(', ') : '') + ' until end of turn'; },
+    pump: op => { if (op.p && op.p.v === 'power') return 'double the power of ' + ref(op.on) + ' until end of turn'; const pt = (op.p != null || op.t != null) && (op.p !== 0 || op.t !== 0); return ref(op.on) + (pt ? ' gets ' + sgn(op.p) + '/' + sgn(op.t) : '') + (op.grant ? (pt ? ' and' : '') + ' gains ' + op.grant.map(k => KWNAME[k]).join(', ') : '') + ' until end of turn'; },
     unblockable: op => ref(op.on) + ' can’t be blocked this turn',
     scry: op => 'scry ' + N(op.n),
     token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); if (!d.types.includes('Creature')) return 'create ' + N(op.n) + ' ' + d.name + ' token' + (op.n === 1 ? '' : 's') + (d.text ? ' (“' + d.text + '”)' : ''); return 'create ' + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : '') + (d.text && !kws.length ? ' with “' + d.text + '”' : '') + (op.attacking ? ' that are tapped and attacking' : '') + (op.attackingIf ? '; if ' + cond(op.attackingIf) + ', they enter tapped and attacking' : '') + (op.sacEnd ? '; sacrifice them at the beginning of the next end step' : ''); },
@@ -122,6 +125,12 @@
     discardRandom: () => 'discard a card at random',
     selfFromGrave: () => 'return this card from your graveyard to the battlefield',
     removeCounter: op => 'remove ' + op.n + ' ' + op.kind + ' counter from this',
+    earthbend: op => 'earthbend ' + op.n + ': ' + ref(op.on) + ' becomes a 0/0 creature with haste that’s still a land and gets ' + op.n + ' +1/+1 counters; when it dies or is exiled, return it to the battlefield tapped',
+    returnLand: () => 'return that land to the battlefield tapped',
+    exileTransformOnto: op => 'if this spell was cast from a graveyard, exile it, then put it onto the battlefield transformed with ' + Object.keys(op.ctr).map(k => 'a ' + k + ' counter').join(' and ') + ' on it',
+    revealTopToHand: () => 'reveal the top card of your library; if it’s a permanent card, put it into your hand',
+    addMana: op => 'add ' + ('{' + op.col + '}').repeat(op.n),
+    becomeCreature: () => 'this becomes an artifact creature until end of turn',
     reflexive: op => 'when you do: ' + MF.describeAbility(Object.assign({}, op.ab, { k: 'reflexiveBody' })),
     counterTarget: op => 'counter ' + ref(op.on),
     counterAbility: op => 'counter ' + ref(op.on) + (op.loseWhile ? '; if it was an ability of an artifact, creature or planeswalker, that permanent loses all abilities for as long as this remains on the battlefield' : ''),
@@ -183,11 +192,11 @@
         if (a.cost.removeCtr) return 'remove ' + a.cost.removeCtr.n + ' ' + a.cost.removeCtr.kind + ' counters from this: ' + ops(a.ops);
         if (a.cycling) return 'cycling ' + a.cost.mana + ' (' + a.cost.mana + ', discard this card from your hand: draw a card)';
         if (a.equip && a.cost.life) return 'equip — pay ' + a.cost.life + ' life (only once each turn, as a sorcery)';
-        return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.discard ? 'discard a card' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
+        return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.discard ? 'discard a card' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : '', a.cost.exileSelf ? 'exile this' : '', a.cost.crew ? 'crew ' + a.cost.crew + ' (tap any number of other untapped creatures you control with total power ' + a.cost.crew + ' or more)' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
       case 'evasion': return a.blockerNot.notSubtypes ? 'this can’t be blocked by non-' + a.blockerNot.notSubtypes.join('/') + ' creatures' : 'this can’t be blocked by ' + filt(Object.assign({ types: ['Creature'] }, a.blockerNot)).replace('creature', 'creatures');
       case 'oppDieExile': return 'if a creature an opponent controls would die, exile it instead';
       case 'enterChoice': return 'as this enters, choose odd or even';
-      case 'reflexiveBody': return (a.tg ? '' : '') + ops(a.ops);
+      case 'reflexiveBody': return (a.cond ? 'if ' + cond(a.cond) + ', ' : '') + ops(a.ops);
       case 'etbCounters': return 'this enters with ' + a.n + ' ' + a.kind + ' counters on it';
       case 'flashback': return 'flashback ' + a.cost + ' (you may cast this from your graveyard for ' + a.cost + '; then exile it)';
       case 'mayhem': return 'mayhem ' + a.cost + ' (if you discarded this card this turn, you may cast it from your graveyard for ' + a.cost + ')';
@@ -240,8 +249,13 @@
       case 'static': if (a.addSubtypes) return 'the equipped creature gets ' + sgn(a.p) + '/' + sgn(a.t) + ' and is a ' + a.addSubtypes.join(' ') + ' in addition to its other types';
         if (a.setTypes) return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + 'this is a ' + a.setPT.join('/') + ' ' + a.setTypes.subtypes.join(' ') + ' creature' + (a.grant ? ' and has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
         if (a.pv) return 'this gets +1/+1 for each other ' + filt(a.pv.f).replace(' you control', '') + ' you control';
-        return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + (typeof a.affects === 'string' ? (a.affects === 'self' ? 'this' : 'the ' + a.affects + ' creature') : 'each ' + filt(a.affects)) + (a.p || a.t ? ' gets ' + sgn(a.p) + '/' + sgn(a.t) : '') + (a.grant ? (a.p || a.t ? ' and' : '') + ' has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
-      case 'cda': return 'power and toughness each equal ' + N(a.v);
+        return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + (typeof a.affects === 'string' ? (a.affects === 'self' ? 'this' : 'the ' + a.affects + ' creature') : 'each ' + filt(a.affects)) + (a.p || a.t ? ' gets ' + sgn(a.p) + '/' + sgn(a.t) : '') + (a.grant ? (a.p || a.t ? ' and' : '') + ' has ' + a.grant.map(k => KWNAME[k]).join(', ') : '') + (a.grantAb ? ' and ' + a.grantAb.map(g => MF.describeAbility(g)).join(', ') : '');
+      case 'cda': return (a.t === false ? 'power is equal to ' : 'power and toughness each equal ') + N(a.v);
+      case 'extraLand': return 'you may play ' + a.n + ' additional land on each of your turns';
+      case 'landsFromGrave': return 'you may play lands from your graveyard';
+      case 'uncounterable': return 'this spell can’t be countered';
+      case 'affinity': return 'affinity for ' + filt(a.f) + 's (costs {1} less for each one you control)';
+      case 'maxBlockers': return 'can’t be blocked by more than ' + N(a.n) + ' creature';
       case 'noUntap': return 'the enchanted creature doesn’t untap during its controller’s untap step';
       case 'etbTapped': return 'enters tapped' + (a.unless ? ' unless ' + cond(a.unless) : '');
       case 'enchant': return 'enchant ' + filt(a.f);

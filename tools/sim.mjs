@@ -7,6 +7,7 @@ const games = +arg('games', 50), seed0 = +arg('seed', 1), policy = arg('policy',
 const ids = Object.values(MF.decks).filter(d => d.registered).map(d => d.id);
 let rs = 12345; const rnd = n => { rs = (rs * 1664525 + 1013904223) >>> 0; return rs % n; };
 const STEPS = MF.STEPS;
+const drops = {};   // the most land drops each player has had available this turn (Icetill Explorer can leave after granting one)
 function check(s, prev, where) {
   const bad = m => { throw new Error('INVARIANT ' + m + ' @ ' + where); };
   const seen = new Set();
@@ -14,7 +15,8 @@ function check(s, prev, where) {
     for (const k in p.pool) if (!(p.pool[k] >= 0)) bad('negative mana');
     if (Number.isNaN(p.life)) bad('NaN life');
     for (const z of ['hand', 'lib', 'grave', 'exile']) for (const i of p[z]) { if (seen.has(i)) bad('an object is in two zones'); seen.add(i); if (s.cards[i].zone !== z) bad('zone mismatch ' + i + ' ' + z + '/' + s.cards[i].zone); }
-    if (p.landsPlayed > 1) bad('two land drops');
+    const dk = s.turn + ':' + p.seat; drops[dk] = Math.max(drops[dk] || 0, MF.landDrops(s, p.seat));
+    if (p.landsPlayed > drops[dk]) bad('more land drops than allowed (CR 305.2)');
   }
   for (const i of s.bf) { if (seen.has(i)) bad('an object is in two zones'); seen.add(i); if (s.cards[i].zone !== 'bf') bad('battlefield zone mismatch'); }
   for (const L of s.stack) if (L.iid != null && s.cards[L.iid].zone !== 'stack') bad('stack object not on the stack');

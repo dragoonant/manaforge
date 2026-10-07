@@ -156,6 +156,7 @@
       case 'addCostYes': return 'no';
       case 'blightOn': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
       case 'teamworkTap': return q.opts.some(o => o.id === 'done') ? 'done' : q.opts.filter(o => o.iid != null).sort((a, b) => MF.chars(s, b.iid).p - MF.chars(s, a.iid).p)[0].id;
+      case 'crewTap': return q.opts.some(o => o.id === 'done') ? 'done' : q.opts.filter(o => o.iid != null).sort((a, b) => MF.chars(s, a.iid).p - MF.chars(s, b.iid).p)[0].id;   // smallest first
       case 'discardOrLife': return q.opts.some(o => o.id === 'life') && P(s, me).life > 10 ? 'life' : q.opts[0].id;
       case 'attackWhom': return q.opts[0].id;
       case 'ninjutsuReturn': case 'sacrificeOne': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;

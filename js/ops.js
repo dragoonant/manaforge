@@ -19,6 +19,7 @@
     if (f.player) return false;
     if (f.types && !f.types.some(t => ch.types.includes(t))) return false;
     if (f.notTypes && f.notTypes.some(t => ch.types.includes(t))) return false;
+    if (f.notSupers && f.notSupers.some(t => ch.supers.includes(t))) return false;   // "nonbasic"
     if (f.notSubtypes && f.notSubtypes.some(t => ch.subtypes.includes(t)) || (f.notSubtypes && ch.allCreatureTypes)) return false;   // "non-outlaw"
     if (f.supers && !f.supers.every(t => ch.supers.includes(t))) return false;                  // "basic land" (CR 205.4a)
     if (f.subtypes && !(ch.allCreatureTypes && ch.types.includes('Creature')) && !f.subtypes.some(t => ch.subtypes.includes(t))) return false;   // CR 205.3m: "all creature types"
@@ -82,6 +83,8 @@
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
     addCostPaid: x => !!(x.L && x.L.addCostPaid),                                            // "if this spell's additional cost was paid", teamwork
+    castFromGrave: x => !!(x.L && x.L.from === 'grave'),                                           // "if this spell was cast from a graveyard"
+    counterAtLeast: (x, c) => { const o = I(x.s, x.src); return !!o && (o.ctr[c.kind] || 0) >= c.n; },
     descended: x => !!P(x.s, x.ctrl).h.descended,                                                // CR 700.11
     oppLifeLE: (x, c) => P(x.s, 1 - x.ctrl).life <= c.n,                                          // "as long as an opponent has 10 or less life"
     sneakPaid: x => !!(x.L && x.L.sneak),                                                      // CR 702.190b
@@ -125,6 +128,7 @@
     castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
     evAmount: x => x.ev.n,                                                                      // "that much damage"
     kicked: (x, v) => x.L && x.L.kicked ? v.yes : v.no,
+    lands: (x, v, table) => countMine(x.s, x.ctrl, { types: ['Land'] }, x.src, table),        // "the number of lands you control"
     gainedThisTurn: x => P(x.s, x.ctrl).h.gained || 0,
     oppsLostLife: x => ((P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0 ? 1 : 0),                    // "for each opponent who lost life this turn"
     oppExiledCreatures: x => ((x.s.exiledCre || {})[1 - x.ctrl] || 0),
@@ -159,6 +163,8 @@
       case 'enters': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid) && (!a.firstEachTurn || ev.first);
       case 'unlock': return ev.iid === iid && ev.door === a.door;                                // "When you unlock this door" (CR 709.5h)
       case 'levelUp': return ev.iid === iid && ev.level === a.level;
+      case 'lore': return ev.iid === iid && ev.before < a.chapter && ev.after >= a.chapter;      // CR 714.2b
+      case 'leaves': return a.iid != null ? ev.iid === a.iid && (ev.to === 'grave' || ev.to === 'exile') : ev.iid === iid;   // earthbend's return; LTB triggers
       case 'discardBatch': case 'leftGraveBatch': case 'toGraveBatch': case 'discarded': return !a.you || ev.who === src.ctrl;
       case 'crime': return ev.who === src.ctrl;                                                 // "Whenever you commit a crime"
       case 'search': return a.opp ? ev.who !== src.ctrl : ev.who === src.ctrl;
@@ -166,11 +172,12 @@
       case 'counterPut': return ev.iid === iid && (!a.ctrKind || ev.kind === a.ctrKind) && (!a.nth || (ev.before < a.nth && ev.after >= a.nth));   // "When the fourth plan counter is put on this"                               // "When this Class becomes level N" (CR 716.2a)
       case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.oppOnly || ev.ctrl !== src.ctrl) && (!a.chosenParity || (s.cards[iid].chosen && ((ev.mv % 2 === 0) === (s.cards[iid].chosen === 'even')))) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
       case 'dealsDamage': return (a.who && a.who !== 'self' ? (ev.srcCtrl === src.ctrl && (!a.who.types || a.who.types.some(ty => (ev.srcTypes || []).includes(ty)))) : ev.src === iid) && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);
-      case 'sacrificed': case 'dies': case 'leaves': return ev.iid === iid;
+      case 'sacrificed': case 'dies': return ev.iid === iid;
       case 'beginStep': return ev.step === a.step && (!a.yours || ev.ap === src.ctrl);
       case 'gainLife': return ev.who === src.ctrl;
       // Valiant: "becomes the target of a spell or ability you control for the first time each turn".
-      case 'targeted': return ev.iid === iid && (!a.byYou || ev.by === src.ctrl) && (!a.byOpp || ev.by !== src.ctrl) && (!a.firstEachTurn || ev.firstThisTurn);
+      case 'targeted': if (a.ownCreature) { const tc = s.cards[ev.iid]; return !!tc && (tc.zone === 'bf' || tc.zone === 'stack') && tc.ctrl === src.ctrl && MF.chars(s, ev.iid).types.includes('Creature') && ev.by !== src.ctrl; }   // Surrak
+        return ev.iid === iid && (!a.byYou || ev.by === src.ctrl) && (!a.byOpp || ev.by !== src.ctrl) && (!a.firstEachTurn || ev.firstThisTurn);
       case 'reflexive': return false;
       case 'attackWith': return ev.ctrl === src.ctrl && (!a.sub || ev.subtypes.includes(a.sub) || ev.anyType);   // CR 508.3c: once for the declaration; "all creature types" counts (CR 205.3m)
       case 'dealtDamage': return ev.iid === iid;
@@ -627,6 +634,37 @@
       const n = MF.move(s, x.src, 'bf', { ctrl: x.ctrl, tapped: true, x: x.x, attacking: x.L.ninjaTarget || { p: 1 - x.ctrl } });
       log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: true, from: 'hand', attacking: true });
     },
+    // CR 701.66a: earthbend N — a 0/0 land creature with haste, N +1/+1 counters; when it dies or is exiled, it returns tapped.
+    earthbend(x, op) {
+      const s = x.s;
+      for (const i of MF.resolveRefs(x, op.on)) {
+        s.effects.push({ k: 'animate', iid: i, p: 0, t: 0, kws: ['haste'], ts: s.ts++ });
+        I(s, i).ctr['+1/+1'] = (I(s, i).ctr['+1/+1'] || 0) + op.n;
+        log(s, 'earthbend', { who: x.ctrl, c: I(s, i).id, n: op.n });
+        (s.delayed = s.delayed || []).push({ src: x.src, ctrl: x.ctrl, once: true, ab: { k: 'trig', on: 'leaves', iid: i, ops: [{ o: 'returnLand', from: i }] } });
+      }
+    },
+    returnLand(x, op) {
+      const s = x.s, n0 = I(s, op.from).to, c = n0 != null ? I(s, n0) : null;
+      if (!c || (c.zone !== 'grave' && c.zone !== 'exile')) return;                             // its ruling: only from the graveyard or exile
+      const n = MF.move(s, n0, 'bf', { ctrl: x.ctrl, tapped: true, x: x.x }); log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: true, from: c.zone === 'grave' ? 'graveyard' : 'exile' });
+    },
+    // Esper Origins: exile it, then put it onto the battlefield transformed with a finality counter (CR 712).
+    exileTransformOnto(x, op) {
+      const s = x.s, c = I(s, x.L.iid); if (!c || c.zone !== 'stack') return;
+      s.stack.splice(s.stack.indexOf(x.L), 1);
+      const e = MF.move(s, x.L.iid, 'exile'); log(s, 'exiled', { who: c.owner, c: c.id, by: c.id, fromStack: true });
+      const n = MF.move(s, e, 'bf', { ctrl: I(s, e).owner, transformed: true, ctr: op.ctr, x: x.x });
+      log(s, 'putOnto', { who: I(s, n).owner, c: I(s, n).id, tapped: false, from: 'exile', ctr: op.ctr, transformed: true });
+    },
+    revealTopToHand(x, op) {
+      const s = x.s, p = P(s, x.ctrl); if (!p.lib.length) return;
+      const top = p.lib[0], d = MF.def(s, top), perm = d.types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty));
+      log(s, 'reveal', { who: x.ctrl, cs: [d.id] });
+      if (perm) { MF.move(s, top, 'hand'); log(s, 'toHand', { who: x.ctrl, c: d.id, revealed: true, from: 'library' }); }
+    },
+    addMana(x, op) { const p = P(x.s, x.ctrl); p.pool[op.col] += op.n; log(x.s, 'addMana', { who: x.ctrl, col: op.col, n: op.n, c: x.L ? x.L.srcId : null }); },
+    becomeCreature(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'bf') return; s.effects.push({ k: 'addTypes', iid: x.src, types: ['Creature'], until: 'eot', ts: s.ts++ }); log(s, 'crewed', { who: x.ctrl, c: c.id }); },
     // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
     selfFromGrave(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'grave') return; const n = MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); log(s, 'putOnto', { who: c.owner, c: I(s, n).id, tapped: false, from: 'graveyard' }); },
     removeCounter(x, op) { const c = I(x.s, x.src); if (!c || c.zone !== 'bf' || !(c.ctr[op.kind] > 0)) return; c.ctr[op.kind] = Math.max(0, c.ctr[op.kind] - op.n); log(x.s, 'removeCounters', { who: c.ctrl, c: c.id, n: op.n, ctr: op.kind }); },
@@ -650,7 +688,9 @@
       MF.runOps(x, op.ops);
     },
     // CR 603.12: a reflexive triggered ability — triggers at once; its targets are chosen as it goes on the stack.
-    reflexive(x, op) { x.s.trigs.push({ src: x.src, ab: -1, inl: op.ab, ctrl: x.ctrl, ev: x.ev || { t: 'reflexive' }, lki: x.lki || null }); },
+    reflexive(x, op) {
+      if (op.ab.cond && !MF.cond(x, op.ab.cond)) return;                                          // "When you do, if ..." — checked as it triggers (CR 603.4)
+      x.s.trigs.push({ src: x.src, ab: -1, inl: op.ab, ctrl: x.ctrl, ev: x.ev || { t: 'reflexive' }, lki: x.lki || null }); },
     // CR 603.7: "Whenever you attack this turn, ..." — a delayed triggered ability with a duration.
     delayed(x, op) {
       (x.s.delayed = x.s.delayed || []).push({ src: x.src, ctrl: x.ctrl, until: op.duration === 'turn' ? 'eot' : null, once: op.duration !== 'turn', ab: { k: 'trig', on: op.on, ops: op.ops } });
@@ -840,6 +880,7 @@
   // CR 701.6a: a countered spell leaves the stack without resolving; it goes to its owner's graveyard
   // (a copy ceases to exist; harmonize exiles it).
   MF.counterSpell = function (s, L, by) {
+    if (MF.chars(s, L.iid).ab.some(a => a.k === 'uncounterable')) { log(s, 'cantCounter', { who: L.ctrl, c: L.id }); return; }   // "This spell can't be countered" (CR 113.6g)
     s.stack.splice(s.stack.indexOf(L), 1);
     log(s, 'countered', { who: L.ctrl, c: L.id, by: by });
     if (L.copy) { const c = I(s, L.iid); c.zone = 'moved'; c.to = null; return; }
@@ -884,6 +925,7 @@
   // "Instant and sorcery spells you cast cost {1} less to cast."
   MF.costMods.push(function (s, who, iid, ch, cost) {
     for (const a of ch.ab) if (a.k === 'costLess' && MF.cond({ s: s, ctrl: who, src: iid, flags: {} }, a.cond)) cost.g -= a.n;
+    for (const a of ch.ab) if (a.k === 'affinity') cost.g -= s.bf.filter(i => I(s, i).ctrl === who && MF.matchChars(s, i, MF.chars(s, i), a.f, who, iid)).length;   // CR 702.41a
     for (const p of s.bf) {
       const pc = I(s, p); if (pc.ctrl !== who) continue;
       for (const a of MF.chars(s, p).ab) if (a.k === 'costLessFor' && a.spell.types.some(t => ch.types.includes(t))) cost.g -= a.n;
@@ -893,7 +935,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

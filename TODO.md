@@ -14,3 +14,6 @@
 - The AI pilots Izzet Prowess poorly (8 wins in 90 mixed sim games; it rarely sequences cheap
   spells for prowess, Vivi's mana or the Cutter's second-spell trigger). The rollout horizon ends
   at end of turn; an evaluator term for spells cast this turn would help.
+- Log lines name a transformed permanent by its front face ("Esper Origins triggers" for Summon:
+  Esper Maduin): log entries carry the card id, not the face. Carry the face with the id (about 25
+  log sites) and let `tag` read it; the battlefield tile already shows the back face.

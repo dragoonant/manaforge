@@ -35,7 +35,7 @@ for (const id of [...ids].sort()) {
   for (const z of ZONES) if (new RegExp('\\b' + z + '\\b').test(oracle) && !desc.includes(z) && !(z === 'battlefield' && /\benters?\b/.test(desc)) && !(z === 'library' && /top|bottom|scry/.test(desc)) && !(z === 'hand' && /draw|discard/.test(desc)) && !(z === 'exile' && /exile/.test(desc))) out.push(['FAIL', 'zone ' + z]);
   for (const v of VERBS) if (oracle.includes(v) && !desc.includes(v.replace("can't", 'can’t'))) out.push(['WARN', 'verb "' + v + '"']);
   // Cross-check: the describer must not mention a keyword the Oracle text lacks.
-  for (const k of KW) if (desc.includes(k) && !oracle.includes(k) && !(k === 'prowess' && /prowess/.test(oracle))) out.push(['FAIL', 'description adds keyword ' + k]);
+  for (const k of KW) if (desc.includes(k) && !oracle.includes(k) && !(k === 'prowess' && /prowess/.test(oracle)) && !(k === 'haste' && /\bearthbend\b/i.test(oracle))) out.push(['FAIL', 'description adds keyword ' + k]);
   const f = out.filter(o => o[0] === 'FAIL').length, w = out.length - f;
   fails += f; warns += w;
   if (out.length || verbose) {

@@ -106,6 +106,7 @@
     const c = I(s, iid), from = c.zone;
     if (from === 'grave' && zone !== 'grave') MF.batchNote(s, 'leftGraveBatch', c.owner);   // "Whenever one or more cards leave your graveyard"
     if (zone === 'grave' && !c.tok && def(s, iid).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))) { MF.batchNote(s, 'toGraveBatch', c.owner); P(s, c.owner).h.descended = true; }   // "permanent cards put into your graveyard from anywhere"
+    if (from === 'bf' && zone === 'grave' && (c.ctr.finality || 0) > 0) { log(s, 'exiledInstead', { who: c.owner, c: c.id, finality: true }); zone = 'exile'; }   // CR 122.1h
     if (from === 'bf' && zone === 'grave' && chars(s, iid).types.includes('Creature') && s.bf.some(v => v !== iid && chars(s, v).ctrl !== c.ctrl && chars(s, v).ab.some(a => a.k === 'oppDieExile'))) {
       log(s, 'exiledInstead', { who: c.owner, c: c.id }); zone = 'exile';                    // its rulings: no "dies" trigger
     }
@@ -137,6 +138,7 @@
       const dl = def(s, n); if (dl.loyalty != null && dl.types.includes('Planeswalker') && nc.ctr.loyalty == null) nc.ctr.loyalty = dl.loyalty;   // CR 306.5b                                           // "enters with N counters" (CR 122.6)
       if (o.door != null) nc.unlocked = [o.door === 0, o.door === 1];
       if (o.xPaid) nc.xPaid = o.xPaid;
+      if (o.transformed) nc.transformed = true;                                               // "put onto the battlefield transformed" (CR 712)
       if (o.warp) (s.delayed = s.delayed || []).push({ src: n, ctrl: nc.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', ops: [{ o: 'warpExile', iid: n }] } });   // CR 702.185a                         // CR 709.5d: the half that was cast enters unlocked
       enterReplacements(s, n, o);
     }
@@ -160,6 +162,7 @@
       const ch = chars(s, n);
       if (ch.types.includes('Creature')) { const h = P(s, nc.ctrl).h; h.entered++; (h.enteredIids = h.enteredIids || []).push(n); }   // turn history (handoff 11.7)
       emit(s, { t: 'enters', iid: n, ctrl: nc.ctrl });
+      if (nc.ctr.lore) emit(s, { t: 'lore', iid: n, before: 0, after: nc.ctr.lore });   // CR 714.2b
       if (o.door != null) { log(s, 'unlock', { who: nc.ctrl, c: nc.id, door: def(s, n).doors[o.door].name, entering: true }); emit(s, { t: 'unlock', iid: n, door: o.door, ctrl: nc.ctrl }); }   // CR 709.5h
     }
     return n;
@@ -171,6 +174,8 @@
   // move needs the invocation (o.x) to ask; every caller that puts a land onto the battlefield passes it.
   function enterReplacements(s, n, o) {
     const c = I(s, n);
+    const bc = baseChars(s, n);
+    if (bc.subtypes.includes('Saga') && bc.ab.some(a => a.chapter) && c.ctr.lore == null) c.ctr.lore = 1;   // CR 714.3a
     for (const a of baseChars(s, n).ab) {
       if (a.k === 'etbCounters') c.ctr[a.kind] = (c.ctr[a.kind] || 0) + a.n;
       if (a.k === 'enterChoice') {
@@ -322,6 +327,7 @@
       if (a.affects === 'enchanted' || a.affects === 'equipped') return src.att != null && out[src.att] ? [src.att] : [];
       return s.bf.filter(i => MF.matchChars(s, i, out[i], a.affects, st.src == null ? st.ctrl : out[st.src].ctrl, st.src));
     };
+    for (const e of s.effects) if (e.k === 'addTypes' && out[e.iid]) for (const ty of e.types) if (!out[e.iid].types.includes(ty)) out[e.iid].types.push(ty);   // crew (CR 702.122a)
     for (const st of statics) if (st.a.addSubtypes) for (const i of affected(st)) for (const sub of st.a.addSubtypes) if (!out[i].subtypes.includes(sub)) out[i].subtypes.push(sub);
     for (const st of statics) if (st.a.setTypes) for (const i of affected(st)) { out[i].types = st.a.setTypes.types.slice(); out[i].subtypes = st.a.setTypes.subtypes.slice(); }   // layer 4: Kaito "is a 3/4 Ninja creature"
     for (const e of s.effects) if (e.k === 'color' && out[e.iid]) out[e.iid].colors = e.colors.slice();                                                 // layer 5
@@ -330,6 +336,7 @@
     const l6 = [];
     for (const st of statics) if (st.a.k === 'static' && st.a.grant) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) for (const k of st.a.grant) out[i].kw[k] = (out[i].kw[k] || 0) + 1; } });
     for (const e of s.effects) if ((e.k === 'grant' || e.k === 'animate') && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { for (const k of e.kws) out[e.iid].kw[k] = (out[e.iid].kw[k] || 0) + 1; } });
+    for (const st of statics) if (st.a.k === 'static' && st.a.grantAb) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) out[i].ab = out[i].ab.concat(st.a.grantAb); } });
     for (const e of s.effects) if (e.k === 'grantAb' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].ab = out[e.iid].ab.concat(e.abs); } });
     for (const e of s.effects) if (e.k === 'loseAll' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].kw = {}; out[e.iid].ab = out[e.iid].ab.map(() => LOCKED); lost.add(e.iid); } });   // Azure Beastbinder: "loses all abilities"
     l6.sort((x, y) => x.ts - y.ts); for (const op of l6) op.run();
@@ -729,7 +736,14 @@
       case 'draw':
         if (!(s.firstTurn)) draw(s, ap, 1);                                                   // CR 504.1, 103.8a
         setPriority(s, ap); return;
-      case 'main1': case 'main2': setPriority(s, ap); return;                                // CR 505.6
+      case 'main1': case 'main2':
+        if (s.step === 'main1') for (const iid of s.bf.slice()) {                              // CR 714.3c: a lore counter on each Saga as the precombat main phase begins
+          const ch = chars(s, iid), c = I(s, iid);
+          if (c.ctrl !== ap || !ch.subtypes.includes('Saga') || !ch.ab.some(a => a.chapter)) continue;
+          const before = c.ctr.lore || 0; c.ctr.lore = before + 1; log(s, 'lore', { who: ap, c: c.id, n: c.ctr.lore });
+          emit(s, { t: 'lore', iid: iid, before: before, after: c.ctr.lore });
+        }
+        setPriority(s, ap); return;                                                            // CR 505.6
       case 'boc':                                                                             // CR 507
         s.combat = { attackers: [], blocks: {}, blockedBy: {}, blocked: {}, fs: false, dealtFirst: [] };
         emit(s, { t: 'beginStep', step: 'boc', ap: ap });
@@ -816,6 +830,7 @@
     const count = {};
     for (const b in assign) count[assign[b]] = (count[assign[b]] || 0) + 1;
     for (const a in count) if (chars(s, +a).kw.menace && count[a] < 2) return false;
+    for (const a in count) for (const ab of chars(s, +a).ab) if (ab.k === 'maxBlockers' && count[a] > ab.n) return false;
     return true;
   }
   EXEC_DEF('declareBlockers', function (x) {                                                 // CR 509.1
@@ -932,6 +947,7 @@
         else if (c.dmg >= ch.t && !ch.kw.indestructible) out.push({ k: 'destroy', iid: iid, why: 'lethal' });   // CR 704.5g
         else if (c.dt && c.dmg > 0 && !ch.kw.indestructible) out.push({ k: 'destroy', iid: iid, why: 'deathtouch' });   // CR 704.5h
       }
+      if (ch.subtypes.includes('Saga') && ch.ab.some(a => a.chapter) && (c.ctr.lore || 0) >= Math.max(...ch.ab.filter(a => a.chapter).map(a => a.chapter)) && !s.stack.some(L => L.kind === 'trig' && L.src === iid) && !s.trigs.some(tg => tg.src === iid)) out.push({ k: 'sagaSac', iid: iid });   // CR 714.4
       if (ch.types.includes('Planeswalker') && !(c.ctr.loyalty > 0)) out.push({ k: 'grave', iid: iid, why: 'loyalty' });   // CR 704.5i
       if (ch.supers.includes('Legendary')) { const key = c.ctrl + '|' + ch.name; (legends[key] = legends[key] || []).push(iid); }
       if (ch.subtypes.includes('Aura')) {                                                     // CR 704.5m, 303.4c
@@ -964,6 +980,7 @@
         case 'tokenGone': { const c = I(s, a.iid); if (c.zone === 'moved') break; zoneArr(s, c).splice(zoneArr(s, c).indexOf(a.iid), 1); c.zone = 'moved'; c.to = null; log(s, 'tokenGone', { c: c.id }); break; }
         case 'grave': if (I(s, a.iid).zone === 'bf') { log(s, 'sbaGrave', { c: I(s, a.iid).id, why: a.why, who: I(s, a.iid).ctrl }); move(s, a.iid, 'grave'); } break;
         case 'destroy': if (I(s, a.iid).zone === 'bf') MF.destroy(s, a.iid, a.why); break;
+        case 'sagaSac': if (I(s, a.iid).zone === 'bf') { log(s, 'sagaDone', { who: I(s, a.iid).ctrl, c: I(s, a.iid).id }); MF.sacrifice(s, a.iid); } break;
         case 'unattach': I(s, a.iid).att = null; log(s, 'unattach', { c: I(s, a.iid).id }); break;
         case 'counters': { const c = I(s, a.iid); const n = Math.min(c.ctr['+1/+1'], c.ctr['-1/-1']); c.ctr['+1/+1'] -= n; c.ctr['-1/-1'] -= n; break; }
         case 'legend': { const k = keep[a.iids.join(',')]; for (const i of a.iids) if (i !== k && I(s, i).zone === 'bf') { log(s, 'legendRule', { who: a.who, c: I(s, i).id }); move(s, i, 'grave'); } break; }
@@ -1035,13 +1052,17 @@
   // Cards a player may cast or play from somewhere other than hand: an effect names them (Alania's Pathmaker).
   function playableZones(s, who) {
     const out = P(s, who).hand.slice();
-    for (const iid of P(s, who).grave) if (def(s, iid).ab.some(a => a.k === 'harmonize' || a.k === 'flashback' || a.k === 'mayhem')) out.push(iid);   // CR 702.180a, 702.34a, 702.187b
+    const graveLands = s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'landsFromGrave'));   // Icetill Explorer
+    for (const iid of P(s, who).grave) if (def(s, iid).ab.some(a => a.k === 'harmonize' || a.k === 'flashback' || a.k === 'mayhem') || (graveLands && def(s, iid).types.includes('Land'))) out.push(iid);   // CR 702.180a, 702.34a, 702.187b
     for (const e of s.effects) if (e.k === 'mayPlay' && e.who === who && I(s, e.iid) && (I(s, e.iid).zone === 'exile' || I(s, e.iid).zone === 'grave') && !(e.afterTurn != null && s.turn <= e.afterTurn) && !out.includes(e.iid)) out.push(e.iid);
     return out;
   }
+  const landDrops = MF.landDrops = (s, who) => 1 + s.bf.filter(i => I(s, i).ctrl === who).reduce((n, i) => n + chars(s, i).ab.filter(a => a.k === 'extraLand').reduce((m, a) => m + a.n, 0), 0);   // CR 305.2a
   const canPlayLand = MF.canPlayLand = function (s, who, iid) {                              // CR 305.1-2, 116.2a
     const d = def(s, iid);
-    return d.types.includes('Land') && sorceryTiming(s, who) && P(s, who).landsPlayed < 1 && s.priority === who;
+    if (I(s, iid).zone === 'grave' && !s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'landsFromGrave'))) return false;
+    if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.castOnly)) return false;
+    return d.types.includes('Land') && sorceryTiming(s, who) && P(s, who).landsPlayed < landDrops(s, who) && s.priority === who;
   };
   const spellPart = MF.spellPart = (sp, L) => !sp ? null : sp.modes && sp.choose ? { ops: (L.modes || []).flatMap(i => sp.modes[i].ops) } : sp.modes ? sp.modes[L.mode] : (sp.gift && L.gift != null ? sp.gift : sp);
   // "You may cast that card ... and mana of any type can be spent to cast it" (Cruelclaw's Heist).
@@ -1092,6 +1113,7 @@
     if (a.cost.removeCtr && (c.ctr[a.cost.removeCtr.kind] || 0) < a.cost.removeCtr.n) return false;
     if (a.cost.life && P(s, who).life < a.cost.life) return false;                             // CR 119.4
     if (a.cost.discard && P(s, who).hand.filter(i => i !== iid).length < a.cost.discard) return false;
+    if (a.cost.crew && s.bf.filter(i => i !== iid && I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature')).reduce((t, i) => t + Math.max(0, chars(s, i).p), 0) < a.cost.crew) return false;
     if (a.cost.sacToken && !s.bf.some(i => I(s, i).ctrl === who && I(s, i).tok)) return false;
     if (a.oncePerTurn && c.actTurn && c.actTurn[i] === s.turn) return false;                  // CR 602.5b: "Activate only once each turn"
     const need = MF.parseMana(a.cost.mana || '');
@@ -1155,7 +1177,7 @@
       if (s.ap !== who) return 'Lands can only be played on your own turn.';
       if (s.step !== 'main1' && s.step !== 'main2') return 'Lands can only be played in a main phase.';
       if (s.stack.length) return 'Lands can only be played while the stack is empty.';
-      if (p.landsPlayed >= 1) return 'You have already played a land this turn.';
+      if (p.landsPlayed >= landDrops(s, who)) return 'You have already played ' + (landDrops(s, who) > 1 ? 'your ' + landDrops(s, who) + ' lands' : 'a land') + ' this turn.';
       return 'You cannot play a land now.';
     }
     const doors = def(s, iid).doors;
@@ -1414,6 +1436,12 @@
       L.ninjaTarget = (s.combat.target && s.combat.target[back]) || { p: 1 - who };
       log(s, 'ninjutsuReturn', { who: who, c: I(s, back).id, card: c.id }); move(s, back, 'hand');
     }
+    if (a.cost.crew) {
+      const cre = s.bf.filter(i => i !== iid && I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature')), tapped = []; let tot = 0;
+      for (;;) { const opts = cre.filter(i => !tapped.includes(i)).map(i => ({ id: i, iid: i })); if (tot >= a.cost.crew) opts.push({ id: 'done' }); const c2 = ask(x, { who: who, kind: 'crewTap', src: iid, n: a.cost.crew, total: tot, opts: opts, cancel: true }); if (c2 === 'done') break; tapped.push(c2); tot += Math.max(0, chars(s, c2).p); }
+      for (const i of tapped) { I(s, i).tapped = true; log(s, 'tapped', { who: who, c: I(s, i).id }); }
+    }
+    if (a.cost.exileSelf) { const ec = I(s, iid); L.lki = snapshot(s, iid); log(s, 'exiledCost', { who: who, c: ec.id }); move(s, iid, 'exile'); }
     if (a.cost.discard) { const card = ask(x, { who: who, kind: 'discard', src: iid, left: 1, opts: P(s, who).hand.filter(i => i !== iid).map(i => ({ id: i, iid: i })), cancel: true }); MF.discard(s, card); }
     if (a.cost.sacToken) { const opts = s.bf.filter(i => I(s, i).ctrl === who && I(s, i).tok).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('no token to sacrifice'); MF.sacrifice(s, ask(x, { who: who, kind: 'sacToken', src: iid, opts: opts, cancel: true })); }
     payMana(x, who, MF.parseMana(a.cost.mana || ''), iid, true);

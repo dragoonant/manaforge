@@ -35,8 +35,13 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-06 — the championship decks (D15) under way: 10 of 20 registered; a per-card audit done.**
+**2026-10-06 — the championship decks (D15) under way: 11 of 20 registered; a per-card audit done.**
 
+- Mono-Green (Earthbender Ascension) brought Sagas (CR 714: lore counters, chapter triggers, the
+  sacrifice SBA), earthbend (701.66), finality counters (122.1h), additional land plays and lands
+  from the graveyard (305.2), crew (702.122), affinity (702.41), "can't be countered" (113.6g),
+  "can't be blocked by more than one creature" (509.1b), a front face put onto the battlefield
+  transformed, and statics that grant abilities.
 - Mono-Black (Desolation Prowler) brought crimes (700.13), choices made as a permanent enters
   (614.12a), unique-mode triggers, ward by discard, job select (702.182), descended (700.11), paying
   during resolution, type-adding Equipment.
@@ -50,7 +55,7 @@ Deck count, never quality. A deck that does not compile in full is not registere
   closed), ninjutsu (702.49), transforming double-faced cards (712), emblems (114), layer 6 in
   timestamp order with "loses all abilities", "until your next turn", choose-two modes, draw events.
 - Registered: Mono-Red Aggro (PT Final Fantasy #1), Gruul Delirium (#35), Orzhov Demons (#28), Izzet
-  Prowess (#2) and Dimir Midrange; from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast) and Mono-Black (Desolation Prowler) — beside the two Starter Kits. Boros
+  Prowess (#2) and Dimir Midrange; from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler) and Mono-Green (Earthbender Ascension) — beside the two Starter Kits. Boros
   brought delayed triggers (CR 603.7), mobilize (702.181), creatures entering attacking (508.4),
   sneak (702.190), Treasure (111.10a), "can't cast spells" (601.3), plan counters. Orzhov (Amalia) brought ward (702.21), explore (701.44), warp (702.185), Cases
   (719), exile-until-it-leaves (610.3), returning as a non-creature, life-gained/lost conditions. Izzet brought Class levels (CR 716), bargain (702.166),
