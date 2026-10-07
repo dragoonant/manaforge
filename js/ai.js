@@ -208,7 +208,7 @@
       case 'chooseName': { const opp = s.players[1 - q.who]; const names = new Set(opp.lib.concat(opp.hand, s.bf.filter(i => I(s, i).ctrl !== q.who)).map(i => MF.def(s, i)).filter(d => d.types.includes('Land') && d.ab.some(a => a.k === 'act')).map(d => d.name)); const o = q.opts.find(o2 => names.has(o2.id)); return o ? o.id : q.opts[0].id; }
       case 'digOnto': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }
       case 'hybrid': return q.opts[q.opts.length - 1].id;
-      case 'manaColor': { const need = { W: 0, U: 0, B: 0, R: 0, G: 0 }; for (const i of P(s, me).hand) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\\{' + k + '\\}', 'g')) || []).length; return Object.keys(need).sort((a, b) => need[b] - need[a])[0]; }   // the color its hand asks for most
+      case 'manaColor': { const need = { W: 0, U: 0, B: 0, R: 0, G: 0 }; for (const i of P(s, me).hand) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\\{' + k + '\\}', 'g')) || []).length; const offered = q.opts.map(o => o.id); return offered.slice().sort((a, b) => (need[b] || 0) - (need[a] || 0))[0]; }   // of the colours offered, the one its hand asks for most
       case 'tutorUpTo': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }
       case 'removeCounterKind': { const o = q.opts.find(o2 => o2.id !== 'none' && o2.id !== '+1/+1') || q.opts.find(o2 => o2.id !== 'none'); return o ? o.id : 'none'; }
       case 'mayPay': return 'yes';
@@ -274,7 +274,7 @@
   function candidates(s, legal) {
     const seen = new Set(), out = [];
     for (const a of legal) {
-      if (a.type === 'cancel' || a.id === 'undo') continue;
+      if (a.type === 'cancel' || a.id === 'undo' || a.type === 'mana') continue;   // mana is made inside a payment; nothing it plays cares about a pool before one
       const key = a.type + ':' + (a.iid != null ? I(s, a.iid).id + '@' + I(s, a.iid).zone : '') + ':' + (a.ab != null ? a.ab : '') + ':' + (a.id != null ? a.id : '') + ':' + (a.door != null ? 'door' + a.door : '') + (a.alt ? 'alt' : '');
       if (seen.has(key)) continue; seen.add(key); out.push(a);
     }

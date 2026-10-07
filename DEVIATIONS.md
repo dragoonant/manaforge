@@ -8,9 +8,12 @@ choice. Newest first.
 | V6 | 702.178a, 702.186b | A max speed ability or an ∞ ability exists only while the speed is 4 / the permanent is harnessed. | The ability is always on the card and is refused (activated) or ignored (triggered) until then. The same in play unless something copies, counts or removes abilities. | Perilous Snare, The Mind Stone — with a copy or "loses all abilities" effect |
 | V5 | 508.4 | A creature put onto the battlefield attacking attacks a player, planeswalker or battle its controller chooses (unless the effect says). | Tokens that enter attacking (mobilize, Dalkovan Encampment, The Last Ronin's Technique) always attack the opposing player; the choice of a planeswalker is not offered. Ninjutsu follows its returned creature, as the rules say. | Voice of Victory, Stadium Headliner, Dalkovan Encampment, The Last Ronin's Technique — when the opponent controls a planeswalker |
 | V2 | 616.1 | When two or more replacement or prevention effects apply to one event, the affected player or controller chooses the order. | The doors exist (`MF.replacers.damage`, `enterReplacements`, the life-loss door) but no order is ever asked. The one non-self replacement in a registered deck, Bloodletter of Aclazotz's doubling, gives the same result in any order. The first card whose order matters must add the question. | none yet |
-| V1 | 117.1d, 605.3a | A player may activate a mana ability whenever they have priority. | Mana abilities are activated only inside a payment (where the rules also allow them). Floating mana before casting is not offered. Nothing in a registered deck cares about mana in the pool before a payment. | none yet |
 
 ## Fixed
+
+- **V1** (CR 117.1d, 605.3a), 2026-10-07: a mana ability can be activated whenever its controller has
+  priority. Click a land to add its mana; it floats until the step ends (CR 500.4) and pays the next
+  cost. The AI still makes mana only inside a payment.
 
 - **V4** (CR 506.3, 508.1b), 2026-10-06: attackers choose the player or a planeswalker (asked only
   when the defender controls one); combat damage goes to what was attacked; Preacher of the

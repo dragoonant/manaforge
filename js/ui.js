@@ -50,7 +50,7 @@
     }
     const shownId = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].copy ? v.cards[o.iid].copy.id : id;
     const sd = shownId === id ? d : MF.cards[shownId];
-    if (o.acts && o.acts.length) cls.push('legal');
+    if (o.acts && o.acts.some(x => x.a.type !== 'mana')) cls.push('legal');                  // a land that can only add mana is clickable, not highlighted
     if (o.cls) cls.push(o.cls);
     const pt = p != null ? `<div class="pt ${p > d.power || t > d.toughness ? 'up' : ''} ${(typeof d.power === 'number' && p < d.power) || (typeof d.toughness === 'number' && t < d.toughness) ? 'down' : ''}">${p}/${t}</div>` : '';
     let tl = sd.token ? 'Token ' + sd.typeLine.replace(/^Token /, '') : sd.typeLine;
@@ -117,6 +117,7 @@
         else if (a.type === 'unlock') { const f = MF.cards[s.cards[a.iid].id].doors[a.door]; add(a.iid, a, 'Unlock ' + f.name + ' — ' + f.mana); }
         else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; if (s.cards[a.iid].zone === 'grave' && !tray.includes(a.iid)) tray.push(a.iid);   // a graveyard ability (CR 113.6m): shown in the tray
  add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : ab.levelUp ? 'Level ' + ab.levelUp + ' — ' + ab.cost.mana : ab.loyalty != null ? MF.describeAbility(ab) : ab.ninjutsu ? 'Ninjutsu — ' + ab.cost.mana + ', return an unblocked attacker' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
+        else if (a.type === 'mana') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, 'Add mana now: ' + MF.describeAbility(ab) + ' (it empties as the step ends)'); }   // CR 605.3a
         else if (a.type === 'pass') btns.push({ a: a, label: T.passLabel(s, ui.human), cls: 'primary' });
       }
       btns.push({ ui: 'passTurn', label: 'Pass to end of turn', cls: 'ghost' });
@@ -373,7 +374,7 @@
   // bounded by a timer. Priority windows are passed for you unless a stop says otherwise.
   // ---------------------------------------------------------------------------------------------
   function shouldStop(s) {
-    const legal = MF.legalActions(s);
+    const legal = MF.legalActions(s).filter(a => a.type !== 'mana');                         // tapping for mana alone doesn't make a window
     if (legal.length === 1 && legal[0].type === 'pass') return false;                          // nothing legal: not a window (owner's rule 9)
     if (s.stack.length) {
       const top = s.stack[s.stack.length - 1];

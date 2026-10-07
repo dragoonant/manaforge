@@ -41,3 +41,21 @@ test('Starting Town: untapped on your first three turns; {T}, pay 1 life: any co
   s = play(s, 'starting-town'); ok(!s.cards[find(s, 'starting-town', 'bf')].tapped, 'early: untapped');
   ok(MF.manaSources(s, 0).some(m => m.cols.length === 5), 'any color');
 });
+test('CR 605.3a: a mana ability at priority — Shivan Reef asks the colour, the mana floats, the player keeps priority, then pays Opt', () => {
+  let s = setup({ me: { hand: ['opt'], bf: ['shivan-reef'], lib: ['island', 'island'] } });
+  const reef = find(s, 'shivan-reef');
+  const a = MF.legalActions(s).find(l => l.type === 'mana' && l.iid === reef && MF.chars(s, reef).ab[l.ab].cols.length > 1);
+  ok(a, 'the {U}/{R} ability is offered at priority');
+  s = MF.apply(s, a); eq(s.pending.q.kind, 'manaColor'); eq(s.pending.q.opts.map(o => o.id), ['U', 'R']);
+  s = MF.apply(s, { type: 'answer', id: 'U' });
+  eq(s.players[0].pool.U, 1); eq(s.players[0].life, 19); eq(s.priority, 0); ok(s.cards[reef].tapped, 'tapped');
+  s = cast(s, 'opt'); s = resolveAll(s, 'top');
+  eq(s.players[0].pool.U, 0); ok(s.players[0].grave.some(i => s.cards[i].id === 'opt'), 'Opt paid from the pool and resolved');
+});
+test('CR 500.4: floated mana empties as the step ends, and the log says so', () => {
+  let s = setup({ me: { bf: ['island'] } });
+  s = MF.apply(s, MF.legalActions(s).find(l => l.type === 'mana'));
+  eq(s.players[0].pool.U, 1);
+  s = toStep(s, 'boc');
+  eq(s.players[0].pool.U, 0); eq(logs(s, 'manaEmpties').length, 1);
+});

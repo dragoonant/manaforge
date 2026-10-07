@@ -524,7 +524,8 @@
   // Mana abilities a player could activate now: [{ iid, ab index, cols }]. CR 302.6: a creature's
   // {T} ability needs it to have been controlled since the turn began, unless it has haste.
   // ctx: { creature } — what the mana is for. Mana that may be spent only on creature spells
-  // (Rockface Village, CR 106.6) is offered only when paying for one.
+  // (Rockface Village, CR 106.6) is offered only when paying for one. ctx.any: activated at priority,
+  // not inside a payment — the restriction then rides on the mana in the pool.
   const abilityHaste = MF.abilityHaste = (s, who) => s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'abilitiesHaste'));
   const manaSources = MF.manaSources = function (s, who, ctx) {
     const out = [];
@@ -534,9 +535,9 @@
       ch.ab.forEach((a, i) => {
         if (a.k !== 'mana') return;
         if (a.cost.tap && c.tapped) return;
-        if (a.only === 'creature' && !(ctx && ctx.creature)) return;
-        if (a.only === 'chosenType' && !(ctx && ctx.creature && (ctx.subtypes || []).includes(c.chosen))) return;
-        if (a.only === 'artifact' && !(ctx && ctx.artifact)) return;
+        if (a.only === 'creature' && !(ctx && (ctx.creature || ctx.any))) return;
+        if (a.only === 'chosenType' && !(ctx && (ctx.any || (ctx.creature && (ctx.subtypes || []).includes(c.chosen))))) return;
+        if (a.only === 'artifact' && !(ctx && (ctx.artifact || ctx.any))) return;
         if (s.effects.some(e => e.k === 'lockTapped' && e.iid === iid) && c.tapped) return;      // Braided Net (it's tapped anyway; kept explicit)
         if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid, flags: {} }, a.cond)) return;        // the Verges: "Activate only if you control ..."
         if (a.cost.life && P(s, who).life < a.cost.life) return;                                 // CR 119.4
@@ -1344,6 +1345,7 @@
       for (const k of canUnlock(s, who, iid)) out.push({ type: 'unlock', iid: iid, door: k });
     }
     for (const iid of P(s, who).hand) if (canPlot(s, who, iid)) out.push({ type: 'plot', iid: iid });   // CR 702.170a, 116.2k
+    { const seen = new Set(); for (const m of manaSources(s, who, { any: true })) { const k = m.iid + ':' + m.ab; if (!seen.has(k)) { seen.add(k); out.push({ type: 'mana', iid: m.iid, ab: m.ab }); } } }   // CR 117.1d, 605.3a: a mana ability whenever the player has priority
     out.push({ type: 'pass' });
     return out;
   };
@@ -1737,6 +1739,21 @@
     emitTargeted(s, L.t, who, L.lid);
     setPriority(s, who);
   });
+  // CR 605.3a-b: a mana ability activated at priority. It doesn't use the stack; the mana stays in the
+  // pool until the step ends (CR 500.4), and the player keeps priority (CR 117.3c).
+  EXEC_DEF('mana', function (x) {
+    const s = x.s, who = x.inv.who, iid = x.inv.iid, ab = x.inv.ab;
+    const src = manaSources(s, who, { any: true }).find(m => m.iid === iid && m.ab === ab);
+    if (!src) throw new Illegal('that mana ability can’t be activated now');
+    if (src.combo) {                                                                          // CR 106.1a: every combination is a choice
+      const opts = []; for (let k = src.amount; k >= 0; k--) opts.push({ id: src.cols[0].repeat(k) + src.cols[1].repeat(src.amount - k) });
+      activateMana(s, who, iid, ab, ask(x, { who: who, kind: 'manaCombo', src: iid, amount: src.amount, cols: src.cols, opts: opts }));
+    } else {
+      const col = src.cols.length > 1 ? ask(x, { who: who, kind: 'manaColor', src: iid, opts: src.cols.map(k => ({ id: k })) }) : src.cols[0];
+      activateMana(s, who, iid, ab, col, x);
+    }
+    setPriority(s, who);
+  });
   EXEC_DEF('plot', function (x) {                                                            // CR 702.170a-b, 116.2k: a special action — no stack
     const s = x.s, who = x.inv.who, iid = x.inv.iid, a = def(s, iid).ab.find(a2 => a2.k === 'plot');
     payMana(x, who, MF.parseMana(a.cost), iid, true);
@@ -1909,6 +1926,7 @@
       case 'unlock': s.todo.unshift({ t: 'unlock', iid: a.iid, door: a.door, who: s.priority, answers: [] }); break;
       case 'plot': s.todo.unshift({ t: 'plot', iid: a.iid, who: s.priority, answers: [] }); break;
       case 'act': s.todo.unshift({ t: 'act', iid: a.iid, ab: a.ab, who: s.priority, answers: [] }); break;
+      case 'mana': s.todo.unshift({ t: 'mana', iid: a.iid, ab: a.ab, who: s.priority, answers: [] }); break;
       default: throw new Error('unknown action type ' + a.type);
     }
     return run(s);

@@ -11,7 +11,6 @@
   combat, in combat, or at their end step, and values instant mana left open as its own turn ends
   (2026-10-07). It casts in 3.8% of the opponent's-turn windows where it could (`node tools/arena.mjs
   --mixed`); it still rarely plans a trick two turns ahead: the roll-out horizon is one turn.
-- Floating mana at priority (DEVIATIONS V1).
 - Izzet Prowess goes 16-26 against the other 21 decks from both seats in a 42-game run (2026-10-07; was
   8 of 90). Roll-outs now attack, so a pre-combat pump counts; the AI still rarely chains cheap spells
   for Vivi's mana or the Cutter's second-spell trigger: the horizon ends at end of turn.
