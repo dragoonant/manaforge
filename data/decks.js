@@ -1512,12 +1512,8 @@ window.MF.decks = {
   ],
   "compiles": false,
   "refused": [
-   "restless-reef: effect: Until end of turn, ~ becomes a 4/4 blue and black Shark creature with deathtouch",
    "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
    "spyglass-siren: effect: Create a Map token",
-   "kaito-bane-of-nightmares: ability: Ninjutsu {1}{U}{B}",
-   "floodpits-drowner: filter qualifier: and put a stun counter on it",
-   "enduring-curiosity: trigger event: a creature you control deals combat damage to a player, draw a card.",
    "tishanas-tidebinder: effect: Counter up to one target activated or triggered ability",
    "shoot-the-sheriff: filter noun: non-outlaw creature",
    "we-say-thee-nay: effect: Teamwork 2",
@@ -1804,7 +1800,7 @@ window.MF.decks = {
    "ba-sing-se: effect: Earthbend 2",
    "demolition-field: filter noun: nonbasic land an opponent controls",
    "icetill-explorer: ability: You may play an additional land on each of your turns.",
-   "esper-origins-summon-esper-maduin: layout transform is not compiled",
+   "esper-origins-summon-esper-maduin: condition: this spell was cast from a graveyard",
    "sazhs-chocobo: trigger event: a land you control enters, put a +1/+1 counter on ~.",
    "earthbender-ascension: effect: Earthbend 2",
    "meltstriders-resolve: ability: Enchant creature you control",
@@ -1981,9 +1977,9 @@ window.MF.decks = {
    "pinnacle-starcage: effect: Exile all artifacts and creatures with mana value 2 or less until ~ leaves the battlefield",
    "the-mind-stone: effect: Harness ~",
    "cryogen-relic: trigger event: ~ enters or leaves the battlefield, draw a card.",
-   "spring-loaded-sawblades-bladewheel-chariot: layout transform is not compiled",
+   "spring-loaded-sawblades-bladewheel-chariot: filter noun: tapped creature an opponent controls",
    "authority-of-the-consuls: ability: Creatures your opponents control enter tapped.",
-   "braided-net-braided-quipu: layout transform is not compiled",
+   "braided-net-braided-quipu: ability: ~ enters with three net counters on it.",
    "dusk-rose-reliquary: ability: As an additional cost to cast this spell, sacrifice an artifact or creature.",
    "torpor-orb: ability: Creatures entering don't cause abilities to trigger.",
    "the-fire-crystal: ability: Red spells you cast cost {1} less to cast."
@@ -2156,8 +2152,7 @@ window.MF.decks = {
    "carnage-crimson-chaos: effect: Return target creature card with mana value 3 or less from your graveyard to the battlefield",
    "inti-seneschal-of-the-sun: trigger event: you attack, you may discard a card. When you do, put a +1/+1 counter on target attacking creature. It gains trample until end of turn.",
    "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
-   "erode: effect: Its controller may search their library for a basic land card, put it onto the battlefield tapped, then shuffle",
-   "cecil-dark-knight-cecil-redeemed-paladin: layout transform is not compiled"
+   "erode: effect: Its controller may search their library for a basic land card, put it onto the battlefield tapped, then shuffle"
   ],
   "tokens": []
  },
@@ -3567,7 +3562,7 @@ window.MF.decks = {
   "player": "Ha Pham",
   "rank": 33,
   "players": 11,
-  "registered": false,
+  "registered": true,
   "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
   "min": 60,
   "main": [
@@ -3710,20 +3705,9 @@ window.MF.decks = {
     "name": "Negate"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "floodpits-drowner: filter qualifier: and put a stun counter on it",
-   "vren-the-relentless: ability: If a creature an opponent controls would die, exile it instead.",
-   "gixs-command: modal \"choose two\" is not compiled",
-   "kaito-bane-of-nightmares: ability: Ninjutsu {1}{U}{B}",
-   "sheoldred-the-apocalypse: trigger event: you draw a card, you gain 2 life.",
-   "cecil-dark-knight-cecil-redeemed-paladin: layout transform is not compiled",
-   "azure-beastbinder: ability: ~ can't be blocked by creatures with power 2 or greater.",
-   "restless-reef: effect: Until end of turn, ~ becomes a 4/4 blue and black Shark creature with deathtouch",
-   "enduring-curiosity: trigger event: a creature you control deals combat damage to a player, draw a card.",
-   "faerie-mastermind: trigger event: an opponent draws their second card each turn, you draw a card."
-  ],
+  "compiles": true,
   "tokens": [
+   "token-rat-1-1-b-this-token-gets-for-each-other-rat-you-control",
    "token-vampire-1-1-w-lifelink"
   ]
  },
@@ -3888,7 +3872,6 @@ window.MF.decks = {
    "souls-of-the-lost: ability: As an additional cost to cast this spell, discard a card or sacrifice a permanent.",
    "rubblebelt-maverick: cost: Exile this card from your graveyard",
    "overwhelming-remorse: effect: This spell costs {1} less to cast for each creature card in your graveyard",
-   "gnawing-vermin: effect: Target player mills two cards",
    "overlord-of-the-balemurk: ability: Impending 5—{1}{B}"
   ],
   "tokens": []

@@ -44,6 +44,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "azure-beastbinder",
+    "styleId": "L",
+    "land": false,
+    "prompt": "master grade super deformed knight, three heads tall, frost-rimed steel armour, a rat rogue mage binding a snarling beast with glowing blue chains, draining its strength, in a dark forest grove. cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war.",
+    "subject": "a rat rogue mage binding a snarling beast with glowing blue chains, draining its strength",
+    "setting": "in a dark forest grove",
+    "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
+    "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "belladonna-took",
     "styleId": "D",
     "land": false,
@@ -198,6 +209,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "cecil-dark-knight-cecil-redeemed-paladin",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a dark knight in spiked black plate armour and a horned helm, a cursed dark sword trailing black flame, his own life bleeding into it, in a shadowed castle hall. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a dark knight in spiked black plate armour and a horned helm, a cursed dark sword trailing black flame, his own life bleeding into it",
+    "setting": "in a shadowed castle hall",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "charmed-sleep",
     "styleId": "E",
     "land": false,
@@ -319,6 +341,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "darkslick-shores",
+    "styleId": "L",
+    "land": true,
+    "prompt": "landscape painting, scenery, a black oily shoreline with metallic rocks glinting, a dark sea beyond, at dusk. cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation.",
+    "subject": "a black oily shoreline with metallic rocks glinting, a dark sea beyond",
+    "setting": "at dusk",
+    "style": "cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "deep-cavern-bat",
     "styleId": "D",
     "land": false,
@@ -385,6 +418,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "enduring-curiosity",
+    "styleId": "E",
+    "land": false,
+    "prompt": "chunky super deformed fantasy soldier, four heads tall, detailed gear, a spectral cat made of glowing blue light stalking forward with eyes like lanterns, through a moonlit library of shadows. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "a spectral cat made of glowing blue light stalking forward with eyes like lanterns",
+    "setting": "through a moonlit library of shadows",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "chunky super deformed fantasy soldier, four heads tall, detailed gear, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "enduring-innocence",
     "styleId": "F",
     "land": false,
@@ -404,6 +448,17 @@
     "setting": "in a dim crypt",
     "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
     "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "faerie-mastermind",
+    "styleId": "K",
+    "land": false,
+    "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a sly faerie spy with dragonfly wings whispering stolen secrets, a dagger hidden behind her back, in a dark castle corridor. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a sly faerie spy with dragonfly wings whispering stolen secrets, a dagger hidden behind her back",
+    "setting": "in a dark castle corridor",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
     "negativeExtra": ""
   },
   {
@@ -451,6 +506,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "floodpits-drowner",
+    "styleId": "F",
+    "land": false,
+    "prompt": "master grade super deformed fighter, stocky three heads tall, battle-scarred, a merfolk assassin dragging a struggling knight down into black water, in a flooded pit under a stormy sky. loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy.",
+    "subject": "a merfolk assassin dragging a struggling knight down into black water",
+    "setting": "in a flooded pit under a stormy sky",
+    "style": "loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy",
+    "short": "master grade super deformed fighter, stocky three heads tall, battle-scarred, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "forest",
     "styleId": "D",
     "land": true,
@@ -493,6 +559,28 @@
     "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
     "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "gixs-command",
+    "styleId": "K",
+    "land": false,
+    "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a sinister cyborg warlord issuing orders with a clawed metal hand, soldiers falling to their knees around him, in a smoking war foundry. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a sinister cyborg warlord issuing orders with a clawed metal hand, soldiers falling to their knees around him",
+    "setting": "in a smoking war foundry",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "gloomlake-verge",
+    "styleId": "K",
+    "land": true,
+    "prompt": "landscape painting, scenery, a still black lake ringed by dead trees and pale fog, a ruined tower on the far shore, at twilight. thick impasto oil landscape, palette knife texture, bold heavy strokes, smouldering orange and black sky.",
+    "subject": "a still black lake ringed by dead trees and pale fog, a ruined tower on the far shore",
+    "setting": "at twilight",
+    "style": "thick impasto oil landscape, palette knife texture, bold heavy strokes, smouldering orange and black sky",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "go-for-the-throat",
@@ -603,6 +691,17 @@
     "style": "modern digital environment concept art, cinematic volumetric lighting, atmospheric haze, epic scale, teal and orange palette",
     "short": "landscape painting, scenery, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "kaito-bane-of-nightmares",
+    "styleId": "I",
+    "land": false,
+    "prompt": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, a masked ninja in dark blue armour striking from the shadows with a glowing blade, his double fading behind him, on neon-lit rooftops at night. retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing.",
+    "subject": "a masked ninja in dark blue armour striking from the shadows with a glowing blade, his double fading behind him",
+    "setting": "on neon-lit rooftops at night",
+    "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
+    "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
+    "negativeExtra": ""
   },
   {
     "key": "karplusan-forest",
@@ -880,6 +979,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "restless-reef",
+    "styleId": "H",
+    "land": true,
+    "prompt": "landscape painting, scenery, a jagged dark reef rising from a churning black sea, the fin of a huge shark circling, under a stormy sky. gothic horror landscape painting, moonlit ruins and dead trees, rich crimson and black, deep shadow, dread.",
+    "subject": "a jagged dark reef rising from a churning black sea, the fin of a huge shark circling",
+    "setting": "under a stormy sky",
+    "style": "gothic horror landscape painting, moonlit ruins and dead trees, rich crimson and black, deep shadow, dread",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "riverpyre-verge",
     "styleId": "E",
     "land": true,
@@ -954,6 +1064,17 @@
     "setting": "through smoke and ash over a ruined battlefield, harsh light breaking through clouds",
     "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
     "short": "master grade super deformed infernal warrior, three heads tall, horned black armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "sheoldred-the-apocalypse",
+    "styleId": "B",
+    "land": false,
+    "prompt": "master grade SD figure, compact heroic proportions, highly detailed armour plating, a towering mechanical horror queen on segmented bladed legs, a skull-like crown, looming over a ruined throne room, in a dark industrial cathedral. premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce.",
+    "subject": "a towering mechanical horror queen on segmented bladed legs, a skull-like crown, looming over a ruined throne room",
+    "setting": "in a dark industrial cathedral",
+    "style": "premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce",
+    "short": "master grade SD figure, compact heroic proportions, highly detailed armour plating, ",
     "negativeExtra": ""
   },
   {
@@ -1309,6 +1430,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "token-rat-1-1-b-this-token-gets-for-each-other-rat-you-control",
+    "styleId": "M",
+    "land": false,
+    "prompt": "super deformed hooded raider, stocky three heads tall, crude weapons, a vicious black rat with red eyes leading a pack forward, in a dark sewer tunnel. matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace.",
+    "subject": "a vicious black rat with red eyes leading a pack forward",
+    "setting": "in a dark sewer tunnel",
+    "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
+    "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "token-treasure",
     "styleId": "N",
     "land": false,
@@ -1375,6 +1507,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "underground-river",
+    "styleId": "D",
+    "land": true,
+    "prompt": "landscape painting, scenery, a dark river flowing through a vast cavern, glowing blue fungi on the walls, deep underground. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a dark river flowing through a vast cavern, glowing blue fungi on the walls",
+    "setting": "deep underground",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "unholy-annex-ritual-chamber",
     "styleId": "A",
     "land": false,
@@ -1427,6 +1570,17 @@
     "setting": "on a hilltop before a battle at dawn",
     "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
     "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "vren-the-relentless",
+    "styleId": "E",
+    "land": false,
+    "prompt": "chunky super deformed fantasy soldier, four heads tall, detailed gear, a ruthless rat warlord in a tattered cloak, black rats at his feet, dagger raised, in a flooded sewer under a ruined city. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "a ruthless rat warlord in a tattered cloak, black rats at his feet, dagger raised",
+    "setting": "in a flooded sewer under a ruined city",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "chunky super deformed fantasy soldier, four heads tall, detailed gear, ",
     "negativeExtra": ""
   },
   {

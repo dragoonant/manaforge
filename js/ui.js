@@ -24,6 +24,8 @@
       if (ch.p != null) { p = ch.p; t = ch.t; }
       if (c.ctr['+1/+1']) badges += `<div class="badge b-ctr">+${c.ctr['+1/+1']}</div>`;
       if (c.ctr['-1/-1']) badges += `<div class="badge b-ctrm">−${c.ctr['-1/-1']}</div>`;
+      if (c.ctr.loyalty != null) badges += `<div class="badge b-loy" title="Loyalty (CR 306.5c)">${c.ctr.loyalty}</div>`;
+      if (c.transformed) badges += `<div class="badge b-copy" title="Transformed: its back face is up (CR 712)">${esc(MF.cards[c.id].back.name)}</div>`;
       if (c.dmg) badges += `<div class="badge b-dmg">${c.dmg} dmg</div>`;
       if (ch.types.includes('Creature') && c.ctrl === v.ap && !ch.kw.haste && !(c.ctlTurn < v.turn)) badges += `<div class="badge b-sick" title="Summoning sick: it came under your control this turn (CR 302.6)">zzz</div>`;
       if (ch.noUntap) badges += `<div class="badge b-lock" title="Doesn’t untap during its controller’s untap step">locked</div>`;
@@ -96,7 +98,7 @@
           add(a.iid, a, 'Cast ' + (a.door != null ? d.doors[a.door].name + ' (door)' : a.alt ? d.alt.name + ' (' + (d.alt.kind === 'omen' ? 'Omen' : 'Adventure') + ')' : d.name) + ' — ' + MF.manaStr(cost));
         }
         else if (a.type === 'unlock') { const f = MF.cards[s.cards[a.iid].id].doors[a.door]; add(a.iid, a, 'Unlock ' + f.name + ' — ' + f.mana); }
-        else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : ab.levelUp ? 'Level ' + ab.levelUp + ' — ' + ab.cost.mana : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
+        else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : ab.levelUp ? 'Level ' + ab.levelUp + ' — ' + ab.cost.mana : ab.loyalty != null ? MF.describeAbility(ab) : ab.ninjutsu ? 'Ninjutsu — ' + ab.cost.mana + ', return an unblocked attacker' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
         else if (a.type === 'pass') btns.push({ a: a, label: T.passLabel(s, ui.human), cls: 'primary' });
       }
       btns.push({ ui: 'passTurn', label: 'Pass to end of turn', cls: 'ghost' });
@@ -129,6 +131,7 @@
           <span class="pz" title="Library">Library ${p.lib.length}</span>
           ${mine ? '' : `<span class="pz" title="Cards in hand">Hand ${p.hand.length}</span>`}
           <span class="pz click" data-view="grave:${seat}">Graveyard ${p.grave.length}</span>
+          ${(v.emblems || []).filter(em => em.ctrl === seat).map(em => `<span class="pz" title="Emblem (CR 114)">Emblem: ${esc(em.text)}</span>`).join('')}
           <span class="pz click" data-view="exile:${seat}">Exile ${p.exile.length}</span>
         </div>
       </div>`;
@@ -282,7 +285,7 @@
       <div class="zrules">${doorsHtml}<div class="zkw">Room — cast one door; it enters unlocked. In your main phase with the stack empty you may pay a locked door’s cost to unlock it (CR 709.5e).</div></div>
       ${live}${why ? `<div class="zwhy">Can’t play now: ${T.symbols(why)}</div>` : ''}</div>`;
     }
-    const text = rules(d.text) + (d.alt ? `<div class="zalt"><b>${esc(d.alt.name)}</b> <span class="zcost">${T.symbols(d.alt.mana)}</span><br><i>${esc(d.alt.typeLine)}</i><br>${rules(d.alt.text)}</div>` : '');
+    const text = rules(d.text) + (d.back ? `<div class="zalt"><b>${esc(d.back.name)}</b> (transformed)<br><i>${esc(d.back.typeLine)}</i><br>${rules(d.back.text)}${d.back.power != null ? '<br>' + d.back.power + '/' + d.back.toughness : ''}</div>` : '') + (d.alt ? `<div class="zalt"><b>${esc(d.alt.name)}</b> <span class="zcost">${T.symbols(d.alt.mana)}</span><br><i>${esc(d.alt.typeLine)}</i><br>${rules(d.alt.text)}</div>` : '');
     return `<div class="zcard">${face(null, id, { size: 'lg' })}${tokens.map(t => `<div class="ztok">Creates:${face(null, t, { size: 'sm' })}</div>`).join('')}</div>
       <div class="ztext"><div class="zname">${esc(d.name)} <span class="zcost">${T.symbols(d.mana)}</span></div><div class="ztype">${esc(d.typeLine)}</div>
       <div class="zrules">${text || '<i>No rules text.</i>'}</div>

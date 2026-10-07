@@ -97,6 +97,9 @@
   const move = MF.move = function (s, iid, zone, o) {
     o = o || {};
     const c = I(s, iid), from = c.zone;
+    if (from === 'bf' && zone === 'grave' && chars(s, iid).types.includes('Creature') && s.bf.some(v => v !== iid && chars(s, v).ctrl !== c.ctrl && chars(s, v).ab.some(a => a.k === 'oppDieExile'))) {
+      log(s, 'exiledInstead', { who: c.owner, c: c.id }); zone = 'exile';                    // its rulings: no "dies" trigger
+    }
     if (from === 'bf' && zone === 'grave' && s.effects.some(e => e.k === 'dieExile' && e.iid === iid) && chars(s, iid).types.some(ty => ty === 'Creature' || ty === 'Planeswalker')) {   // "dies" (CR 700.4)
       log(s, 'exiledInstead', { who: c.owner, c: c.id });                                     // Torch the Tower: it would die; it is exiled instead
       zone = 'exile';
@@ -121,16 +124,19 @@
       if (o.spent != null) nc.spent = o.spent;
       if (o.castFromHand) nc.castFromHand = true;
       if (o.att != null) nc.att = o.att;
-      if (o.ctr) nc.ctr = Object.assign({}, o.ctr);                                           // "enters with N counters" (CR 122.6)
+      if (o.ctr) nc.ctr = Object.assign({}, o.ctr);
+      const dl = def(s, n); if (dl.loyalty != null && dl.types.includes('Planeswalker') && nc.ctr.loyalty == null) nc.ctr.loyalty = dl.loyalty;   // CR 306.5b                                           // "enters with N counters" (CR 122.6)
       if (o.door != null) nc.unlocked = [o.door === 0, o.door === 1];
       if (o.warp) (s.delayed = s.delayed || []).push({ src: n, ctrl: nc.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', ops: [{ o: 'warpExile', iid: n }] } });   // CR 702.185a                         // CR 709.5d: the half that was cast enters unlocked
       enterReplacements(s, n, o);
     }
     const to = zoneArr(s, nc);
     if (to) { if (o.top) to.unshift(n); else to.push(n); }
+    if (zone === 'bf' && o.attacking) MF.enterAttacking(s, n, o.attacking);                   // ninjutsu (CR 702.49c)
     if (from === 'bf') {
       for (const k of s.bf) { const a = I(s, k); if (a.att === iid) a.att = -1; }            // what was attached to it is now attached to nothing (SBA 704.5m/n)
       if (s.combat) removeFromCombat(s, iid);                                                // CR 506.4
+      if (zone === 'exile' && lki.types.includes('Creature')) { s.exiledCre = s.exiledCre || {}; s.exiledCre[lki.ctrl] = (s.exiledCre[lki.ctrl] || 0) + 1; }   // "creatures that were exiled under your opponents' control this turn"
       emit(s, { t: 'leaves', iid: iid, to: zone, lki: lki });
       for (const e of s.effects.filter(e => e.k === 'exileUntil' && e.src === iid)) {           // CR 610.3: the exiled card returns, to its owner's hand
         s.effects.splice(s.effects.indexOf(e), 1);
@@ -183,11 +189,12 @@
   // A creature put onto the battlefield attacking (CR 508.4): attacking the opponent, never declared,
   // so "whenever ... attacks" does not trigger; after blockers are declared it is unblocked (508.4d).
   // One that is not the attacking player's, or outside combat, is never attacking (506.3b).
-  MF.enterAttacking = function (s, iid) {
+  MF.enterAttacking = function (s, iid, target) {
     const c = I(s, iid), cb = s.combat;
     c.tapped = true;
     if (!cb || c.ctrl !== s.ap || !['attackers', 'blockers', 'fsdamage', 'damage', 'eoc'].includes(s.step) || !chars(s, iid).types.includes('Creature')) return false;
     cb.attackers.push(iid);
+    (cb.target = cb.target || {})[iid] = target && typeof target === 'object' ? target : { p: 1 - c.ctrl };
     if (s.step !== 'attackers') cb.blocked[iid] = false;
     return true;
   };
@@ -216,6 +223,7 @@
       if (!p.lib.length) { p.drewEmpty = true; continue; }                                    // CR 104.3c, 121.3
       move(s, p.lib[0], 'hand'); k++;
       p.h.drawn = (p.h.drawn || 0) + 1;
+      emit(s, { t: 'drawCard', who: who, nth: p.h.drawn });
     }
     if (k) log(s, 'draw', { who: who, n: k });
     return k;
@@ -247,6 +255,9 @@
     if (c.asDoor != null && c.zone === 'stack') return faceChars(s, iid, false, c.asDoor);
     let d = def(s, iid);
     let name = d.name, types = d.types.slice(), subtypes = d.subtypes.slice(), supers = d.supers.slice(), colors = d.colors.slice(), p = d.power, t = d.toughness, ab = d.ab, kw = Object.assign({}, d.kw), mana = d.mana;
+    if (d.back && c.transformed && c.zone === 'bf') {                                          // CR 712.8e: the back face's characteristics; mana value from the front
+      const b = d.back; name = b.name; types = b.types.slice(); subtypes = b.subtypes.slice(); supers = b.supers.slice(); colors = b.colors.slice(); p = b.power; t = b.toughness; ab = b.ab; kw = Object.assign({}, b.kw);
+    }
     if (d.layout === 'case' && c.zone === 'bf' && !c.solved) ab = d.ab.map(a => a.solved ? LOCKED : a);   // CR 719.3c
     if (d.layout === 'class' && c.zone === 'bf') { const lv = c.level || 1; ab = d.ab.map(a => (a.level || 1) <= lv ? a : LOCKED); }   // CR 716.2a, 716.2d
     if (d.doors && c.zone === 'bf') {                                                         // CR 709.5: a Room has the name, mana cost and rules text of its unlocked doors only
@@ -277,30 +288,43 @@
     // (No card in a registered deck makes these; written here so the order is right when one does.)
     for (const e of s.effects) if (e.k === 'control' && out[e.iid]) out[e.iid].ctrl = e.who;   // layer 2
     for (const e of s.effects) if (e.k === 'types' && out[e.iid]) { const o = out[e.iid]; o.types = e.types.slice(); o.subtypes = e.subtypes.slice(); }   // layer 4
-    for (const e of s.effects) if (e.k === 'animate' && out[e.iid]) { const o = out[e.iid]; if (!o.types.includes('Creature')) o.types.push('Creature'); if (e.allTypes) o.allCreatureTypes = true; }   // layer 4: "becomes a creature ... It's still a land"
-    for (const e of s.effects) if (e.k === 'color' && out[e.iid]) out[e.iid].colors = e.colors.slice();                                                 // layer 5
+    for (const e of s.effects) if (e.k === 'animate' && out[e.iid]) { const o = out[e.iid]; if (!o.types.includes('Creature')) o.types.push('Creature'); if (e.allTypes) o.allCreatureTypes = true; for (const st of e.subtypes || []) if (!o.subtypes.includes(st)) o.subtypes.push(st); }   // layer 4: "becomes a creature ... It's still a land"
     // Statics that apply, in timestamp order (CR 613.7). Their conditions and affected sets are
-    // read with layers 1-4 applied.
+    // read with the layers so far applied. Emblems (CR 114) have statics with no object.
     const statics = [];
     for (const iid of s.bf) for (const a of out[iid].ab) if (a.k === 'static' || a.k === 'cda' || a.k === 'noUntap') statics.push({ src: iid, a: a, ts: I(s, iid).ts });
+    for (const em of s.emblems || []) statics.push({ src: null, ctrl: em.ctrl, a: em.ab, ts: em.ts });
     statics.sort((x, y) => x.ts - y.ts);
+    const lost = new Set();                                                                    // objects that lost all abilities (layer 6): their statics stop applying from there on
     const affected = (st) => {
-      const a = st.a, src = I(s, st.src), sc = out[st.src];
-      if (a.cond && !MF.condStatic(s, st.src, a.cond, out)) return [];
+      const a = st.a;
+      if (st.src != null && lost.has(st.src)) return [];
+      if (a.cond && !(st.src == null ? MF.cond({ s: s, ctrl: st.ctrl, src: null, flags: {} }, a.cond) : MF.condStatic(s, st.src, a.cond, out))) return [];
       if (a.affects === 'self') return [st.src];
+      const src = I(s, st.src);
       if (a.affects === 'enchanted' || a.affects === 'equipped') return src.att != null && out[src.att] ? [src.att] : [];
-      return s.bf.filter(i => MF.matchChars(s, i, out[i], a.affects, sc.ctrl, st.src));
+      return s.bf.filter(i => MF.matchChars(s, i, out[i], a.affects, st.src == null ? st.ctrl : out[st.src].ctrl, st.src));
     };
-    // Layer 6: ability-adding and -removing effects.
-    for (const st of statics) if (st.a.k === 'static' && st.a.grant) for (const i of affected(st)) for (const k of st.a.grant) out[i].kw[k] = (out[i].kw[k] || 0) + 1;
-    for (const e of s.effects) if ((e.k === 'grant' || e.k === 'animate') && out[e.iid]) for (const k of e.kws) out[e.iid].kw[k] = (out[e.iid].kw[k] || 0) + 1;
+    for (const st of statics) if (st.a.setTypes) for (const i of affected(st)) { out[i].types = st.a.setTypes.types.slice(); out[i].subtypes = st.a.setTypes.subtypes.slice(); }   // layer 4: Kaito "is a 3/4 Ninja creature"
+    for (const e of s.effects) if (e.k === 'color' && out[e.iid]) out[e.iid].colors = e.colors.slice();                                                 // layer 5
+    for (const e of s.effects) if (e.k === 'animate' && e.colors && out[e.iid]) out[e.iid].colors = e.colors.slice();
+    // Layer 6: ability-adding and -removing effects, in timestamp order (CR 613.7).
+    const l6 = [];
+    for (const st of statics) if (st.a.k === 'static' && st.a.grant) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) for (const k of st.a.grant) out[i].kw[k] = (out[i].kw[k] || 0) + 1; } });
+    for (const e of s.effects) if ((e.k === 'grant' || e.k === 'animate') && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { for (const k of e.kws) out[e.iid].kw[k] = (out[e.iid].kw[k] || 0) + 1; } });
+    for (const e of s.effects) if (e.k === 'loseAll' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].kw = {}; out[e.iid].ab = out[e.iid].ab.map(() => LOCKED); lost.add(e.iid); } });   // Azure Beastbinder: "loses all abilities"
+    l6.sort((x, y) => x.ts - y.ts); for (const op of l6) op.run();
     // Layer 7a: characteristic-defining abilities.
     for (const st of statics) if (st.a.k === 'cda') { const o = out[st.src]; const v = MF.valueStatic(s, st.src, st.a.v, out); if (st.a.p) o.p = v; if (st.a.t) o.t = v; }
     for (const iid of s.bf) { const o = out[iid]; if (o.p === '*') o.p = 0; if (o.t === '*') o.t = 0; }
     // Layer 7b: effects that set power and toughness.
-    for (const e of s.effects) if ((e.k === 'setPT' || e.k === 'animate') && out[e.iid]) { out[e.iid].p = e.p; out[e.iid].t = e.t; }
+    const l7b = [];
+    for (const st of statics) if (st.a.setPT) l7b.push({ ts: st.ts, run: () => { for (const i of affected(st)) { out[i].p = st.a.setPT[0]; out[i].t = st.a.setPT[1]; } } });
+    for (const e of s.effects) if ((e.k === 'setPT' || e.k === 'animate') && out[e.iid]) l7b.push({ ts: e.ts || 0, run: () => { out[e.iid].p = e.p; out[e.iid].t = e.t; } });
+    l7b.sort((x, y) => x.ts - y.ts); for (const op of l7b) op.run();
     // Layer 7c: modifications, and counters.
     for (const st of statics) if (st.a.k === 'static' && (st.a.p || st.a.t)) for (const i of affected(st)) { out[i].p += st.a.p || 0; out[i].t += st.a.t || 0; }
+    for (const st of statics) if (st.a.k === 'static' && st.a.pv) for (const i of affected(st)) { const v = MF.valueStatic(s, st.src, st.a.pv, out); out[i].p += v; out[i].t += v; }   // "+1/+1 for each other Rat you control"
     for (const e of s.effects) if (e.k === 'pt' && out[e.iid]) { out[e.iid].p += e.p; out[e.iid].t += e.t; }
     for (const iid of s.bf) { const c = I(s, iid), o = out[iid]; const n = (c.ctr['+1/+1'] || 0) - (c.ctr['-1/-1'] || 0); if (o.p != null) { o.p += n; o.t += n; } }
     // Layer 7d: switching. (None yet.)
@@ -339,7 +363,8 @@
       const lost = loseLifeRaw(s, o.to.p, lifeLost(s, o.to.p, n));                            // CR 120.3a; the damage dealt stays n (Bloodletter ruling: lifelink gains n)
       log(s, 'damage', Object.assign({ who: o.to.p, n: n, src: sc.name, srcId: sc.id, life: p.life, combat: !!o.combat }, lost !== n ? { lost: lost } : {}));
     } else {
-      const c = I(s, o.to.c);
+      const c = I(s, o.to.c), pwTypes = chars(s, o.to.c).types;
+      if (pwTypes.includes('Planeswalker')) { c.ctr.loyalty = Math.max(0, (c.ctr.loyalty || 0) - n); log(s, 'loyaltyLoss', { who: c.ctrl, c: c.id, n: n, src: sc.name, srcId: sc.id, left: c.ctr.loyalty }); }
       c.dmg += n;                                                                            // CR 120.3e
       if (sc.iid != null) (c.dmgBy = c.dmgBy || []).push(sc.iid);
       if (o.batch) o.batch[o.to.c] = (o.batch[o.to.c] || 0) + n;                               // combat damage is one event (CR 510.2): emitted once per creature by combatDamage
@@ -348,7 +373,7 @@
       log(s, 'damageCreature', { who: c.ctrl, n: n, src: sc.name, srcId: sc.id, c: c.id, combat: !!o.combat });
     }
     if (sc.kw.lifelink) { if (o.gainBatch) { const g = o.gainBatch[sc.iid] || (o.gainBatch[sc.iid] = { sc: sc, n: 0 }); g.n += n; } else gainLife(s, sc.ctrl, n, sc); }   // CR 702.15b
-    emit(s, { t: 'dealsDamage', src: sc.iid, srcCtrl: sc.ctrl, to: o.to, n: n, combat: !!o.combat });
+    emit(s, { t: 'dealsDamage', src: sc.iid, srcCtrl: sc.ctrl, srcTypes: sc.types.slice(), to: o.to, n: n, combat: !!o.combat });
     return n;
   };
   MF.replacers = { damage: [] };
@@ -660,7 +685,8 @@
   function nextTurn(s) {
     s.ap = 1 - s.ap; s.turn++; s.step = 'untap'; s.sub = 0; s.firstTurn = false; s.extraCombat = 0;
     for (const p of s.players) { p.landsPlayed = 0; p.h = freshHist(); }
-    s.diedThisTurn = 0;
+    s.diedThisTurn = 0; s.exiledCre = {};
+    s.effects = s.effects.filter(e => !(e.untilNextTurnOf === s.ap && e.turn < s.turn));   // "until your next turn"
   }
   function stepFlow(s) {
     const ap = s.ap;
@@ -718,6 +744,7 @@
     if (bc.ctrl === s.ap || bc.tapped || !bch.types.includes('Creature')) return false;       // CR 509.1a
     if (s.effects.some(e => e.k === 'cantBlock' && e.iid === b)) return false;
     if (ach.unblockable) return false;
+    for (const ea of ach.ab) if (ea.k === 'evasion' && MF.matchChars(s, b, bch, ea.blockerNot, bch.ctrl, a)) return false;   // CR 509.1b
     if (restricted(s, b, 'block')) return false;
     if (ach.kw.flying && !bch.kw.flying && !bch.kw.reach) return false;                      // CR 702.9b
     return true;
@@ -742,7 +769,14 @@
     }
     log(s, 'attackers', { who: who, cs: chosen.map(i => I(s, i).id) });
     if (chosen.length) P(s, who).h.attackedWith += chosen.length;
-    for (const iid of chosen) { const c = I(s, iid), first = c.attackedTurn !== s.turn; c.attackedTurn = s.turn; emit(s, { t: 'attacks', iid: iid, ctrl: who, first: first }); }   // CR 508.1m
+    cb.target = cb.target || {};
+    const pws = s.bf.filter(i => I(s, i).ctrl !== who && chars(s, i).types.includes('Planeswalker'));
+    for (const iid of chosen) {
+      if (!pws.length) { cb.target[iid] = { p: 1 - who }; continue; }
+      const a = ask(x, { who: who, kind: 'attackWhom', src: iid, opts: [{ id: 'p' + (1 - who), seat: 1 - who }].concat(pws.map(i => ({ id: 'c' + i, iid: i }))) });
+      cb.target[iid] = a[0] === 'p' ? { p: +a.slice(1) } : { c: +a.slice(1) };
+    }
+    for (const iid of chosen) { const c = I(s, iid), first = c.attackedTurn !== s.turn; c.attackedTurn = s.turn; emit(s, { t: 'attacks', iid: iid, ctrl: who, first: first, target: cb.target[iid] }); }   // CR 508.1m
     if (chosen.length) {                                                                      // CR 508.3c: "Whenever you attack with one or more Lizards" — once for the declaration
       const subs = new Set(); let anyType = false;
       for (const iid of chosen) { const ch = chars(s, iid); ch.subtypes.forEach(st => subs.add(st)); if (ch.allCreatureTypes) anyType = true; }
@@ -795,12 +829,13 @@
       const ch = chars(s, a), pow = ch.p;
       if (pow <= 0) continue;                                                                 // CR 510.1a
       const blockers = (cb.blockedBy[a] || []).filter(b => I(s, b).zone === 'bf');
-      if (!cb.blocked[a]) { assigns.push({ src: a, to: { p: 1 - s.ap }, n: pow }); continue; }   // CR 510.1b
+      const at = (cb.target && cb.target[a]) || { p: 1 - s.ap }, atOk = at.p != null || (I(s, at.c).zone === 'bf');   // a planeswalker that has left is dealt nothing (CR 506.4)
+      if (!cb.blocked[a]) { if (atOk) assigns.push({ src: a, to: at, n: pow }); continue; }   // CR 510.1b
       if (!blockers.length) {                                                                 // CR 510.1c, 702.19d
-        if (ch.kw.trample) assigns.push({ src: a, to: { p: 1 - s.ap }, n: pow });
+        if (ch.kw.trample && atOk) assigns.push({ src: a, to: at, n: pow });
         continue;
       }
-      divide(x, s.ap, a, pow, blockers, ch.kw.trample ? { p: 1 - s.ap } : null, ch.kw.deathtouch, assigns);
+      divide(x, s.ap, a, pow, blockers, ch.kw.trample && atOk ? at : null, ch.kw.deathtouch, assigns);
     }
     // Blockers, by the defending player.
     for (const b in cb.blocks) {
@@ -869,6 +904,7 @@
         else if (c.dmg >= ch.t && !ch.kw.indestructible) out.push({ k: 'destroy', iid: iid, why: 'lethal' });   // CR 704.5g
         else if (c.dt && c.dmg > 0 && !ch.kw.indestructible) out.push({ k: 'destroy', iid: iid, why: 'deathtouch' });   // CR 704.5h
       }
+      if (ch.types.includes('Planeswalker') && !(c.ctr.loyalty > 0)) out.push({ k: 'grave', iid: iid, why: 'loyalty' });   // CR 704.5i
       if (ch.supers.includes('Legendary')) { const key = c.ctrl + '|' + ch.name; (legends[key] = legends[key] || []).push(iid); }
       if (ch.subtypes.includes('Aura')) {                                                     // CR 704.5m, 303.4c
         const ok = c.att != null && c.att >= 0 && I(s, c.att) && I(s, c.att).zone === 'bf' && MF.auraCanEnchant(s, iid, c.att);
@@ -971,7 +1007,7 @@
     const d = def(s, iid);
     return d.types.includes('Land') && sorceryTiming(s, who) && P(s, who).landsPlayed < 1 && s.priority === who;
   };
-  const spellPart = MF.spellPart = (sp, L) => !sp ? null : sp.modes ? sp.modes[L.mode] : (sp.gift && L.gift != null ? sp.gift : sp);
+  const spellPart = MF.spellPart = (sp, L) => !sp ? null : sp.modes && sp.choose ? { ops: (L.modes || []).flatMap(i => sp.modes[i].ops) } : sp.modes ? sp.modes[L.mode] : (sp.gift && L.gift != null ? sp.gift : sp);
   // "You may cast that card ... and mana of any type can be spent to cast it" (Cruelclaw's Heist).
   const anyManaFor = MF.anyManaFor = (s, iid) => s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.anyMana) && I(s, iid).zone === 'exile';
   // `alt`: cast as its Adventure or Omen (CR 715.3a, 720.3a: only the alternative face is evaluated);
@@ -1012,6 +1048,8 @@
     if (a.tg && !slotsLegalNow(s, who, iid, a.tg)) return false;
     if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid }, a.cond)) return false;
     if (a.once && c.usedOnce) return false;
+    if (a.loyalty != null && (!sorceryTiming(s, who) || c.loyaltyTurn === s.turn || (a.loyalty < 0 && (c.ctr.loyalty || 0) < -a.loyalty))) return false;   // CR 606.3
+    if (a.ninjutsu && !unblockedAttackers(s, who).length) return false;                        // CR 702.49a: an unblocked attacker to return
     if (a.levelUp && (c.level || 1) !== a.levelUp - 1) return false;                           // CR 716.2a: only if this Class is level N-1
     if (a.cost.removeCtr && (c.ctr[a.cost.removeCtr.kind] || 0) < a.cost.removeCtr.n) return false;
     if (a.cost.life && P(s, who).life < a.cost.life) return false;                             // CR 119.4
@@ -1240,7 +1278,12 @@
       }
     }
     const sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
-    if (sp && sp.modes) {                                                                     // CR 700.2a, 601.2b: the mode is chosen as it is cast
+    if (sp && sp.modes && sp.choose === 2) {                                                   // "Choose two —": two different modes (CR 700.2d)
+      const opts = sp.modes.map((m, i) => ({ id: i, text: m.text }));
+      const m1 = ask(x, { who: who, kind: 'mode', src: iid, n: 1, of: 2, opts: opts, cancel: true });
+      const m2 = ask(x, { who: who, kind: 'mode', src: iid, n: 2, of: 2, opts: opts.filter(o => o.id !== m1), cancel: true });
+      L.modes = [m1, m2].sort((a, b) => a - b);
+    } else if (sp && sp.modes) {                                                              // CR 700.2a, 601.2b: the mode is chosen as it is cast
       const opts = sp.modes.map((m, i) => ({ id: i, text: m.text })).filter(o => !sp.modes[o.id].tg || slotsLegalNow(s, who, iid, sp.modes[o.id].tg));
       L.mode = ask(x, { who: who, kind: 'mode', src: iid, opts: opts, cancel: true });
       if (sp.modes[L.mode].tg) L.t = chooseTargets(x, who, iid, sp.modes[L.mode].tg, 'spell', true);
@@ -1287,6 +1330,12 @@
     if (a.tg) L.t = chooseTargets(x, who, iid, a.tg, 'ab', true);
     if (a.cost.tap) { if (c.tapped) throw new Illegal('already tapped'); c.tapped = true; }    // CR 602.2b, 601.2h
     // CR 601.2h: costs in any order; the token is chosen first, and a cost that can no longer be completed reverses the action (CR 733).
+    if (a.loyalty != null) { c.ctr.loyalty = (c.ctr.loyalty || 0) + a.loyalty; c.loyaltyTurn = s.turn; log(s, 'loyalty', { who: who, c: c.id, n: a.loyalty, left: c.ctr.loyalty }); }   // CR 606.4
+    if (a.cost.returnUnblocked) {                                                              // ninjutsu: return an unblocked attacker; this enters attacking what it attacked (702.49c)
+      const back = ask(x, { who: who, kind: 'ninjutsuReturn', src: iid, opts: unblockedAttackers(s, who).map(i => ({ id: i, iid: i })), cancel: true });
+      L.ninjaTarget = (s.combat.target && s.combat.target[back]) || { p: 1 - who };
+      log(s, 'ninjutsuReturn', { who: who, c: I(s, back).id, card: c.id }); move(s, back, 'hand');
+    }
     if (a.cost.sacToken) { const opts = s.bf.filter(i => I(s, i).ctrl === who && I(s, i).tok).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('no token to sacrifice'); MF.sacrifice(s, ask(x, { who: who, kind: 'sacToken', src: iid, opts: opts, cancel: true })); }
     payMana(x, who, MF.parseMana(a.cost.mana || ''), iid, true);
     if (a.once) c.usedOnce = true;

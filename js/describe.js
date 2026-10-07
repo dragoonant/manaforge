@@ -6,7 +6,8 @@
   const MF = window.MF;
   const KWNAME = { flying: 'flying', reach: 'reach', firstStrike: 'first strike', doubleStrike: 'double strike', deathtouch: 'deathtouch', lifelink: 'lifelink', trample: 'trample', vigilance: 'vigilance', haste: 'haste', menace: 'menace', defender: 'defender', flash: 'flash', hexproof: 'hexproof', indestructible: 'indestructible', prowess: 'prowess', shroud: 'shroud' };
   MF.KWNAME = KWNAME;
-  const N = n => typeof n === 'number' ? String(n) : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
+  const VN = { oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control' };
+  const N = n => typeof n === 'number' ? String(n) : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
   function filt(f) {
     if (!f) return 'anything';
     if (f.any) return 'any target';
@@ -25,6 +26,7 @@
     if (f.counter) w.push('with a ' + f.counter + ' counter');
     if (f.kw) w.push('with ' + KWNAME[f.kw]); if (f.notKw) w.push('without ' + KWNAME[f.notKw]);
     if (f.tokOrSub) w.push('that is a token or a ' + f.tokOrSub);
+    if (f.attacking) w.push('attacking');
     if (f.tok && f.types) w.push('token');
     if (f.mvLE != null) w.push('with mana value ' + f.mvLE + ' or less');
     if (f.ptSumLE != null) w.push('with total power and toughness ' + f.ptSumLE + ' or less');
@@ -75,6 +77,8 @@
     lkiType: c => 'it was a ' + c.type.toLowerCase(),
     selfPowerIs: c => 'its power is exactly ' + c.n,
     notSolved: () => 'this Case is not solved',
+    hasCounter: c => 'it has one or more ' + c.kind + ' counters',
+    lifeAtMostHalfStart: () => 'your life total is less than or equal to half your starting life total',
     yourTurn: () => 'it is your turn',
   };
   const cond = c => (C[c.c] ? C[c.c](c) : c.c);
@@ -106,6 +110,14 @@
     counterUnless: op => 'counter ' + ref(op.on) + ' unless its controller pays ' + op.pay,
     lookPick: op => 'look at the top ' + op.n + ' cards of your library; put ' + op.take + ' of them into your hand and the rest on the bottom in any order',
     dieExile: () => 'if a permanent dealt damage by this would die this turn, exile it instead',
+    shuffleIntoLib: op => 'shuffle this and ' + ref(op.on[1]) + ' into their owners’ libraries',
+    transform: () => 'transform this',
+    emblem: op => 'you get an emblem with “' + op.text + '”',
+    choose: op => 'choose up to one ' + filt(op.f) + ' (not targeted)',
+    chooseFromGrave: op => 'return up to ' + op.n + ' ' + op.types.join('/').toLowerCase() + ' cards from your graveyard to your hand',
+    sacGreatestPower: () => 'each opponent sacrifices a creature with the greatest power among creatures they control',
+    loseAbilities: op => ref(op.on) + ' loses all abilities until your next turn; if it is a creature, it has base power and toughness ' + op.basePT.join('/') + ' until your next turn',
+    ninjutsuEnter: () => 'put this card onto the battlefield from your hand tapped and attacking',
     explore: () => 'this explores (reveal the top card: a land goes to your hand; otherwise a +1/+1 counter on this, and you may put the card into your graveyard)',
     moveCounters: op => 'put its counters on ' + ref(op.to),
     graveToBattlefield: op => 'return ' + ref(op.on) + ' to the battlefield',
@@ -150,10 +162,14 @@
       case 'mana': if (a.combo) return a.cost.mana + ': add X mana in any combination of ' + a.cols.map(c => '{' + c + '}').join(' and/or ') + ', where X is this creature’s power (only during your turn, only once each turn)';
         return [a.cost.tap ? '{T}' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': add ' + (a.cols.length === 5 ? 'one mana of any color' : a.cols.map(c => '{' + c + '}').join(' or ')) + (a.only ? ' (spend only on a creature spell)' : '') + (a.cond ? ' — only if ' + cond(a.cond) : '') + (a.selfDamage ? '; this deals ' + a.selfDamage + ' damage to you' : '');
       case 'etbPayOrTap': return 'as this enters, you may pay ' + a.life + ' life; if you don’t, it enters tapped';
-      case 'act': if (a.levelUp) return a.cost.mana + ': Level ' + a.levelUp + ' (as a sorcery, only while level ' + (a.levelUp - 1) + ')';
+      case 'act': if (a.loyalty != null) return '[' + (a.loyalty > 0 ? '+' + a.loyalty : a.loyalty === 0 ? '0' : '−' + (-a.loyalty)) + ']: ' + ops(a.ops) + ' (loyalty ability: once a turn, as a sorcery)';
+        if (a.ninjutsu) return 'ninjutsu ' + a.cost.mana + ' (' + a.cost.mana + ', return an unblocked attacker you control to hand: put this onto the battlefield from your hand tapped and attacking)';
+        if (a.levelUp) return a.cost.mana + ': Level ' + a.levelUp + ' (as a sorcery, only while level ' + (a.levelUp - 1) + ')';
         if (a.cost.removeCtr) return 'remove ' + a.cost.removeCtr.n + ' ' + a.cost.removeCtr.kind + ' counters from this: ' + ops(a.ops);
         if (a.cycling) return 'cycling ' + a.cost.mana + ' (' + a.cost.mana + ', discard this card from your hand: draw a card)';
         return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
+      case 'evasion': return 'this can’t be blocked by ' + filt(Object.assign({ types: ['Creature'] }, a.blockerNot)).replace('creature', 'creatures');
+      case 'oppDieExile': return 'if a creature an opponent controls would die, exile it instead';
       case 'warp': return 'warp ' + a.cost + ' (you may cast this from your hand for ' + a.cost + '; exile it at the beginning of the next end step, and you may cast it from exile on a later turn)';
       case 'sneak': return 'sneak ' + a.cost + ' (you may cast this for ' + a.cost + ' during your declare blockers step by returning an unblocked attacker you control to its owner’s hand)';
       case 'oppNoCast': return 'your opponents can’t cast spells during your turn';
@@ -172,6 +188,9 @@
         else if (a.on === 'dealsDamage') e = 'Whenever this deals ' + (a.combat ? 'combat ' : '') + 'damage' + (a.toOpp ? ' to an opponent' : a.toPlayer ? ' to a player' : '');
         else if (a.on === 'unlock') e = 'When you unlock this door';
         else if (a.on === 'gainLife') e = 'Whenever you gain life';
+        else if (a.on === 'drawCard') e = 'Whenever ' + (a.opp ? 'an opponent draws' : 'you draw') + (a.nth ? ' their second card each turn' : ' a card');
+        else if (a.on === 'dealsDamage' && a.who && a.who !== 'self') e = 'Whenever ' + who(a.who) + ' deals ' + (a.combat ? 'combat ' : '') + 'damage' + (a.toPlayer ? ' to a player' : '');
+        else if (a.on === 'beginStep' && !a.yours && a.step === 'end') e = 'At the beginning of each end step';
         else if (a.mobilize) e = 'Mobilize ' + a.mobilize + ' — whenever this attacks';
         else if (a.on === 'counterPut' && a.nth) e = 'When the ' + ['first', 'second', 'third', 'fourth', 'fifth'][a.nth - 1] + ' ' + a.ctrKind + ' counter is put on this';
         else if (a.on === 'levelUp') e = 'When this Class becomes level ' + a.level;
@@ -183,14 +202,17 @@
         else e = 'Whenever ' + who(a.who) + ' ' + EV[a.on];
         return e + (a.cond ? ', if ' + cond(a.cond) : '') + ': ' + ops(a.ops) + (a.oncePerTurn ? ' (only once each turn)' : '');
       }
-      case 'static': return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + (typeof a.affects === 'string' ? (a.affects === 'self' ? 'this' : 'the ' + a.affects + ' creature') : 'each ' + filt(a.affects)) + (a.p || a.t ? ' gets ' + sgn(a.p) + '/' + sgn(a.t) : '') + (a.grant ? (a.p || a.t ? ' and' : '') + ' has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
+      case 'static': if (a.setTypes) return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + 'this is a ' + a.setPT.join('/') + ' ' + a.setTypes.subtypes.join(' ') + ' creature' + (a.grant ? ' and has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
+        if (a.pv) return 'this gets +1/+1 for each other ' + filt(a.pv.f).replace(' you control', '') + ' you control';
+        return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + (typeof a.affects === 'string' ? (a.affects === 'self' ? 'this' : 'the ' + a.affects + ' creature') : 'each ' + filt(a.affects)) + (a.p || a.t ? ' gets ' + sgn(a.p) + '/' + sgn(a.t) : '') + (a.grant ? (a.p || a.t ? ' and' : '') + ' has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
       case 'cda': return 'power and toughness each equal ' + N(a.v);
       case 'noUntap': return 'the enchanted creature doesn’t untap during its controller’s untap step';
       case 'etbTapped': return 'enters tapped' + (a.unless ? ' unless ' + cond(a.unless) : '');
       case 'enchant': return 'enchant ' + filt(a.f);
       case 'costLess': return 'costs {' + a.n + '} less if ' + cond(a.cond);
       case 'costLessFor': return a.spell.types.join(' and ').toLowerCase() + ' spells you cast cost {' + a.n + '} less';
-      case 'spell': if (a.gift) { const base = ops(a.ops); curTg = a.gift.tg || []; named = new Set(); return base + '; if the gift was promised, instead: ' + ops(a.gift.ops); }
+      case 'spell': if (a.choose) return 'choose ' + a.choose + ' — ' + a.modes.map((m, i) => '(' + (i + 1) + ') ' + ops(m.ops)).join(' / ');
+        if (a.gift) { const base = ops(a.ops); curTg = a.gift.tg || []; named = new Set(); return base + '; if the gift was promised, instead: ' + ops(a.gift.ops); }
         if (a.modes) return 'choose one — ' + a.modes.map((m, i) => { curTg = m.tg || []; return '(' + (i + 1) + ') ' + ops(m.ops); }).join(' / '); return ops(a.ops);
       case 'restrict': return 'this can’t ' + [a.attack ? 'attack' : '', a.block ? 'block' : ''].filter(Boolean).join(' or ') + (a.unless ? ' unless ' + cond(a.unless) : '');
       case 'offspring': return 'offspring ' + a.cost + ' (an optional additional cost)';
@@ -202,6 +224,7 @@
   MF.describeCard = function (d) {
     const kws = Object.keys(d.kw).map(k => KWNAME[k] + (d.kw[k] > 1 ? ' ×' + d.kw[k] : ''));
     if (d.doors) return d.ab.map(a => d.doors[a.door].name + ' (door, while unlocked): ' + MF.describeAbility(a));   // CR 709.5
+    if (d.back) { const bk = Object.keys(d.back.kw).map(k => KWNAME[k]); return (kws.length ? [kws.join(', ')] : []).concat(d.ab.map(MF.describeAbility)).concat(['Transformed (' + d.back.name + '): ' + bk.concat(d.back.ab.map(MF.describeAbility)).join('; ')]); }   // CR 712
     return (kws.length ? [kws.join(', ')] : []).concat(d.ab.map(MF.describeAbility));
   };
 })();

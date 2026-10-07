@@ -187,3 +187,4 @@ a { color: var(--accent); }
 .b-doors { top: 3.6em; left: .25em; right: .25em; display: flex; flex-direction: column; gap: .1em; font-size: .62em; background: rgba(10,10,14,.78); }
 .b-doors .dopen { color: #ffd98a; } .b-doors .dlock { color: #8d8a99; }
 .b-stun { bottom: 3.4em; right: .25em; color: #ffb36b; }
+.b-loy { bottom: 1.9em; left: .25em; color: #f2e4a6; background: rgba(40,30,10,.85); font-weight: 700; }

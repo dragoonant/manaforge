@@ -150,6 +150,10 @@
       case 'discardUpTo': return 'done';
       case 'gift': return q.opts.some(o => o.id === 'no') ? 'no' : q.opts[0].id;
       case 'bargain': return 'none';
+      case 'attackWhom': return q.opts[0].id;
+      case 'ninjutsuReturn': case 'sacrificeOne': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
+      case 'chooseObj': { const mine = q.opts.filter(o => o.iid != null && I(s, o.iid).ctrl === me).sort((a, b) => permValue(s, b.iid) - permValue(s, a.iid)); return mine.length ? mine[0].id : 'none'; }
+      case 'chooseFromGrave': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }
       case 'exploreGrave': return MF.def(s, q.card).types.includes('Land') ? 'top' : keepValue(s, q.card) < 3 ? 'grave' : 'top';
       case 'wardPay': return P(s, me).life > (q.life || 0) + 5 ? 'pay' : 'decline';
       case 'sneakReturn': case 'sacToken': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
@@ -157,7 +161,7 @@
       case 'manaCombo': return q.opts[0].id;
       case 'payOrCounter': return 'pay';
       case 'lookPick': return q.opts.slice().sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0].id;
-      case 'handPick': return q.opts.slice().sort((a, b) => MF.manaValue(MF.parseMana(MF.def(s, b.iid).mana)) - MF.manaValue(MF.parseMana(MF.def(s, a.iid).mana)))[0].id;   // the most expensive card
+      case 'handPick': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => MF.manaValue(MF.parseMana(MF.def(s, b.iid).mana)) - MF.manaValue(MF.parseMana(MF.def(s, a.iid).mana)))[0]; return c ? c.id : 'none'; }   // the most expensive card
       case 'trigOrder': return q.opts[0].id;
       case 'legend': return q.opts[0].id;
       case 'scry': { const lands = s.bf.filter(i => I(s, i).ctrl === me && MF.isType(s, i, 'Land')).length; const land = isLand(s, q.opts[0].iid); return (land ? lands < 6 : true) ? 'top' : 'bottom'; }
@@ -197,7 +201,7 @@
     return evalFor(s, me);
   }
   // Kinds where every answer is worth a roll-out when the AI itself is asked.
-  const SEARCH_KINDS = { wardPay: 1, bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
+  const SEARCH_KINDS = { attackWhom: 1, wardPay: 1, bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
   function candidates(s, legal) {
     const seen = new Set(), out = [];

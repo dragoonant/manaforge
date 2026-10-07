@@ -24,7 +24,7 @@ for (const id of [...ids].sort()) {
   const d = MF.cards[id];
   if (d.un) { console.log('UN    ' + id + ': ' + d.un); continue; }
   n++;
-  const oracle = norm(d.text);
+  const oracle = norm(d.text + (d.back ? '\n' + d.back.text : ''));                          // a transforming card: both faces (CR 712)
   const desc = MF.describeCard(d).join(' | ').toLowerCase() + ' ' + (d.ab.some(a => a.k === 'mana') && /add|\{t\}/.test(oracle) ? ' {t}: add ' : '');
   const descNums = new Set((desc.match(/[+-]?\d+/g) || []).map(x => String(Math.abs(+x))));
   const out = [];
