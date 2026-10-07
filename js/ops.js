@@ -27,6 +27,7 @@
     if (f.ctrl === 'opp' && ch.ctrl === who) return false;
     if (f.other && iid === srcIid) return false;
     if (f.notIid != null && iid === f.notIid) return false;                                       // "other than that creature"
+    if (f.mvLEv && !(ch.mv <= MF.num({ s: s, ctrl: who, src: srcIid }, f.mvLEv))) return false;     // Lay Down Arms: "less than or equal to the number of Plains you control"
     if (f.kw && !ch.kw[f.kw]) return false;
     if (f.notKw && ch.kw[f.notKw]) return false;
     if (f.powLE != null && !(ch.p <= f.powLE)) return false;
@@ -84,6 +85,7 @@
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
     addCostPaid: x => !!(x.L && x.L.addCostPaid),                                            // "if this spell's additional cost was paid", teamwork
+    oppMore: (x, c) => { const me = P(x.s, x.ctrl), op = P(x.s, 1 - x.ctrl), n = (p, w) => w === 'life' ? p.life : w === 'hand' ? p.hand.length : x.s.bf.filter(i => I(x.s, i).ctrl === p.seat && MF.chars(x.s, i).types.includes(w === 'lands' ? 'Land' : 'Creature')).length; return n(op, c.what) > n(me, c.what); },   // Beza
     impendingTime: x => { const c = I(x.s, x.src); return !!c && !!c.impended && (c.ctr.time || 0) > 0; },   // CR 702.176a's intervening "if"
     castFromGrave: x => !!(x.L && x.L.from === 'grave'),                                           // "if this spell was cast from a graveyard"
     counterAtLeast: (x, c) => { const o = I(x.s, x.src); return !!o && (o.ctr[c.kind] || 0) >= c.n; },
@@ -130,6 +132,8 @@
     castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
     evAmount: x => x.ev.n,                                                                      // "that much damage"
     kicked: (x, v) => x.L && x.L.kicked ? v.yes : v.no,
+    countYou: (x, v, table) => x.s.bf.filter(i => I(x.s, i).ctrl === x.ctrl && MF.matchChars(x.s, i, table ? table[i] : MF.chars(x.s, i), v.f, x.ctrl, x.src)).length,   // "the number of Plains you control"
+    creLeftYou: x => P(x.s, x.ctrl).h.creLeft || 0,                                              // "each creature that left the battlefield under your control this turn"
     graveCount: x => P(x.s, x.ctrl).grave.filter(i => MF.def(x.s, i).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))).length,   // "permanent cards in your graveyard": card types from the card itself (a CDA reading chars here would read its own count)
     lands: (x, v, table) => countMine(x.s, x.ctrl, { types: ['Land'] }, x.src, table),        // "the number of lands you control"
     gainedThisTurn: x => P(x.s, x.ctrl).h.gained || 0,
@@ -238,6 +242,12 @@
   // -------------------------------------------------------------------------------------------
   // Ops
   // -------------------------------------------------------------------------------------------
+  // "Its controller": the target's controller as it last existed on the battlefield (CR 608.2h).
+  function ctrlOfTarget(x, ref) {
+    const r = (x.t[ref.t] || [])[0]; if (!r || r.c == null) return null;
+    const c = I(x.s, r.c); if (!c) return null;
+    return c.zone === 'bf' ? c.ctrl : c.lki ? c.lki.ctrl : c.ctrl;
+  }
   const OPS = {
     counter(x, op) {                                                                           // CR 122.1
       const n = num(x, op.n);                                                                 // fixed once as it resolves (Ouroboroid's X, its ruling)
@@ -293,6 +303,7 @@
       log(s, 'scry', { who: x.ctrl, n: n, top: top.length, bottom: bottom.length });
     },
     token(x, op) {                                                                             // CR 111.1
+      if (op.forCtrlOf) { const w = ctrlOfTarget(x, op.forCtrlOf); if (w == null) return; return OPS.token(Object.assign({}, x, { ctrl: w }), Object.assign({}, op, { forCtrlOf: null })); }   // "Its controller creates ..."
       const s = x.s, n = num(x, op.n);
       for (let k = 0; k < n; k++) {
         const iid = s.nid++;
@@ -314,6 +325,7 @@
     // Offspring (CR 702.175a): "create a token that's a copy of it, except it's 1/1".
     tokenCopy(x, op) {
       const s = x.s, src = MF.resolveRefs(x, op.of)[0];
+      if (op.targeted && src == null) return;                                                  // an illegal target: nothing is copied (CR 608.2b)
       // If the creature has left the battlefield, its copiable values are its last known ones (CR 608.2h, 707.2): the record it left behind.
       const base = src != null ? I(s, src) : I(s, x.src);
       if (!base) { log(s, 'noSource', { src: x.L.srcId }); return; }
@@ -411,8 +423,8 @@
       const ids = op.on && op.on.t != null ? (x.t[op.on.t] || []).filter(q => q && q.c != null).map(q => q.c) : MF.resolveRefs(x, op.on);
       for (const i of ids) {
         const c = I(s, i); if (!c || c.zone === 'moved' || c.zone === 'exile') continue;
-        const id = c.id, n = MF.move(s, i, 'exile');
-        log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null });
+        const id = c.id, from0 = c.zone, n = MF.move(s, i, 'exile');
+        log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null, from: from0 });
         if (op.link) { const src = I(s, x.src); if (src && src.zone === 'bf') (src.exiled = src.exiled || []).push(n); }
       }
     },
@@ -495,7 +507,9 @@
         MF.discard(s, iid);
       }
     },
-    gain(x, op) { MF.gainLife(x.s, x.ctrl, num(x, op.n), { name: x.L ? MF.cards[x.L.srcId || x.L.id].name : null }); },
+    gain(x, op) {
+      if (op.forCtrlOf) { const w = ctrlOfTarget(x, op.forCtrlOf); if (w == null) return; return OPS.gain(Object.assign({}, x, { ctrl: w }), Object.assign({}, op, { forCtrlOf: null })); }   // "Its controller gains 3 life"
+      MF.gainLife(x.s, x.ctrl, num(x, op.n), { name: x.L ? MF.cards[x.L.srcId || x.L.id].name : null }); },
     // Fecund Greenshell: "look at the top card of your library. If it's a land card, you may put it
     // onto the battlefield tapped. Otherwise, put it into your hand."
     lookTop(x, op) {
@@ -713,11 +727,12 @@
     // Seam Rip: CR 610.3, 610.3b — if ~ has already left, nothing is exiled; otherwise it returns to the battlefield when ~ leaves.
     exileUntilLeaves(x, op) {
       const s = x.s, sc = I(s, x.src); if (!sc || sc.zone !== 'bf') return;
-      for (const r of (x.t[op.on.t] || [])) {
-        if (!r || r.c == null) continue; const c = I(s, r.c); if (!c || c.zone !== 'bf') continue;
-        const id = c.id, n = MF.move(s, r.c, 'exile');
+      const ids = op.on.t != null ? (x.t[op.on.t] || []).filter(r => r && r.c != null).map(r => r.c) : MF.resolveRefs(x, op.on);   // a target, or "each nonland permanent ..."
+      for (const i of ids) {
+        const c = I(s, i); if (!c || c.zone !== 'bf') continue;
+        const id = c.id, n = MF.move(s, i, 'exile');
         s.effects.push({ k: 'exileUntil', src: x.src, iid: n, back: 'bf' });
-        log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null, until: true });
+        log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null, until: true, from: 'bf' });
       }
     },
     // Hollow Marauder: each targeted opponent discards a card of their choice; for each who didn't discard one with mana value 4 or greater, draw.
@@ -729,6 +744,26 @@
         if (hand.length) { const a = MF.ask(x.x, { who: who, kind: 'discard', src: x.src, left: 1, opts: hand.map(i => ({ id: i, iid: i })) }); big = MF.chars(s, a).mv >= op.mvGE; MF.discard(s, a); }
         if (!big) OPS.draw(x, { n: 1 });
       }
+    },
+    exileGrave(x, op) {                                                                       // "Exile target player's graveyard"
+      const s = x.s;
+      for (const w of players(x, op.who)) { const g = P(s, w).grave.slice(); if (!g.length) continue; log(s, 'exiledGrave', { who: w, cs: g.map(i => I(s, i).id) }); for (const i of g) MF.move(s, i, 'exile'); }
+    },
+    // CR 724.1a-b: triggered abilities waiting to be put on the stack cease to exist; every object on the stack is exiled, this one too.
+    endTurn(x) {
+      const s = x.s;
+      s.trigs = [];
+      for (const L of s.stack.slice().reverse()) {
+        if (L.kind !== 'spell') continue;
+        const c = I(s, L.iid); if (!c || c.zone !== 'stack') continue;
+        if (L.copy) { c.zone = 'moved'; c.to = null; continue; }
+        log(s, 'exiled', { who: c.owner, c: c.id, by: x.L ? (x.L.srcId || x.L.id) : null, fromStack: true }); MF.move(s, L.iid, 'exile');
+      }
+      s.stack = [];
+      const me = x.L && x.L.iid != null ? I(s, x.L.iid) : null;
+      if (me && me.zone === 'stack') { log(s, 'exiled', { who: me.owner, c: me.id, by: me.id, fromStack: true }); MF.move(s, x.L.iid, 'exile'); }
+      log(s, 'endTurn', { who: x.ctrl, c: x.L ? (x.L.srcId || x.L.id) : null });
+      s.endTurnNow = true;
     },
     // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
     selfFromGrave(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'grave') return; const n = MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); log(s, 'putOnto', { who: c.owner, c: I(s, n).id, tapped: false, from: 'graveyard' }); },
@@ -836,7 +871,7 @@
         const a = MF.ask(x.x, { who: who, kind: 'payOrCounter', src: x.src, spell: iid, pay: pay, opts: [{ id: 'pay' }, { id: 'decline' }] });
         if (a === 'pay') { MF.payMana(x.x, who, need, iid, false); log(s, 'paidToSave', { who: who, c: L.id, mana: pay }); return; }
       }
-      MF.counterSpell(s, L, x.L ? (x.L.srcId || x.L.id) : null);
+      MF.counterSpell(s, L, x.L ? (x.L.srcId || x.L.id) : null, op.exile);
     },
     counterTarget(x, op) { const iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return; MF.counterSpell(x.s, x.s.stack.find(l => l.kind === 'spell' && l.iid === iid), x.L ? (x.L.srcId || x.L.id) : null); },   // CR 701.6a
     // Tishana's Tidebinder: counter an ability; an artifact's, creature's or planeswalker's loses all abilities while this remains (CR 611.2b).
@@ -944,11 +979,12 @@
   MF.resolveTargetSpell = (x, r) => { const q = (x.t[r.t] || [])[0]; return q && q.c != null && I(x.s, q.c) && I(x.s, q.c).zone === 'stack' ? q.c : null; };
   // CR 701.6a: a countered spell leaves the stack without resolving; it goes to its owner's graveyard
   // (a copy ceases to exist; harmonize exiles it).
-  MF.counterSpell = function (s, L, by) {
+  MF.counterSpell = function (s, L, by, exile) {
     if (MF.chars(s, L.iid).ab.some(a => a.k === 'uncounterable')) { log(s, 'cantCounter', { who: L.ctrl, c: L.id }); return; }   // "This spell can't be countered" (CR 113.6g)
     s.stack.splice(s.stack.indexOf(L), 1);
     log(s, 'countered', { who: L.ctrl, c: L.id, by: by });
     if (L.copy) { const c = I(s, L.iid); c.zone = 'moved'; c.to = null; return; }
+    if (exile) { const n = MF.move(s, L.iid, 'exile'); log(s, 'exiledInsteadOfGrave', { who: L.ctrl, c: I(s, n).id }); return; }   // No More Lies
     MF.spellAway(s, L);
   };
   MF.runOps = function (x, ops) {

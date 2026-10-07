@@ -35,8 +35,13 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-06 — the championship decks (D15) under way: 13 of 20 registered; a per-card audit done.**
+**2026-10-06 — the championship decks (D15) under way: 14 of 20 registered; a per-card audit done.**
 
+- Azorius Control (Mitchell Tamblyn, #11) brought spree (CR 702.172), ending the turn (724.1),
+  modal triggered abilities with targeted modes (700.2a), modes chosen together sharing one target
+  list, "its controller" effects, exile instead of the graveyard on a counter, exile-until for each of
+  several permanents, mana value compared with a count. Fixed: the AI could loop forever adding and
+  undoing a blocker when a lone blocker stood on a menace attacker.
 - Golgari Graveyard (Jody Keith, #34) brought impending (CR 702.176), abilities that function in
   the graveyard (113.6m) and hand, cost reductions per card in the graveyard and exile (601.2f),
   combat-damage prevention through the damage door (615), discard-or-sacrifice costs, a */*+1 CDA
@@ -65,7 +70,7 @@ Deck count, never quality. A deck that does not compile in full is not registere
   closed), ninjutsu (702.49), transforming double-faced cards (712), emblems (114), layer 6 in
   timestamp order with "loses all abilities", "until your next turn", choose-two modes, draw events.
 - Registered: Mono-Red Aggro (PT Final Fantasy #1), Gruul Delirium (#35), Orzhov Demons (#28), Izzet
-  Prowess (#2), Dimir Midrange and Golgari Graveyard (#34); from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler), Mono-Green (Earthbender Ascension) and Selesnya (Llanowar Elves) — beside the two Starter Kits. Boros
+  Prowess (#2), Dimir Midrange, Golgari Graveyard (#34) and Azorius Control (#11); from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler), Mono-Green (Earthbender Ascension) and Selesnya (Llanowar Elves) — beside the two Starter Kits. Boros
   brought delayed triggers (CR 603.7), mobilize (702.181), creatures entering attacking (508.4),
   sneak (702.190), Treasure (111.10a), "can't cast spells" (601.3), plan counters. Orzhov (Amalia) brought ward (702.21), explore (701.44), warp (702.185), Cases
   (719), exile-until-it-leaves (610.3), returning as a non-creature, life-gained/lost conditions. Izzet brought Class levels (CR 716), bargain (702.166),

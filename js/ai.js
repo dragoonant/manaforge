@@ -105,6 +105,11 @@
   // only to stay alive.
   function blockPolicy(s, q) {
     const me = q.who, cb = s.combat, life = P(s, me).life;
+    if (!q.opts.some(o => o.id === 'done') && Object.keys(q.assign).length) {                 // an illegal declaration (a lone blocker on a menace attacker): complete the pair, or take blockers back — never add elsewhere, or it loops
+      const lone = cb.attackers.filter(a => MF.chars(s, a).kw.menace && Object.values(q.assign).filter(t => t === a).length === 1);
+      const fix = q.opts.find(o => o.iid != null && lone.includes(o.att));
+      return fix ? fix.id : 'undo';
+    }
     const incoming = cb.attackers.filter(a => !Object.values(q.assign).includes(a)).reduce((t, a) => t + Math.max(0, MF.chars(s, a).p), 0);
     let best = null, bs = 0.5;
     for (const o of q.opts) {
@@ -160,6 +165,7 @@
       }
       case 'discardOrSac': return q.opts.some(o => o.id === 'discard') ? 'discard' : 'sac';
       case 'sacrificeCost': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
+      case 'spreeMode': return q.chosen.length ? 'done' : q.opts[0].id;
       case 'hybrid': return q.opts[q.opts.length - 1].id;
       case 'manaColor': { const need = { W: 0, U: 0, B: 0, R: 0, G: 0 }; for (const i of P(s, me).hand) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\\{' + k + '\\}', 'g')) || []).length; return Object.keys(need).sort((a, b) => need[b] - need[a])[0]; }   // the color its hand asks for most
       case 'tutorUpTo': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }
@@ -240,6 +246,7 @@
       MF.ai.stats.decisions++;
       if (s.pending) {
         const q = s.pending.q;
+        if (q.kind === 'block' && !q.opts.some(o => o.id === 'done')) return { type: 'answer', id: blockPolicy(s, q) };   // an illegal declaration: repair it by policy (a search here can add and undo forever)
         if (!SEARCH_KINDS[q.kind] || q.opts.length === 1) { const a = policyAnswer(s, q); if (a !== undefined) return { type: 'answer', id: a }; if (q.opts.length === 1) return { type: 'answer', id: q.opts[0].id }; }
       }
       const legal = candidates(s, MF.legalActions(s));

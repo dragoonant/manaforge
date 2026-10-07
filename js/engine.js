@@ -149,6 +149,7 @@
     if (from === 'bf') {
       for (const k of s.bf) { const a = I(s, k); if (a.att === iid) a.att = -1; }            // what was attached to it is now attached to nothing (SBA 704.5m/n)
       if (s.combat) removeFromCombat(s, iid);                                                // CR 506.4
+      if (lki.types.includes('Creature')) P(s, lki.ctrl).h.creLeft = (P(s, lki.ctrl).h.creLeft || 0) + 1;
       if (zone === 'exile' && lki.types.includes('Creature')) { s.exiledCre = s.exiledCre || {}; s.exiledCre[lki.ctrl] = (s.exiledCre[lki.ctrl] || 0) + 1; }   // "creatures that were exiled under your opponents' control this turn"
       s.effects = s.effects.filter(e => e.whileSrc !== iid);                                   // CR 611.2b: "for as long as ~ remains on the battlefield"
       emit(s, { t: 'leaves', iid: iid, to: zone, lki: lki });
@@ -1038,6 +1039,10 @@
       for (const t of order) {
         const ab = trigAbility(s, t);
         const L = { lid: s.lid++, kind: 'trig', ctrl: t.ctrl, src: t.src, ab: t.ab, abObj: t.abObj || null, inl: t.inl || null, ev: t.ev, lki: t.lki, srcId: t.lki ? t.lki.id : I(s, t.src).id, t: [] };
+        if (ab.modes && !ab.uniqueModes) {                                                     // CR 700.2a: the mode is chosen as it is put on the stack; a mode whose targets can't be chosen can't be chosen
+          const opts = ab.modes.map((m, i) => ({ id: i, text: m.text })).filter(o2 => !ab.modes[o2.id].tg || slotsLegalNow(s, t.ctrl, t.src, ab.modes[o2.id].tg));
+          L.mode = ask(x, { who: t.ctrl, kind: 'mode', src: t.src, opts: opts });
+        }
         if (ab.uniqueModes) {                                                                  // CR 700.2a: chosen as it is put on the stack; "one that hasn't been chosen"
           const so = s.cards[t.src], used = (so && so.modesUsed) || [];
           const opts = ab.modes.map((m, i) => ({ id: i, text: m.text })).filter(o2 => !used.includes(o2.id));
@@ -1045,8 +1050,9 @@
           L.mode = ask(x, { who: t.ctrl, kind: 'mode', src: t.src, opts: opts });
           so.modesUsed = used.concat([L.mode]);
         }
-        if (ab.tg && ab.tg.length) {
-          const tg = ab.tg.map(sl => sl.notEv && t.ev && t.ev.iid != null ? Object.assign({}, sl, { f: Object.assign({}, sl.f, { notIid: t.ev.iid }) }) : sl);
+        const tg0 = ab.modes && L.mode != null && ab.modes[L.mode].tg ? ab.modes[L.mode].tg : ab.tg;
+        if (tg0 && tg0.length) {
+          const tg = tg0.map(sl => sl.notEv && t.ev && t.ev.iid != null ? Object.assign({}, sl, { f: Object.assign({}, sl.f, { notIid: t.ev.iid }) }) : sl);
           try { L.t = chooseTargets(x, t.ctrl, t.src, tg, 'trig', false); }
           catch (e) { if (e instanceof Illegal) { log(s, 'trigNoTarget', { who: t.ctrl, c: L.srcId }); continue; } throw e; }   // CR 603.3d
         }
@@ -1090,7 +1096,13 @@
     if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.castOnly)) return false;
     return d.types.includes('Land') && sorceryTiming(s, who) && P(s, who).landsPlayed < landDrops(s, who) && s.priority === who;
   };
-  const spellPart = MF.spellPart = (sp, L) => !sp ? null : sp.modes && sp.choose ? { ops: (L.modes || []).flatMap(i => sp.modes[i].ops) } : sp.modes ? sp.modes[L.mode] : (sp.gift && L.gift != null ? sp.gift : sp);
+  const shiftRefs = (v, off) => Array.isArray(v) ? v.map(e => shiftRefs(e, off)) : v && typeof v === 'object' ? (Object.keys(v).length === 1 && typeof v.t === 'number' ? { t: v.t + off } : Object.fromEntries(Object.entries(v).map(([k, e]) => [k, k === 'ab' ? e : shiftRefs(e, off)]))) : v;
+  const combineModes = MF.combineModes = function (sp, idxs) {                               // CR 700.2, 702.172a: each chosen mode's targets, in printed order
+    const tg = [], ops = [];
+    for (const i of idxs) { const m = sp.modes[i], off = tg.length; for (const sl of m.tg || []) tg.push(sl); ops.push(...shiftRefs(m.ops, off)); }
+    return tg.length ? { ops: ops, tg: tg } : { ops: ops };
+  };
+  const spellPart = MF.spellPart = (sp, L) => !sp ? null : sp.modes && (sp.choose || sp.spree) ? combineModes(sp, L.modes || []) : sp.modes ? sp.modes[L.mode] : (sp.gift && L.gift != null ? sp.gift : sp);
   // "You may cast that card ... and mana of any type can be spent to cast it" (Cruelclaw's Heist).
   const anyManaFor = MF.anyManaFor = (s, iid) => s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.anyMana) && I(s, iid).zone === 'exile';
   // `alt`: cast as its Adventure or Omen (CR 715.3a, 720.3a: only the alternative face is evaluated);
@@ -1121,7 +1133,9 @@
     if (sp && sp.modes && !sp.modes.some(m => !m.tg || slotsLegalNow(s, who, iid, m.tg))) return false;   // CR 700.2a: a mode whose targets cannot be chosen cannot be chosen
     if (sp && sp.tg && !slotsLegalNow(s, who, iid, sp.tg) && !(sp.gift && slotsLegalNow(s, who, iid, sp.gift.tg || []))) return false;   // with a gift, its own targets (CR 702.174m)
     if (aura && !slotsLegalNow(s, who, iid, [{ f: aura.f }])) return false;
-    return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0 }), { creature: ch.types.includes('Creature') });
+    let spreeExtra = null;
+    if (sp && sp.spree) { const ms = sp.modes.filter(m => !m.tg || slotsLegalNow(s, who, iid, m.tg)).map(m => MF.parseMana(m.cost)).sort((a, b) => MF.manaValue(a) - MF.manaValue(b)); if (!ms.length) return false; spreeExtra = ms[0]; }
+    return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: spreeExtra }), { creature: ch.types.includes('Creature') });
   };
   // Harmonize: the most generic mana a tapped creature could take off (CR 702.180a).
   const harmonizeTappable = (s, who) => s.bf.filter(i => I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature'));
@@ -1418,7 +1432,22 @@
       }
     }
     const sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
-    if (sp && sp.modes && sp.choose === 2) {                                                   // "Choose two —": two different modes (CR 700.2d)
+    if (sp && sp.spree) {                                                                      // CR 702.172a: one or more modes; each adds its cost
+      const chosen = [];
+      for (;;) {
+        const opts = sp.modes.map((m, i) => ({ id: i, text: m.text, cost: m.cost })).filter(o => !chosen.includes(o.id) && (!sp.modes[o.id].tg || slotsLegalNow(s, who, iid, sp.modes[o.id].tg)));
+        if (!opts.length) break;
+        if (chosen.length) opts.push({ id: 'done' });
+        const m = ask(x, { who: who, kind: 'spreeMode', src: iid, chosen: chosen.slice(), opts: opts, cancel: true });
+        if (m === 'done') break;
+        chosen.push(m);
+      }
+      if (!chosen.length) throw new Illegal('no mode can be chosen');
+      L.modes = chosen.sort((a, b) => a - b);
+      for (const i of L.modes) { const add = MF.parseMana(sp.modes[i].cost); for (const k of ['W', 'U', 'B', 'R', 'G', 'C', 'g']) extra[k] = (extra[k] || 0) + add[k]; }
+      const part = combineModes(sp, L.modes);
+      if (part.tg) L.t = chooseTargets(x, who, iid, part.tg, 'spell', true);
+    } else if (sp && sp.modes && sp.choose === 2) {                                            // "Choose two —": two different modes (CR 700.2d)
       const opts = sp.modes.map((m, i) => ({ id: i, text: m.text }));
       const m1 = ask(x, { who: who, kind: 'mode', src: iid, n: 1, of: 2, opts: opts, cancel: true });
       const m2 = ask(x, { who: who, kind: 'mode', src: iid, n: 2, of: 2, opts: opts.filter(o => o.id !== m1), cancel: true });
@@ -1595,7 +1624,7 @@
       s.stack.pop();
       const ab = L.kind === 'trig' ? trigAbility(s, L) : (L.lki ? abFromLki(s, L.lki)[L.ab] : chars(s, L.src).ab[L.ab]);
       if (L.kind === 'trig' && ab.cond && !MF.cond(X, ab.cond)) { log(s, 'trigIf', { who: L.ctrl, c: L.srcId }); afterResolve(s); return; }   // CR 608.2a
-      const lt = liveTargets(s, L, ab.tg);
+      const lt = liveTargets(s, L, ab.modes && L.mode != null && ab.modes[L.mode].tg ? ab.modes[L.mode].tg : ab.tg);
       if (!lt.any) { log(s, 'fizzle', { who: L.ctrl, c: L.srcId, ab: true }); afterResolve(s); return; }
       X.t = lt.t;
       log(s, 'resolveAb', { who: L.ctrl, c: L.srcId, trig: L.kind === 'trig' });
@@ -1609,7 +1638,17 @@
     if (L.harmonize) { const n = move(s, L.iid, 'exile'); log(s, 'harmonizeExile', { who: L.ctrl, c: I(s, n).id, via: L.via || 'harmonize' }); return n; }
     return move(s, L.iid, 'grave');
   };
-  function afterResolve(s) { if (s.winner == null) setPriority(s, s.ap); }                    // CR 117.3b
+  function afterResolve(s) {                                                                // CR 117.3b
+    if (s.winner != null) return;
+    if (s.endTurnNow) {                                                                       // CR 724.1c-d: SBAs, no priority; straight to the cleanup step
+      delete s.endTurnNow; s.priority = null; s.passes = 0; s.combat = null;
+      for (const p of s.players) { p.pool = emptyPool(); p.poolCre = emptyPool(); }
+      s.todo.push({ t: 'sba', answers: [] });
+      s.step = 'cleanup'; s.sub = 0;
+      return;
+    }
+    setPriority(s, s.ap);
+  }
 
   // -------------------------------------------------------------------------------------------
   // The loop. CR 117.5 / 704.3: each time a player would receive priority, state-based actions

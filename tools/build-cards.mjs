@@ -39,6 +39,10 @@ export function parseFilter(str) {
   if ((m = s.match(/^non-outlaw (.*)$/))) { f.notSubtypes = ['Assassin', 'Mercenary', 'Pirate', 'Rogue', 'Warlock']; s = m[1]; }   // CR 700.12                                // CR 205.4a
   if ((m = s.match(/^non(land|creature|artifact) (.*)$/))) { f.notTypes = [m[1][0].toUpperCase() + m[1].slice(1)]; s = m[2]; }
   if ((m = s.match(/^creature or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Planeswalker']; s = m[1]; }
+  else if ((m = s.match(/^creature, enchantment, or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Enchantment', 'Planeswalker']; s = m[1]; }
+  else if ((m = s.match(/^artifact or enchantment\b ?(.*)$/))) { f.types = ['Artifact', 'Enchantment']; s = m[1]; }
+  else if ((m = s.match(/^artifact or creature\b ?(.*)$/))) { f.types = ['Artifact', 'Creature']; s = m[1]; }
+  else if ((m = s.match(/^artifacts and creatures\b ?(.*)$/))) { f.types = ['Artifact', 'Creature']; s = m[1]; }
   else if ((m = s.match(/^creature or artifact\b ?(.*)$/))) { f.types = ['Creature', 'Artifact']; s = m[1]; }
   else if ((m = s.match(/^attacking creatures?\b ?(.*)$/))) { f.types = ['Creature']; f.attacking = true; s = m[1]; }
   else if ((m = s.match(/^(creature|creatures|land|lands|artifact|enchantment|permanent|permanents)\b ?(.*)$/))) { if (NOUN[m[1]]) f.types = NOUN[m[1]]; s = m[2]; }
@@ -54,6 +58,7 @@ export function parseFilter(str) {
     if ((m = s.match(/^with power or toughness (\d+) or greater\b ?(.*)$/))) { f.ptGE = +m[1]; s = m[2]; continue; }
     if ((m = s.match(/^with toughness greater than its power\b ?(.*)$/))) { f.touGtPow = true; s = m[1]; continue; }
     if ((m = s.match(/^with mana value (\d+) or less\b ?(.*)$/))) { f.mvLE = +m[1]; s = m[2]; continue; }                 // CR 202.3
+    if ((m = s.match(/^with mana value less than or equal to the number of (Plains|Islands|Swamps|Mountains|Forests) you control\b ?(.*)$/))) { f.mvLEv = { v: 'countYou', f: { subtypes: [m[1].replace(/s$/, '').replace(/^Plain$/, 'Plains')] } }; s = m[2]; continue; }
     if ((m = s.match(/^with total power and toughness (\d+) or less\b ?(.*)$/))) { f.ptSumLE = +m[1]; s = m[2]; continue; }
     if ((m = s.match(/^with an? (\+1\/\+1|[a-z]+) counter on it\b ?(.*)$/))) { f.counter = m[1]; s = m[2]; continue; }
     if ((m = s.match(new RegExp('^with (' + KWRE + ')\\b ?(.*)$')))) { f.kw = KW[m[1]]; s = m[2]; continue; }
@@ -156,6 +161,9 @@ function parseEffect(T, ctx, sentence) {
   let s = sentence.trim(), m;
   if ((m = s.match(/^[Pp]ut a \+1\/\+1 counter on target creature you control other than that creature$/))) { T.push({ f: { types: ['Creature'], ctrl: 'you' }, notEv: true }); return [{ o: 'counter', on: { t: T.length - 1 }, n: 1, kind: '+1/+1' }]; }
   if ((m = s.match(/^[Oo]ther creatures get (-\d+)\/(-\d+) until end of turn$/))) return [{ o: 'pump', on: { each: { types: ['Creature'], other: true } }, p: +m[1], t: +m[2] }];
+  if ((m = s.match(/^[Pp]ut a \+1\/\+1 counter on ~ for each creature that left the battlefield under your control this turn$/))) return [{ o: 'counter', on: 'self', n: { v: 'creLeftYou' }, kind: '+1/+1' }];
+  if ((m = s.match(/^(.+) if an opponent (controls more lands|has more life|controls more creatures|has more cards in hand) than you$/))) { const what = { 'controls more lands': 'lands', 'has more life': 'life', 'controls more creatures': 'creatures', 'has more cards in hand': 'hand' }[m[2]]; return [{ o: 'if', cond: { c: 'oppMore', what: what }, ops: parseEffect(T, ctx, m[1]) }]; }   // Beza: each clause checked as it resolves
+  if ((m = s.match(/^[Cc]reate a token that's a copy of (target .+)$/))) return [{ o: 'tokenCopy', of: parseRef(T, ctx, m[1]), targeted: true }];   // CR 707.2
   if ((m = s.match(/^Treefolk and Forests you control gain (\w+) until end of turn$/))) return [{ o: 'pump', on: { each: { subtypes: ['Treefolk', 'Forest'], ctrl: 'you' } }, grant: kwList(m[1]) }];
   if ((m = s.match(/^[Tt]ap (.+) and put (a|an|one|two) stun counters? on it$/))) { const on = parseRef(T, ctx, m[1]); return [{ o: 'tap', on: on }, { o: 'counter', on: on, n: numOf(m[2]), kind: 'stun' }]; }
   if (/^Creature cards in your graveyard gain "You may cast this card from your graveyard" until end of turn$/.test(s)) return [{ o: 'graveCastable', types: ['Creature'] }];
@@ -186,6 +194,14 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may put a (permanent|creature|land) card from among the milled cards into your hand$/))) return [{ o: 'pickMilled', type: m[1] }];   // CR 701.17c
   if ((m = s.match(/^[Uu]ntap (target .+)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
   if (/^[Uu]ntap ~$/.test(s)) return [{ o: 'untap', on: 'self' }];
+  if ((m = s.match(/^[Ss]urveil (\d+), then draw a card$/))) return [{ o: 'surveil', n: +m[1] }, { o: 'draw', n: 1 }];
+  if ((m = s.match(/^[Dd]raw two cards, then discard a card$/))) return [{ o: 'draw', n: 2 }, { o: 'discard', n: 1 }];
+  if ((m = s.match(/^[Ee]xile (target player)'s graveyard$/))) return [{ o: 'exileGrave', who: parseRef(T, ctx, m[1]) }];
+  if (/^[Ee]nd the turn$/.test(s)) return [{ o: 'endTurn' }];                                       // CR 724.1
+  if ((m = s.match(/^[Ee]xile each (nonland permanent with mana value \d+ or less) until ~ leaves the battlefield$/))) return [{ o: 'exileUntilLeaves', on: { each: parseFilter(m[1]) } }];   // CR 610.3
+  if ((m = s.match(/^[Rr]eturn up to two other target (nonland permanents) to their owners' hands$/))) { T.push({ f: Object.assign(parseFilter(m[1].replace(/s$/, '')), { other: true }), n: 2, upTo: true }); return [{ o: 'bounce', on: { t: T.length - 1 } }]; }
+  if (/^[Ii]ts controller creates two Map tokens$/.test(s) && T.length) return [{ o: 'token', id: 'token-map', n: 2, forCtrlOf: { t: T.length - 1 } }];
+  if (/^[Ii]ts controller gains 3 life$/.test(s) && T.length) return [{ o: 'gain', n: 3, forCtrlOf: { t: T.length - 1 } }];
   if ((m = s.match(/^[Pp]ut a (flying|deathtouch|lifelink) counter, an? (flying|deathtouch|lifelink) counter, and an? (flying|deathtouch|lifelink) counter on (target creature)$/))) { const on = parseRef(T, ctx, m[4]); return [m[1], m[2], m[3]].map(k => ({ o: 'counter', on: on, n: 1, kind: k })); }   // CR 122.1b
   if (/^[Mm]ill four cards, then you may return a non-Avatar creature card or a planeswalker card from your graveyard to your hand$/.test(s)) return [{ o: 'mill', n: 4 }, { o: 'chooseFromGrave', fs: [{ types: ['Creature'], notSubtypes: ['Avatar'] }, { types: ['Planeswalker'] }], n: 1, to: 'hand' }];
   if (/^[Tt]ransform ~$/.test(s)) return [{ o: 'transform' }];                                      // CR 701.27a
@@ -200,6 +216,7 @@ function parseEffect(T, ctx, sentence) {
   if (/^After this phase, there is an additional combat phase$/.test(s)) return [{ o: 'extraCombat' }];   // CR 500.8
   if ((m = s.match(/^(.+?) fights (.+)$/))) return [{ o: 'fight', a: parseRef(T, ctx, m[1]), b: parseRef(T, ctx, m[2]) }];   // CR 701.14
   if ((m = s.match(/^[Ee]xile (target creature or planeswalker)$/))) return [{ o: 'exile', on: parseRef(T, ctx, m[1]) }];
+  if ((m = s.match(/^[Ee]xile (target creature with mana value less than or equal to the number of \w+ you control)$/))) return [{ o: 'exile', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Ee]xile target card from a graveyard$/))) { T.push({ f: { card: 'grave' } }); return [{ o: 'exile', on: { t: T.length - 1 }, link: true }]; }   // CR 607.2a: linked to "exiled with"
   if ((m = s.match(/^[Ss]earch your library for a basic land card, reveal it, put it into your hand, then shuffle$/))) return [{ o: 'searchBasic', toHand: true }];
   if ((m = s.match(/^[Dd]iscard a card, then draw a card$/))) return [{ o: 'discard', n: 1 }, { o: 'draw', n: 1 }];
@@ -349,6 +366,8 @@ function parseEffects(T, ctx, text) {
   if (/^mill four cards\. You may put a land card from among them into your hand\. If you put a Town card into your hand this way, you gain 2 life$/i.test(t)) return [{ o: 'mill', n: 4 }, { o: 'pickMilled', type: 'land', ifSub: { sub: 'Town', gain: 2 } }];
   // Hollow Marauder: "any number of target opponents each discard a card. For each of those opponents who didn't discard a card with mana value 4 or greater, draw a card."
   if (/^any number of target opponents each discard a card\. For each of those opponents who didn't discard a card with mana value 4 or greater, draw a card$/i.test(t)) { T.push({ f: { player: 'opp' }, n: 1, upTo: true }); return [{ o: 'discardOrFeed', on: { t: T.length - 1 }, mvGE: 4 }]; }   // two players: "any number" is none or the one opponent
+  // No More Lies: "Counter target spell unless its controller pays {3}. If that spell is countered this way, exile it instead of putting it into its owner's graveyard."
+  if ((m = t.match(/^counter (target spell) unless its controller pays (\{\d\})\. If that spell is countered this way, exile it instead of putting it into its owner's graveyard$/i))) return [{ o: 'counterUnless', on: parseRef(T, ctx, m[1]), pay: m[2], exile: true }];
   // Gix's Command: "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn." — chosen on resolution (its ruling)
   if ((m = t.match(/^put (\w+) \+1\/\+1 counters on up to one creature\. It gains (\w+) until end of turn$/i))) return [{ o: 'choose', f: { types: ['Creature'] }, upTo: true }, { o: 'counter', on: 'it', n: numOf(m[1]), kind: '+1/+1' }, { o: 'pump', on: 'it', grant: kwList(m[2]) }];
   // Azure Beastbinder: loses all abilities and becomes 2/2 until your next turn (layers 6 and 7b)
@@ -746,6 +765,25 @@ export function compileCard(c, tokens, alt, room) {
         if (modes.length < 2) throw new Fail('modal spell with fewer than two modes');
         if (mm[1] === 'two' && modes.some(x => x.tg)) throw new Fail('"choose two" with a targeted mode');
         d.ab.push(Object.assign({ k: 'spell', modes: modes }, mm[1] === 'two' ? { choose: 2 } : {}));
+        continue;
+      }
+      if (lines[i] === 'Spree') {                                                                 // CR 702.172a: one or more modes, each with an additional cost
+        const modes = [];
+        while (i + 1 < lines.length && /^\+ (\{[^ ]+\}) — /.test(lines[i + 1])) {
+          const mm2 = lines[++i].match(/^\+ (\{[^ ]+\}) — (.+)$/), T = [];
+          const ops = parseEffects(T, Object.assign({}, ctx, { it: null }), mm2[2]);
+          modes.push(Object.assign({ text: mm2[2], cost: mm2[1], ops: ops }, T.length ? { tg: T } : {}));
+        }
+        if (modes.length < 2) throw new Fail('spree with fewer than two modes');
+        d.ab.push({ k: 'spell', spree: true, modes: modes });
+        continue;
+      }
+      const mo = lines[i].match(/^((?:When|Whenever) .+), choose one —$/);
+      if (mo) {                                                                                     // CR 700.2a: a modal triggered ability — the mode and its targets are chosen as it goes on the stack
+        const modes = [];
+        while (i + 1 < lines.length && /^• /.test(lines[i + 1])) { const text = lines[++i].slice(2), T = []; const ops = parseEffects(T, Object.assign({}, ctx, { it: 'self' }), text); modes.push(Object.assign({ text: text, ops: ops }, T.length ? { tg: T } : {})); }
+        const tmp = []; parseTrigger(mo[1] + ', draw a card.', ctx, tmp);
+        d.ab.push(Object.assign(tmp[0], { ops: [], modes: modes }));
         continue;
       }
       const mt = lines[i].match(/^(Whenever .+), choose one that hasn't been chosen —$/);

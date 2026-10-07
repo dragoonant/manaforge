@@ -2818,18 +2818,17 @@ window.MF.decks = {
   "compiles": false,
   "refused": [
    "high-noon: ability: Each player can't cast more than one spell each turn.",
-   "get-lost: filter qualifier: , enchantment, or planeswalker",
    "cavern-of-souls: ability: As ~ enters, choose a creature type.",
-   "beza-the-bounding-spring: effect: Create a Treasure token if an opponent controls more lands than you",
    "overlord-of-the-hauntwoods: effect: Create a tapped colorless land token named Everywhere that is every basic land type",
-   "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
    "zur-eternal-schemer: ability: Enchantment creatures you control have deathtouch, lifelink, and hexproof.",
    "rides-end: condition: it targets a tapped permanent",
    "authority-of-the-consuls: ability: Creatures your opponents control enter tapped.",
-   "leyline-binding: ability: This spell costs {1} less to cast for each basic land type among lands you control.",
-   "ultima: filter noun: artifacts and creatures"
+   "leyline-binding: ability: This spell costs {1} less to cast for each basic land type among lands you control."
   ],
   "tokens": [
+   "token-map",
+   "token-treasure",
+   "token-fish-1-1-u",
    "token-insect-2-1-w-flying"
   ]
  },
@@ -2990,18 +2989,17 @@ window.MF.decks = {
   "refused": [
    "abuelos-awakening: effect: Return target artifact or non-Aura enchantment card from your graveyard to the battlefield with X additional +1/+1 counters on it",
    "fallaji-archaeologist: effect: You may put a noncreature, nonland card from among the cards milled this way into your hand",
-   "get-lost: filter qualifier: , enchantment, or planeswalker",
    "cavern-of-souls: ability: As ~ enters, choose a creature type.",
    "roiling-dragonstorm: trigger event: a Dragon you control enters, return ~ to its owner's hand.",
-   "oracle-of-tragedy: trigger event: ~ enters or dies, choose one —",
-   "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
+   "oracle-of-tragedy: effect: Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library",
    "scrollshift: effect: Exile up to one target artifact, creature, or enchantment you control, then return it to the battlefield under its owner's control",
    "epharas-dispersal: condition: it targets an attacking creature",
    "omniscience: ability: You may cast spells from your hand without paying their mana costs.",
-   "jace-the-perfected-mind: ability: Compleated",
-   "marang-river-regent-coil-and-catch: effect: Return up to two other target nonland permanents to their owners' hands"
+   "jace-the-perfected-mind: ability: Compleated"
   ],
-  "tokens": []
+  "tokens": [
+   "token-map"
+  ]
  },
  "azorius-control-fin": {
   "id": "azorius-control-fin",
@@ -3025,7 +3023,7 @@ window.MF.decks = {
   "player": "Mitchell Tamblyn",
   "rank": 11,
   "players": 6,
-  "registered": false,
+  "registered": true,
   "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
   "min": 60,
   "main": [
@@ -3148,23 +3146,11 @@ window.MF.decks = {
     "name": "The Filigree Sylex"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "cathar-commando: filter qualifier: or enchantment",
-   "three-steps-ahead: effect: Spree",
-   "dreams-of-laguna: effect: Surveil 1, then draw a card",
-   "kutzils-flanker: effect: Choose one —",
-   "get-lost: filter qualifier: , enchantment, or planeswalker",
-   "beza-the-bounding-spring: effect: Create a Treasure token if an opponent controls more lands than you",
-   "no-more-lies: condition: that spell is countered this way",
-   "lay-down-arms: effect: Exile target creature with mana value less than or equal to the number of Plains you control",
-   "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
-   "marang-river-regent-coil-and-catch: effect: Return up to two other target nonland permanents to their owners' hands",
-   "ultima: filter noun: artifacts and creatures"
-  ],
+  "compiles": true,
   "tokens": [
    "token-fish-1-1-u",
-   "token-treasure"
+   "token-treasure",
+   "token-map"
   ]
  },
  "golgari-roots-fin": {
@@ -3333,7 +3319,6 @@ window.MF.decks = {
    "insidious-roots: cost: Creature tokens you control have \"{T}",
    "osteomancer-adept: effect: Until end of turn, you may cast creature spells from your graveyard by foraging in addition to paying their other costs",
    "tyvar-jubilant-brawler: ability: You may activate abilities of creatures you control as though those creatures had haste.",
-   "disruptive-stormbrood-petty-revenge: filter qualifier: or enchantment",
    "great-arashin-city: cost: Exile a creature card from your graveyard",
    "cache-grab: effect: You may put a permanent card from among the cards milled this way into your hand",
    "haywire-mite: effect: Exile target noncreature artifact or noncreature enchantment",

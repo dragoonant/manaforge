@@ -7,7 +7,7 @@
   const KWNAME = { flying: 'flying', reach: 'reach', firstStrike: 'first strike', doubleStrike: 'double strike', deathtouch: 'deathtouch', lifelink: 'lifelink', trample: 'trample', vigilance: 'vigilance', haste: 'haste', menace: 'menace', defender: 'defender', flash: 'flash', hexproof: 'hexproof', indestructible: 'indestructible', prowess: 'prowess', shroud: 'shroud' };
   MF.KWNAME = KWNAME;
   const VN = { halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control' };
-  const N = n => typeof n === 'number' ? String(n) : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'lands' ? 'the number of lands you control' : n.v === 'graveCount' ? 'the number of permanent cards in your graveyard' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
+  const N = n => typeof n === 'number' ? String(n) : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'lands' ? 'the number of lands you control' : n.v === 'graveCount' ? 'the number of permanent cards in your graveyard' : n.v === 'creLeftYou' ? 'the number of creatures that left the battlefield under your control this turn' : n.v === 'countYou' ? 'the number of ' + filt(n.f) + 's you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
   function filt(f) {
     if (!f) return 'anything';
     if (f.any) return 'any target';
@@ -27,6 +27,8 @@
     if (f.ptGE != null) w.push('with power or toughness ' + f.ptGE + ' or greater');
     if (f.touGtPow) w.push('with toughness greater than its power');
     if (f.counter) w.push('with a ' + f.counter + ' counter');
+    if (f.mvLE != null && !f.card) w.push('with mana value ' + f.mvLE + ' or less');
+    if (f.mvLEv) w.push('with mana value less than or equal to ' + N(f.mvLEv));
     if (f.kw) w.push('with ' + KWNAME[f.kw]); if (f.notKw) w.push('without ' + KWNAME[f.notKw]);
     if (f.tokOrSub) w.push('that is a token or a ' + f.tokOrSub);
     if (f.attacking) w.push('attacking');
@@ -84,6 +86,7 @@
     notSolved: () => 'this Case is not solved',
     descended: () => 'you descended this turn',
     castFromGrave: () => 'this spell was cast from a graveyard',
+    oppMore: c => 'an opponent ' + ({ lands: 'controls more lands', life: 'has more life', creatures: 'controls more creatures', hand: 'has more cards in hand' })[c.what] + ' than you',
     impendingTime: () => 'its impending cost was paid and it has a time counter on it',
     counterAtLeast: c => 'it has ' + (['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][c.n] || c.n) + ' or more ' + c.kind + ' counters on it',
     oppLifeLE: c => 'an opponent has ' + c.n + ' or less life',
@@ -101,13 +104,15 @@
     pump: op => { if (op.p && op.p.v === 'power') return 'double the power of ' + ref(op.on) + ' until end of turn'; const pt = (op.p != null || op.t != null) && (op.p !== 0 || op.t !== 0); return ref(op.on) + (pt ? ' gets ' + sgn(op.p) + '/' + sgn(op.t) : '') + (op.grant ? (pt ? ' and' : '') + ' gains ' + op.grant.map(k => KWNAME[k]).join(', ') : '') + ' until end of turn'; },
     unblockable: op => ref(op.on) + ' can’t be blocked this turn',
     scry: op => 'scry ' + N(op.n),
-    token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); if (!d.types.includes('Creature')) return 'create ' + N(op.n) + ' ' + d.name + ' token' + (op.n === 1 ? '' : 's') + (d.text ? ' (“' + d.text + '”)' : ''); return 'create ' + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : '') + (d.text && !kws.length ? ' with “' + d.text + '”' : '') + (op.attacking ? ' that are tapped and attacking' : '') + (op.attackingIf ? '; if ' + cond(op.attackingIf) + ', they enter tapped and attacking' : '') + (op.sacEnd ? '; sacrifice them at the beginning of the next end step' : ''); },
-    tokenCopy: op => 'create a token copy of ' + ref(op.of) + (op.except && op.except.pt ? ', except it is ' + op.except.pt.join('/') : ''),
+    token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); if (!d.types.includes('Creature')) return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + d.name + ' token' + (op.n === 1 ? '' : 's') + (d.text ? ' (“' + d.text + '”)' : ''); return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : '') + (d.text && !kws.length ? ' with “' + d.text + '”' : '') + (op.attacking ? ' that are tapped and attacking' : '') + (op.attackingIf ? '; if ' + cond(op.attackingIf) + ', they enter tapped and attacking' : '') + (op.sacEnd ? '; sacrifice them at the beginning of the next end step' : ''); },
+    tokenCopy: op => 'create a token that’s a copy of ' + ref(op.of) + (op.except && op.except.pt ? ', except it is ' + op.except.pt.join('/') : ''),
     destroy: op => 'destroy ' + ref(op.on),
     damage: op => ref(op.from) + ' deals ' + N(op.n) + ' damage to ' + ref(op.to),
     draw: op => (op.who ? ref(op.who) + ' draws ' : 'draw ') + N(op.n) + ' card' + (op.n === 1 ? '' : 's'),
     discard: op => 'discard ' + op.n + ' card' + (op.n === 1 ? '' : 's') + ' of your choice',
-    gain: op => 'gain ' + N(op.n) + ' life',
+    gain: op => (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] gains ' : 'gain ') + N(op.n) + ' life',
+    exileGrave: op => 'exile ' + ref(op.who) + '’s graveyard',
+    endTurn: () => 'end the turn (exile everything on the stack, including this; skip to the cleanup step)',
     lookTop: op => 'look at the top card of your library; if it is a ' + op.type.toLowerCase() + ', you may put it onto the battlefield tapped, otherwise put it into your hand',
     revealUntil: op => 'reveal from the top until a ' + op.type.toLowerCase() + '; put it onto the battlefield tapped, the rest on the bottom in a random order',
     impulse: op => 'exile the top card of your library; you may play it ' + (op.until === 'eot' ? 'until end of turn' : op.until === 'nextEndStep' ? 'until your next end step' : 'until the end of your next turn'),
@@ -118,7 +123,7 @@
     handPick: op => op.look ? 'look at ' + ref(op.who) + '’s hand; you may exile a nonland card from it until this leaves the battlefield' : ref(op.who) + ' reveals their hand; you choose a ' + (op.f.notTypes || []).map(x => 'non' + x.toLowerCase()).join(', ') + ' card from it; ' + (op.then === 'discard' ? 'that player discards it' : 'exile it' + (op.castIfGift ? '; if the gift was promised, you may cast it while it remains exiled, spending mana of any type' : '')),
     bounce: op => 'return ' + ref(op.on) + ' to its owner’s hand',
     graveToHand: op => 'return ' + ref(op.on) + ' to your hand',
-    counterUnless: op => 'counter ' + ref(op.on) + ' unless its controller pays ' + op.pay + (op.payIf ? ' (' + op.payIf.pay + ' instead if this spell was cast using teamwork)' : ''),
+    counterUnless: op => 'counter ' + ref(op.on) + ' unless its controller pays ' + op.pay + (op.payIf ? ' (' + op.payIf.pay + ' instead if this spell was cast using teamwork)' : '') + (op.exile ? '; if that spell is countered this way, exile it instead of putting it into its owner’s graveyard' : ''),
     lookPick: op => 'look at the top ' + op.n + ' cards of your library; put ' + op.take + ' of them into your hand and the rest on the bottom in any order',
     dieExile: () => 'if a permanent dealt damage by this would die this turn, exile it instead',
     mayPay: op => 'you may pay ' + (op.mana || op.life + ' life') + '; if you do: ' + ops(op.ops),
@@ -250,6 +255,7 @@
         else if (a.on === 'attacks' && a.youMostLife) e = 'Whenever this attacks while you have the most life or are tied for most life';
         else if (a.on === 'sacrificed') e = 'When you sacrifice this';
         else e = 'Whenever ' + who(a.who) + ' ' + EV[a.on];
+        if (a.modes && !a.uniqueModes) return e + ', choose one — ' + a.modes.map((m, i) => { curTg = m.tg || []; named = new Set(); return '(' + (i + 1) + ') ' + ops(m.ops); }).join(' / ');
         if (a.modes) return e + ', choose one that hasn’t been chosen — ' + a.modes.map((m, i) => '(' + (i + 1) + ') ' + ops(m.ops)).join(' / ');
         return e + (a.cond ? ', if ' + cond(a.cond) : '') + ': ' + ops(a.ops) + (a.oncePerTurn ? ' (only once each turn)' : '');
       }
@@ -273,7 +279,8 @@
       case 'enchant': return 'enchant ' + filt(a.f);
       case 'costLess': return 'costs {' + a.n + '} less if ' + cond(a.cond);
       case 'costLessFor': return a.spell.types.join(' and ').toLowerCase() + ' spells you cast cost {' + a.n + '} less';
-      case 'spell': if (a.choose) return 'choose ' + a.choose + ' — ' + a.modes.map((m, i) => '(' + (i + 1) + ') ' + ops(m.ops)).join(' / ');
+      case 'spell': if (a.spree) return 'spree — choose one or more; each adds its cost: ' + a.modes.map((m, i) => { curTg = m.tg || []; named = new Set(); return '(+' + m.cost + ') ' + ops(m.ops); }).join(' / ');
+        if (a.choose) return 'choose ' + a.choose + ' — ' + a.modes.map((m, i) => '(' + (i + 1) + ') ' + ops(m.ops)).join(' / ');
         if (a.gift) { const base = ops(a.ops); curTg = a.gift.tg || []; named = new Set(); return base + '; if the gift was promised, instead: ' + ops(a.gift.ops); }
         if (a.modes) return 'choose one — ' + a.modes.map((m, i) => { curTg = m.tg || []; return '(' + (i + 1) + ') ' + ops(m.ops); }).join(' / '); return ops(a.ops);
       case 'restrict': return 'this can’t ' + [a.attack ? 'attack' : '', a.block ? 'block' : ''].filter(Boolean).join(' or ') + (a.unless ? ' unless ' + cond(a.unless) : '');
