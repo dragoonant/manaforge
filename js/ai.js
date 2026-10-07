@@ -177,6 +177,9 @@
       case 'forage': return q.opts.some(o => o.id === 'exile') ? 'exile' : 'food';
       case 'leyline': return 'yes';
       case 'freeEquip': return 'free';
+      case 'tapCost': case 'craftMaterial': return q.opts.slice().sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0].id;
+      case 'chooseName': { const opp = s.players[1 - q.who]; const names = new Set(opp.lib.concat(opp.hand, s.bf.filter(i => I(s, i).ctrl !== q.who)).map(i => MF.def(s, i)).filter(d => d.types.includes('Land') && d.ab.some(a => a.k === 'act')).map(d => d.name)); const o = q.opts.find(o2 => names.has(o2.id)); return o ? o.id : q.opts[0].id; }
+      case 'digOnto': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }
       case 'hybrid': return q.opts[q.opts.length - 1].id;
       case 'manaColor': { const need = { W: 0, U: 0, B: 0, R: 0, G: 0 }; for (const i of P(s, me).hand) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\\{' + k + '\\}', 'g')) || []).length; return Object.keys(need).sort((a, b) => need[b] - need[a])[0]; }   // the color its hand asks for most
       case 'tutorUpTo': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }

@@ -49,6 +49,8 @@ export function parseFilter(str) {
   else if ((m = s.match(/^artifacts and creatures\b ?(.*)$/))) { f.types = ['Artifact', 'Creature']; s = m[1]; }
   else if ((m = s.match(/^creature or artifact\b ?(.*)$/))) { f.types = ['Creature', 'Artifact']; s = m[1]; }
   else if ((m = s.match(/^attacking creatures?\b ?(.*)$/))) { f.types = ['Creature']; f.attacking = true; s = m[1]; }
+  else if ((m = s.match(/^tapped creatures?\b ?(.*)$/))) { f.types = ['Creature']; f.tapped = true; s = m[1]; }
+  else if ((m = s.match(/^artifacts and creatures with mana value (\d+) or less\b ?(.*)$/))) { f.types = ['Artifact', 'Creature']; f.mvLE = +m[1]; s = m[2]; }
   else if ((m = s.match(/^(creature|creatures|land|lands|artifact|enchantment|permanent|permanents)\b ?(.*)$/))) { if (NOUN[m[1]]) f.types = NOUN[m[1]]; s = m[2]; }
   else if ((m = s.match(/^([A-Z][a-z]+(?:-[a-z]+)?)\b ?(.*)$/))) { f.subtypes = [m[1].replace(/(?<=[^s])s$/, '').replace(/ves$/, 'f')]; s = m[2]; }   // a creature type, singular or plural ("Mouse", "Lizards", "Elves")
   else if ((m = s.match(/^(token)s?\b ?(.*)$/))) { f.tok = true; s = m[2]; }
@@ -204,6 +206,15 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may put a (permanent|creature|land) card from among the milled cards into your hand$/))) return [{ o: 'pickMilled', type: m[1] }];   // CR 701.17c
   if ((m = s.match(/^[Uu]ntap (target .+)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
   if (/^[Uu]ntap ~$/.test(s)) return [{ o: 'untap', on: 'self' }];
+  if (/^[Cc]hoose a land card name$/.test(s)) return [{ o: 'chooseName', what: 'land' }];                     // CR 201.4
+  if (/^[Hh]arness ~$/.test(s)) return [{ o: 'harness' }];                                                     // CR 701.64a
+  if (/^[Cc]reate a 3\/3 colorless Robot Villain artifact creature token named Doombot$/.test(s)) return [{ o: 'token', id: ctx.token.named({ name: 'Doombot', supers: [], subtypes: ['Robot', 'Villain'], colors: [], p: 3, t: 3, artifact: true }), n: 1 }];
+  if ((m = s.match(/^[Pp]ut a stun counter on (up to one target tapped creature)$/))) return [{ o: 'counter', on: parseRef(T, ctx, m[1]), n: 1, kind: 'stun' }];
+  if ((m = s.match(/^[Pp]ut a \+1\/\+1 counter on target creature or Vehicle you control$/))) { T.push({ f: { typesOrSub: { types: ['Creature'], subtypes: ['Vehicle'] }, ctrl: 'you' } }); return [{ o: 'counter', on: { t: T.length - 1 }, n: 1, kind: '+1/+1' }]; }
+  if (/^[Ee]xile up to one other target nonland permanent you control, then return that card to the battlefield under its owner's control$/.test(s)) { T.push({ f: { notTypes: ['Land'], other: true, ctrl: 'you' }, n: 1, upTo: true }); return [{ o: 'flicker', on: { t: T.length - 1 } }]; }
+  if ((m = s.match(/^[Ee]xile all (artifacts and creatures with mana value \d+ or less) until ~ leaves the battlefield$/))) return [{ o: 'exileUntilLeaves', on: { each: parseFilter(m[1]) } }];   // CR 610.3
+  if (/^~ becomes an artifact creature until end of turn$/.test(s)) return [{ o: 'becomeCreature' }];
+  if ((m = s.match(/^~ deals 5 damage to (target tapped creature an opponent controls)$/))) return [{ o: 'damage', from: 'self', to: parseRef(T, ctx, m[1]), n: 5 }];
   if (/^[Yy]ou may attach ~ to it$/.test(s) && ctx.it === 'ev') return [{ o: 'may', what: 'attach', ops: [{ o: 'attachSelfTo', on: 'ev' }] }];
   if (/^[Cc]reate a (2)\/(2) red Dwarf creature token$/.test(s)) return [{ o: 'token', id: ctx.token({ sub: 'Dwarf', p: 2, t: 2, color: 'red' }), n: 1 }];
   if ((m = s.match(/^[Uu]ntap (up to one target creature)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
@@ -436,6 +447,22 @@ function parseEffects(T, ctx, text) {
   if (/^create Cragflame, a legendary colorless Equipment artifact token with "Equipped creature gets \+1\/\+1 and has vigilance, trample, and haste" and equip \{2\}$/i.test(t)) return [{ o: 'token', id: ctx.token.equipment({ name: 'Cragflame', legendary: true, text: 'Equipped creature gets +1/+1 and has vigilance, trample, and haste.\nEquip {2}', st: { k: 'static', affects: 'equipped', p: 1, t: 1, grant: ['vigilance', 'trample', 'haste'] }, equip: '{2}' }), n: 1 }];
   // Dáin Ironfoot: an Axe, then a reflexive attach
   if (/^create a colorless Equipment artifact token named Axe with "Equipped creature gets \+1\/\+0" and equip \{2\}\. When you do, attach it to target creature you control$/i.test(t)) return [{ o: 'token', id: ctx.token.equipment({ name: 'Axe', legendary: false, text: 'Equipped creature gets +1/+0.\nEquip {2}', st: { k: 'static', affects: 'equipped', p: 1, t: 0 }, equip: '{2}' }), n: 1 }, { o: 'reflexive', ab: { k: 'trig', on: 'reflexive', tg: [{ f: { types: ['Creature'], ctrl: 'you' } }], ops: [{ o: 'attachMade', to: { t: 0 } }] } }];
+  // The Fire Crystal
+  if ((m = t.match(/^create a token that's a copy of (target creature you control)\. Sacrifice it at the beginning of the next end step$/i))) return [{ o: 'tokenCopy', of: parseRef(T, ctx, m[1]), targeted: true, sacEnd: true }];
+  // Fomori Vault
+  if (/^look at the top X cards of your library, where X is the number of artifacts you control\. Put one of those cards into your hand and the rest on the bottom of your library in a random order$/i.test(t)) return [{ o: 'lookPick', n: { v: 'countYou', f: { types: ['Artifact'] } }, take: 1, random: true }];
+  // United Battlefront
+  if (/^look at the top seven cards of your library\. Put up to two noncreature, nonland permanent cards with mana value 3 or less from among them onto the battlefield\. Put the rest on the bottom of your library in a random order$/i.test(t)) return [{ o: 'digOnto', n: 7, upTo: 2, f: { types: ['Artifact', 'Battle', 'Enchantment', 'Planeswalker'], notTypes: ['Creature', 'Land'], mvLE: 3 } }];
+  // Simulacrum Synthesizer's Construct
+  if (/^create a 0\/0 colorless Construct artifact creature token with "This token gets \+1\/\+1 for each artifact you control\."$/i.test(t)) return [{ o: 'token', id: ctx.token.named({ name: 'Construct', supers: [], subtypes: ['Construct'], colors: [], p: 0, t: 0, artifact: true, text: 'This token gets +1/+1 for each artifact you control.', ab: [{ k: 'static', affects: 'self', p: 0, t: 0, pv: { v: 'countYou', f: { types: ['Artifact'] } } }] }), n: 1 }];
+  // Repurposing Bay
+  if (/^search your library for an artifact card with mana value equal to 1 plus the sacrificed artifact's mana value, put that card onto the battlefield, then shuffle$/i.test(t)) return [{ o: 'tutorOnto', f: { types: ['Artifact'] }, mvSacPlus: 1 }];
+  // Pinnacle Starcage
+  if (/^put each card exiled with ~ into its owner's graveyard, then create a 2\/2 colorless Robot artifact creature token for each card put into a graveyard this way\. Sacrifice ~$/i.test(t)) return [{ o: 'starcage', robot: ctx.token.named({ name: 'Robot', supers: [], subtypes: ['Robot'], colors: [], p: 2, t: 2, artifact: true }) }];
+  // Braided Net
+  if (/^tap another target nonland permanent\. Its activated abilities can't be activated for as long as it remains tapped$/i.test(t)) { T.push({ f: { notTypes: ['Land'], other: true } }); return [{ o: 'tap', on: { t: T.length - 1 } }, { o: 'lockWhileTapped', on: { t: T.length - 1 } }]; }
+  // Braided Quipu
+  if (/^draw a card for each artifact you control, then put ~ into its owner's library third from the top$/i.test(t)) return [{ o: 'draw', n: { v: 'countYou', f: { types: ['Artifact'] } } }, { o: 'selfToLibrary', pos: 3 }];
   // Gix's Command: "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn." — chosen on resolution (its ruling)
   if ((m = t.match(/^put (\w+) \+1\/\+1 counters on up to one creature\. It gains (\w+) until end of turn$/i))) return [{ o: 'choose', f: { types: ['Creature'] }, upTo: true }, { o: 'counter', on: 'it', n: numOf(m[1]), kind: '+1/+1' }, { o: 'pump', on: 'it', grant: kwList(m[2]) }];
   // Azure Beastbinder: loses all abilities and becomes 2/2 until your next turn (layers 6 and 7b)
@@ -497,7 +524,11 @@ function parseCost(str) {
     else if (p === 'Exile ~') cost.exileSelf = true;
     else if (p === 'Exile this card from your graveyard') { cost.exileSelf = true; cost.zone = 'grave'; }   // CR 113.6m: an ability that functions in the graveyard
     else if (p === 'Discard this card') { cost.discardSelf = true; cost.zone = 'hand'; }
-    else if (p === 'Exile a card from your graveyard') cost.exileGrave = {};                          // a choice, made as the cost is paid (CR 601.2h)
+    else if (p === 'Exile a card from your graveyard') cost.exileGrave = {};
+    else if (p === 'Sacrifice an artifact') cost.sacType = { types: ['Artifact'] };
+    else if (p === 'Sacrifice another artifact') cost.sacType = { types: ['Artifact'], other: true };
+    else if (/^Remove an? \w+ counter from ~$/.test(p)) cost.removeCtr = { n: 1, kind: p.split(' ')[2] };
+    else if (p === 'Tap two other untapped artifacts you control') cost.tapOthers = { n: 2, f: { types: ['Artifact'] } };   // CR 701.21 via 118.3                          // a choice, made as the cost is paid (CR 601.2h)
     else if (p === 'Exile a creature card from your graveyard') cost.exileGrave = { types: ['Creature'] };
     else if (/^Pay (\d+) life$/.test(p)) cost.life = +p.match(/\d+/)[0];                             // CR 119.4
     else if (/^Remove (\w+) (\w+) counters from ~$/.test(p)) { const r = p.match(/^Remove (\w+) (\w+) counters from ~$/); cost.removeCtr = { n: numOf(r[1]), kind: r[2] }; }   // CR 118.3
@@ -520,6 +551,8 @@ const EVENTS = [
   [/^one or more artifact and\/or creature cards leave your graveyard$/, () => [{ on: 'leftGraveArtCreBatch', you: true }]],
   [/^one or more permanent cards are put into your graveyard from anywhere while ~ has an? (-1\/-1|\+1\/\+1) counter on it$/, m => [{ on: 'toGraveBatch', you: true, evCond: { c: 'hasCounter', kind: m[1] } }]],
   [/^you attack$/, () => [{ on: 'attackWith' }]],
+  [/^another artifact you control with mana value (\d+) or greater enters$/, m => [{ on: 'enters', who: { types: ['Artifact'], other: true, ctrl: 'you', mvGE: +m[1] } }]],
+  [/^~ enters or leaves the battlefield$/, () => [{ on: 'enters', who: 'self' }, { on: 'leaves', who: 'self', lookBack: true }]],
   [/^another Dwarf or Equipment you control enters$/, () => [{ on: 'enters', who: { subtypes: ['Dwarf', 'Equipment'], other: true, ctrl: 'you' } }]],
   [/^~ or another Dwarf you control enters and whenever an Equipment you control enters$/, () => [{ on: 'enters', who: { or: ['self', { subtypes: ['Dwarf'], other: true, ctrl: 'you' }] } }, { on: 'enters', who: { subtypes: ['Equipment'], ctrl: 'you' } }]],
   [/^a creature you control with mana value (\d+) or greater enters$/, m => [{ on: 'enters', who: { types: ['Creature'], ctrl: 'you', mvGE: +m[1] } }]],
@@ -665,6 +698,15 @@ function parseStatic(line, ctx, out, d) {
   if (line === 'If this card is in your opening hand, you may begin the game with it on the battlefield.') { out.push({ k: 'leyline' }); return true; }   // CR 103.6a
   if ((m = line.match(/^Equip abilities you activate that target ~ cost \{(\d+)\} less to activate\.$/))) { out.push({ k: 'equipDiscountTarget', n: +m[1] }); return true; }
   if ((m = line.match(/^Other (Mice) you control get \+(\d+)\/\+(\d+)\.$/))) { out.push({ k: 'static', affects: { subtypes: ['Mouse'], other: true, ctrl: 'you' }, p: +m[2], t: +m[3] }); return true; }
+  if (line === 'Start your engines!') { out.push({ k: 'engines' }); return true; }                                         // CR 702.179a
+  if (line === "Creatures entering don't cause abilities to trigger.") { out.push({ k: 'torpor' }); return true; }          // Torpor Orb (CR 603.2)
+  if (line === 'Activated abilities of sources with the chosen name can\'t be activated unless they\'re mana abilities.') { out.push({ k: 'nameLock' }); return true; }   // CR 602.5
+  if (line === 'Lands with the chosen name have "{T}: Add {C}."') { out.push({ k: 'nameGrantC' }); return true; }
+  if ((m = line.match(/^(Red) spells you cast cost \{(\d+)\} less to cast\.$/))) { out.push({ k: 'costLessFor', n: +m[2], spell: { colors: ['R'] } }); return true; }
+  if (line === 'Creatures you control have haste.') { out.push({ k: 'static', affects: { types: ['Creature'], ctrl: 'you' }, grant: ['haste'] }); return true; }
+  if ((m = line.match(/^~ enters with (two|three|four) (\w+) counters on it\.$/))) { out.push({ k: 'etbCounters', n: numOf(m[1]), kind: m[2] }); return true; }   // CR 614.1c
+  if (line === 'As an additional cost to cast this spell, sacrifice an artifact or creature.') { out.push({ k: 'addCost', what: 'sacArtCre' }); return true; }   // CR 601.2f
+  if (line === 'This token gets +1/+1 for each artifact you control.') { out.push({ k: 'static', affects: 'self', p: 0, t: 0, pv: { v: 'countYou', f: { types: ['Artifact'] } } }); return true; }
   if (line === 'You may play an additional land on each of your turns.') { out.push({ k: 'extraLand', n: 1 }); return true; }   // CR 305.2
   if (line === 'You may play lands from your graveyard.') { out.push({ k: 'landsFromGrave' }); return true; }
   if (line === "This spell can't be countered.") { out.push({ k: 'uncounterable' }); return true; }        // CR 113.6g
@@ -734,6 +776,9 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(/^To solve — (.+)\.$/))) { ab.push({ k: 'trig', on: 'beginStep', step: 'end', yours: true, cond: { c: 'all', of: [parseCond(m[1].replace(/^You/, 'you'), ctx), { c: 'notSolved' }] }, solveTrig: true, ops: [{ o: 'solve' }] }); return; }   // CR 719.3a
   if ((m = line.match(/^Solved — (.+)$/))) { const n0 = ab.length; parseLine(m[1], ctx, d, kw, ab); for (let k = n0; k < ab.length; k++) ab[k].solved = true; return; }   // CR 719.3c
   if ((m = line.match(/^Plot (\{[^ ]+\})$/))) { ab.push({ k: 'plot', cost: m[1] }); return; }   // CR 702.170a
+  if ((m = line.match(/^Max speed — (.+)$/))) { const n0 = ab.length; parseLine(m[1], ctx, d, kw, ab); for (let k = n0; k < ab.length; k++) ab[k].maxSpeed = true; return; }   // CR 702.178: only with max speed
+  if ((m = line.match(/^∞ — (.+)$/))) { const n0 = ab.length; parseLine(m[1], ctx, d, kw, ab); for (let k = n0; k < ab.length; k++) ab[k].harnessed = true; return; }   // CR 702.186b: only while harnessed
+  if ((m = line.match(/^Craft with artifact (\{[^ ]+\})$/))) { ab.push({ k: 'act', cost: { mana: m[1], tap: false, sacSelf: false, exileSelf: true, craftArtifact: true }, sorcery: true, craft: true, ops: [{ o: 'craftReturn' }] }); return; }   // CR 702.167a
   if ((m = line.match(/^Crew (\d+)$/))) { ab.push({ k: 'act', crew: +m[1], cost: { mana: '', tap: false, sacSelf: false, crew: +m[1] }, ops: [{ o: 'becomeCreature' }] }); return; }   // CR 702.122a
   if ((m = line.match(/^(I|II|III|IV|V) — (.+)$/))) { const n = ['I', 'II', 'III', 'IV', 'V'].indexOf(m[1]) + 1, T = []; const ops = parseEffects(T, Object.assign({}, ctx, { it: 'self' }), m[2]); ab.push(Object.assign({ k: 'trig', on: 'lore', who: 'self', chapter: n, ops: ops }, T.length ? { tg: T } : {})); return; }   // CR 714.2b
   if ((m = line.match(/^Flashback (\{[^ ]+\})$/))) { ab.push({ k: 'flashback', cost: m[1] }); return; }   // CR 702.34a
@@ -761,7 +806,7 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(/^(As long as .+?\.) (~ gets an additional .+\.)$/))) { parseLine(m[1], ctx, d, kw, ab); parseLine(m[2], ctx, d, kw, ab); return; }   // Elenda: two statics in one paragraph
   if (parseStatic(line, ctx, ab, d)) return;
   if (parseTrigger(line, ctx, ab)) return;
-  if ((m = line.match(/^([^:]+): (.+)$/)) && /\{|Sacrifice|^Remove |^Discard a card$|^Pay \d+ life$|Exile ~|Exile this card|Discard this card|Exile a (?:creature )?card from your graveyard/.test(m[1])) {                          // CR 602.1
+  if ((m = line.match(/^([^:]+): (.+)$/)) && /\{|Sacrifice|^Remove |^Discard a card$|^Pay \d+ life$|Exile ~|Exile this card|Discard this card|Exile a (?:creature )?card from your graveyard|^Tap two other untapped artifacts you control$/.test(m[1])) {                          // CR 602.1
     const cost = parseCost(m[1]);
     let mm, body = m[2];
     if ((mm = body.match(/^Add \{([WUBRGC])\}(?: or \{([WUBRGC])\})?\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1]].concat(mm[2] ? [mm[2]] : []) }); return; }   // CR 605.1a
@@ -771,6 +816,7 @@ function parseLine(line, ctx, d, kw, ab) {
     // Vivi Ornitier: X mana in any combination of two colours (CR 106.1a); X is read as it is activated.
     if ((mm = body.match(/^Add X mana in any combination of \{([WUBRG])\} and\/or \{([WUBRG])\}, where X is ~'s power\. Activate only during your turn and only once each turn\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1], mm[2]], combo: true, amount: { v: 'power', of: 'self' }, cond: { c: 'yourTurn' }, oncePerTurn: true }); return; }
     if (body === 'Add one mana of any color.') { ab.push({ k: 'mana', cost: cost, cols: ['W', 'U', 'B', 'R', 'G'] }); return; }   // (with an exile cost: Molt Tender)
+    if (body === 'Add one mana of any color. Spend this mana only to cast an artifact spell.') { ab.push({ k: 'mana', cost: cost, cols: ['W', 'U', 'B', 'R', 'G'], only: 'artifact' }); return; }   // CR 106.6
     if (body === "Add one mana of any color. Spend this mana only to cast a creature spell of the chosen type, and that spell can't be countered.") { ab.push({ k: 'mana', cost: cost, cols: ['W', 'U', 'B', 'R', 'G'], only: 'chosenType', uncounterable: true }); return; }   // CR 106.6
     // Activation restrictions (CR 602.5): "Activate only as a sorcery.", "... only once each turn.", "Activate only if <cond>."
     const act = { k: 'act', cost: cost };
@@ -968,7 +1014,7 @@ function tokenMaker(pack) {
   };
   mk.named = function (o) {                                                                        // "create <Name>, a legendary 8/8 blue Octopus creature token"
     const id = 'token-' + o.name.toLowerCase().replace(/[^a-z]+/g, '-');
-    if (!pack[id]) pack[id] = { id: id, name: o.name, token: true, mana: '', colors: o.colors, types: ['Creature'], subtypes: o.subtypes, supers: o.supers, power: o.p, toughness: o.t, typeLine: 'Token ' + o.supers.join(' ') + ' Creature — ' + o.subtypes.join(' '), text: '', kw: {}, ab: [], layout: 'token' };
+    if (!pack[id]) pack[id] = { id: id, name: o.name, token: true, mana: '', colors: o.colors, types: o.artifact ? ['Artifact', 'Creature'] : ['Creature'], subtypes: o.subtypes, supers: o.supers, power: o.p, toughness: o.t, typeLine: ('Token ' + o.supers.join(' ') + (o.artifact ? ' Artifact' : '') + ' Creature — ' + o.subtypes.join(' ')).replace(/  +/g, ' '), text: o.text || '', kw: {}, ab: o.ab || [], layout: 'token' };
     return id;
   };
   mk.equipment = function (o) {                                                                    // "a colorless Equipment artifact token named Axe with ... and equip {2}"
@@ -1054,7 +1100,10 @@ export function build() {
 if (process.argv[1] && process.argv[1].endsWith('build-cards.mjs')) {
   const { cards, decks, fails } = build();
   const head = '// GENERATED by tools/build-cards.mjs from MTGJSON deck files (docs/sources.md). Do not edit.\n';
-  fs.writeFileSync(path.join(ROOT, 'data/cards.js'), head + 'window.MF.cards = ' + JSON.stringify(cards, null, 0).replace(/\},"/g, '},\n"') + ';\n');
+  const atomicPath = path.join(ROOT, 'scratch/data/AtomicCards.json'), landNames = new Set();
+  if (fs.existsSync(atomicPath)) for (const faces of Object.values(JSON.parse(fs.readFileSync(atomicPath, 'utf8')).data)) for (const f of faces) if ((f.types || []).includes('Land') && !(f.isFunny) && f.layout !== 'token') landNames.add(f.faceName || f.name);
+  fs.writeFileSync(path.join(ROOT, 'data/cards.js'), head + 'window.MF.cards = ' + JSON.stringify(cards, null, 0).replace(/\},"/g, '},\n"') + ';\n'
+    + '// CR 201.4: every land card name in the Oracle card reference, for "choose a land card name".\nwindow.MF.LAND_NAMES = ' + JSON.stringify([...landNames].sort()) + ';\n');
   fs.writeFileSync(path.join(ROOT, 'data/decks.js'), head + 'window.MF.decks = ' + JSON.stringify(decks, null, 1) + ';\n');
   const reg = Object.values(decks).filter(d => d.registered);
   const all = Object.values(cards).filter(c => !c.token);

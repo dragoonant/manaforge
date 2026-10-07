@@ -17,8 +17,8 @@
 - Log lines name a transformed permanent by its front face ("Esper Origins triggers" for Summon:
   Esper Maduin): log entries carry the card id, not the face. Carry the face with the id (about 25
   log sites) and let `tag` read it; the battlefield tile already shows the back face.
-- Golgari Graveyard (12), Azorius Control (15), Domain Overlords (16), Azorius Omniscience (11), Sultai (16), Golgari Roots (16) and Boros Dáin (17) cards still show procedural art: the GPU was
-  busy with the owner's Hunyuan3D jobs on 2026-10-06. `python tools/gen-art-sdxl.py` renders whatever has no art.
+- 123 card illustrations are still procedural (Golgari Graveyard through Azorius Perilous Snare): the GPU
+  was busy with the owner's Hunyuan3D jobs on 2026-10-06. `python tools/gen-art-sdxl.py` renders whatever has no art.
 - Oblivious Bookworm reads "unless a permanent entered face down ... or you turned one face up": nothing in
   this engine turns a permanent face down, so the discard always happens. When a face-down mechanic
   arrives (morph, disguise, cloak), give that condition a real history.

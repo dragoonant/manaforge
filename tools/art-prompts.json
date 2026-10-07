@@ -264,6 +264,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "braided-net-braided-quipu",
+    "styleId": "J",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a heavy fishing net of braided blue cord with glowing knots, spread across stone, on a misty harbour dock. modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment.",
+    "subject": "a heavy fishing net of braided blue cord with glowing knots, spread across stone",
+    "setting": "on a misty harbour dock",
+    "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "break-out",
     "styleId": "E",
     "land": false,
@@ -374,6 +385,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "candy-trail",
+    "styleId": "C",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a trail of bright sugared sweets leading through a dark forest path, in a moonlit wood. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a trail of bright sugared sweets leading through a dark forest path",
+    "setting": "in a moonlit wood",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "carnage-crimson-chaos",
     "styleId": "C",
     "land": false,
@@ -405,6 +427,17 @@
     "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
     "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "castle-doom",
+    "styleId": "F",
+    "land": true,
+    "prompt": "landscape painting, scenery, a grim iron fortress castle on a jagged mountain peak, green-lit windows, lightning above, in a stormy night. loose ink and watercolour landscape, bleeding pigment washes, deep indigo and rust, splattered paint, brooding sky.",
+    "subject": "a grim iron fortress castle on a jagged mountain peak, green-lit windows, lightning above",
+    "setting": "in a stormy night",
+    "style": "loose ink and watercolour landscape, bleeding pigment washes, deep indigo and rust, splattered paint, brooding sky",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "cathar-commando",
@@ -581,6 +614,17 @@
     "style": "premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce",
     "short": "master grade SD figure, compact heroic proportions, highly detailed armour plating, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "cryogen-relic",
+    "styleId": "A",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a frost-covered metal reliquary leaking icy blue vapour, crystals forming on its edges, in a frozen vault. oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood.",
+    "subject": "a frost-covered metal reliquary leaking icy blue vapour, crystals forming on its edges",
+    "setting": "in a frozen vault",
+    "style": "oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "cut-down",
@@ -836,6 +880,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "dusk-rose-reliquary",
+    "styleId": "H",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, an ornate gold reliquary box with a single blood-red rose blooming from it, on a church altar at dusk. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "an ornate gold reliquary box with a single blood-red rose blooming from it",
+    "setting": "on a church altar at dusk",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "dwalin-weaponmaster",
     "styleId": "D",
     "land": false,
@@ -1078,6 +1133,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "fomori-vault",
+    "styleId": "C",
+    "land": true,
+    "prompt": "landscape painting, scenery, a sealed ancient stone vault door carved with giant runes, half buried in a hillside, in grey fog. action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour.",
+    "subject": "a sealed ancient stone vault door carved with giant runes, half buried in a hillside",
+    "setting": "in grey fog",
+    "style": "action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "forest",
     "styleId": "D",
     "land": true,
@@ -1252,6 +1318,17 @@
     "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
     "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "hallowed-fountain",
+    "styleId": "A",
+    "land": true,
+    "prompt": "landscape painting, scenery, a white marble fountain in a sunlit cathedral courtyard, clear water spilling over steps, in bright morning light. oil painting at blazing sunset, epic fantasy landscape art, rich detailed brushwork, ominous towering scale.",
+    "subject": "a white marble fountain in a sunlit cathedral courtyard, clear water spilling over steps",
+    "setting": "in bright morning light",
+    "style": "oil painting at blazing sunset, epic fantasy landscape art, rich detailed brushwork, ominous towering scale",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "hardened-academic",
@@ -2123,6 +2200,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "perilous-snare",
+    "styleId": "H",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a vicious spring-loaded steel snare trap with glowing white runes, jaws open, on a forest floor. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "a vicious spring-loaded steel snare trap with glowing white runes, jaws open",
+    "setting": "on a forest floor",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "pest-control",
     "styleId": "I",
     "land": false,
@@ -2134,6 +2222,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "petrified-hamlet",
+    "styleId": "C",
+    "land": true,
+    "prompt": "landscape painting, scenery, a small village turned entirely to grey stone, houses and trees frozen as rock, under a pale overcast sky. action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour.",
+    "subject": "a small village turned entirely to grey stone, houses and trees frozen as rock",
+    "setting": "under a pale overcast sky",
+    "style": "action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "pileated-provisioner",
     "styleId": "M",
     "land": false,
@@ -2143,6 +2242,17 @@
     "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
     "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "pinnacle-starcage",
+    "styleId": "E",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a towering cage of white light and silver bars hanging from the stars, trapping small shadowy shapes, in a starry void. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "a towering cage of white light and silver bars hanging from the stars, trapping small shadowy shapes",
+    "setting": "in a starry void",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "plains",
@@ -2286,6 +2396,17 @@
     "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
     "short": "master grade super deformed infernal warrior, three heads tall, horned black armour, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "repurposing-bay",
+    "styleId": "M",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a cluttered artificer workshop bay with mechanical arms reassembling a brass machine, lit by blue arc lamps. matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace.",
+    "subject": "a cluttered artificer workshop bay with mechanical arms reassembling a brass machine",
+    "setting": "lit by blue arc lamps",
+    "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "requiting-hex",
@@ -2541,6 +2662,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "simulacrum-synthesizer",
+    "styleId": "N",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a humming brass machine with glass tubes assembling a small construct from glowing parts, in a dark laboratory. infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale.",
+    "subject": "a humming brass machine with glass tubes assembling a small construct from glowing parts",
+    "setting": "in a dark laboratory",
+    "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "skateboard",
     "styleId": "D",
     "land": false,
@@ -2637,6 +2769,17 @@
     "setting": "at twilight",
     "style": "cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation",
     "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "spring-loaded-sawblades-bladewheel-chariot",
+    "styleId": "N",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a spinning circular saw blade launching from a spring trap in a shower of sparks, in a dusty arena. infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale.",
+    "subject": "a spinning circular saw blade launching from a spring trap in a shower of sparks",
+    "setting": "in a dusty arena",
+    "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
+    "short": "fantasy still life painting of a single object, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
@@ -2849,6 +2992,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "the-fire-crystal",
+    "styleId": "G",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a large glowing red crystal floating above an altar, flames swirling inside it, in a dark shrine. gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action.",
+    "subject": "a large glowing red crystal floating above an altar, flames swirling inside it",
+    "setting": "in a dark shrine",
+    "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "the-last-ronins-technique",
     "styleId": "A",
     "land": false,
@@ -2868,6 +3022,17 @@
     "setting": "under a red evening sky",
     "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
     "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "the-mind-stone",
+    "styleId": "D",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a brilliant yellow gemstone radiating golden light, set in a dark metal sceptre head, in a black void. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a brilliant yellow gemstone radiating golden light, set in a dark metal sceptre head",
+    "setting": "in a black void",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "fantasy still life painting of a single object, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
@@ -2970,6 +3135,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "token-construct",
+    "styleId": "I",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a boxy brass construct robot with glowing seams, in a workshop. retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing.",
+    "subject": "a boxy brass construct robot with glowing seams",
+    "setting": "in a workshop",
+    "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "token-cragflame",
     "styleId": "F",
     "land": false,
@@ -2990,6 +3166,17 @@
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "token-doombot",
+    "styleId": "C",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a menacing iron war robot with a blank metal faceplate and green-glowing eyes, in a fortress hall. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a menacing iron war robot with a blank metal faceplate and green-glowing eyes",
+    "setting": "in a fortress hall",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "token-drake-2-2-u-flying",
@@ -3179,6 +3366,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "token-robot",
+    "styleId": "K",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a small sturdy silver robot with round lamp eyes, in a white chamber. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a small sturdy silver robot with round lamp eyes",
+    "setting": "in a white chamber",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "token-scion-of-the-deep",
     "styleId": "M",
     "land": false,
@@ -3278,6 +3476,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "torpor-orb",
+    "styleId": "M",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a dull grey metal orb on a stand, slowing mist frozen around it, in a silent stone chamber. matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace.",
+    "subject": "a dull grey metal orb on a stand, slowing mist frozen around it",
+    "setting": "in a silent stone chamber",
+    "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "town-greeter",
     "styleId": "D",
     "land": false,
@@ -3363,6 +3572,17 @@
     "setting": "in a haunted manor chamber lit by red candles",
     "style": "oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood",
     "short": "master grade super deformed warrior, three heads tall, heroic armoured figure, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "united-battlefront",
+    "styleId": "K",
+    "land": false,
+    "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a line of armoured soldiers and mages raising glowing shields together, on a battlefield at dawn. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a line of armoured soldiers and mages raising glowing shields together",
+    "setting": "on a battlefield at dawn",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
     "negativeExtra": ""
   },
   {

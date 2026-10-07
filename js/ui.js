@@ -147,6 +147,7 @@
         ${pool ? `<div class="ppool" title="Mana pool — empties at the end of each step">${pool}</div>` : ''}
         <div class="pzones">
           <span class="pz" title="Library">Library ${p.lib.length}</span>
+          ${p.speed != null ? `<span class="pz" title="Speed (CR 702.179): rises once on your turn when an opponent loses life; 4 is max speed">Speed ${p.speed}${p.speed >= 4 ? ' (max)' : ''}</span>` : ''}${p.enduring ? '<span class="pz" title="Enduring story (CR 702.195)">Enduring story</span>' : ''}
           ${mine ? '' : `<span class="pz" title="Cards in hand">Hand ${p.hand.length}</span>`}
           <span class="pz click" data-view="grave:${seat}">Graveyard ${p.grave.length}</span>
           ${(v.emblems || []).filter(em => em.ctrl === seat).map(em => `<span class="pz" title="Emblem (CR 114)">Emblem: ${esc(em.text)}</span>`).join('')}

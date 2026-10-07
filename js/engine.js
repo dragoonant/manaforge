@@ -217,11 +217,18 @@
   // (120.3a) all lose life here, so a replacement of life loss sees every one of them.
   // Bloodletter of Aclazotz: "If an opponent would lose life during your turn, they lose twice that
   // much life instead" (CR 614.1a); each instance applies once (616.1), and doubling commutes.
+  function speedTrigger(s, who) {
+    const ap = s.ap, p = P(s, ap);
+    if (who === ap || !(p.speed >= 1 && p.speed < 4) || p.speedTrigTurn === s.turn) return;
+    p.speedTrigTurn = s.turn;
+    s.trigs.push({ src: null, ab: -1, inl: { k: 'trig', on: 'speed', cond: { c: 'speedBelow4' }, ops: [{ o: 'speedUp' }] }, ctrl: ap, ev: { t: 'speed' }, lki: { id: 'speed' } });
+  }
+  MF.speedTrigger = speedTrigger;
   function lifeLost(s, who, n) {
     for (const iid of s.bf) { const ch = chars(s, iid); if (ch.ctrl !== who && ch.ctrl === s.ap) for (const a of ch.ab) if (a.k === 'lifeLossDouble') n *= 2; }
     return n;
   }
-  const loseLifeRaw = (s, who, n) => { const p = P(s, who); p.life -= n; p.h.lostLife = (p.h.lostLife || 0) + n; return n; };
+  const loseLifeRaw = (s, who, n) => { const p = P(s, who); p.life -= n; p.h.lostLife = (p.h.lostLife || 0) + n; if (n > 0) speedTrigger(s, who); return n; };   // CR 702.179d: an opponent losing life during your turn
   MF.loseLife = function (s, who, n, why, cid) {
     if (n <= 0) return 0;
     const lost = loseLifeRaw(s, who, lifeLost(s, who, n));
@@ -247,6 +254,7 @@
     if (!c.tapped) return false;
     if (c.ctr.stun > 0) { c.ctr.stun--; log(s, 'stunUntap', { who: c.ctrl, c: c.id, left: c.ctr.stun }); return false; }
     c.tapped = false;
+    s.effects = s.effects.filter(e => !(e.k === 'lockTapped' && e.iid === iid));             // "for as long as it remains tapped"
     if (!quiet) log(s, 'untapped', { c: c.id });
     return true;
   };
@@ -381,6 +389,7 @@
     for (const st of statics) if (st.a.k === 'static' && st.a.grant) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) for (const k of st.a.grant) out[i].kw[k] = (out[i].kw[k] || 0) + 1; } });
     for (const e of s.effects) if ((e.k === 'grant' || e.k === 'animate') && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { for (const k of e.kws) out[e.iid].kw[k] = (out[e.iid].kw[k] || 0) + 1; } });
     for (const st of statics) if (st.a.k === 'static' && st.a.grantAb) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) out[i].ab = out[i].ab.concat(st.a.grantAb); } });
+    for (const iid of s.bf) if (I(s, iid).chosenName && out[iid] && out[iid].ab.some(a => a.k === 'nameGrantC')) { const nm = I(s, iid).chosenName; l6.push({ ts: I(s, iid).ts, run: () => { for (const i of s.bf) if (out[i] && out[i].types.includes('Land') && out[i].name === nm) out[i].ab = out[i].ab.concat([{ k: 'mana', cost: { mana: '', tap: true, sacSelf: false }, cols: ['C'] }]); } }); }
     for (const st of statics) if (st.a.k === 'cauldronGrant') l6.push({ ts: st.ts, run: () => {
       const src = I(s, st.src), abs = (src.exiled || []).filter(e => I(s, e) && I(s, e).zone === 'exile' && def(s, e).types.includes('Creature')).flatMap(e => def(s, e).ab.filter(a => (a.k === 'act' || a.k === 'mana') && !a.zone && a.loyalty == null));
       if (!abs.length) return;
@@ -470,6 +479,7 @@
   // player would receive priority, then goes on the stack in APNAP order (CR 603.3b).
   // -------------------------------------------------------------------------------------------
   const emit = MF.emit = function (s, ev) {
+    if (ev.t === 'enters' && s.cards[ev.iid] && chars(s, ev.iid).types.includes('Creature') && s.bf.some(i => chars(s, i).ab.some(a => a.k === 'torpor'))) return;   // Torpor Orb
     const seen = new Set();
     const scan = (iid, lki) => {
       const key = iid + (lki ? 'L' : '');
@@ -479,6 +489,7 @@
       for (let i = 0; i < ab.length; i++) {
         const a = ab[i];
         if (a.k !== 'trig' || a.on !== ev.t) continue;
+        if (a.harnessed && !(s.cards[iid] && s.cards[iid].harnessed)) continue;              // CR 702.186b
         if (!!a.lookBack !== !!lki) continue;                                                 // CR 603.10a: leaves-the-battlefield triggers look back in time
         if (!MF.trigMatch(s, iid, src, a, ev)) continue;
         if (a.cond && !MF.cond(ctxFor(s, { kind: 'trig', ctrl: src.ctrl, src: iid, ev: ev, lki: lki || null, t: [] }), a.cond)) continue;   // CR 603.4: an intervening "if" is checked as the event happens
@@ -523,6 +534,8 @@
         if (a.cost.tap && c.tapped) return;
         if (a.only === 'creature' && !(ctx && ctx.creature)) return;
         if (a.only === 'chosenType' && !(ctx && ctx.creature && (ctx.subtypes || []).includes(c.chosen))) return;
+        if (a.only === 'artifact' && !(ctx && ctx.artifact)) return;
+        if (s.effects.some(e => e.k === 'lockTapped' && e.iid === iid) && c.tapped) return;      // Braided Net (it's tapped anyway; kept explicit)
         if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid, flags: {} }, a.cond)) return;        // the Verges: "Activate only if you control ..."
         if (a.cost.life && P(s, who).life < a.cost.life) return;                                 // CR 119.4
         if (a.oncePerTurn && c.actTurn && c.actTurn['m' + i] === s.turn) return;                 // CR 602.5b
@@ -581,7 +594,8 @@
     if (p.poolCav && p.poolCav.length) { const u = usablePool0(p, ctx); for (const m of p.poolCav) if (!(ctx && ctx.creature && (ctx.subtypes || []).includes(m.type))) u[m.col]--; return u; }
     return usablePool0(p, ctx);
   };
-  const usablePool0 = (p, ctx) => { if (ctx && ctx.creature) return Object.assign({}, p.pool); const u = {}; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) u[k] = p.pool[k] - ((p.poolCre && p.poolCre[k]) || 0); return u; };
+  const usablePool0 = (p, ctx) => { if (p.poolArt && !(ctx && ctx.artifact)) { const u = usablePool1(p, ctx); for (const k in u) u[k] -= (p.poolArt[k] || 0); return u; } return usablePool1(p, ctx); };
+  const usablePool1 = (p, ctx) => { if (ctx && ctx.creature) return Object.assign({}, p.pool); const u = {}; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) u[k] = p.pool[k] - ((p.poolCre && p.poolCre[k]) || 0); return u; };
   const canPayMana = MF.canPayMana = (s, who, need, ctx) => {
     if (need.ph && need.ph.length) {                                                          // try paying the first k of them with life
       for (let k = 0; k <= need.ph.length; k++) {
@@ -621,6 +635,7 @@
     p.pool[col]++;
     if (a.only === 'creature') { p.poolCre = p.poolCre || emptyPool(); p.poolCre[col]++; }   // CR 106.6: mana with a spending restriction
     if (a.only === 'chosenType') (p.poolCav = p.poolCav || []).push({ col: col, type: c.chosen, unc: !!a.uncounterable });
+    if (a.only === 'artifact') { p.poolArt = p.poolArt || emptyPool(); p.poolArt[col]++; }
     if (a.cost.life) MF.loseLife(s, who, a.cost.life, 'pay', c.id);                         // CR 119.4: paying life is part of the cost
     log(s, 'mana', { who: who, c: c.id, col: col, only: a.only || null });
     if (a.cost.sacSelf) MF.sacrifice(s, iid);                                                 // part of the cost (CR 605.3b: still a mana ability)
@@ -683,6 +698,7 @@
           p.pool[k] -= spent;
           if (ctx && spent) { ctx.spentCols = ctx.spentCols || {}; ctx.spentCols[k] = (ctx.spentCols[k] || 0) + spent; }
           if (ctx && ctx.creature && p.poolCre) p.poolCre[k] -= Math.min(p.poolCre[k], spent);   // creature-only mana is spent first on a creature spell
+          if (ctx && ctx.artifact && p.poolArt) p.poolArt[k] -= Math.min(p.poolArt[k], spent);
           if (ctx && ctx.creature && p.poolCav) for (let j = 0; j < spent; j++) { const m = p.poolCav.findIndex(e => e.col === k && (ctx.subtypes || []).includes(e.type)); if (m < 0) break; if (p.poolCav[m].unc) ctx.usedCavern = true; p.poolCav.splice(m, 1); }   // restricted mana first; "that spell can't be countered"
         }
         log(s, 'pay', { who: who, mana: MF.manaStr(need) });
@@ -807,7 +823,7 @@
   }
   // CR 500.5: as a step ends, "until end of step" effects end, then mana empties.
   function endStep(s) {
-    for (const p of s.players) { if (poolTotal(p.pool)) log(s, 'manaEmpties', { who: p.seat, n: poolTotal(p.pool) }); p.pool = emptyPool(); p.poolCre = emptyPool(); p.poolCav = []; }
+    for (const p of s.players) { if (poolTotal(p.pool)) log(s, 'manaEmpties', { who: p.seat, n: poolTotal(p.pool) }); p.pool = emptyPool(); p.poolCre = emptyPool(); p.poolCav = []; p.poolArt = emptyPool(); }
     let extra = false;
     if (s.step === 'eoc') {                                                                   // CR 511.3
       s.effects = s.effects.filter(e => e.until !== 'eoc');
@@ -1054,6 +1070,7 @@
         else if (c.dt && c.dmg > 0 && !ch.kw.indestructible) out.push({ k: 'destroy', iid: iid, why: 'deathtouch' });   // CR 704.5h
       }
       if (ch.subtypes.includes('Saga') && ch.ab.some(a => a.chapter) && (c.ctr.lore || 0) >= Math.max(...ch.ab.filter(a => a.chapter).map(a => a.chapter)) && !s.stack.some(L => L.kind === 'trig' && L.src === iid) && !s.trigs.some(tg => tg.src === iid)) out.push({ k: 'sagaSac', iid: iid });   // CR 714.4
+      if (ch.ab.some(a => a.k === 'engines') && P(s, c.ctrl).speed == null && !out.some(o => o.k === 'speed' && o.who === c.ctrl)) out.push({ k: 'speed', who: c.ctrl });   // CR 702.179a
       if (ch.ab.some(a => a.k === 'storied') && !P(s, c.ctrl).enduring && s.bf.filter(i => I(s, i).ctrl === c.ctrl && (chars(s, i).types.includes('Artifact') || chars(s, i).subtypes.includes('Saga') || chars(s, i).supers.includes('Legendary'))).length >= 3 && !out.some(o => o.k === 'enduring' && o.who === c.ctrl)) out.push({ k: 'enduring', who: c.ctrl });
       if (ch.types.includes('Planeswalker') && !(c.ctr.loyalty > 0)) out.push({ k: 'grave', iid: iid, why: 'loyalty' });   // CR 704.5i
       if (ch.supers.includes('Legendary')) { const key = c.ctrl + '|' + ch.name; (legends[key] = legends[key] || []).push(iid); }
@@ -1087,6 +1104,7 @@
         case 'tokenGone': { const c = I(s, a.iid); if (c.zone === 'moved') break; zoneArr(s, c).splice(zoneArr(s, c).indexOf(a.iid), 1); c.zone = 'moved'; c.to = null; log(s, 'tokenGone', { c: c.id }); break; }
         case 'grave': if (I(s, a.iid).zone === 'bf') { log(s, 'sbaGrave', { c: I(s, a.iid).id, why: a.why, who: I(s, a.iid).ctrl }); move(s, a.iid, 'grave'); } break;
         case 'destroy': if (I(s, a.iid).zone === 'bf') MF.destroy(s, a.iid, a.why); break;
+        case 'speed': P(s, a.who).speed = 1; log(s, 'speed', { who: a.who, n: 1 }); break;
         case 'enduring': P(s, a.who).enduring = true; log(s, 'enduring', { who: a.who }); break;   // CR 702.195a
         case 'sagaSac': if (I(s, a.iid).zone === 'bf') { log(s, 'sagaDone', { who: I(s, a.iid).ctrl, c: I(s, a.iid).id }); MF.sacrifice(s, a.iid); } break;
         case 'unattach': I(s, a.iid).att = null; log(s, 'unattach', { c: I(s, a.iid).id }); break;
@@ -1201,6 +1219,7 @@
     if (via === 'impending' && !d0.ab.some(a => a.k === 'impending')) return false;
     if (via === 'evoke' && !(I(s, iid).zone === 'hand' && d0.ab.some(a => a.k === 'evoke'))) return false;
     if (via === 'free' && !(I(s, iid).zone === 'hand' && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'castFree')))) return false;
+    for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'sacArtCre' && !s.bf.some(i => I(s, i).ctrl === who && (chars(s, i).types.includes('Artifact') || chars(s, i).types.includes('Creature')))) return false;
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrSac' && P(s, who).hand.filter(i => i !== iid).length === 0 && !s.bf.some(i => I(s, i).ctrl === who)) return false;   // a mandatory additional cost that can't be paid
     if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.plotted != null) && !sorceryTiming(s, who)) return false;   // CR 702.170d: main phase, empty stack
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrLife' && P(s, who).hand.filter(i => i !== iid).length === 0 && P(s, who).life < a.life) return false;   // a mandatory additional cost that can't be paid   // CR 702.185a: from your hand
@@ -1224,7 +1243,7 @@
     const tappedTg = tcl ? MF.targetOptions(s, sp.tg[0], who, iid, []).find(r => MF.cond({ s: s, ctrl: who, src: iid, flags: {}, targets: [[r]] }, tcl.cond)) : null;   // Ride's End, Ephara's Dispersal: priced with a target that qualifies, if one can be chosen
     let spreeExtra = null;
     if (sp && sp.spree) { const ms = sp.modes.filter(m => !m.tg || slotsLegalNow(s, who, iid, m.tg)).map(m => MF.parseMana(m.cost)).sort((a, b) => MF.manaValue(a) - MF.manaValue(b)); if (!ms.length) return false; spreeExtra = ms[0]; }
-    return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: spreeExtra, targets: tappedTg ? [[tappedTg]] : null }), { creature: ch.types.includes('Creature'), subtypes: ch.subtypes });
+    return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: spreeExtra, targets: tappedTg ? [[tappedTg]] : null }), { creature: ch.types.includes('Creature'), artifact: ch.types.includes('Artifact'), subtypes: ch.subtypes });
   };
   // Harmonize: the most generic mana a tapped creature could take off (CR 702.180a).
   const harmonizeTappable = (s, who) => s.bf.filter(i => I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature'));
@@ -1254,6 +1273,12 @@
     if ((a.zone === 'hand' || a.zone === 'grave') && c.owner !== who) return false;
     if (a.sorcery && !sorceryTiming(s, who)) return false;
     if (a.cost.tap && (c.tapped || (ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn) && !abilityHaste(s, who)))) return false;   // CR 302.6
+    if (a.maxSpeed && !((P(s, who).speed || 0) >= 4)) return false;                            // "Max speed —" (CR 702.178)
+    if (s.effects.some(e => e.k === 'lockTapped' && e.iid === iid) && c.tapped) return false;   // Braided Net
+    if (s.bf.some(i => { const h = I(s, i); return h.chosenName && h.chosenName === ch.name && chars(s, i).ab.some(b => b.k === 'nameLock'); })) return false;   // Petrified Hamlet (mana abilities aren't 'act')
+    if (a.cost.sacType && !s.bf.some(i => I(s, i).ctrl === who && (!a.cost.sacType.other || i !== iid) && a.cost.sacType.types.some(ty => chars(s, i).types.includes(ty)))) return false;
+    if (a.cost.tapOthers && s.bf.filter(i => i !== iid && I(s, i).ctrl === who && !I(s, i).tapped && MF.matchChars(s, i, chars(s, i), a.cost.tapOthers.f, who, iid)).length < a.cost.tapOthers.n) return false;
+    if (a.cost.craftArtifact && !(s.bf.some(i => i !== iid && I(s, i).ctrl === who && chars(s, i).types.includes('Artifact')) || P(s, who).grave.some(g => def(s, g).types.includes('Artifact')))) return false;   // CR 702.167a
     if (a.cost.exileGrave && !P(s, who).grave.some(g => g !== iid && (!a.cost.exileGrave.types || a.cost.exileGrave.types.some(ty => def(s, g).types.includes(ty))))) return false;
     if (a.tg && !slotsLegalNow(s, who, iid, a.tg)) return false;
     if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid }, a.cond)) return false;
@@ -1487,7 +1512,7 @@
     const c = I(s, iid);
     if (alt) c.asAlt = true;
     if (door != null) c.asDoor = door;
-    const ctx = { creature: d.types.includes('Creature'), subtypes: d.subtypes.slice() };      // what the mana is spent on (CR 106.6)
+    const ctx = { creature: d.types.includes('Creature'), artifact: d.types.includes('Artifact'), subtypes: d.subtypes.slice() };   // what the mana is spent on (CR 106.6)
     const costRaw = MF.parseMana(d.mana);
     if (costRaw.x) {                                                                           // CR 601.2b, 107.3a: X is announced
       // The largest X whose total cost (reductions included, CR 601.2f) the player could pay.
@@ -1532,6 +1557,10 @@
           if (c2 === 'done') break; tapped.push(c2); tot += Math.max(0, chars(s, c2).p);
         }
         L.addCostPaid = true; addPay.push(() => { for (const i of tapped) { I(s, i).tapped = true; log(s, 'tapped', { who: who, c: I(s, i).id }); } });
+      } else if (a.what === 'sacArtCre') {
+        const opts = s.bf.filter(i => I(s, i).ctrl === who && (chars(s, i).types.includes('Artifact') || chars(s, i).types.includes('Creature'))).map(i => ({ id: i, iid: i }));
+        if (!opts.length) throw new Illegal('nothing to sacrifice');
+        const v = ask(x, { who: who, kind: 'sacrificeCost', src: iid, opts: opts, cancel: true }); addPay.push(() => MF.sacrifice(s, v));
       } else if (a.what === 'discardOrSac') {
         const canDiscard = P(s, who).hand.length > 0, mine = s.bf.filter(i => I(s, i).ctrl === who);
         if (!canDiscard && !mine.length) throw new Illegal('cannot pay the additional cost');
@@ -1666,6 +1695,23 @@
     if (a.cost.exileSelf) { const ec = I(s, iid); L.lki = snapshot(s, iid); log(s, 'exiledCost', { who: who, c: ec.id }); move(s, iid, 'exile'); }
     if (a.cost.discard) { const card = ask(x, { who: who, kind: 'discard', src: iid, left: 1, opts: P(s, who).hand.filter(i => i !== iid).map(i => ({ id: i, iid: i })), cancel: true }); MF.discard(s, card); }
     if (a.cost.sacToken) { const opts = s.bf.filter(i => I(s, i).ctrl === who && I(s, i).tok).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('no token to sacrifice'); MF.sacrifice(s, ask(x, { who: who, kind: 'sacToken', src: iid, opts: opts, cancel: true })); }
+    if (a.cost.sacType) {                                                                      // "Sacrifice an artifact", "Sacrifice another artifact": which one is a choice
+      const opts = s.bf.filter(i => I(s, i).ctrl === who && (!a.cost.sacType.other || i !== iid) && a.cost.sacType.types.some(ty => chars(s, i).types.includes(ty))).map(i => ({ id: i, iid: i }));
+      if (!opts.length) throw new Illegal('nothing to sacrifice');
+      const v = ask(x, { who: who, kind: 'sacrificeCost', src: iid, opts: opts, cancel: true });
+      L.sacMv = chars(s, v).mv; MF.sacrifice(s, v);                                            // Repurposing Bay: "the sacrificed artifact's mana value"
+    }
+    if (a.cost.tapOthers) {                                                                    // Bladewheel Chariot: "Tap two other untapped artifacts you control"
+      const got = [];
+      for (let k = 0; k < a.cost.tapOthers.n; k++) { const opts = s.bf.filter(i => i !== iid && !got.includes(i) && I(s, i).ctrl === who && !I(s, i).tapped && MF.matchChars(s, i, chars(s, i), a.cost.tapOthers.f, who, iid)).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('not enough to tap'); got.push(ask(x, { who: who, kind: 'tapCost', src: iid, k: k + 1, n: a.cost.tapOthers.n, opts: opts, cancel: true })); }
+      for (const i of got) { I(s, i).tapped = true; log(s, 'tapped', { who: who, c: I(s, i).id }); }
+    }
+    if (a.cost.craftArtifact) {                                                                // CR 702.167a: exile another artifact you control or an artifact card from your graveyard
+      const opts = s.bf.filter(i => i !== iid && I(s, i).ctrl === who && chars(s, i).types.includes('Artifact')).concat(P(s, who).grave.filter(g => def(s, g).types.includes('Artifact'))).map(i => ({ id: i, iid: i }));
+      if (!opts.length) throw new Illegal('no artifact to craft with');
+      const m = ask(x, { who: who, kind: 'craftMaterial', src: iid, opts: opts, cancel: true });
+      log(s, 'exiledCost', { who: who, c: I(s, m).id, from: I(s, m).zone === 'grave' ? 'graveyard' : 'battlefield' }); move(s, m, 'exile');
+    }
     if (a.cost.exileGrave) {                                                                   // "Exile a [creature] card from your graveyard": which one is a choice (CR 601.2h)
       const opts = P(s, who).grave.filter(g => !a.cost.exileGrave.types || a.cost.exileGrave.types.some(ty => def(s, g).types.includes(ty))).map(g => ({ id: g, iid: g }));
       if (!opts.length) throw new Illegal('no card to exile');

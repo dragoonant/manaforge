@@ -15,7 +15,7 @@
     return `<span class="ms ms-N">${esc(t)}</span>`;
   };
   const symbols = str => esc(str).replace(/\{([^}]+)\}/g, (m, t) => sym(t));
-  const cname = id => MF.cards[id] ? MF.cards[id].name : id;
+  const cname = id => MF.cards[id] ? MF.cards[id].name : id === 'speed' ? 'Speed (start your engines!)' : id;   // the inherent speed trigger has no source (CR 702.179d)
   const tag = id => id == null ? '' : `<b class="cn" data-cid="${esc(id)}">${esc(cname(id))}</b>`;
   const list = ids => ids.map(tag).join(', ');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -69,6 +69,10 @@
     forageCast: (e, v) => `Until end of turn, ${W(e.who, v)} may cast creature spells from ${T.whose(e.who, v)} graveyard by foraging.`,
     enduring: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'have', 'has')} an enduring story for the rest of the game (CR 702.195).`,
     leyline: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'begin', 'begins')} the game with ${tag(e.c)} on the battlefield.`,
+    speed: (e, v) => `${T.whose(e.who, v)[0].toUpperCase() + T.whose(e.who, v).slice(1)} speed is now ${e.n}${e.n >= 4 ? ' — max speed' : ''} (CR 702.179).`,
+    harnessed: (e, v) => `${tag(e.c)} is harnessed: its ∞ ability is active.`,
+    toGraveFromExile: (e, v) => `${tag(e.c)} goes from exile to ${T.whose(e.who, v)} graveyard.`,
+    toLibraryPos: (e, v) => `${tag(e.c)} is put into ${T.whose(e.who, v)} library ${['', 'on top', 'second from the top', 'third from the top'][e.pos]}.`,
     lore: (e, v) => `${tag(e.c)} gets a lore counter (${e.n}).`,
     sagaDone: (e, v) => `${tag(e.c)} has read its final chapter and is sacrificed.`,
     exiledCost: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'exile', 'exiles')} ${tag(e.c)} to pay a cost.`,
@@ -216,6 +220,10 @@
     forage: (s, q) => ({ title: `Forage to cast ${C(s, q.src)} from your graveyard`, body: 'Exile three other cards from your graveyard, or sacrifice a Food (CR 701.61). It enters with a finality counter.', labels: { exile: 'Exile three cards from my graveyard', food: 'Sacrifice a Food' } }),
     leyline: (s, q) => ({ title: `Begin the game with ${tag(q.c)} on the battlefield?`, body: 'It is in your opening hand; you may put it onto the battlefield before the first turn (CR 103.6a).', labels: { yes: 'Put it onto the battlefield', no: 'Keep it in my hand' } }),
     freeEquip: (s, q) => ({ title: `${C(s, q.src)}: equip for {0}?`, body: `You have an enduring story and this is your first equip ability this turn: you may pay {0} instead of ${symbols(q.cost)}.`, labels: { free: 'Pay {0}', pay: 'Pay ' + q.cost.replace(/[{}]/g, '') } }),
+    tapCost: (s, q) => ({ title: `${C(s, q.src)}: tap an artifact (${q.k} of ${q.n})`, body: 'Tapping them is part of the cost. Click a glowing artifact.', labels: {} }),
+    craftMaterial: (s, q) => ({ title: `Craft ${C(s, q.src)}: exile an artifact`, body: 'Exile another artifact you control or an artifact card from your graveyard (CR 702.167a). Click a glowing one.', labels: {} }),
+    chooseName: (s, q) => ({ title: `${C(s, q.src)}: choose a land card name`, body: 'Any land card name may be chosen (CR 201.4); the lands in this game are listed first. Its activated abilities that aren’t mana abilities can’t be activated, and lands with that name tap for {C}.', labels: Object.fromEntries(q.opts.map(o => [o.id, o.id])) }),
+    digOnto: (s, q) => ({ title: `${C(s, q.src)}: put a card onto the battlefield (${q.k} of up to ${q.upTo})`, body: `Only you see these ${q.n} cards. Choose a noncreature, nonland permanent card with mana value 3 or less, or finish; the rest go to the bottom in a random order.`, labels: { done: 'Done' } }),
     hybrid: (s, q) => ({ title: `${C(s, q.src)}: pay ${symbols('{' + q.sym[0] + '/' + q.sym[1] + '}')} with which colour?`, body: `A hybrid symbol is paid with either colour; you announce which before paying (CR 601.2b). Only the colours your mana can pay are offered.${q.n > 1 ? ' Symbol ' + q.k + ' of ' + q.n + '.' : ''}`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'Pay it with ' + MF.COLOR_NAME[o.id]])) }),
     manaColor: (s, q) => ({ title: `${C(s, q.src)}: add one mana of which color?`, body: 'The mana goes into your mana pool; it empties as the step ends.', labels: Object.fromEntries(q.opts.map(o => [o.id, 'Add ' + MF.COLOR_NAME[o.id]])) }),
     tutorUpTo: (s, q) => ({ title: `${C(s, q.src)}: choose card ${q.k} of up to ${q.n}`, body: 'Only you see your library. Click a glowing card; the ones you take are revealed and go into your hand, then your library is shuffled.', labels: { done: 'Done searching' } }),

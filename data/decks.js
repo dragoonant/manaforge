@@ -1787,7 +1787,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (october-5-2026)",
   "rank": null,
   "players": 7,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -1918,25 +1918,12 @@ window.MF.decks = {
     "name": "Rest in Peace"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "castle-doom: effect: Spend this mana only to cast an artifact spell",
-   "petrified-hamlet: effect: Choose a land card name",
-   "fomori-vault: effect: Look at the top X cards of your library, where X is the number of artifacts you control",
-   "united-battlefront: effect: Look at the top seven cards of your library",
-   "simulacrum-synthesizer: trigger event: another artifact you control with mana value 3 or greater enters, create a 0/0 colorless Construct artifact creature token with \"This token gets +1/+1 for each artifact you control.\"",
-   "perilous-snare: ability: Start your engines!",
-   "repurposing-bay: cost: Sacrifice another artifact",
-   "pinnacle-starcage: effect: Exile all artifacts and creatures with mana value 2 or less until ~ leaves the battlefield",
-   "the-mind-stone: effect: Harness ~",
-   "cryogen-relic: trigger event: ~ enters or leaves the battlefield, draw a card.",
-   "spring-loaded-sawblades-bladewheel-chariot: filter noun: tapped creature an opponent controls",
-   "braided-net-braided-quipu: ability: ~ enters with three net counters on it.",
-   "dusk-rose-reliquary: ability: As an additional cost to cast this spell, sacrifice an artifact or creature.",
-   "torpor-orb: ability: Creatures entering don't cause abilities to trigger.",
-   "the-fire-crystal: ability: Red spells you cast cost {1} less to cast."
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-doombot",
+   "token-construct",
+   "token-robot"
+  ]
  },
  "mardu-bloodghast-hob": {
   "id": "mardu-bloodghast-hob",
