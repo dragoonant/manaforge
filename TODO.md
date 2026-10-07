@@ -7,8 +7,9 @@
 - **More decks by compile rate** (`node tools/build-cards.mjs --report`): modal spells, linked
   exile ("until this leaves the battlefield"), "can't attack or block", landfall.
 - Drag to play (CARD-PRESENTATION-SPEC: tap inspects, drag commits); today a click plays.
-- The AI uses instants in 1.9% of the windows where it could: it rarely holds mana for a trick
-  (handoff 11.8.4 predicted this). Add an evaluator term for untapped mana with an instant in hand.
+- The AI uses 7.7% of the opponent's-turn windows where it could cast (was 4.9%, `node tools/arena.mjs --mixed`)
+  since the evaluator values instant mana left open at the end of its turn (2026-10-07; even in an A/B,
+  30-29). It still rarely plans a trick two turns ahead: the roll-out horizon is one turn.
 - Floating mana at priority (DEVIATIONS V1).
 - The AI pilots Izzet Prowess poorly (8 wins in 90 mixed sim games; it rarely sequences cheap
   spells for prowess, Vivi's mana or the Cutter's second-spell trigger). The rollout horizon ends

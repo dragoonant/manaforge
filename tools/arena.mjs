@@ -1,6 +1,6 @@
 // The arena: AI against AI, both seats, with behaviour counters (handoff 7.4). A crash gate and a
 // behaviour check — never a balance instrument (CLAUDE.md regime 2).
-//   node tools/arena.mjs [--games N] [--seed S]
+//   node tools/arena.mjs [--games N] [--seed S] [--mixed]   (--mixed: every registered deck in rotation, not the two Starter Kits)
 import { loadEngine } from './load.mjs';
 const MF = loadEngine();
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i < 0 ? d : process.argv[i + 1]; };
@@ -9,7 +9,8 @@ const ids = Object.values(MF.decks).filter(d => d.registered).map(d => d.id);
 const C = { firstWins: 0, decisive: 0, capped: 0, turns: 0, ownTurns: 0, emptyTurns: 0, landTurns5: 0, landsPlayed5: 0, unspent: 0, attackChances: 0, attacked: 0, blockersAvail: 0, blocksMade: 0, instWindows: 0, instUsed: 0, casts: 0 };
 const t0 = Date.now();
 for (let g = 0; g < games; g++) {
-  const decks = g % 2 ? [ids[1], ids[0]] : [ids[0], ids[1]];
+  const mixed = process.argv.includes('--mixed'), a0 = mixed ? ids[g % ids.length] : ids[0], b0 = mixed ? ids[(g * 7 + 3) % ids.length] : ids[1];
+  const decks = g % 2 ? [b0, a0] : [a0, b0];
   let s = MF.newGame({ seed: seed0 + g, decks: decks });
   let turnActs = null, lastTurn = -1;
   for (let n = 0; s.winner == null; n++) {

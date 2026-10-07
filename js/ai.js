@@ -16,7 +16,7 @@
   // The evaluator. Board presence persists in Magic (handoff 11.8.5): power, toughness and
   // evasion on the battlefield, cards in hand, lands, and life with a low-life cliff.
   // ---------------------------------------------------------------------------------------------
-  const W = { landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0 };
+  const W = { landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2 };
   MF.aiWeights = W;
   const lifeScore = l => l * W.life - (l < W.lowLife ? (W.lowLife - l) * W.lowLifeExtra : 0);
   function permValue(s, iid) {
@@ -50,6 +50,15 @@
       }
       x += Math.min(lands, W.landCap) * W.land + Math.max(0, lands - W.landCap) * 0.3;
       if (p.lib.length < 3) x -= (3 - p.lib.length) * 4;
+      // My turn has just ended at the horizon: an instant-speed card I could still cast with my untapped
+      // lands is a threat the opponent must play around (TODO: the AI rarely held mana for a trick).
+      // Only then — deciding on the opponent's turn, the horizon is my untap, and holding is worth nothing.
+      if (seat === me && s.ap !== me) {
+        const open = s.bf.filter(i => I(s, i).ctrl === me && !I(s, i).tapped && MF.isType(s, i, 'Land')).length;
+        let held = 0;
+        for (const iid of p.hand) { const d = MF.def(s, iid); if ((d.types.includes('Instant') || d.kw.flash) && MF.manaValue(MF.parseMana(d.mana)) <= open && held < 2) held++; }
+        x += held * W.openInstant;
+      }
       v += sign * x;
     }
     return v;
