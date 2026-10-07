@@ -35,8 +35,13 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-06 — the championship decks (D15) under way: 12 of 20 registered; a per-card audit done.**
+**2026-10-06 — the championship decks (D15) under way: 13 of 20 registered; a per-card audit done.**
 
+- Golgari Graveyard (Jody Keith, #34) brought impending (CR 702.176), abilities that function in
+  the graveyard (113.6m) and hand, cost reductions per card in the graveyard and exile (601.2f),
+  combat-damage prevention through the damage door (615), discard-or-sacrifice costs, a */*+1 CDA
+  in every zone (604.3), flavor words (207.2d). Fixed for Mardu: Carnage's "mana value 3 or less"
+  was not checked on graveyard targets, which let two Carnages loop.
 - Selesnya (Llanowar Elves) brought hybrid mana (CR 107.4e, announced as a nonhybrid cost, 601.2b),
   modal double-faced cards (712.3, 712.8f; either face cast, the front transforms), plot (702.170),
   keyword counters (122.1b), a chosen basic land type (305.7), exile-until-it-leaves returning to the
@@ -60,7 +65,7 @@ Deck count, never quality. A deck that does not compile in full is not registere
   closed), ninjutsu (702.49), transforming double-faced cards (712), emblems (114), layer 6 in
   timestamp order with "loses all abilities", "until your next turn", choose-two modes, draw events.
 - Registered: Mono-Red Aggro (PT Final Fantasy #1), Gruul Delirium (#35), Orzhov Demons (#28), Izzet
-  Prowess (#2) and Dimir Midrange; from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler), Mono-Green (Earthbender Ascension) and Selesnya (Llanowar Elves) — beside the two Starter Kits. Boros
+  Prowess (#2), Dimir Midrange and Golgari Graveyard (#34); from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler), Mono-Green (Earthbender Ascension) and Selesnya (Llanowar Elves) — beside the two Starter Kits. Boros
   brought delayed triggers (CR 603.7), mobilize (702.181), creatures entering attacking (508.4),
   sneak (702.190), Treasure (111.10a), "can't cast spells" (601.3), plan counters. Orzhov (Amalia) brought ward (702.21), explore (701.44), warp (702.185), Cases
   (719), exile-until-it-leaves (610.3), returning as a non-creature, life-gained/lost conditions. Izzet brought Class levels (CR 716), bargain (702.166),

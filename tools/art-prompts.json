@@ -154,6 +154,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "blooming-marsh",
+    "styleId": "B",
+    "land": true,
+    "prompt": "landscape painting, scenery, a dark marsh where pale flowers bloom over black water among drowned trees, in misty grey dawn light. night scene, molten lava glowing against black rock, hyper detailed, cinematic lighting, dramatic scale.",
+    "subject": "a dark marsh where pale flowers bloom over black water among drowned trees",
+    "setting": "in misty grey dawn light",
+    "style": "night scene, molten lava glowing against black rock, hyper detailed, cinematic lighting, dramatic scale",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "blossoming-sands",
     "styleId": "C",
     "land": true,
@@ -495,6 +506,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "diamond-weapon",
+    "styleId": "O",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a colossal ancient war machine of faceted diamond armour plates on massive pillar legs, a glowing white core in its chest, rising from a stormy ocean. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a colossal ancient war machine of faceted diamond armour plates on massive pillar legs, a glowing white core in its chest",
+    "setting": "rising from a stormy ocean",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "dissection-practice",
     "styleId": "L",
     "land": false,
@@ -803,6 +825,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "gnawing-vermin",
+    "styleId": "M",
+    "land": false,
+    "prompt": "super deformed hooded raider, stocky three heads tall, crude weapons, a huge plague rat with matted fur and yellow teeth gnawing through a wooden beam, in a rotting cellar. matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace.",
+    "subject": "a huge plague rat with matted fur and yellow teeth gnawing through a wooden beam",
+    "setting": "in a rotting cellar",
+    "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
+    "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "go-for-the-throat",
     "styleId": "L",
     "land": false,
@@ -858,6 +891,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "harvester-of-misery",
+    "styleId": "N",
+    "land": false,
+    "prompt": "master grade super deformed infernal warrior, three heads tall, horned black armour, a gaunt shrouded spirit reaper with long skeletal arms trailing black mist, withering everything around it, over a battlefield of the fallen. infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale.",
+    "subject": "a gaunt shrouded spirit reaper with long skeletal arms trailing black mist, withering everything around it",
+    "setting": "over a battlefield of the fallen",
+    "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
+    "short": "master grade super deformed infernal warrior, three heads tall, horned black armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "heartfire-hero",
     "styleId": "I",
     "land": false,
@@ -902,6 +946,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "hollow-marauder",
+    "styleId": "I",
+    "land": false,
+    "prompt": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, a hollow-eyed specter rogue in tattered black robes riding a skeletal flying beast, clutching a stolen golden relic, in a stormy night sky. retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing.",
+    "subject": "a hollow-eyed specter rogue in tattered black robes riding a skeletal flying beast, clutching a stolen golden relic",
+    "setting": "in a stormy night sky",
+    "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
+    "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "hop-to-it",
     "styleId": "E",
     "land": false,
@@ -921,6 +976,17 @@
     "setting": "in soft golden afternoon light",
     "style": "action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour",
     "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "huskburster-swarm",
+    "styleId": "O",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a hulking beetle monster of cracked chitin husks and bone, its shell splitting open as carrion beetles pour out, in a dark graveyard. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a hulking beetle monster of cracked chitin husks and bone, its shell splitting open as carrion beetles pour out",
+    "setting": "in a dark graveyard",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "fantasy still life painting of a single object, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
@@ -1076,6 +1142,17 @@
     "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
     "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "llanowar-wastes",
+    "styleId": "G",
+    "land": true,
+    "prompt": "landscape painting, scenery, a blighted forest of dead grey trunks and cracked earth, faint green moss clinging to the stumps, under a sickly overcast sky. gritty comic book landscape panel, heavy black inks, halftone shading, vivid flat colour, ominous sky.",
+    "subject": "a blighted forest of dead grey trunks and cracked earth, faint green moss clinging to the stumps",
+    "setting": "under a sickly overcast sky",
+    "style": "gritty comic book landscape panel, heavy black inks, halftone shading, vivid flat colour, ominous sky",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "lumbering-worldwagon",
@@ -1276,6 +1353,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "overlord-of-the-balemurk",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a towering swamp horror avatar of rotting vines, antlered skull head and dripping black mud, rising from a bog, in a fog-choked marsh at night. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a towering swamp horror avatar of rotting vines, antlered skull head and dripping black mud, rising from a bog",
+    "setting": "in a fog-choked marsh at night",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "overprotect",
     "styleId": "E",
     "land": false,
@@ -1284,6 +1372,17 @@
     "setting": "in a dark forest clearing under a storm",
     "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
     "short": "chunky super deformed fantasy soldier, four heads tall, detailed gear, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "overwhelming-remorse",
+    "styleId": "J",
+    "land": false,
+    "prompt": "master grade super deformed soldier, stocky three heads tall, layered armour, a broken warrior kneeling in despair as ghostly hands drag him down into the dark, in a ruined chapel. modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment.",
+    "subject": "a broken warrior kneeling in despair as ghostly hands drag him down into the dark",
+    "setting": "in a ruined chapel",
+    "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
+    "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
     "negativeExtra": ""
   },
   {
@@ -1383,6 +1482,17 @@
     "setting": "on cathedral steps at night, candles guttering",
     "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
     "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "qarsi-revenant",
+    "styleId": "K",
+    "land": false,
+    "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a winged vampire revenant in ornate black armour with bat wings and a wicked curved blade, above a moonlit desert ruin. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a winged vampire revenant in ornate black armour with bat wings and a wicked curved blade",
+    "setting": "above a moonlit desert ruin",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
     "negativeExtra": ""
   },
   {
@@ -1494,6 +1604,17 @@
     "style": "cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation",
     "short": "landscape painting, scenery, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "rubblebelt-maverick",
+    "styleId": "G",
+    "land": false,
+    "prompt": "master grade super deformed brawler, three heads tall, heavy armour, snarling, a scruffy detective ranger in a long coat crouching in rubble, studying tracks with a lantern, in a collapsed city district. gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action.",
+    "subject": "a scruffy detective ranger in a long coat crouching in rubble, studying tracks with a lantern",
+    "setting": "in a collapsed city district",
+    "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
+    "short": "master grade super deformed brawler, three heads tall, heavy armour, snarling, ",
+    "negativeExtra": ""
   },
   {
     "key": "sacred-foundry",
@@ -1658,6 +1779,17 @@
     "setting": "through a burning ruined town at night",
     "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
     "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "souls-of-the-lost",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a mass of wailing ghostly faces twisting together into a single hungering spirit, in a dark abyss. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a mass of wailing ghostly faces twisting together into a single hungering spirit",
+    "setting": "in a dark abyss",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
     "negativeExtra": ""
   },
   {
@@ -2189,6 +2321,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "town-greeter",
+    "styleId": "D",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a weathered gatekeeper in a patched cloak holding a lantern at a wooden town gate, at dusk on a muddy road. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a weathered gatekeeper in a patched cloak holding a lantern at a wooden town gate",
+    "setting": "at dusk on a muddy road",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "treeguard-duo",
     "styleId": "H",
     "land": false,
@@ -2209,6 +2352,17 @@
     "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
     "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "underground-mortuary",
+    "styleId": "N",
+    "land": true,
+    "prompt": "landscape painting, scenery, a vast underground crypt with stone burial niches carved into roots and earth, a dim green glow, deep beneath a city. infernal fantasy landscape painting, rivers of fire, black smoke and embers, demonic red and gold sky.",
+    "subject": "a vast underground crypt with stone burial niches carved into roots and earth, a dim green glow",
+    "setting": "deep beneath a city",
+    "style": "infernal fantasy landscape painting, rivers of fire, black smoke and embers, demonic red and gold sky",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "underground-river",
@@ -2242,6 +2396,17 @@
     "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
     "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "up-the-beanstalk",
+    "styleId": "F",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a colossal twisting beanstalk climbing into the clouds, huge leaves and thick vines, above a small farm at dawn. loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy.",
+    "subject": "a colossal twisting beanstalk climbing into the clouds, huge leaves and thick vines",
+    "setting": "above a small farm at dawn",
+    "style": "loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "violent-urge",
@@ -2319,6 +2484,17 @@
     "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
     "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "wastewood-verge",
+    "styleId": "H",
+    "land": true,
+    "prompt": "landscape painting, scenery, the rotting edge of a swamp forest, fallen logs covered in fungus and creeping vines, in a gloomy green twilight. gothic horror landscape painting, moonlit ruins and dead trees, rich crimson and black, deep shadow, dread.",
+    "subject": "the rotting edge of a swamp forest, fallen logs covered in fungus and creeping vines",
+    "setting": "in a gloomy green twilight",
+    "style": "gothic horror landscape painting, moonlit ruins and dead trees, rich crimson and black, deep shadow, dread",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "waterspout-warden",

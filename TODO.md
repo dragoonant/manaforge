@@ -17,3 +17,5 @@
 - Log lines name a transformed permanent by its front face ("Esper Origins triggers" for Summon:
   Esper Maduin): log entries carry the card id, not the face. Carry the face with the id (about 25
   log sites) and let `tag` read it; the battlefield tile already shows the back face.
+- Twelve Golgari Graveyard cards still show procedural art (the GPU was busy with the owner's
+  terrain job on 2026-10-06); `python tools/gen-art-sdxl.py` renders whatever has no art.

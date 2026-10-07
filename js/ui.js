@@ -20,9 +20,12 @@
     const up = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone === 'bf' && v.cards[o.iid].transformed && MF.cards[id].back;   // CR 712.8e: the back face's characteristics
     const d = up ? Object.assign({}, MF.cards[id], MF.cards[id].back, { mana: '' }) : MF.cards[id];
     let p = d.power, t = d.toughness, badges = '', cls = ['card', 'sz-' + (o.size || 'md')];
+    if (o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone !== 'bf' && d.ab.some(a => a.k === 'cda')) { const ch0 = MF.chars(v, o.iid); if (ch0.p != null) { p = ch0.p; t = ch0.t; } }   // CR 604.3: a CDA works in every zone
     if (o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone === 'bf') {
       const c = v.cards[o.iid], ch = MF.chars(v, o.iid);
       if (ch.p != null) { p = ch.p; t = ch.t; }
+      else if (!ch.types.includes('Creature') && !ch.subtypes.includes('Vehicle')) { p = null; t = null; }   // not a creature now (impending, CR 702.176a): no power or toughness shown
+      if (c.impended && c.ctr.time > 0) badges += `<div class="badge b-lock" title="Impending (CR 702.176a): not a creature while it has a time counter; one is removed at your end step">not a creature</div>`;
       if (c.ctr['+1/+1']) badges += `<div class="badge b-ctr">+${c.ctr['+1/+1']}</div>`;
       if (c.ctr['-1/-1']) badges += `<div class="badge b-ctrm">−${c.ctr['-1/-1']}</div>`;
       if (c.ctr.loyalty != null) badges += `<div class="badge b-loy" title="Loyalty (CR 306.5c)">${c.ctr.loyalty}</div>`;
@@ -48,6 +51,8 @@
     if (o.acts && o.acts.length) cls.push('legal');
     if (o.cls) cls.push(o.cls);
     const pt = p != null ? `<div class="pt ${p > d.power || t > d.toughness ? 'up' : ''} ${(typeof d.power === 'number' && p < d.power) || (typeof d.toughness === 'number' && t < d.toughness) ? 'down' : ''}">${p}/${t}</div>` : '';
+    let tl = sd.token ? 'Token ' + sd.typeLine.replace(/^Token /, '') : sd.typeLine;
+    if (o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone === 'bf') { const ch = MF.chars(v, o.iid); tl = (v.cards[o.iid].tok ? 'Token ' : '') + ch.supers.concat(ch.types).join(' ') + (ch.subtypes.length ? ' — ' + ch.subtypes.join(' ') : ''); }   // the types it has now (layer 4), not the printed line
     const attrs = [`data-cid="${esc(shownId)}"`];
     if (o.iid != null) attrs.push(`data-iid="${o.iid}"`);
     if (o.acts && o.acts.length) attrs.push(`data-acts='${esc(JSON.stringify(o.acts))}'`);
@@ -55,7 +60,7 @@
     return `<div class="${cls.join(' ')}" ${attrs.join(' ')}>
       <div class="art" style="background-image:${MF.art.css(shownId)}"></div>
       <div class="top"><span class="nm">${esc(sd.name)}</span><span class="cost">${T.symbols(sd.mana)}</span></div>
-      <div class="bot"><span class="tl">${esc(sd.token ? 'Token ' + sd.typeLine.replace(/^Token /, '') : sd.typeLine)}</span>${pt}</div>
+      <div class="bot"><span class="tl">${esc(tl)}</span>${pt}</div>
       ${badges}${o.tag ? `<div class="ctag">${o.tag}</div>` : ''}
     </div>`;
   }
@@ -96,6 +101,7 @@
           const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); delete cost.xs;
           if (s.cards[a.iid].zone !== 'hand' && !tray.includes(a.iid)) tray.push(a.iid);                // castable from a graveyard or exile: shown in the tray
           if (a.via === 'flashback' || a.via === 'mayhem') { add(a.iid, a, 'Cast ' + d.name + ' with ' + a.via + ' — ' + MF.manaStr(cost)); continue; }
+          if (a.via === 'impending') { const im = d.ab.find(x => x.k === 'impending'); add(a.iid, a, 'Cast ' + d.name + ' for its impending cost — ' + MF.manaStr(cost) + ' (enters with ' + im.n + ' time counters; not a creature until the last is removed)'); continue; }
           if (a.via === 'warp') { add(a.iid, a, 'Cast ' + d.name + ' for its warp cost — ' + MF.manaStr(cost) + ' (exiled at end step; recast later)'); continue; }
           if (a.via === 'sneak') { add(a.iid, a, 'Cast ' + d.name + ' for its sneak cost — ' + MF.manaStr(cost) + ' (return an unblocked attacker)'); continue; }
           if (a.via === 'harmonize') { add(a.iid, a, 'Cast ' + d.name + ' with harmonize — ' + MF.manaStr(cost) + ' (tap a creature to reduce it)'); if (!tray.includes(a.iid)) tray.push(a.iid); continue; }
@@ -103,7 +109,8 @@
         }
         else if (a.type === 'plot') { const p = MF.cards[s.cards[a.iid].id].ab.find(x => x.k === 'plot'); add(a.iid, a, 'Plot ' + MF.cards[s.cards[a.iid].id].name + ' — ' + MF.manaStr(MF.parseMana(p.cost)) + ' (cast it free on a later turn)'); }
         else if (a.type === 'unlock') { const f = MF.cards[s.cards[a.iid].id].doors[a.door]; add(a.iid, a, 'Unlock ' + f.name + ' — ' + f.mana); }
-        else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : ab.levelUp ? 'Level ' + ab.levelUp + ' — ' + ab.cost.mana : ab.loyalty != null ? MF.describeAbility(ab) : ab.ninjutsu ? 'Ninjutsu — ' + ab.cost.mana + ', return an unblocked attacker' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
+        else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; if (s.cards[a.iid].zone === 'grave' && !tray.includes(a.iid)) tray.push(a.iid);   // a graveyard ability (CR 113.6m): shown in the tray
+ add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : ab.levelUp ? 'Level ' + ab.levelUp + ' — ' + ab.cost.mana : ab.loyalty != null ? MF.describeAbility(ab) : ab.ninjutsu ? 'Ninjutsu — ' + ab.cost.mana + ', return an unblocked attacker' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
         else if (a.type === 'pass') btns.push({ a: a, label: T.passLabel(s, ui.human), cls: 'primary' });
       }
       btns.push({ ui: 'passTurn', label: 'Pass to end of turn', cls: 'ghost' });

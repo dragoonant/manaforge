@@ -67,3 +67,8 @@ test('Erode: destroy target creature or planeswalker; its controller may search 
   s = cast(s, 'erode', tgt(find(s, 'quaketusk-boar'))); s = resolveAll(s, 'yes', q => q.opts.find(o => o.iid != null).id);
   ok(s.bf.some(i => s.cards[i].id === 'mountain' && s.cards[i].ctrl === 1 && s.cards[i].tapped), 'their Mountain, tapped');
 });
+test('Carnage, Crimson Chaos: only a creature card with mana value 3 or less is a legal target (a second Carnage is not)', () => {
+  let s = setup({ me: { hand: ['carnage-crimson-chaos'], bf: ['swamp', 'swamp', 'mountain', 'mountain'], grave: ['carnage-crimson-chaos', 'bloodghast'] } });
+  s = cast(s, 'carnage-crimson-chaos'); s = MF.apply(s, { type: 'pass' }); s = MF.apply(s, { type: 'pass' });
+  eq(s.pending.q.kind, 'target'); eq(s.pending.q.opts.map(o => s.cards[o.iid].id), ['bloodghast']);
+});

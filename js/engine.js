@@ -138,7 +138,8 @@
       const dl = def(s, n); if (dl.loyalty != null && dl.types.includes('Planeswalker') && nc.ctr.loyalty == null) nc.ctr.loyalty = dl.loyalty;   // CR 306.5b                                           // "enters with N counters" (CR 122.6)
       if (o.door != null) nc.unlocked = [o.door === 0, o.door === 1];
       if (o.xPaid) nc.xPaid = o.xPaid;
-      if (o.transformed) nc.transformed = true;                                               // "put onto the battlefield transformed" (CR 712)
+      if (o.transformed) nc.transformed = true;
+      if (o.impending) { nc.impended = true; nc.ctr.time = (nc.ctr.time || 0) + o.impending; }      // CR 702.176a: enters with N time counters                                               // "put onto the battlefield transformed" (CR 712)
       if (o.warp) (s.delayed = s.delayed || []).push({ src: n, ctrl: nc.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', ops: [{ o: 'warpExile', iid: n }] } });   // CR 702.185a                         // CR 709.5d: the half that was cast enters unlocked
       enterReplacements(s, n, o);
     }
@@ -301,7 +302,7 @@
     }
     if (c.zone !== 'bf') for (const a of ab) if (a.k === 'cda') {                             // CR 604.3: a characteristic-defining ability works in every zone (on the battlefield, layer 7a does it)
       const v = MF.vals[a.v.v]({ s: s, ctrl: c.ctrl, src: iid }, a.v, null);
-      if (a.p) p = v; if (a.t) t = v;
+      if (a.p) p = v; if (a.t) t = v + (a.tPlus || 0);
     }
     return { iid: iid, name: name, types: types, subtypes: subtypes, supers: supers, colors: colors, p: p, t: t, ab: ab, kw: kw, mana: mana, mv: MF.manaValue(MF.parseMana(mana)), ctrl: c.ctrl, owner: c.owner, tok: !!c.tok };   // CR 709.4b: a split card's mana value is that of its combined costs
   }
@@ -329,6 +330,10 @@
       if (a.affects === 'enchanted' || a.affects === 'equipped') return src.att != null && out[src.att] ? [src.att] : [];
       return s.bf.filter(i => MF.matchChars(s, i, out[i], a.affects, st.src == null ? st.ctrl : out[st.src].ctrl, st.src));
     };
+    const NONCRE_SUB = ['Aura', 'Saga', 'Equipment', 'Vehicle', 'Class', 'Case', 'Room', 'Shrine', 'Curse', 'Background', 'Role', 'Cartouche', 'Rune', 'Shard'];
+    for (const i of s.bf) if (out[i] && I(s, i).impended && (I(s, i).ctr.time || 0) > 0 && out[i].types.includes('Creature')) {
+      out[i].types = out[i].types.filter(ty => ty !== 'Creature'); out[i].subtypes = out[i].subtypes.filter(st => NONCRE_SUB.includes(st)); out[i].p = null; out[i].t = null;   // CR 205.3d: creature types go with the type
+    }
     for (const e of s.effects) if (e.k === 'addTypes' && out[e.iid]) for (const ty of e.types) if (!out[e.iid].types.includes(ty)) out[e.iid].types.push(ty);   // crew (CR 702.122a)
     for (const i of s.bf) if (out[i] && I(s, i).chosen && out[i].ab.some(a => a.k === 'chosenLandType')) {
       const ty = I(s, i).chosen, col = { Plains: 'W', Island: 'U', Swamp: 'B', Mountain: 'R', Forest: 'G' }[ty];
@@ -349,7 +354,7 @@
     for (const i of s.bf) if (out[i]) for (const k in I(s, i).ctr) if (KWC[k] && I(s, i).ctr[k] > 0) l6.push({ ts: I(s, i).ts, run: () => { out[i].kw[KWC[k]] = (out[i].kw[KWC[k]] || 0) + 1; } });
     l6.sort((x, y) => x.ts - y.ts); for (const op of l6) op.run();
     // Layer 7a: characteristic-defining abilities.
-    for (const st of statics) if (st.a.k === 'cda') { const o = out[st.src]; const v = MF.valueStatic(s, st.src, st.a.v, out); if (st.a.p) o.p = v; if (st.a.t) o.t = v; }
+    for (const st of statics) if (st.a.k === 'cda') { const o = out[st.src]; const v = MF.valueStatic(s, st.src, st.a.v, out); if (st.a.p) o.p = v; if (st.a.t) o.t = v + (st.a.tPlus || 0); }
     for (const iid of s.bf) { const o = out[iid]; if (o.p === '*') o.p = 0; if (o.t === '*') o.t = 0; }
     // Layer 7b: effects that set power and toughness.
     const l7b = [];
@@ -633,7 +638,7 @@
   MF.costMods = [];          // (s, who, iid, d, cost) => void: js/ops.js registers "costs {1} less"
   const spellCost = MF.spellCost = function (s, who, iid, o) {
     const ch = faceChars(s, iid, o && o.alt, o && o.door);
-    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
+    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem' || o.via === 'impending') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
     const plotted = (o && o.free) || MF.isPlotted(s, iid);                                    // CR 702.170d: without paying its mana cost
     const c = MF.parseMana(plotted ? '' : hz ? hz.cost : ch.mana);                            // CR 702.180a: an alternative cost
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
@@ -655,7 +660,7 @@
     if (ref.p != null) return MF.matchPlayer(s, ref.p, slot.f, who);
     if (ref.a != null) return !!(slot.f && slot.f.ability) && s.stack.some(L => L.lid === ref.a && L.kind !== 'spell');   // an activated or triggered ability on the stack
     const c = s.cards[ref.c];
-    if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card && (!slot.f.own || c.owner === who) && (!slot.f.types || slot.f.types.some(ty => def(s, ref.c).types.includes(ty))) && (!slot.f.mvLEv || chars(s, ref.c).mv <= MF.num({ s: s, ctrl: who, src: srcIid }, slot.f.mvLEv));   // a card in a graveyard: its own characteristics
+    if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card && (!slot.f.own || c.owner === who) && (!slot.f.types || slot.f.types.some(ty => def(s, ref.c).types.includes(ty))) && (slot.f.mvLE == null || chars(s, ref.c).mv <= slot.f.mvLE) && (!slot.f.mvLEv || chars(s, ref.c).mv <= MF.num({ s: s, ctrl: who, src: srcIid }, slot.f.mvLEv));   // a card in a graveyard: its own characteristics
     if (slot.f && slot.f.spell) {                                                             // a spell on the stack (CR 115.1); not itself (115.5)
       if (!c || c.zone !== 'stack' || ref.c === srcIid || !s.stack.some(L => L.kind === 'spell' && L.iid === ref.c)) return false;
       const ch = chars(s, ref.c);
@@ -1097,6 +1102,8 @@
     const d0 = def(s, iid);
     if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
     if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;
+    if (via === 'impending' && !d0.ab.some(a => a.k === 'impending')) return false;
+    for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrSac' && P(s, who).hand.filter(i => i !== iid).length === 0 && !s.bf.some(i => I(s, i).ctrl === who)) return false;   // a mandatory additional cost that can't be paid
     if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.plotted != null) && !sorceryTiming(s, who)) return false;   // CR 702.170d: main phase, empty stack
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrLife' && P(s, who).hand.filter(i => i !== iid).length === 0 && P(s, who).life < a.life) return false;   // a mandatory additional cost that can't be paid   // CR 702.185a: from your hand
     if ((via === 'flashback' || via === 'mayhem') && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === via) || (via === 'mayhem' && I(s, iid).discardedTurn !== s.turn))) return false;
@@ -1123,7 +1130,7 @@
     const c = I(s, iid), ch = chars(s, iid), a = ch.ab[i];
     if (c.ctrl !== who || a.k !== 'act' || s.priority !== who) return false;
     if ((a.zone || 'bf') !== c.zone) return false;                                            // CR 702.29a: cycling functions only in its owner's hand
-    if (a.zone === 'hand' && c.owner !== who) return false;
+    if ((a.zone === 'hand' || a.zone === 'grave') && c.owner !== who) return false;
     if (a.sorcery && !sorceryTiming(s, who)) return false;
     if (a.cost.tap && (c.tapped || (ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn)))) return false;   // CR 302.6
     if (a.tg && !slotsLegalNow(s, who, iid, a.tg)) return false;
@@ -1162,6 +1169,7 @@
       if (canPlayLand(s, who, iid)) out.push({ type: 'land', iid: iid });
       else if (d.doors) { for (let k = 0; k < d.doors.length; k++) if (canCast(s, who, iid, false, k)) out.push({ type: 'cast', iid: iid, door: k }); }   // CR 709.3
       else if (I(s, iid).zone === 'grave') { for (const v of ['flashback', 'mayhem']) if (canCast(s, who, iid, false, null, v)) out.push({ type: 'cast', iid: iid, via: v }); if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
+      else if (d.ab.some(a => a.k === 'impending') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'impending')) out.push({ type: 'cast', iid: iid, via: 'impending' }); }
       else if (d.ab.some(a => a.k === 'warp') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'warp')) out.push({ type: 'cast', iid: iid, via: 'warp' }); }
       else if (d.ab.some(a => a.k === 'sneak') && canCast(s, who, iid, false, null, 'sneak')) { out.push({ type: 'cast', iid: iid, via: 'sneak' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }
       else if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid });
@@ -1171,6 +1179,10 @@
     for (const iid of P(s, who).hand) {                                                       // CR 702.29a: abilities that function in the hand (cycling)
       const ab = chars(s, iid).ab;
       for (let i = 0; i < ab.length; i++) if (ab[i].k === 'act' && ab[i].zone === 'hand' && canActivate(s, who, iid, i)) out.push({ type: 'act', iid: iid, ab: i });
+    }
+    for (const iid of P(s, who).grave) {                                                      // CR 113.6m: abilities that function in the graveyard
+      const ab = chars(s, iid).ab;
+      for (let i = 0; i < ab.length; i++) if (ab[i].k === 'act' && ab[i].zone === 'grave' && canActivate(s, who, iid, i)) out.push({ type: 'act', iid: iid, ab: i });
     }
     for (const iid of s.bf) {
       if (I(s, iid).ctrl !== who) continue;
@@ -1321,6 +1333,7 @@
     if (via) L.via = via;
     if (via === 'sneak') L.sneak = true;
     if (via === 'warp') L.warp = true;
+    if (via === 'impending') L.impending = d.ab.find(a => a.k === 'impending').n;
     s.stack.push(L);
     const c = I(s, iid);
     if (alt) c.asAlt = true;
@@ -1370,6 +1383,12 @@
           if (c2 === 'done') break; tapped.push(c2); tot += Math.max(0, chars(s, c2).p);
         }
         L.addCostPaid = true; addPay.push(() => { for (const i of tapped) { I(s, i).tapped = true; log(s, 'tapped', { who: who, c: I(s, i).id }); } });
+      } else if (a.what === 'discardOrSac') {
+        const canDiscard = P(s, who).hand.length > 0, mine = s.bf.filter(i => I(s, i).ctrl === who);
+        if (!canDiscard && !mine.length) throw new Illegal('cannot pay the additional cost');
+        const way = ask(x, { who: who, kind: 'discardOrSac', src: iid, opts: [canDiscard ? { id: 'discard' } : null, mine.length ? { id: 'sac' } : null].filter(Boolean), cancel: true });
+        if (way === 'discard') { const cd = ask(x, { who: who, kind: 'discard', src: iid, left: 1, opts: P(s, who).hand.map(i => ({ id: i, iid: i })), cancel: true }); addPay.push(() => MF.discard(s, cd)); }
+        else { const sp = ask(x, { who: who, kind: 'sacrificeCost', src: iid, opts: mine.map(i => ({ id: i, iid: i })), cancel: true }); addPay.push(() => MF.sacrifice(s, sp)); }
       } else if (a.what === 'discardOrLife') {                                                // Bitter Triumph: mandatory, one of the two
         const canDiscard = P(s, who).hand.length > 0, canLife = P(s, who).life >= a.life;
         if (!canDiscard && !canLife) throw new Illegal('cannot pay the additional cost');
@@ -1565,6 +1584,7 @@
         const o = { ctrl: L.ctrl, x: x, spent: L.spent, offspringPaid: !!L.offspring, castFromHand: L.from === 'hand' };
         if (L.door != null) o.door = L.door;                                                   // CR 709.5d
         if (L.warp) o.warp = true;
+        if (L.impending) o.impending = L.impending;
         if (L.alt === 'mdfc') o.transformed = true;
         if (L.x) o.xPaid = L.x;
         if (aura) o.att = lt.t[0][0].c;                                                        // CR 608.3c

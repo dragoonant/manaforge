@@ -84,6 +84,7 @@
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
     addCostPaid: x => !!(x.L && x.L.addCostPaid),                                            // "if this spell's additional cost was paid", teamwork
+    impendingTime: x => { const c = I(x.s, x.src); return !!c && !!c.impended && (c.ctr.time || 0) > 0; },   // CR 702.176a's intervening "if"
     castFromGrave: x => !!(x.L && x.L.from === 'grave'),                                           // "if this spell was cast from a graveyard"
     counterAtLeast: (x, c) => { const o = I(x.s, x.src); return !!o && (o.ctr[c.kind] || 0) >= c.n; },
     descended: x => !!P(x.s, x.ctrl).h.descended,                                                // CR 700.11
@@ -129,6 +130,7 @@
     castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
     evAmount: x => x.ev.n,                                                                      // "that much damage"
     kicked: (x, v) => x.L && x.L.kicked ? v.yes : v.no,
+    graveCount: x => P(x.s, x.ctrl).grave.filter(i => MF.def(x.s, i).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))).length,   // "permanent cards in your graveyard": card types from the card itself (a CDA reading chars here would read its own count)
     lands: (x, v, table) => countMine(x.s, x.ctrl, { types: ['Land'] }, x.src, table),        // "the number of lands you control"
     gainedThisTurn: x => P(x.s, x.ctrl).h.gained || 0,
     oppsLostLife: x => ((P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0 ? 1 : 0),                    // "for each opponent who lost life this turn"
@@ -383,10 +385,14 @@
       const s = x.s, PERM = ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'];
       const ok = t => op.type === 'permanent' ? PERM.some(ty => t.includes(ty)) : t.includes(op.type[0].toUpperCase() + op.type.slice(1));
       const opts = (x.milled || []).filter(i => I(s, i).zone === 'grave' && ok(MF.def(s, i).types)).map(i => ({ id: i, iid: i }));
+      if (!opts.length && op.ifSub) return;
       if (!opts.length) return;
       opts.push({ id: 'none' });
       const a = MF.ask(x.x, { who: x.ctrl, kind: 'pickMilled', src: x.src, type: op.type, opts: opts });
-      if (a !== 'none') { const id = I(s, a).id; MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'graveyard' }); }
+      if (a !== 'none') {
+        const id = I(s, a).id; MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'graveyard' });
+        if (op.ifSub && MF.def(s, a).subtypes.includes(op.ifSub.sub)) MF.gainLife(s, x.ctrl, op.ifSub.gain, x.L ? x.L.srcId : null);   // Town Greeter: "If you put a Town card into your hand this way"
+      }
     },
     untap(x, op) { for (const i of MF.resolveRefs(x, op.on)) MF.untap(x.s, i); },
     extraCombat(x) { x.s.extraCombat = (x.s.extraCombat || 0) + 1; log(x.s, 'extraCombatAdded', { who: x.ctrl }); },
@@ -601,7 +607,8 @@
     chooseFromGrave(x, op) {
       const s = x.s, p = P(s, x.ctrl), took = [];
       for (let k = 0; k < op.n; k++) {
-        const opts = p.grave.filter(i => !took.includes(i) && op.types.some(ty => MF.def(s, i).types.includes(ty))).map(i => ({ id: i, iid: i }));
+        const fit = i => op.fs ? op.fs.some(f => MF.matchChars(s, i, MF.chars(s, i), f, x.ctrl, x.src)) : op.types.some(ty => MF.def(s, i).types.includes(ty));
+        const opts = p.grave.filter(i => !took.includes(i) && fit(i)).map(i => ({ id: i, iid: i }));
         if (!opts.length) break; opts.push({ id: 'done' });
         const a = MF.ask(x.x, { who: x.ctrl, kind: 'chooseFromGrave', src: x.src, n: op.n, k: k + 1, opts: opts });
         if (a === 'done') break; took.push(a);
@@ -711,6 +718,16 @@
         const id = c.id, n = MF.move(s, r.c, 'exile');
         s.effects.push({ k: 'exileUntil', src: x.src, iid: n, back: 'bf' });
         log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null, until: true });
+      }
+    },
+    // Hollow Marauder: each targeted opponent discards a card of their choice; for each who didn't discard one with mana value 4 or greater, draw.
+    discardOrFeed(x, op) {
+      const s = x.s;
+      for (const r of (x.t[op.on.t] || [])) {
+        if (!r || r.p == null) continue; const who = r.p, hand = P(s, who).hand;
+        let big = false;
+        if (hand.length) { const a = MF.ask(x.x, { who: who, kind: 'discard', src: x.src, left: 1, opts: hand.map(i => ({ id: i, iid: i })) }); big = MF.chars(s, a).mv >= op.mvGE; MF.discard(s, a); }
+        if (!big) OPS.draw(x, { n: 1 });
       }
     },
     // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
@@ -971,8 +988,16 @@
 
   // Cost changes printed on cards (CR 601.2f): "This spell costs {1} less to cast if ...",
   // "Instant and sorcery spells you cast cost {1} less to cast."
+  // Diamond Weapon: "Prevent all combat damage that would be dealt to ~" (CR 615).
+  MF.replacers.damage.push(function (s, o, n) {
+    if (!o.combat || o.to.c == null || !I(s, o.to.c) || I(s, o.to.c).zone !== 'bf') return n;
+    if (!MF.chars(s, o.to.c).ab.some(a => a.k === 'preventCombatToSelf')) return n;
+    log(s, 'prevented', { who: I(s, o.to.c).ctrl, c: I(s, o.to.c).id, n: n, src: o.srcChars ? o.srcChars.id : null });
+    return 0;
+  });
   MF.costMods.push(function (s, who, iid, ch, cost) {
     for (const a of ch.ab) if (a.k === 'costLess' && MF.cond({ s: s, ctrl: who, src: iid, flags: {} }, a.cond)) cost.g -= a.n;
+    for (const a of ch.ab) if (a.k === 'costLessPer') cost.g -= a.zones.reduce((n, z) => n + P(s, who)[z].filter(i => i !== iid && I(s, i).owner === who && a.f.types.some(ty => MF.def(s, i).types.includes(ty))).length, 0);   // "for each creature card in your graveyard" (CR 601.2f)
     for (const a of ch.ab) if (a.k === 'affinity') cost.g -= s.bf.filter(i => I(s, i).ctrl === who && MF.matchChars(s, i, MF.chars(s, i), a.f, who, iid)).length;   // CR 702.41a
     for (const p of s.bf) {
       const pc = I(s, p); if (pc.ctrl !== who) continue;
@@ -983,7 +1008,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
