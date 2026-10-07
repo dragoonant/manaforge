@@ -16,7 +16,7 @@
   };
   const symbols = str => esc(str).replace(/\{([^}]+)\}/g, (m, t) => sym(t));
   const cname = id => MF.cards[id] ? MF.cards[id].name : id === 'speed' ? 'Speed (start your engines!)' : id;   // the inherent speed trigger has no source (CR 702.179d)
-  const tag = id => id == null ? '' : `<b class="cn" data-cid="${esc(id)}">${esc(cname(id))}</b>`;
+  const tag = (id, face) => id == null ? '' : `<b class="cn" data-cid="${esc(id)}">${esc(typeof face === 'string' ? face : cname(id))}</b>`;   // face: the name a transformed permanent shows (a string; .map(tag) passes an index)
   const list = ids => ids.map(tag).join(', ');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   const T = MF.text = { esc: esc, symbols: symbols, sym: sym, cname: cname, tag: tag, plural: plural };
@@ -55,7 +55,7 @@
     surveil: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'surveil', 'surveils')} ${e.n}: ${e.top} kept on top${e.grave.length ? ', ' + list(e.grave) + ' to the graveyard' : ''}.`,
     searchNothing: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'search', 'searches')} and ${V(e.who, v, 'find', 'finds')} nothing to take.`,
     untapped: (e) => `${tag(e.c)} untaps.`,
-    manaCombo: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'activate', 'activates')} ${tag(e.c)} for ${e.cols.split('').map(sym).join('')}.`,
+    manaCombo: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'activate', 'activates')} ${tag(e.c, e.cf)} for ${e.cols.split('').map(sym).join('')}.`,
     removeCounters: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'remove', 'removes')} ${e.n} ${e.ctr} counters from ${tag(e.c)}.`,
     exiledInstead: (e, v) => e.finality ? `${tag(e.c)} would go to the graveyard, and is exiled instead (finality counter).` : `${tag(e.c)} would die, and is exiled instead.`,
     prevented: (e, v) => `${e.n} combat damage to ${tag(e.c)} is prevented.`,
@@ -73,8 +73,8 @@
     harnessed: (e, v) => `${tag(e.c)} is harnessed: its ∞ ability is active.`,
     toGraveFromExile: (e, v) => `${tag(e.c)} goes from exile to ${T.whose(e.who, v)} graveyard.`,
     toLibraryPos: (e, v) => `${tag(e.c)} is put into ${T.whose(e.who, v)} library ${['', 'on top', 'second from the top', 'third from the top'][e.pos]}.`,
-    lore: (e, v) => `${tag(e.c)} gets a lore counter (${e.n}).`,
-    sagaDone: (e, v) => `${tag(e.c)} has read its final chapter and is sacrificed.`,
+    lore: (e, v) => `${tag(e.c, e.cf)} gets a lore counter (${e.n}).`,
+    sagaDone: (e, v) => `${tag(e.c, e.cf)} has read its final chapter and is sacrificed.`,
     exiledCost: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'exile', 'exiles')} ${tag(e.c)} to pay a cost.`,
     earthbend: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'earthbend', 'earthbends')} ${e.n}: ${tag(e.c)} becomes a 0/0 creature with haste and gets ${e.n} +1/+1 counters.`,
     addMana: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'add', 'adds')} ${('{' + e.col + '}').repeat(e.n)}${e.c ? ' from ' + tag(e.c) : ''}.`,
@@ -135,14 +135,14 @@
     unattach: (e) => `${tag(e.c)} becomes unattached.`,
     legendRule: (e, v) => `Legend rule: ${tag(e.c)} is put into ${T.whose(e.who, v)} graveyard.`,
     trigNoTarget: (e) => `<span class="notice">${tag(e.c)}’s ability had no legal target and was removed.</span>`,
-    trigger: (e) => `${tag(e.c)}${e.inl === 'prowess' ? '’s prowess' : ''} triggers${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
+    trigger: (e) => `${tag(e.c, e.cf)}${e.inl === 'prowess' ? '’s prowess' : ''} triggers${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
     discard: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'discard', 'discards')} ${tag(e.c)}.`,
     sacrifice: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'sacrifice', 'sacrifices')} ${tag(e.c)}.`,
     undone: (e, v) => `<span class="notice">${W(e.who, v)} could not complete that; it is reversed (${esc(e.why)}).</span>`,
     fizzle: (e) => `<span class="notice">${tag(e.c)} ${e.ab ? '’s ability ' : ''}does nothing: all its targets became illegal.</span>`,
     resolve: (e) => `${tag(e.c)} resolves.`,
     trigIf: (e) => `<span class="notice">${tag(e.c)}’s ability does nothing: its condition is no longer true.</span>`,
-    resolveAb: (e) => `${tag(e.c)}’s ${e.trig ? 'triggered' : 'activated'} ability resolves.`,
+    resolveAb: (e) => `${tag(e.c, e.cf)}’s ${e.trig ? 'triggered' : 'activated'} ability resolves.`,
     counter: (e) => `${tag(e.c)} gets ${e.n === 1 ? 'a ' + e.kind + ' counter' : e.n + ' ' + e.kind + ' counters'}.`,
     tapped: (e) => `${tag(e.c)} becomes tapped.`,
     pump: (e) => `${e.all ? 'Each of ' : ''}${list(e.cs)} ${e.cs.length > 1 || e.all ? 'get' : 'gets'}${e.p || e.tou ? ' ' + (e.p >= 0 ? '+' : '') + e.p + '/' + (e.tou >= 0 ? '+' : '') + e.tou : ''}${e.grant ? (e.p || e.tou ? ' and' : '') + ' ' + e.grant.map(k => MF.KWNAME[k]).join(', ') : ''} until end of turn.`,

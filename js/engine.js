@@ -308,6 +308,8 @@
     s.effects.push({ k: 'mayPlay', iid: k, who: c.ctrl, castOnly: true, prepOf: n });
     log(s, 'prepared', { who: c.ctrl, c: c.id, spell: d.prep.name });
   };
+  // The name a permanent shows when it isn't its printed front face (CR 712.8e-f): for log lines.
+  const faceName = MF.faceName = (s, iid, lki) => { const nm = lki ? lki.name : s.cards[iid] && s.cards[iid].zone !== 'moved' ? chars(s, iid).name : null; const id = lki ? lki.id : s.cards[iid] && s.cards[iid].id; return nm && id && MF.cards[id] && nm !== MF.cards[id].name ? nm : null; };
   const LOCKED = { k: 'locked' };                                                             // a locked door's ability: it does not exist (CR 709.5); its place is kept so ability indices stay put
   function baseChars(s, iid) {
     const c = I(s, iid);
@@ -861,7 +863,7 @@
         if (s.step === 'main1') for (const iid of s.bf.slice()) {                              // CR 714.3c: a lore counter on each Saga as the precombat main phase begins
           const ch = chars(s, iid), c = I(s, iid);
           if (c.ctrl !== ap || !ch.subtypes.includes('Saga') || !ch.ab.some(a => a.chapter)) continue;
-          const before = c.ctr.lore || 0; c.ctr.lore = before + 1; log(s, 'lore', { who: ap, c: c.id, n: c.ctr.lore });
+          const before = c.ctr.lore || 0; c.ctr.lore = before + 1; log(s, 'lore', { who: ap, c: c.id, cf: faceName(s, iid), n: c.ctr.lore });
           emit(s, { t: 'lore', iid: iid, before: before, after: c.ctr.lore });
         }
         setPriority(s, ap); return;                                                            // CR 505.6
@@ -1106,7 +1108,7 @@
         case 'destroy': if (I(s, a.iid).zone === 'bf') MF.destroy(s, a.iid, a.why); break;
         case 'speed': P(s, a.who).speed = 1; log(s, 'speed', { who: a.who, n: 1 }); break;
         case 'enduring': P(s, a.who).enduring = true; log(s, 'enduring', { who: a.who }); break;   // CR 702.195a
-        case 'sagaSac': if (I(s, a.iid).zone === 'bf') { log(s, 'sagaDone', { who: I(s, a.iid).ctrl, c: I(s, a.iid).id }); MF.sacrifice(s, a.iid); } break;
+        case 'sagaSac': if (I(s, a.iid).zone === 'bf') { log(s, 'sagaDone', { who: I(s, a.iid).ctrl, c: I(s, a.iid).id, cf: faceName(s, a.iid) }); MF.sacrifice(s, a.iid); } break;
         case 'unattach': I(s, a.iid).att = null; log(s, 'unattach', { c: I(s, a.iid).id }); break;
         case 'counters': { const c = I(s, a.iid); const n = Math.min(c.ctr['+1/+1'], c.ctr['-1/-1']); c.ctr['+1/+1'] -= n; c.ctr['-1/-1'] -= n; break; }
         case 'legend': { const k = keep[a.iids.join(',')]; for (const i of a.iids) if (i !== k && I(s, i).zone === 'bf') { log(s, 'legendRule', { who: a.who, c: I(s, i).id }); move(s, i, 'grave'); } break; }
@@ -1157,7 +1159,7 @@
           catch (e) { if (e instanceof Illegal) { log(s, 'trigNoTarget', { who: t.ctrl, c: L.srcId }); continue; } throw e; }   // CR 603.3d
         }
         s.stack.push(L);
-        log(s, 'trigger', { who: t.ctrl, c: L.srcId, ab: t.ab, inl: t.inl || null, tg: L.t.map(sl => sl.map(r => refLabel(s, r))) });
+        log(s, 'trigger', { who: t.ctrl, c: L.srcId, cf: t.src != null ? faceName(s, t.src, t.lki) : null, ab: t.ab, inl: t.inl || null, tg: L.t.map(sl => sl.map(r => refLabel(s, r))) });
         emitTargeted(s, L.t, t.ctrl, L.lid);
       }
     }
@@ -1726,7 +1728,7 @@
     if (a.oncePerTurn) { c.actTurn = c.actTurn || {}; c.actTurn[x.inv.ab] = s.turn; }
     L.lki = snapshot(s, iid);
     if (a.cycling) log(s, 'cycle', { who: who, c: c.id });                                     // CR 702.29a
-    else log(s, 'activate', { who: who, c: c.id, ab: x.inv.ab, tg: L.t.map(sl => sl.map(r => refLabel(s, r))) });
+    else log(s, 'activate', { who: who, c: c.id, cf: L.lki ? faceName(s, iid, L.lki) : null, ab: x.inv.ab, tg: L.t.map(sl => sl.map(r => refLabel(s, r))) });
     if (a.cost.life) MF.loseLife(s, who, a.cost.life, 'pay', c.id);                            // CR 119.4
     if (a.cost.removeCtr) { const r = a.cost.removeCtr; if ((c.ctr[r.kind] || 0) < r.n) throw new Illegal('not enough ' + r.kind + ' counters'); c.ctr[r.kind] -= r.n; log(s, 'removeCounters', { who: who, c: c.id, n: r.n, ctr: r.kind }); }   // CR 118.3
     if (a.cost.sacSelf) MF.sacrifice(s, iid);
@@ -1834,7 +1836,7 @@
       const lt = liveTargets(s, L, ab.modes && L.mode != null && ab.modes[L.mode].tg ? ab.modes[L.mode].tg : ab.tg);
       if (!lt.any) { log(s, 'fizzle', { who: L.ctrl, c: L.srcId, ab: true }); afterResolve(s); return; }
       X.t = lt.t;
-      log(s, 'resolveAb', { who: L.ctrl, c: L.srcId, trig: L.kind === 'trig' });
+      log(s, 'resolveAb', { who: L.ctrl, c: L.srcId, cf: L.src != null ? faceName(s, L.src, L.lki) : null, trig: L.kind === 'trig' });
       MF.runOps(X, ab.modes && L.mode != null ? ab.modes[L.mode].ops : ab.ops);
     }
     afterResolve(s);

@@ -100,7 +100,7 @@
       for (const a of MF.legalActions(s)) {
         if (a.type === 'land') add(a.iid, a, 'Play ' + MF.cards[s.cards[a.iid].id].name);
         else if (a.type === 'cast') {
-          const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); delete cost.xs;
+          const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); cost.x = cost.xs; delete cost.xs;   // show {X} in the label (it is announced as the spell is cast)
           if (s.cards[a.iid].zone !== 'hand' && !tray.includes(a.iid)) tray.push(a.iid);                // castable from a graveyard or exile: shown in the tray
           if (a.via === 'flashback' || a.via === 'mayhem') { add(a.iid, a, 'Cast ' + d.name + ' with ' + a.via + ' — ' + MF.manaStr(cost)); continue; }
           if (a.via === 'forage') { add(a.iid, a, 'Cast ' + d.name + ' from your graveyard by foraging — ' + MF.manaStr(cost) + ' (enters with a finality counter)'); if (!tray.includes(a.iid)) tray.push(a.iid); continue; }

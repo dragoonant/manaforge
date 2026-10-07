@@ -113,3 +113,9 @@ test('Meltstriders Resolve: a second blocker for the enchanted creature is never
   ok(!s.pending.q.opts.some(o => o.att === su), 'no second blocker offered'); ok(s.pending.q.opts.some(o => o.id === 'done'), 'one blocker is legal');
   s = answer(s, ['undo']); eq(Object.keys(s.pending.q.assign).length, 0, 'undone');
 });
+test('Log lines name the face a permanent shows: Summon: Esper Maduin triggers, not Esper Origins', () => {
+  let s = setup({ me: { bf: [{ id: 'esper-origins-summon-esper-maduin', ctr: { lore: 1, finality: 1 } }], lib: [G, G, G, G] } });
+  s = MF.clone(s); s.cards[find(s, 'esper-origins-summon-esper-maduin')].transformed = true; s = MF.run(s);
+  for (let g = 0; g < 400 && !(s.turn > 3 && s.ap === 0 && s.step === 'main1'); g++) s = MF.apply(s, s.pending ? { type: 'answer', id: s.pending.q.opts.some(o => o.id === 'done') ? 'done' : s.pending.q.opts[0].id } : { type: 'pass' });
+  const tr = logs(s, 'trigger').find(e => e.c === 'esper-origins-summon-esper-maduin'); ok(tr, 'it triggered'); eq(tr.cf, 'Summon: Esper Maduin');
+});
