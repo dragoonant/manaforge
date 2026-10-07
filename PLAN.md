@@ -28,12 +28,19 @@ This file owns decisions. No other file states one.
 | D15 | 2026-10-05 | **Supersedes D3's scope: the game offers decks from two Standard eras only — the Final Fantasy era and the Hobbit era — plus the two Bloomburrow Starter Kit decks.** (The owner said "limited, last 2 trilogies"; in Magic "Limited" names draft and sealed, so the docs say "the two eras".) **10 distinct archetypes per era**, owner's choice. **Final Fantasy era:** Pro Tour Magic: The Gathering—FINAL FANTASY (Standard, 2025-06-20), the best-finishing list of each of the 10 best-placed archetypes, joined to the final standings. **Hobbit era:** no championship-level Standard event has run since The Hobbit (2026-08-14) — the September 2026 Regional Championship and China Open lists on magic.gg are Modern despite their "Standard" label — so, by the owner's choice, Wizards' weekly published top-ranked Arena Traditional Standard lists (2026-08-17 to 2026-10-05, 283 lists), clustered into archetypes (`tools/fetch-championship.mjs`), the 10 largest, each represented by its most typical list. A deck registers only when every card in it compiles. Card text from MTGJSON AtomicCards (MIT). | owner |
 | D16 | 2026-10-05 | **Final Fantasy and Hobbit characters are painted** in the Grim Dark style, owner's choice, after the concern was stated once: both sets are licensed crossovers with a second rights holder (Square Enix; the Tolkien rights holders), and the site is public (D12). | owner |
 | D17 | 2026-10-05 | **The card art is a mix of fifteen styles**, as Magic's art comes from many artists: the five audition directions (A–E) plus ten more (F–O), all in tools/art-styles.mjs. Each card takes one by a stable hash of its key. Every style keeps the D14 brief (master grade super deformed fighters and mages, never cute; lands are landscape only). Supersedes D14's single style; Grim Dark is style D. | owner |
+| D18 | 2026-10-07 | **The animation layer (handoff 10) is a diff director, js/anim.js.** Each render records where every card was; after it, the difference plays: moved cards slide (FLIP), taps turn, a permanent that left the battlefield leaves a ghost that flashes for how it left (destroyed or sacrificed: red; exiled: white; bounced: blue) and flies to that zone, new permanents arrive from the hand or stack, damage and life float as numbers. It reads the log, decides nothing. The opponent and auto-pass wait for the motion (Mallet-42k §4); elements are removed by timer, not onfinish (a hidden tab never finishes). "Motion: on/off" in the sidebar; off by default under prefers-reduced-motion. Built under the owner's standing "keep going" on TODO; the owner can turn it off. | session |
 
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.
 
 ## Status
+
+**2026-10-07 — the animation layer (D18); floating mana (V1 fixed); AI timing.**
+
+- The AI holds instant mana open, attacks in its roll-outs, and acts on the opponent's turn only at
+  their beginning of combat, in combat, at their end step, or in response; Izzet Prowess 16-26 against
+  the field. Mana abilities at priority (CR 605.3a). All 343 cards illustrated in the D17 mix.
 
 **2026-10-06 — the championship decks (D15) registered: 20 of 20; a per-card audit done.**
 

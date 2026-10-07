@@ -1,9 +1,9 @@
 # TODO — wanted improvements to things that already work
 
-- Art: every card in both decks is illustrated (D13). Re-roll any card with `--force <key> --seed-offset N` in `tools/gen-art-sdxl.py`; review with `tools/contact-sheet.ps1`.
+- Art: every card in every registered deck is illustrated (D13, D17). Re-roll any card with `--force <key> --seed-offset N` in `tools/gen-art-sdxl.py`; review with `tools/contact-sheet.ps1`.
 - **Sound and music**: ElevenLabs effects and music with a synthesised fallback voice (D9).
-- **The animation layer** (handoff 10): a presentation director playing the log; deferred by six
-  games — budget it as a stage. Creatures dying with no motion are hard to follow.
+- The animation layer (D18) plays motion from a diff of each render. Not yet: an attacker lunging at
+  combat damage, a spell resolving off the stack with an effect, a speed setting beyond on/off.
 - **More decks by compile rate** (`node tools/build-cards.mjs --report`): modal spells, linked
   exile ("until this leaves the battlefield"), "can't attack or block", landfall.
 - Drag to play (CARD-PRESENTATION-SPEC: tap inspects, drag commits); today a click plays.

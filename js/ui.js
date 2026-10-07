@@ -220,6 +220,7 @@
   function render() {
     const s = ui.s, v = MF.view(s), am = actionMap(s);
     const app = document.getElementById('app');
+    const before = ui.animReady ? MF.anim.capture() : null;                                  // the presentation director (js/anim.js) plays the difference
     app.innerHTML = `<div class="game">
       <div class="board">
         ${sideHTML(s, v, 1 - ui.human, am)}
@@ -229,7 +230,7 @@
         ${handHTML(s, v, am)}
       </div>
       <div class="sidebar">
-        <div class="topbar"><span class="brand">MANAFORGE</span><button class="btn tiny" data-ui="howto">How to play</button><button class="btn tiny" data-ui="menu">Menu</button></div>
+        <div class="topbar"><span class="brand">MANAFORGE</span><button class="btn tiny" data-ui="motion" title="Cards slide, die and fly to their zones; damage floats">Motion: ${MF.anim.on ? 'on' : 'off'}</button><button class="btn tiny" data-ui="howto">How to play</button><button class="btn tiny" data-ui="menu">Menu</button></div>
         ${logHTML(v)}
       </div>
       ${ui.spot ? `<div class="spot">${face(null, ui.spot.id, { size: 'lg' })}<div class="spotlbl">${esc(ui.spot.label)}</div></div>` : ''}
@@ -239,6 +240,7 @@
       <div id="zoom" class="zoom"></div>
     </div>`;
     drawArrows(v, s.pending && s.pending.q);
+    MF.anim.play(before, v, ui.human); ui.animReady = true;
   }
   ui.render = render;
 
@@ -344,6 +346,7 @@
       if (k === 'closemodal') { if (t === u || t.tagName === 'BUTTON') { ui.modal = null; render(); return; } if (!t.closest('[data-acts]')) return; ui.modal = null; }
       if (k === 'again') return MF.main.start(ui.setup, true);
       if (k === 'menu') return MF.main.menu();
+      if (k === 'motion') { MF.anim.toggle(); render(); return; }
       if (k === 'howto') return MF.main.howto();
       if (k === 'bug') return MF.main.bugReport();
       if (k === 'peek') { ui.peek = !ui.peek; render(); return; }
@@ -410,19 +413,19 @@
         let a;
         try { a = MF.ai.choose(ui.s); } catch (err) { MF.main.crash(err); return; }
         dispatch(a);
-      }, ui.spot ? 1200 : visible ? 380 : 60);
+      }, Math.max(ui.spot ? 1200 : visible ? 380 : 60, MF.anim.busyUntil - Date.now()));   // the opponent waits for the motion it caused (Mallet-42k §4)
       return;
     }
     if (!s.pending && !shouldStop(s)) {
       const p = MF.legalActions(s).find(a => a.type === 'pass');
-      ui.timer = setTimeout(() => dispatch(p), visible ? 300 : 40);
+      ui.timer = setTimeout(() => dispatch(p), Math.max(visible ? 300 : 40, MF.anim.busyUntil - Date.now()));
     } else if (ui.spot) ui.timer = setTimeout(() => { ui.spot = null; render(); }, 1400);
   }
   ui.begin = function (setup, state) {
     clearTimeout(ui.timer);
     ui.setup = setup; ui.human = setup.human; ui.actions = []; ui.spot = null; ui.modal = null; ui.menu = null; ui.recent = []; ui.passUntil = null; ui.peek = false;
     ui.stops = loadStops();
-    ui.s = state;
+    ui.s = state; ui.animReady = false; MF.anim.reset(state);
     step(false);
   };
   ui.dispatch = dispatch;                                                                    // for the page tests (tools and the browser console)

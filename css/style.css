@@ -189,3 +189,9 @@ a { color: var(--accent); }
 .b-doors .dopen { color: #ffd98a; } .b-doors .dlock { color: #8d8a99; }
 .b-stun { bottom: 3.4em; right: .25em; color: #ffb36b; }
 .b-loy { bottom: 1.9em; left: .25em; color: #f2e4a6; background: rgba(40,30,10,.85); font-weight: 700; }
+/* The presentation director (js/anim.js): ghosts of departed permanents and floating numbers */
+#fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+.fxghost { position: fixed; display: flex; align-items: center; justify-content: center; }
+.fxghost .perm, .fxghost .attached { margin: 0; }
+.fxnum { position: fixed; font-weight: 800; font-size: 1.9rem; text-shadow: 0 2px 6px #000, 0 0 2px #000; white-space: nowrap; }
+.fxnum.hurt { color: #ff5c5c; } .fxnum.heal { color: #7be29b; }
