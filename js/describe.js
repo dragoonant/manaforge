@@ -29,7 +29,7 @@
     if (f.kw) w.push('with ' + KWNAME[f.kw]); if (f.notKw) w.push('without ' + KWNAME[f.notKw]);
     if (f.tokOrSub) w.push('that is a token or a ' + f.tokOrSub);
     if (f.attacking) w.push('attacking');
-    if (f.notSubtypes) w.unshift('non-outlaw');
+    if (f.notSubtypes) w.unshift(f.notSubtypes.length === 5 ? 'non-outlaw' : 'non-' + f.notSubtypes.join('/'));
     if (f.tok && f.types) w.push('token');
     if (f.mvLE != null) w.push('with mana value ' + f.mvLE + ' or less');
     if (f.ptSumLE != null) w.push('with total power and toughness ' + f.ptSumLE + ' or less');
@@ -81,6 +81,7 @@
     lkiType: c => 'it was a ' + c.type.toLowerCase(),
     selfPowerIs: c => 'its power is exactly ' + c.n,
     notSolved: () => 'this Case is not solved',
+    descended: () => 'you descended this turn',
     oppLifeLE: c => 'an opponent has ' + c.n + ' or less life',
     addCostPaid: () => 'this spell’s additional cost was paid',
     hasCounter: c => 'it has one or more ' + c.kind + ' counters',
@@ -116,6 +117,7 @@
     counterUnless: op => 'counter ' + ref(op.on) + ' unless its controller pays ' + op.pay + (op.payIf ? ' (' + op.payIf.pay + ' instead if this spell was cast using teamwork)' : ''),
     lookPick: op => 'look at the top ' + op.n + ' cards of your library; put ' + op.take + ' of them into your hand and the rest on the bottom in any order',
     dieExile: () => 'if a permanent dealt damage by this would die this turn, exile it instead',
+    mayPay: op => 'you may pay ' + (op.mana || op.life + ' life') + '; if you do: ' + ops(op.ops),
     tutor: () => 'search your library for a card, put it into your hand, shuffle',
     discardRandom: () => 'discard a card at random',
     selfFromGrave: () => 'return this card from your graveyard to the battlefield',
@@ -137,7 +139,7 @@
     graveCastable: () => 'creature cards in your graveyard gain “You may cast this card from your graveyard” until end of turn',
     solve: () => 'this Case becomes solved',
     warpExile: () => 'exile it; its owner may cast it from exile on a later turn',
-    wardCounter: op => 'counter that spell or ability unless its controller pays ' + (op.life != null ? op.life + ' life' : op.mana),
+    wardCounter: op => 'counter that spell or ability unless its controller ' + (op.discard ? 'discards a card' : 'pays ' + (op.life != null ? op.life + ' life' : op.mana)),
     delayed: op => (op.on === 'attackWith' ? 'whenever you attack' : 'at ' + op.on) + (op.duration === 'turn' ? ' this turn' : '') + ': ' + ops(op.ops),
     sacThese: () => 'sacrifice them',
     sacrificeSelf: () => 'sacrifice this',
@@ -180,9 +182,11 @@
         if (a.levelUp) return a.cost.mana + ': Level ' + a.levelUp + ' (as a sorcery, only while level ' + (a.levelUp - 1) + ')';
         if (a.cost.removeCtr) return 'remove ' + a.cost.removeCtr.n + ' ' + a.cost.removeCtr.kind + ' counters from this: ' + ops(a.ops);
         if (a.cycling) return 'cycling ' + a.cost.mana + ' (' + a.cost.mana + ', discard this card from your hand: draw a card)';
+        if (a.equip && a.cost.life) return 'equip — pay ' + a.cost.life + ' life (only once each turn, as a sorcery)';
         return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.discard ? 'discard a card' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
-      case 'evasion': return 'this can’t be blocked by ' + filt(Object.assign({ types: ['Creature'] }, a.blockerNot)).replace('creature', 'creatures');
+      case 'evasion': return a.blockerNot.notSubtypes ? 'this can’t be blocked by non-' + a.blockerNot.notSubtypes.join('/') + ' creatures' : 'this can’t be blocked by ' + filt(Object.assign({ types: ['Creature'] }, a.blockerNot)).replace('creature', 'creatures');
       case 'oppDieExile': return 'if a creature an opponent controls would die, exile it instead';
+      case 'enterChoice': return 'as this enters, choose odd or even';
       case 'reflexiveBody': return (a.tg ? '' : '') + ops(a.ops);
       case 'etbCounters': return 'this enters with ' + a.n + ' ' + a.kind + ' counters on it';
       case 'flashback': return 'flashback ' + a.cost + ' (you may cast this from your graveyard for ' + a.cost + '; then exile it)';
@@ -207,6 +211,10 @@
         else if (a.on === 'dealsDamage') e = 'Whenever this deals ' + (a.combat ? 'combat ' : '') + 'damage' + (a.toOpp ? ' to an opponent' : a.toPlayer ? ' to a player' : '');
         else if (a.on === 'unlock') e = 'When you unlock this door';
         else if (a.on === 'gainLife') e = 'Whenever you gain life';
+        else if (a.on === 'crime') e = 'Whenever you commit a crime' + (a.zone === 'grave' ? ' (this works from your graveyard)' : '');
+        else if (a.on === 'cast' && a.chosenParity) e = 'Whenever an opponent casts a spell with mana value of the chosen quality';
+        else if (a.jobSelect) e = 'Job select — when this enters';
+        else if (a.on === 'attacks' && a.evCond) e = 'Whenever this attacks while ' + cond(a.evCond);
         else if (a.on === 'discardBatch') e = 'Whenever you discard one or more cards';
         else if (a.on === 'discarded') e = 'Whenever you discard a card';
         else if (a.on === 'leftGraveBatch') e = 'Whenever one or more cards leave your graveyard';
@@ -226,9 +234,11 @@
         else if (a.on === 'attacks' && a.youMostLife) e = 'Whenever this attacks while you have the most life or are tied for most life';
         else if (a.on === 'sacrificed') e = 'When you sacrifice this';
         else e = 'Whenever ' + who(a.who) + ' ' + EV[a.on];
+        if (a.modes) return e + ', choose one that hasn’t been chosen — ' + a.modes.map((m, i) => '(' + (i + 1) + ') ' + ops(m.ops)).join(' / ');
         return e + (a.cond ? ', if ' + cond(a.cond) : '') + ': ' + ops(a.ops) + (a.oncePerTurn ? ' (only once each turn)' : '');
       }
-      case 'static': if (a.setTypes) return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + 'this is a ' + a.setPT.join('/') + ' ' + a.setTypes.subtypes.join(' ') + ' creature' + (a.grant ? ' and has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
+      case 'static': if (a.addSubtypes) return 'the equipped creature gets ' + sgn(a.p) + '/' + sgn(a.t) + ' and is a ' + a.addSubtypes.join(' ') + ' in addition to its other types';
+        if (a.setTypes) return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + 'this is a ' + a.setPT.join('/') + ' ' + a.setTypes.subtypes.join(' ') + ' creature' + (a.grant ? ' and has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
         if (a.pv) return 'this gets +1/+1 for each other ' + filt(a.pv.f).replace(' you control', '') + ' you control';
         return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + (typeof a.affects === 'string' ? (a.affects === 'self' ? 'this' : 'the ' + a.affects + ' creature') : 'each ' + filt(a.affects)) + (a.p || a.t ? ' gets ' + sgn(a.p) + '/' + sgn(a.t) : '') + (a.grant ? (a.p || a.t ? ' and' : '') + ' has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
       case 'cda': return 'power and toughness each equal ' + N(a.v);

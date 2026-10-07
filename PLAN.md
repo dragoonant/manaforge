@@ -35,8 +35,11 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-06 — the championship decks (D15) under way: 9 of 20 registered; a per-card audit done.**
+**2026-10-06 — the championship decks (D15) under way: 10 of 20 registered; a per-card audit done.**
 
+- Mono-Black (Desolation Prowler) brought crimes (700.13), choices made as a permanent enters
+  (614.12a), unique-mode triggers, ward by discard, job select (702.182), descended (700.11), paying
+  during resolution, type-adding Equipment.
 - Mardu (Bloodghast) brought batched "one or more" events (CR 603.2c), discard costs and events,
   graveyard abilities (113.6m), flashback (702.34) and mayhem (702.187), reflexive triggers (603.12),
   attack requirements (508.1d), granted abilities, enters-with-counters.
@@ -47,19 +50,19 @@ Deck count, never quality. A deck that does not compile in full is not registere
   closed), ninjutsu (702.49), transforming double-faced cards (712), emblems (114), layer 6 in
   timestamp order with "loses all abilities", "until your next turn", choose-two modes, draw events.
 - Registered: Mono-Red Aggro (PT Final Fantasy #1), Gruul Delirium (#35), Orzhov Demons (#28), Izzet
-  Prowess (#2) and Dimir Midrange; from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph) and Mardu (Bloodghast) — beside the two Starter Kits. Boros
+  Prowess (#2) and Dimir Midrange; from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast) and Mono-Black (Desolation Prowler) — beside the two Starter Kits. Boros
   brought delayed triggers (CR 603.7), mobilize (702.181), creatures entering attacking (508.4),
   sneak (702.190), Treasure (111.10a), "can't cast spells" (601.3), plan counters. Orzhov (Amalia) brought ward (702.21), explore (701.44), warp (702.185), Cases
   (719), exile-until-it-leaves (610.3), returning as a non-creature, life-gained/lost conditions. Izzet brought Class levels (CR 716), bargain (702.166),
   harmonize (702.180), counterspells, X-mana abilities, flurry, gift-dependent targets. Orzhov brought Rooms (CR 709.5), stun counters (122.1d), gift
   (702.174), cycling (702.29), hexproof from (702.11d), a life-loss replacement, hand reveals. Gruul brought modal spells (CR 700.2), fight (701.14), extra
   combat phases (500.8), linked exile, mill/surveil, "can't attack or block unless".
-- Gates: `tools/test.mjs` 172/172; audit 157 cards 0 FAIL / 0 WARN; check-pages clean (102 log types,
-  50 question kinds); `tools/sim.mjs` 110 mixed games; `tools/policy-sweep.mjs` 80 games, 0 violations.
+- Gates: `tools/test.mjs` 181/181; audit 167 cards 0 FAIL / 0 WARN; check-pages clean (102 log types,
+  50 question kinds); `tools/sim.mjs` 120 mixed games; `tools/policy-sweep.mjs` 80 games, 0 violations.
 - Audit (2026-10-06): all 83 cards then registered checked against Oracle text, rulings and the CR;
   13 defects fixed, each with a test (tests/08); DEVIATIONS V3 closed, V4 opened.
-- Art: all 173 keys painted in the fifteen-style mix (D17), reviewed on contact sheets.
-- Next: the remaining 5 Pro Tour Final Fantasy and 6 Hobbit-era archetypes, closest first.
+- Art: all 186 keys painted in the fifteen-style mix (D17), reviewed on contact sheets.
+- Next: the remaining 5 Pro Tour Final Fantasy and 5 Hobbit-era archetypes, closest first.
 
 **2026-10-03, end of the first session — playable against the AI, private and local.**
 

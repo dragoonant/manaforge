@@ -82,6 +82,7 @@
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
     addCostPaid: x => !!(x.L && x.L.addCostPaid),                                            // "if this spell's additional cost was paid", teamwork
+    descended: x => !!P(x.s, x.ctrl).h.descended,                                                // CR 700.11
     oppLifeLE: (x, c) => P(x.s, 1 - x.ctrl).life <= c.n,                                          // "as long as an opponent has 10 or less life"
     sneakPaid: x => !!(x.L && x.L.sneak),                                                      // CR 702.190b
     gainedAtLeast: (x, c) => (P(x.s, x.ctrl).h.gained || 0) >= c.n,                            // "if you gained life this turn", "3 or more life"
@@ -159,10 +160,11 @@
       case 'unlock': return ev.iid === iid && ev.door === a.door;                                // "When you unlock this door" (CR 709.5h)
       case 'levelUp': return ev.iid === iid && ev.level === a.level;
       case 'discardBatch': case 'leftGraveBatch': case 'toGraveBatch': case 'discarded': return !a.you || ev.who === src.ctrl;
+      case 'crime': return ev.who === src.ctrl;                                                 // "Whenever you commit a crime"
       case 'search': return a.opp ? ev.who !== src.ctrl : ev.who === src.ctrl;
       case 'drawCard': return (!a.you || ev.who === src.ctrl) && (!a.opp || ev.who !== src.ctrl) && (!a.nth || ev.nth === a.nth);
       case 'counterPut': return ev.iid === iid && (!a.ctrKind || ev.kind === a.ctrKind) && (!a.nth || (ev.before < a.nth && ev.after >= a.nth));   // "When the fourth plan counter is put on this"                               // "When this Class becomes level N" (CR 716.2a)
-      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
+      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.oppOnly || ev.ctrl !== src.ctrl) && (!a.chosenParity || (s.cards[iid].chosen && ((ev.mv % 2 === 0) === (s.cards[iid].chosen === 'even')))) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
       case 'dealsDamage': return (a.who && a.who !== 'self' ? (ev.srcCtrl === src.ctrl && (!a.who.types || a.who.types.some(ty => (ev.srcTypes || []).includes(ty)))) : ev.src === iid) && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);
       case 'sacrificed': case 'dies': case 'leaves': return ev.iid === iid;
       case 'beginStep': return ev.step === a.step && (!a.yours || ev.ap === src.ctrl);
@@ -639,6 +641,14 @@
       MF.shuffle(s, p.lib);
     },
     discardRandom(x) { const s = x.s, p = P(s, x.ctrl); if (!p.hand.length) return; MF.discard(s, p.hand[MF.randInt(s, p.hand.length)]); },   // random: inside apply (CLAUDE.md rule 9)
+    // "You may pay {B}. If you do, ..." / "you may pay 1 life. If you do, ..." — paid as it resolves; not offered if it can't be paid.
+    mayPay(x, op) {
+      const s = x.s, need = op.mana ? MF.parseMana(op.mana) : null;
+      if (need ? !MF.canPayMana(s, x.ctrl, need) : P(s, x.ctrl).life < op.life) return;
+      if (MF.ask(x.x, { who: x.ctrl, kind: 'mayPay', src: x.src, mana: op.mana, life: op.life, opts: [{ id: 'yes' }, { id: 'no' }] }) !== 'yes') return;
+      if (need) MF.payMana(x.x, x.ctrl, need, x.src, false); else MF.loseLife(s, x.ctrl, op.life, 'pay', I(s, x.src).id);
+      MF.runOps(x, op.ops);
+    },
     // CR 603.12: a reflexive triggered ability — triggers at once; its targets are chosen as it goes on the stack.
     reflexive(x, op) { x.s.trigs.push({ src: x.src, ab: -1, inl: op.ab, ctrl: x.ctrl, ev: x.ev || { t: 'reflexive' }, lki: x.lki || null }); },
     // CR 603.7: "Whenever you attack this turn, ..." — a delayed triggered ability with a duration.
@@ -696,9 +706,10 @@
     wardCounter(x, op) {
       const s = x.s, L = s.stack.find(l => l.lid === x.ev.lid); if (!L) return;
       const who = L.ctrl, need = op.mana ? MF.parseMana(op.mana) : null;
-      const can = op.life != null ? P(s, who).life >= op.life : MF.canPayMana(s, who, need);
-      if (can && MF.ask(x.x, { who: who, kind: 'wardPay', src: x.src, life: op.life, mana: op.mana, target: L.kind === 'spell' ? L.iid : L.src, opts: [{ id: 'pay' }, { id: 'decline' }] }) === 'pay') {
-        if (op.life != null) MF.loseLife(s, who, op.life, 'pay', I(s, x.src).id); else MF.payMana(x.x, who, need, x.src, false);
+      const can = op.discard ? P(s, who).hand.length > 0 : op.life != null ? P(s, who).life >= op.life : MF.canPayMana(s, who, need);
+      if (can && MF.ask(x.x, { who: who, kind: 'wardPay', src: x.src, life: op.life, mana: op.mana, discard: op.discard || null, target: L.kind === 'spell' ? L.iid : L.src, opts: [{ id: 'pay' }, { id: 'decline' }] }) === 'pay') {
+        if (op.discard) MF.discard(s, MF.ask(x.x, { who: who, kind: 'discard', src: x.src, left: 1, opts: P(s, who).hand.map(i => ({ id: i, iid: i })) }));
+        else if (op.life != null) MF.loseLife(s, who, op.life, 'pay', I(s, x.src).id); else MF.payMana(x.x, who, need, x.src, false);
         log(s, 'wardPaid', { who: who, c: I(s, x.src).id }); return;
       }
       if (L.kind === 'spell') MF.counterSpell(s, L, I(s, x.src).id);
@@ -882,7 +893,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
@@ -890,7 +901,7 @@
       const d = MF.cards[id];
       if (d.un) continue;
       for (const a of d.ab.concat(d.alt ? d.alt.ab : [])) {
-        for (const m of a.modes || []) walkOps(id, m.ops);                                      // a modal spell's modes (CR 700.2)
+        for (const m of a.modes || []) walkOps(id, m.ops);   // spells' and triggers' modes                                      // a modal spell's modes (CR 700.2)
         if (a.gift && a.gift.ops) walkOps(id, a.gift.ops);
         if (!ABKINDS.includes(a.k)) bad.push(id + ': ability kind with no rule: ' + a.k);
         walkOps(id, a.ops);

@@ -105,7 +105,7 @@
     o = o || {};
     const c = I(s, iid), from = c.zone;
     if (from === 'grave' && zone !== 'grave') MF.batchNote(s, 'leftGraveBatch', c.owner);   // "Whenever one or more cards leave your graveyard"
-    if (zone === 'grave' && !c.tok && def(s, iid).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))) MF.batchNote(s, 'toGraveBatch', c.owner);   // "permanent cards put into your graveyard from anywhere"
+    if (zone === 'grave' && !c.tok && def(s, iid).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))) { MF.batchNote(s, 'toGraveBatch', c.owner); P(s, c.owner).h.descended = true; }   // "permanent cards put into your graveyard from anywhere"
     if (from === 'bf' && zone === 'grave' && chars(s, iid).types.includes('Creature') && s.bf.some(v => v !== iid && chars(s, v).ctrl !== c.ctrl && chars(s, v).ab.some(a => a.k === 'oppDieExile'))) {
       log(s, 'exiledInstead', { who: c.owner, c: c.id }); zone = 'exile';                    // its rulings: no "dies" trigger
     }
@@ -173,6 +173,11 @@
     const c = I(s, n);
     for (const a of baseChars(s, n).ab) {
       if (a.k === 'etbCounters') c.ctr[a.kind] = (c.ctr[a.kind] || 0) + a.n;
+      if (a.k === 'enterChoice') {
+        if (!o.x) throw new Error('a permanent with an entering choice was moved without the invocation to ask: ' + c.id);
+        c.chosen = ask(o.x, { who: c.ctrl, kind: 'enterChoice', c: c.id, what: a.what, opts: [{ id: 'odd' }, { id: 'even' }] });
+        log(s, 'chose', { who: c.ctrl, c: c.id, choice: c.chosen });
+      }
       if (a.k === 'etbTapped' && !(a.unless && MF.cond({ s: s, ctrl: c.ctrl, src: n, flags: {} }, a.unless))) c.tapped = true;
       if (a.k === 'etbPayOrTap' && !o.tapped) {                                                // put onto the battlefield tapped anyway: paying could change nothing, so nothing is asked
         if (!o.x) throw new Error('a land with an entering choice was moved without the invocation to ask: ' + c.id);
@@ -317,6 +322,7 @@
       if (a.affects === 'enchanted' || a.affects === 'equipped') return src.att != null && out[src.att] ? [src.att] : [];
       return s.bf.filter(i => MF.matchChars(s, i, out[i], a.affects, st.src == null ? st.ctrl : out[st.src].ctrl, st.src));
     };
+    for (const st of statics) if (st.a.addSubtypes) for (const i of affected(st)) for (const sub of st.a.addSubtypes) if (!out[i].subtypes.includes(sub)) out[i].subtypes.push(sub);
     for (const st of statics) if (st.a.setTypes) for (const i of affected(st)) { out[i].types = st.a.setTypes.types.slice(); out[i].subtypes = st.a.setTypes.subtypes.slice(); }   // layer 4: Kaito "is a 3/4 Ninja creature"
     for (const e of s.effects) if (e.k === 'color' && out[e.iid]) out[e.iid].colors = e.colors.slice();                                                 // layer 5
     for (const e of s.effects) if (e.k === 'animate' && e.colors && out[e.iid]) out[e.iid].colors = e.colors.slice();
@@ -420,7 +426,7 @@
         if (a.evCond && !MF.cond(ctxFor(s, { kind: 'trig', ctrl: src.ctrl, src: iid, ev: ev, lki: lki || null, t: [] }), a.evCond)) continue;   // "while ~ has a -1/-1 counter": as it triggers only
         if (a.zone === 'grave') continue;                                                      // a graveyard ability does not function on the battlefield
         if (a.oncePerTurn) { const oc = s.cards[iid]; if (oc.trigTurn && oc.trigTurn[i] === s.turn) continue; oc.trigTurn = oc.trigTurn || {}; oc.trigTurn[i] = s.turn; }   // "This ability triggers only once each turn"
-        s.trigs.push({ src: iid, ab: i, ctrl: src.ctrl, ev: ev, lki: lki || null });
+        s.trigs.push({ src: iid, ab: i, abObj: a, ctrl: src.ctrl, ev: ev, lki: lki || null });   // the ability itself travels: a granted one may be gone by the time it is put on the stack
       }
       if (ev.t === 'cast' && !lki && src.kw && src.kw.prowess && ev.ctrl === src.ctrl && !ev.types.includes('Creature') && src.types.includes('Creature')) {
         for (let k = 0; k < src.kw.prowess; k++) s.trigs.push({ src: iid, ab: -1, inl: 'prowess', ctrl: src.ctrl, ev: ev });   // CR 702.108a-b: each instance triggers separately
@@ -989,7 +995,14 @@
       }
       for (const t of order) {
         const ab = trigAbility(s, t);
-        const L = { lid: s.lid++, kind: 'trig', ctrl: t.ctrl, src: t.src, ab: t.ab, inl: t.inl || null, ev: t.ev, lki: t.lki, srcId: t.lki ? t.lki.id : I(s, t.src).id, t: [] };
+        const L = { lid: s.lid++, kind: 'trig', ctrl: t.ctrl, src: t.src, ab: t.ab, abObj: t.abObj || null, inl: t.inl || null, ev: t.ev, lki: t.lki, srcId: t.lki ? t.lki.id : I(s, t.src).id, t: [] };
+        if (ab.uniqueModes) {                                                                  // CR 700.2a: chosen as it is put on the stack; "one that hasn't been chosen"
+          const so = s.cards[t.src], used = (so && so.modesUsed) || [];
+          const opts = ab.modes.map((m, i) => ({ id: i, text: m.text })).filter(o2 => !used.includes(o2.id));
+          if (!opts.length) { log(s, 'modesSpent', { who: t.ctrl, c: L.srcId }); continue; }     // its ruling: no mode left, no effect
+          L.mode = ask(x, { who: t.ctrl, kind: 'mode', src: t.src, opts: opts });
+          so.modesUsed = used.concat([L.mode]);
+        }
         if (ab.tg && ab.tg.length) {
           try { L.t = chooseTargets(x, t.ctrl, t.src, ab.tg, 'trig', false); }
           catch (e) { if (e instanceof Illegal) { log(s, 'trigNoTarget', { who: t.ctrl, c: L.srcId }); continue; } throw e; }   // CR 603.3d
@@ -1003,6 +1016,7 @@
   function trigAbility(s, t) {
     if (t.inl === 'prowess') return MF.PROWESS;
     if (t.inl) return t.inl;
+    if (t.abObj) return t.abObj;
     const src = t.lki ? abFromLki(s, t.lki) : chars(s, t.src).ab;
     return src[t.ab];
   }
@@ -1366,13 +1380,19 @@
     log(s, 'cast', { who: who, c: card.id, face: alt || door != null ? d.name : null, alt: alt ? d.kind : door != null ? 'door' : null, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring, kicked: !!L.kicked, gift: L.gift != null, bargained: !!L.bargained, harmonize: !!L.harmonize, sneak: !!L.sneak, warp: !!L.warp });
     // The spell as cast travels with the event: a copy made after it has left the stack is made from it as it last existed (Alania's rulings, CR 707.10).
     const spell = { id: card.id, t: JSON.parse(JSON.stringify(L.t)), x: L.x, mode: L.mode, alt: L.alt, door: L.door, kicked: !!L.kicked, offspring: !!L.offspring, gift: L.gift, bargained: !!L.bargained };
-    emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid, spell: spell, nth: p.h.cast });   // CR 601.2i
+    emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid, spell: spell, nth: p.h.cast, mv: ch.mv + (L.x || 0) * costRaw.x });   // CR 601.2i
     emitTargeted(s, L.t, who, L.lid);
     setPriority(s, who);                                                                      // CR 117.3c
   });
   // "Becomes the target of a spell or ability you control for the first time each turn" (valiant):
   // each object records, per controller, the turn it was last targeted (CR 603.2e: "becomes").
+  function emitCrime(s, t, by) {
+    const opp = (t || []).flat().some(r => r && (r.p != null ? r.p !== by : r.a != null ? (s.stack.find(L => L.lid === r.a) || {}).ctrl !== by : (() => { const c = s.cards[r.c]; return !!c && ((c.zone === 'bf' || c.zone === 'stack') ? c.ctrl !== by : c.owner !== by); })()));
+    if (opp) emit(s, { t: 'crime', who: by });
+  }
+  MF.emitCrime = emitCrime;
   function emitTargeted(s, t, by, lid) {
+    emitCrime(s, t, by);
     const seen = new Set();
     for (const sl of t || []) for (const r of sl) {
       if (!r || r.c == null || seen.has(r.c)) continue; seen.add(r.c);
@@ -1494,7 +1514,7 @@
       if (!lt.any) { log(s, 'fizzle', { who: L.ctrl, c: L.srcId, ab: true }); afterResolve(s); return; }
       X.t = lt.t;
       log(s, 'resolveAb', { who: L.ctrl, c: L.srcId, trig: L.kind === 'trig' });
-      MF.runOps(X, ab.ops);
+      MF.runOps(X, ab.modes && L.mode != null ? ab.modes[L.mode].ops : ab.ops);
     }
     afterResolve(s);
   });

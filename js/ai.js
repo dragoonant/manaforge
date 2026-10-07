@@ -151,6 +151,8 @@
       case 'discardUpTo': return 'done';
       case 'gift': return q.opts.some(o => o.id === 'no') ? 'no' : q.opts[0].id;
       case 'bargain': return 'none';
+      case 'enterChoice': return 'odd';
+      case 'mayPay': return 'yes';
       case 'addCostYes': return 'no';
       case 'blightOn': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
       case 'teamworkTap': return q.opts.some(o => o.id === 'done') ? 'done' : q.opts.filter(o => o.iid != null).sort((a, b) => MF.chars(s, b.iid).p - MF.chars(s, a.iid).p)[0].id;

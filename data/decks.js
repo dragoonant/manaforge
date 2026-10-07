@@ -2315,7 +2315,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (september-7-2026)",
   "rank": null,
   "players": 6,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -2406,19 +2406,12 @@ window.MF.decks = {
     "name": "Elegy Acolyte"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "realm-of-koh: token ability: This token can't block or be blocked by non-Spirit creatures.",
-   "nighthowl-pursuer: trigger event: ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn.",
-   "desolation-prowler: ability: Pay 2 life: ~ gets +2/+2 until end of turn. Activate only once each turn.",
-   "forsaken-miner: trigger event: you commit a crime, you may pay {B}. If you do, return this card from your graveyard to the battlefield.",
-   "sunset-saboteur: ability: Ward—Discard a card.",
-   "corpses-of-the-lost: ability: Skeletons you control get +1/+0 and have haste.",
-   "gollum-riddle-master: ability: As ~ enters, choose odd or even.",
-   "dark-knights-greatsword: ability: Job select",
-   "dissection-practice: effect: Target opponent loses 1 life"
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-spirit-1-1-c-this-token-can-t-block-or-be-blocked-by-non-spirit-creatures",
+   "token-skeleton-pirate-2-2-b",
+   "token-hero-1-1-c"
+  ]
  },
  "mono-red-aggro-fin": {
   "id": "mono-red-aggro-fin",
