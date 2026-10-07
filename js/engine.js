@@ -135,7 +135,7 @@
       if (o.castFromHand) nc.castFromHand = true;
       if (o.att != null) nc.att = o.att;
       if (o.ctr) nc.ctr = Object.assign({}, o.ctr);
-      const dl = def(s, n); if (dl.loyalty != null && dl.types.includes('Planeswalker') && nc.ctr.loyalty == null) nc.ctr.loyalty = dl.loyalty;   // CR 306.5b                                           // "enters with N counters" (CR 122.6)
+      const dl = def(s, n); if (dl.loyalty != null && dl.types.includes('Planeswalker') && nc.ctr.loyalty == null) nc.ctr.loyalty = Math.max(0, dl.loyalty - (o.loyaltyMinus || 0));   // CR 306.5b                                           // "enters with N counters" (CR 122.6)
       if (o.door != null) nc.unlocked = [o.door === 0, o.door === 1];
       if (o.xPaid) nc.xPaid = o.xPaid;
       if (o.transformed) nc.transformed = true;
@@ -342,7 +342,7 @@
     for (const i of s.bf) if (out[i] && I(s, i).impended && (I(s, i).ctr.time || 0) > 0 && out[i].types.includes('Creature')) {
       out[i].types = out[i].types.filter(ty => ty !== 'Creature'); out[i].subtypes = out[i].subtypes.filter(st => NONCRE_SUB.includes(st)); out[i].p = null; out[i].t = null;   // CR 205.3d: creature types go with the type
     }
-    for (const e of s.effects) if (e.k === 'addTypes' && out[e.iid]) for (const ty of e.types) if (!out[e.iid].types.includes(ty)) out[e.iid].types.push(ty);   // crew (CR 702.122a)
+    for (const e of s.effects) if (e.k === 'addTypes' && out[e.iid]) { for (const ty of e.types) if (!out[e.iid].types.includes(ty)) out[e.iid].types.push(ty); for (const st of e.subtypes || []) if (!out[e.iid].subtypes.includes(st)) out[e.iid].subtypes.push(st); }   // crew (CR 702.122a)
     for (const i of s.bf) if (out[i] && I(s, i).chosen && out[i].ab.some(a => a.k === 'chosenLandType')) {
       const ty = I(s, i).chosen, col = { Plains: 'W', Island: 'U', Swamp: 'B', Mountain: 'R', Forest: 'G' }[ty];
       if (col && !out[i].subtypes.includes(ty)) { out[i].subtypes.push(ty); out[i].ab = out[i].ab.concat([{ k: 'mana', cost: { tap: true }, cols: [col] }]); }
@@ -549,7 +549,17 @@
     return usablePool0(p, ctx);
   };
   const usablePool0 = (p, ctx) => { if (ctx && ctx.creature) return Object.assign({}, p.pool); const u = {}; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) u[k] = p.pool[k] - ((p.poolCre && p.poolCre[k]) || 0); return u; };
-  const canPayMana = MF.canPayMana = (s, who, need, ctx) => MF.hybridWays(need).some(w => !!solve(usablePool(P(s, who), ctx), manaSources(s, who, ctx), w));
+  const canPayMana = MF.canPayMana = (s, who, need, ctx) => {
+    if (need.ph && need.ph.length) {                                                          // try paying the first k of them with life
+      for (let k = 0; k <= need.ph.length; k++) {
+        if (2 * k > P(s, who).life) break;                                                    // CR 119.4
+        const w = Object.assign({}, need, { ph: [] }); need.ph.slice(k).forEach(c => { w[c]++; });
+        if (canPayMana(s, who, w, ctx)) return true;
+      }
+      return false;
+    }
+    return MF.hybridWays(need).some(w => !!solve(usablePool(P(s, who), ctx), manaSources(s, who, ctx), w));
+  };
   // How much mana a player could make right now: pool plus untapped sources (for the X question).
   MF.manaAvailable = (s, who, ctx) => { const per = new Map(); for (const m of manaSources(s, who, ctx)) per.set(m.iid, Math.max(per.get(m.iid) || 0, m.amount || 1)); let n = 0; for (const v of per.values()) n += v; return poolTotal(usablePool(P(s, who), ctx)) + n; };   // one activation per permanent
 
@@ -598,6 +608,20 @@
   const payMana = MF.payMana = function (x, who, need, srcIid, cancel, ctx) {
     const s = x.s, p = P(s, who);
     if (MF.manaValue(need) === 0) return;
+    if (need.ph && need.ph.length) {                                                           // CR 601.2b: for each Phyrexian symbol, its colour or 2 life
+      const fixed = Object.assign({}, need, { ph: [] });
+      need.ph.forEach((k, i) => {
+        const rest = need.ph.slice(i + 1), lifeLeft = P(s, who).life - 2 * (ctx && ctx.phLife || 0);
+        const opts = [];
+        if (canPayMana(s, who, Object.assign({}, fixed, { [k]: fixed[k] + 1, ph: rest }), ctx)) opts.push({ id: 'mana' });
+        if (lifeLeft >= 2 && canPayMana(s, who, Object.assign({}, fixed, { ph: rest }), ctx)) opts.push({ id: 'life' });
+        if (!opts.length) throw new Illegal('the cost can’t be paid');
+        const a = ask(x, { who: who, kind: 'phyrexian', src: srcIid, col: k, life: P(s, who).life, opts: opts, cancel: cancel });
+        if (a === 'mana') fixed[k]++; else { if (ctx) ctx.phLife = (ctx.phLife || 0) + 1; MF.loseLife(s, who, 2, 'pay', I(s, srcIid).id); }
+      });
+      need = fixed;
+      if (MF.manaValue(need) === 0) return;
+    }
     if (need.h && need.h.length) {                                                             // CR 601.2b: announce the nonhybrid equivalent, one symbol at a time
       const fixed = Object.assign({}, need, { h: [] });
       need.h.forEach((h, i) => {
@@ -654,7 +678,7 @@
   const spellCost = MF.spellCost = function (s, who, iid, o) {
     const ch = faceChars(s, iid, o && o.alt, o && o.door);
     const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem' || o.via === 'impending') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
-    const plotted = (o && o.free) || MF.isPlotted(s, iid);                                    // CR 702.170d: without paying its mana cost
+    const plotted = (o && o.free) || (o && o.via === 'free') || MF.isPlotted(s, iid);         // CR 702.170d, 118.9: without paying its mana cost
     const c = MF.parseMana(plotted ? '' : hz ? hz.cost : ch.mana);                            // CR 702.180a: an alternative cost
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
     if (o && o.extra) { const e = o.extra; for (const k in e) c[k] += e[k]; }
@@ -675,7 +699,7 @@
     if (ref.p != null) return MF.matchPlayer(s, ref.p, slot.f, who);
     if (ref.a != null) return !!(slot.f && slot.f.ability) && s.stack.some(L => L.lid === ref.a && L.kind !== 'spell');   // an activated or triggered ability on the stack
     const c = s.cards[ref.c];
-    if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card && (!slot.f.own || c.owner === who) && (!slot.f.types || slot.f.types.some(ty => def(s, ref.c).types.includes(ty))) && (slot.f.mvLE == null || chars(s, ref.c).mv <= slot.f.mvLE) && (!slot.f.mvLEv || chars(s, ref.c).mv <= MF.num({ s: s, ctrl: who, src: srcIid }, slot.f.mvLEv));   // a card in a graveyard: its own characteristics
+    if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card && (!slot.f.own || c.owner === who) && (!slot.f.types || slot.f.types.some(ty => def(s, ref.c).types.includes(ty))) && (slot.f.mvLE == null || chars(s, ref.c).mv <= slot.f.mvLE) && (slot.f.mvGE == null || chars(s, ref.c).mv >= slot.f.mvGE) && (!slot.f.notSubtypes || !slot.f.notSubtypes.some(st => def(s, ref.c).subtypes.includes(st))) && (!slot.f.mvLEv || chars(s, ref.c).mv <= MF.num({ s: s, ctrl: who, src: srcIid }, slot.f.mvLEv));   // a card in a graveyard: its own characteristics
     if (slot.f && slot.f.spell) {                                                             // a spell on the stack (CR 115.1); not itself (115.5)
       if (!c || c.zone !== 'stack' || ref.c === srcIid || !s.stack.some(L => L.kind === 'spell' && L.iid === ref.c)) return false;
       const ch = chars(s, ref.c);
@@ -1129,6 +1153,7 @@
     if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
     if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;
     if (via === 'impending' && !d0.ab.some(a => a.k === 'impending')) return false;
+    if (via === 'free' && !(I(s, iid).zone === 'hand' && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'castFree')))) return false;
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrSac' && P(s, who).hand.filter(i => i !== iid).length === 0 && !s.bf.some(i => I(s, i).ctrl === who)) return false;   // a mandatory additional cost that can't be paid
     if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.plotted != null) && !sorceryTiming(s, who)) return false;   // CR 702.170d: main phase, empty stack
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrLife' && P(s, who).hand.filter(i => i !== iid).length === 0 && P(s, who).life < a.life) return false;   // a mandatory additional cost that can't be paid   // CR 702.185a: from your hand
@@ -1148,7 +1173,8 @@
     if (sp && sp.modes && !sp.modes.some(m => !m.tg || slotsLegalNow(s, who, iid, m.tg))) return false;   // CR 700.2a: a mode whose targets cannot be chosen cannot be chosen
     if (sp && sp.tg && !slotsLegalNow(s, who, iid, sp.tg) && !(sp.gift && slotsLegalNow(s, who, iid, sp.gift.tg || []))) return false;   // with a gift, its own targets (CR 702.174m)
     if (aura && !slotsLegalNow(s, who, iid, [{ f: aura.f }])) return false;
-    const tappedTg = sp && sp.tg && d.ab.some(a => a.k === 'costLess' && a.cond && a.cond.c === 'targetsTapped') ? MF.targetOptions(s, sp.tg[0], who, iid, []).find(r => r.c != null && I(s, r.c).tapped) : null;   // Ride's End: priced with a tapped target if one can be chosen
+    const tcl = sp && sp.tg ? d.ab.find(a => a.k === 'costLess' && a.cond && (a.cond.c === 'targetsTapped' || a.cond.c === 'targetsAttacking')) : null;
+    const tappedTg = tcl ? MF.targetOptions(s, sp.tg[0], who, iid, []).find(r => MF.cond({ s: s, ctrl: who, src: iid, flags: {}, targets: [[r]] }, tcl.cond)) : null;   // Ride's End, Ephara's Dispersal: priced with a target that qualifies, if one can be chosen
     let spreeExtra = null;
     if (sp && sp.spree) { const ms = sp.modes.filter(m => !m.tg || slotsLegalNow(s, who, iid, m.tg)).map(m => MF.parseMana(m.cost)).sort((a, b) => MF.manaValue(a) - MF.manaValue(b)); if (!ms.length) return false; spreeExtra = ms[0]; }
     return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: spreeExtra, targets: tappedTg ? [[tappedTg]] : null }), { creature: ch.types.includes('Creature'), subtypes: ch.subtypes });
@@ -1166,7 +1192,7 @@
     if (a.tg && !slotsLegalNow(s, who, iid, a.tg)) return false;
     if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid }, a.cond)) return false;
     if (a.once && c.usedOnce) return false;
-    if (a.loyalty != null && (!sorceryTiming(s, who) || c.loyaltyTurn === s.turn || (a.loyalty < 0 && (c.ctr.loyalty || 0) < -a.loyalty))) return false;   // CR 606.3
+    if (a.loyalty != null && (!sorceryTiming(s, who) || c.loyaltyTurn === s.turn || (typeof a.loyalty === 'number' && a.loyalty < 0 && (c.ctr.loyalty || 0) < -a.loyalty))) return false;   // CR 606.3
     if (a.ninjutsu && !unblockedAttackers(s, who).length) return false;                        // CR 702.49a: an unblocked attacker to return
     if (a.levelUp && (c.level || 1) !== a.levelUp - 1) return false;                           // CR 716.2a: only if this Class is level N-1
     if (a.cost.removeCtr && (c.ctr[a.cost.removeCtr.kind] || 0) < a.cost.removeCtr.n) return false;
@@ -1205,6 +1231,7 @@
       else if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid });
       // CR 715.3, 720.3: an Adventure or Omen card may be cast as that spell — not again from exile after its Adventure (715.3d)
       if (d.alt && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.noAlt) && canCast(s, who, iid, true)) out.push({ type: 'cast', iid: iid, alt: true });
+      if (I(s, iid).zone === 'hand' && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'castFree')) && !d.doors && canCast(s, who, iid, false, null, 'free')) out.push({ type: 'cast', iid: iid, via: 'free' });   // Omniscience
     }
     for (const iid of P(s, who).hand) {                                                       // CR 702.29a: abilities that function in the hand (cycling)
       const ab = chars(s, iid).ab;
@@ -1356,7 +1383,7 @@
   EXEC_DEF('cast', function (x) {
     const s = x.s, who = x.inv.who, iid0 = x.inv.iid, c0 = I(s, iid0), from = c0.zone, alt = !!x.inv.alt, door = x.inv.door, via = x.inv.via || null;
     const card = def(s, iid0), d = faceDef(s, iid0, alt, door);                               // CR 715.3b, 720.3b, 709.3b: as an Adventure, Omen or door it has only that face
-    const anyMana = anyManaFor(s, iid0), plotted = MF.isPlotted(s, iid0);                      // CR 702.170d: decided before it moves
+    const anyMana = anyManaFor(s, iid0), plotted = MF.isPlotted(s, iid0) || via === 'free';   // CR 702.170d, 118.9: decided before it moves
     const iid = move(s, iid0, 'stack', { ctrl: who });                                        // CR 601.2a
     const L = { lid: s.lid++, kind: 'spell', ctrl: who, iid: iid, id: card.id, t: [], x: 0, from: from, alt: alt ? d.kind : null };
     if (door != null) L.door = door;
@@ -1485,6 +1512,7 @@
     payMana(x, who, cost, iid, true, ctx);                                                    // CR 601.2g-h
     L.spent = MF.manaValue(cost);                                                             // "the amount of mana spent to cast" (CR 601.2h)
     if (ctx.usedCavern) L.uncounterable = true;                                               // Cavern of Souls
+    if (ctx.phLife) L.phLife = ctx.phLife;                                                    // compleated (CR 702.150a)
     const ch = chars(s, iid);
     const p = P(s, who);
     p.h.cast++;
@@ -1521,10 +1549,16 @@
   EXEC_DEF('act', function (x) {                                                             // CR 602.2
     const s = x.s, who = x.inv.who, iid = x.inv.iid, c = I(s, iid), ch = chars(s, iid), a = ch.ab[x.inv.ab];
     const L = { lid: s.lid++, kind: 'ab', ctrl: who, src: iid, ab: x.inv.ab, srcId: c.id, t: [], lki: null };
+    if (a.loyalty === 'X') {                                                                   // CR 601.2b (via 602.2b): X is announced before targets are chosen
+      const opts = []; for (let k = 0; k <= (c.ctr.loyalty || 0); k++) opts.push({ id: k });
+      L.x = ask(x, { who: who, kind: 'x', src: iid, opts: opts, cancel: true });
+    }
     if (a.tg) L.t = chooseTargets(x, who, iid, a.tg, 'ab', true);
     if (a.cost.tap) { if (c.tapped) throw new Illegal('already tapped'); c.tapped = true; }    // CR 602.2b, 601.2h
     // CR 601.2h: costs in any order; the token is chosen first, and a cost that can no longer be completed reverses the action (CR 733).
-    if (a.loyalty != null) { c.ctr.loyalty = (c.ctr.loyalty || 0) + a.loyalty; c.loyaltyTurn = s.turn; log(s, 'loyalty', { who: who, c: c.id, n: a.loyalty, left: c.ctr.loyalty }); }   // CR 606.4
+    if (a.loyalty === 'X') {                                                                   // CR 107.3k, 606.4: the cost removes X loyalty counters
+      c.ctr.loyalty = (c.ctr.loyalty || 0) - L.x; c.loyaltyTurn = s.turn; log(s, 'loyalty', { who: who, c: c.id, n: -L.x, left: c.ctr.loyalty });
+    } else if (a.loyalty != null) { c.ctr.loyalty = (c.ctr.loyalty || 0) + a.loyalty; c.loyaltyTurn = s.turn; log(s, 'loyalty', { who: who, c: c.id, n: a.loyalty, left: c.ctr.loyalty }); }   // CR 606.4
     if (a.cost.returnUnblocked) {                                                              // ninjutsu: return an unblocked attacker; this enters attacking what it attacked (702.49c)
       const back = ask(x, { who: who, kind: 'ninjutsuReturn', src: iid, opts: unblockedAttackers(s, who).map(i => ({ id: i, iid: i })), cancel: true });
       L.ninjaTarget = (s.combat.target && s.combat.target[back]) || { p: 1 - who };
@@ -1632,6 +1666,7 @@
         if (L.door != null) o.door = L.door;                                                   // CR 709.5d
         if (L.warp) o.warp = true;
         if (L.impending) o.impending = L.impending;
+        if (L.phLife && d.ab.some(a => a.k === 'compleated')) o.loyaltyMinus = 2 * L.phLife;      // CR 702.150a: two fewer loyalty counters
         if (L.alt === 'mdfc') o.transformed = true;
         if (L.x) o.xPaid = L.x;
         if (aura) o.att = lt.t[0][0].c;                                                        // CR 608.3c

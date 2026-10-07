@@ -101,6 +101,7 @@
           const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); delete cost.xs;
           if (s.cards[a.iid].zone !== 'hand' && !tray.includes(a.iid)) tray.push(a.iid);                // castable from a graveyard or exile: shown in the tray
           if (a.via === 'flashback' || a.via === 'mayhem') { add(a.iid, a, 'Cast ' + d.name + ' with ' + a.via + ' — ' + MF.manaStr(cost)); continue; }
+          if (a.via === 'free') { add(a.iid, a, 'Cast ' + d.name + ' without paying its mana cost (Omniscience)'); continue; }
           if (a.via === 'impending') { const im = d.ab.find(x => x.k === 'impending'); add(a.iid, a, 'Cast ' + d.name + ' for its impending cost — ' + MF.manaStr(cost) + ' (enters with ' + im.n + ' time counters; not a creature until the last is removed)'); continue; }
           if (a.via === 'warp') { add(a.iid, a, 'Cast ' + d.name + ' for its warp cost — ' + MF.manaStr(cost) + ' (exiled at end step; recast later)'); continue; }
           if (a.via === 'sneak') { add(a.iid, a, 'Cast ' + d.name + ' for its sneak cost — ' + MF.manaStr(cost) + ' (return an unblocked attacker)'); continue; }

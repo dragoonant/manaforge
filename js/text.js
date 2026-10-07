@@ -9,6 +9,7 @@
   // Mana symbols, drawn by this project in CSS (docs/rights.md rule 1).
   const sym = t => {
     if (t === 'T') return '<span class="ms ms-T" title="tap">⟳</span>';
+    if (/^[WUBRG]\/P$/.test(t)) return `<span class="ms ms-${t[0]}" title="Phyrexian ${MF.COLOR_NAME[t[0]]}: its colour or 2 life">ϕ</span>`;   // CR 107.4f
     if (/^[WUBRG]\/[WUBRG]$/.test(t)) { const v = k => 'var(--m' + k + ')'; return `<span class="ms ms-h" style="--h1:${v(t[0])};--h2:${v(t[2])}" title="${MF.COLOR_NAME[t[0]]} or ${MF.COLOR_NAME[t[2]]}"></span>`; }   // CR 107.4e
     if (/^[WUBRGC]$/.test(t)) return `<span class="ms ms-${t}" title="${MF.COLOR_NAME[t]}">${t === 'C' ? '◇' : ''}</span>`;
     return `<span class="ms ms-N">${esc(t)}</span>`;
@@ -81,7 +82,7 @@
     loyaltyLoss: (e, v) => `${tag(e.srcId)} deals <b>${e.n}</b> damage to ${tag(e.c)}: loyalty ${e.left}.`,
     ninjutsuReturn: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'return', 'returns')} the unblocked ${tag(e.c)} to hand for the ninjutsu of ${tag(e.card)}.`,
     ninjutsuGone: (e, v) => `<span class="notice">${tag(e.c)} is no longer in hand; it doesn’t enter.</span>`,
-    shuffledIn: (e, v) => `${tag(e.c)} is shuffled into ${T.whose(e.who, v)} library.`,
+    shuffledIn: (e, v) => `${e.cs ? e.cs.map(tag).join(', ') + (e.cs.length > 1 ? ' are' : ' is') : tag(e.c) + ' is'} shuffled into ${T.whose(e.who, v)} library${e.from ? ' from ' + T.whose(e.who, v) + ' graveyard' : ''}.`,
     transformed: (e, v) => `${tag(e.c)} transforms into <b>${esc(e.face)}</b>.`,
     emblem: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'get', 'gets')} an emblem: “${esc(e.text)}”${e.c ? ' (' + tag(e.c) + ')' : ''}.`,
     loseAbilities: (e, v) => `${tag(e.c)} loses all abilities${e.pt ? ' and is ' + e.pt.join('/') : ''} until ${e.who === v ? 'the opponent’s' : 'your'} next turn.`,
@@ -203,6 +204,7 @@
     blightOn: (s, q) => ({ title: `Blight ${q.n}: which creature gets the -1/-1 counter?`, body: 'Click one of your glowing creatures.', labels: {} }),
     crewTap: (s, q) => ({ title: `Crew ${q.n} ${C(s, q.src)}: tap creatures (total power ${q.total} so far)`, body: `Tap other untapped creatures you control with total power ${q.n} or more (CR 702.122). Click a glowing creature.`, labels: { done: 'Done — crew it' } }),
     spreeMode: (s, q) => ({ title: `${C(s, q.src)}: choose ${q.chosen.length ? 'another mode, or finish' : 'a mode'} (spree)`, body: `Choose one or more modes; each adds its cost (CR 702.172).${q.chosen.length ? ' Chosen so far: ' + q.chosen.map(i => '(' + (i + 1) + ')').join(', ') + '.' : ''}${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, o.id === 'done' ? 'Done choosing' : '+' + o.cost.replace(/[{}]/g, '') + ' — ' + o.text])) }),
+    phyrexian: (s, q) => ({ title: `${C(s, q.src)}: pay ${symbols('{' + q.col + '/P}')} with ${MF.COLOR_NAME[q.col]} mana or 2 life?`, body: `A Phyrexian symbol is paid with its colour or with 2 life, announced before paying (CR 107.4f, 601.2b); only what you can pay is offered. Your life: ${q.life}.${oracle(s, q.src)}`, labels: { mana: 'Pay ' + MF.COLOR_NAME[q.col] + ' mana', life: 'Pay 2 life' } }),
     hybrid: (s, q) => ({ title: `${C(s, q.src)}: pay ${symbols('{' + q.sym[0] + '/' + q.sym[1] + '}')} with which colour?`, body: `A hybrid symbol is paid with either colour; you announce which before paying (CR 601.2b). Only the colours your mana can pay are offered.${q.n > 1 ? ' Symbol ' + q.k + ' of ' + q.n + '.' : ''}`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'Pay it with ' + MF.COLOR_NAME[o.id]])) }),
     manaColor: (s, q) => ({ title: `${C(s, q.src)}: add one mana of which color?`, body: 'The mana goes into your mana pool; it empties as the step ends.', labels: Object.fromEntries(q.opts.map(o => [o.id, 'Add ' + MF.COLOR_NAME[o.id]])) }),
     tutorUpTo: (s, q) => ({ title: `${C(s, q.src)}: choose card ${q.k} of up to ${q.n}`, body: 'Only you see your library. Click a glowing card; the ones you take are revealed and go into your hand, then your library is shuffled.', labels: { done: 'Done searching' } }),

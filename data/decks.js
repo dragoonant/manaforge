@@ -2843,7 +2843,7 @@ window.MF.decks = {
   "player": "Shaun Henry",
   "rank": 10,
   "players": 66,
-  "registered": false,
+  "registered": true,
   "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
   "min": 60,
   "main": [
@@ -2974,17 +2974,7 @@ window.MF.decks = {
     "name": "Voice of Victory"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "abuelos-awakening: effect: Return target artifact or non-Aura enchantment card from your graveyard to the battlefield with X additional +1/+1 counters on it",
-   "fallaji-archaeologist: effect: You may put a noncreature, nonland card from among the cards milled this way into your hand",
-   "roiling-dragonstorm: trigger event: a Dragon you control enters, return ~ to its owner's hand.",
-   "oracle-of-tragedy: effect: Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library",
-   "scrollshift: effect: Exile up to one target artifact, creature, or enchantment you control, then return it to the battlefield under its owner's control",
-   "epharas-dispersal: condition: it targets an attacking creature",
-   "omniscience: ability: You may cast spells from your hand without paying their mana costs.",
-   "jace-the-perfected-mind: ability: Compleated"
-  ],
+  "compiles": true,
   "tokens": [
    "token-map"
   ]

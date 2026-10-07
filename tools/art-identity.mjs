@@ -196,6 +196,18 @@ export const CARDS = {
   'rides-end': { subject: 'a heavily armoured knight unhorsing a dark rider with a lance strike, the steed rearing', setting: 'on a muddy road in the rain' },
   'zur-eternal-schemer': { subject: 'an ancient grim sorcerer in dark blue robes with a skull-like face, enchanted runes orbiting him', setting: 'in a shadowy arcane sanctum' },
   'token-insect-2-1-w-flying': { subject: 'a pale winged insect spirit with glowing white wings darting through mist', setting: 'over a foggy moor' },
+  // ---- Azorius Omniscience, Pro Tour Final Fantasy ----
+  'adarkar-wastes': { land: true, subject: 'a frozen white waste of ice ridges and blue glacial crevasses', setting: 'under a pale arctic sky' },
+  'seachrome-coast': { land: true, subject: 'a gleaming coastline of silver metallic rock against a calm blue sea', setting: 'in bright morning light' },
+  'abuelos-awakening': { subject: 'a ghostly old grandfather spirit with a kind stern face rising from an ancient carved lantern, glowing wings of light', setting: 'in a candlelit family shrine' },
+  'epharas-dispersal': { subject: 'a charging warrior dissolving into scattered blue light and water droplets mid-stride', setting: 'on a stone bridge over a river' },
+  'fallaji-archaeologist': { subject: 'a desert scholar archaeologist in sand-coloured robes brushing dust from an ancient buried machine', setting: 'in a sunlit excavation pit' },
+  'jace-the-perfected-mind': { subject: 'a hooded blue mind mage half fused with gleaming white metal plating, eyes glowing cold blue', setting: 'in a sterile white metal chamber' },
+  'omniscience': { object: true, subject: 'a vast glowing blue eye of pure knowledge suspended over swirling galaxies of light', setting: 'in an endless starry void' },
+  'oracle-of-tragedy': { subject: 'a sorrowful blindfolded oracle wizard in blue robes, tears of light falling as visions swirl around her', setting: 'in a ruined temple' },
+  'overlord-of-the-floodpits': { subject: 'a colossal tentacled sea horror avatar rising from a flooded pit, crowned with coral and bone', setting: 'in a stormy drowned ruin' },
+  'roiling-dragonstorm': { object: true, subject: 'a towering storm of churning blue clouds with the shapes of dragons twisting inside the lightning', setting: 'over a dark sea' },
+  'scrollshift': { subject: 'a white-robed mage stepping through a doorway of folding white light, vanishing and reappearing', setting: 'in a pale marble hall' },
   // ---- Mardu (Bloodghast), Hobbit-era Arena Standard ----
   'bloodghast': { subject: 'a gaunt vampire spirit with hollow glowing eyes clawing its way out of an open grave', setting: 'in a misty graveyard at night' },
   'marauding-mako': { subject: 'a snarling shark pirate in a torn coat swinging a cutlass, water streaming from its jaws', setting: 'on the deck of a burning ship' },

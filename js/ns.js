@@ -29,7 +29,8 @@ window.MF = {};
       if (/^\d+$/.test(t)) c.g += +t;
       else if (t === 'X') c.x++;
       else if (c[t] != null && t !== 'g' && t !== 'x') c[t]++;
-      else if (/^[WUBRG]\/[WUBRG]$/.test(t)) (c.h = c.h || []).push(t[0] + t[2]);            // CR 107.4e: a hybrid symbol, paid with either colour
+      else if (/^[WUBRG]\/[WUBRG]$/.test(t)) (c.h = c.h || []).push(t[0] + t[2]);
+      else if (/^[WUBRG]\/P$/.test(t)) (c.ph = c.ph || []).push(t[0]);                         // CR 107.4f: a Phyrexian symbol — its colour, or 2 life            // CR 107.4e: a hybrid symbol, paid with either colour
       else throw new Error('mana symbol not supported: {' + t + '}');
     }
     return c;
@@ -42,13 +43,14 @@ window.MF = {};
   };
   // CR 205.3m (Comprehensive Rules effective 2026-09-25): every creature type, for "choose a creature type".
   MF.CREATURE_TYPES = ["Advisor","Aetherborn","Alien","Ally","Angel","Antelope","Ape","Archer","Archon","Armadillo","Army","Artificer","Assassin","Assembly-Worker","Astartes","Atog","Aurochs","Avatar","Azra","Badger","Balloon","Barbarian","Bard","Basilisk","Bat","Bear","Beast","Beaver","Beeble","Beholder","Berserker","Bird","Bison","Blinkmoth","Boar","Bringer","Brushwagg","C’tan","Camarid","Camel","Capybara","Caribou","Carrier","Cat","Centaur","Child","Chimera","Citizen","Cleric","Clown","Cockatrice","Construct","Coward","Coyote","Crab","Crocodile","Custodes","Cyberman","Cyclops","Dalek","Dauthi","Demigod","Demon","Deserter","Detective","Devil","Dinosaur","Djinn","Doctor","Dog","Dragon","Drake","Dreadnought","Drix","Drone","Druid","Dryad","Dwarf","Echidna","Efreet","Egg","Elder","Eldrazi","Elemental","Elephant","Elf","Elk","Employee","Eternal","Eye","Faerie","Ferret","Fish","Flagbearer","Fox","Fractal","Frog","Fungus","Gamer","Gamma","Gargoyle","Germ","Giant","Giraffe","Gith","Glimmer","Gnoll","Gnome","Goat","Goblin","God","Golem","Gorgon","Graveborn","Gremlin","Griffin","Guest","Hag","Halfling","Hamster","Harpy","Hedgehog","Hellion","Hero","Hippo","Hippogriff","Homarid","Homunculus","Horror","Horse","Human","Hydra","Hyena","Illusion","Imp","Incarnation","Inhuman","Inkling","Inquisitor","Insect","Jackal","Jellyfish","Juggernaut","Kangaroo","Kavu","Kirin","Kithkin","Knight","Kobold","Kor","Kraken","Kree","Lamia","Lammasu","Leech","Lemur","Leviathan","Lhurgoyf","Licid","Lizard","Llama","Lobster","Manticore","Masticore","Mercenary","Merfolk","Metathran","Minion","Minotaur","Mite","Mole","Monger","Mongoose","Monk","Monkey","Moogle","Moonfolk","Mount","Mouse","Mutant","Myr","Mystic","Nautilus","Necron","Nephilim","Nightmare","Nightstalker","Ninja","Noble","Noggle","Nomad","Nymph","Octopus","Ogre","Ooze","Orb","Orc","Orgg","Otter","Ouphe","Ox","Oyster","Pangolin","Peasant","Pegasus","Pentavite","Performer","Pest","Phelddagrif","Phoenix","Phyrexian","Pilot","Pincher","Pirate","Plant","Platypus","Porcupine","Possum","Praetor","Primarch","Prism","Processor","Qu","Rabbit","Raccoon","Ranger","Rat","Rebel","Reflection","Rhino","Rigger","Robot","Rogue","Sable","Salamander","Samurai","Sand","Saproling","Satyr","Scarecrow","Scientist","Scion","Scorpion","Scout","Sculpture","Seal","Serf","Serpent","Servo","Shade","Shaman","Shapeshifter","Shark","Sheep","Shi’ar","Siren","Skeleton","Skrull","Skunk","Slith","Sliver","Sloth","Slug","Snail","Snake","Soldier","Soltari","Sorcerer","Spawn","Specter","Spellshaper","Sphinx","Spider","Spike","Spirit","Splinter","Sponge","Spy","Squid","Squirrel","Starfish","Surrakar","Survivor","Symbiote","Synth","Tentacle","Tetravite","Thalakos","Thopter","Thrull","Tiefling","Time Lord","Toy","Treefolk","Trilobite","Triskelavite","Troll","Turtle","Tyranid","Unicorn","Utrom","Vampire","Varmint","Vedalken","Villain","Volver","Wall","Walrus","Warlock","Warrior","Weasel","Weird","Werewolf","Whale","Wizard","Wolf","Wolverine","Wombat","Worm","Wraith","Wurm","Yeti","Zombie","Zubera"];
-  MF.manaValue = c => c.g + c.W + c.U + c.B + c.R + c.G + c.C + (c.h ? c.h.length : 0);   // CR 202.3f: each hybrid symbol counts one
+  MF.manaValue = c => c.g + c.W + c.U + c.B + c.R + c.G + c.C + (c.h ? c.h.length : 0) + (c.ph ? c.ph.length : 0);   // CR 202.3f: each hybrid or Phyrexian symbol counts one
   MF.manaStr = function (c) {
     let s = '';
     for (let i = 0; i < c.x; i++) s += '{X}';
     if (c.g || (!c.x && !MF.manaValue(c))) s += '{' + c.g + '}';
     for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) for (let i = 0; i < c[k]; i++) s += '{' + k + '}';
     for (const h of c.h || []) s += '{' + h[0] + '/' + h[1] + '}';
+    for (const k of c.ph || []) s += '{' + k + '/P}';
     return s;
   };
 })();

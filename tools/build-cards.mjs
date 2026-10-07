@@ -42,6 +42,7 @@ export function parseFilter(str) {
   if ((m = s.match(/^creature or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Planeswalker']; s = m[1]; }
   else if ((m = s.match(/^creature, enchantment, or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Enchantment', 'Planeswalker']; s = m[1]; }
   else if ((m = s.match(/^artifact or enchantment\b ?(.*)$/))) { f.types = ['Artifact', 'Enchantment']; s = m[1]; }
+  else if ((m = s.match(/^artifact, creature, or enchantment\b ?(.*)$/))) { f.types = ['Artifact', 'Creature', 'Enchantment']; s = m[1]; }
   else if ((m = s.match(/^artifact or creature\b ?(.*)$/))) { f.types = ['Artifact', 'Creature']; s = m[1]; }
   else if ((m = s.match(/^creature or Vehicle\b ?(.*)$/))) { f.typesOrSub = { types: ['Creature'], subtypes: ['Vehicle'] }; s = m[1]; }
   else if ((m = s.match(/^artifacts and creatures\b ?(.*)$/))) { f.types = ['Artifact', 'Creature']; s = m[1]; }
@@ -196,6 +197,12 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may put a (permanent|creature|land) card from among the milled cards into your hand$/))) return [{ o: 'pickMilled', type: m[1] }];   // CR 701.17c
   if ((m = s.match(/^[Uu]ntap (target .+)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
   if (/^[Uu]ntap ~$/.test(s)) return [{ o: 'untap', on: 'self' }];
+  if (/^[Rr]eturn ~ to its owner's hand$/.test(s)) return [{ o: 'bounce', on: 'self' }];
+  if ((m = s.match(/^[Rr]eturn (target creature) to its owner's hand$/))) return [{ o: 'bounce', on: parseRef(T, ctx, m[1]) }];
+  if ((m = s.match(/^[Uu]ntil your next turn, (up to one target creature) gets ([+-]\d+)\/([+-]\d+)$/))) return [{ o: 'pump', on: parseRef(T, ctx, m[1]), p: +m[2], t: +m[3], until: 'yourNext' }];
+  if ((m = s.match(/^([Tt]arget player) mills three times X cards$/))) return [{ o: 'mill', n: { v: 'x', mult: 3 }, who: parseRef(T, ctx, m[1].toLowerCase()) }];
+  if ((m = s.match(/^[Ss]huffle up to (four) target cards with mana value (\d+) or greater from your graveyard into your library$/))) { T.push({ f: { card: 'grave', own: true, mvGE: +m[2] }, n: numOf(m[1]), upTo: true }); return [{ o: 'shuffleGraveIntoLib', on: { t: T.length - 1 } }]; }
+  if ((m = s.match(/^[Ee]xile (up to one target artifact, creature, or enchantment you control), then return it to the battlefield under its owner's control$/))) return [{ o: 'flicker', on: parseRef(T, ctx, m[1]) }];   // CR 400.7: a new object
   if ((m = s.match(/^[Ii]t deals (\d+) damage to (any target)$/)) && ctx.it == null) return [{ o: 'damage', from: 'self', to: parseRef(T, ctx, m[2]), n: +m[1] }];   // High Noon: "It" is the sacrificed enchantment
   if (/^[Cc]reate a tapped colorless land token named Everywhere that is every basic land type$/.test(s)) return [{ o: 'token', id: ctx.token.everywhere(), n: 1, tapped: true }];
   if ((m = s.match(/^(target non-Aura enchantment you control) becomes a creature in addition to its other types and has base power and base toughness each equal to its mana value$/i))) return [{ o: 'becomeCreatureMV', on: parseRef(T, ctx, m[1]) }];   // layers 4 and 7b
@@ -373,6 +380,12 @@ function parseEffects(T, ctx, text) {
   if (/^any number of target opponents each discard a card\. For each of those opponents who didn't discard a card with mana value 4 or greater, draw a card$/i.test(t)) { T.push({ f: { player: 'opp' }, n: 1, upTo: true }); return [{ o: 'discardOrFeed', on: { t: T.length - 1 }, mvGE: 4 }]; }   // two players: "any number" is none or the one opponent
   // No More Lies: "Counter target spell unless its controller pays {3}. If that spell is countered this way, exile it instead of putting it into its owner's graveyard."
   if ((m = t.match(/^counter (target spell) unless its controller pays (\{\d\})\. If that spell is countered this way, exile it instead of putting it into its owner's graveyard$/i))) return [{ o: 'counterUnless', on: parseRef(T, ctx, m[1]), pay: m[2], exile: true }];
+  // Abuelo's Awakening: returns with X additional +1/+1 counters, and is a 1/1 Spirit creature with flying in addition to its other types.
+  if (/^return target artifact or non-Aura enchantment card from your graveyard to the battlefield with X additional \+1\/\+1 counters on it\. It's a 1\/1 Spirit creature with flying in addition to its other types$/i.test(t)) { T.push({ f: { card: 'grave', own: true, types: ['Artifact', 'Enchantment'], notSubtypes: ['Aura'] } }); return [{ o: 'reanimateAs', on: { t: T.length - 1 }, ctrs: { v: 'x' }, as: { types: ['Creature'], subtypes: ['Spirit'], pt: [1, 1], kw: ['flying'] } }]; }
+  // Fallaji Archaeologist
+  if (/^mill three cards\. You may put a noncreature, nonland card from among the cards milled this way into your hand\. If you don't, put a \+1\/\+1 counter on ~$/i.test(t)) return [{ o: 'mill', n: 3 }, { o: 'pickMilled', type: 'noncreatureNonland', elseOps: [{ o: 'counter', on: 'self', n: 1, kind: '+1/+1' }] }];
+  // Jace: "Then if a graveyard has twenty or more cards in it, you draw three cards. Otherwise, you draw a card."
+  if ((m = t.match(/^(target player mills three cards)\. Then if a graveyard has twenty or more cards in it, you draw three cards\. Otherwise, you draw a card$/i))) return parseEffect(T, ctx, cap(m[1])).concat([{ o: 'if', cond: { c: 'anyGraveAtLeast', n: 20 }, ops: [{ o: 'draw', n: 3 }], else: [{ o: 'draw', n: 1 }] }]);
   // Gix's Command: "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn." — chosen on resolution (its ruling)
   if ((m = t.match(/^put (\w+) \+1\/\+1 counters on up to one creature\. It gains (\w+) until end of turn$/i))) return [{ o: 'choose', f: { types: ['Creature'] }, upTo: true }, { o: 'counter', on: 'it', n: numOf(m[1]), kind: '+1/+1' }, { o: 'pump', on: 'it', grant: kwList(m[2]) }];
   // Azure Beastbinder: loses all abilities and becomes 2/2 until your next turn (layers 6 and 7b)
@@ -453,6 +466,8 @@ const EVENTS = [
   [/^one or more cards leave your graveyard$/, () => [{ on: 'leftGraveBatch', you: true }]],
   [/^one or more permanent cards are put into your graveyard from anywhere while ~ has an? (-1\/-1|\+1\/\+1) counter on it$/, m => [{ on: 'toGraveBatch', you: true, evCond: { c: 'hasCounter', kind: m[1] } }]],
   [/^you attack$/, () => [{ on: 'attackWith' }]],
+  [/^an? ([A-Z][a-z]+) you control enters$/, m => [{ on: 'enters', who: { subtypes: [m[1]], ctrl: 'you' } }]],
+  [/^~ enters or dies$/, () => [{ on: 'enters', who: 'self' }, { on: 'dies', who: 'self', lookBack: true }]],
   [/^a creature an opponent controls enters$/, () => [{ on: 'enters', who: { types: ['Creature'], ctrl: 'opp' } }]],
   [/^~ enters and whenever you cast a spell with mana value (\d+) or greater$/, m => [{ on: 'enters', who: 'self' }, { on: 'cast', spell: { mvGE: +m[1] } }]],
   [/^a creature you control becomes the target of a spell or ability an opponent controls$/, () => [{ on: 'targeted', ownCreature: true, byOpp: true, permOnly: true }]],
@@ -572,6 +587,9 @@ function parseStatic(line, ctx, out, d) {
   if ((m = line.match(/^Enchantment creatures you control have (.+)\.$/))) { out.push({ k: 'static', affects: { allTypes: ['Enchantment', 'Creature'], ctrl: 'you' }, grant: kwList(m[1]) }); return true; }
   if (line === 'This spell costs {1} less to cast for each basic land type among lands you control.') { out.push({ k: 'costLessPer', domain: true, f: { types: ['Land'] }, zones: [] }); return true; }   // domain (CR 207.2c)
   if ((m = line.match(/^This spell costs \{(\d+)\} less to cast if it targets a tapped permanent\.$/))) { out.push({ k: 'costLess', n: +m[1], cond: { c: 'targetsTapped' } }); return true; }   // CR 601.2f: after targets are chosen
+  if (line === 'You may cast spells from your hand without paying their mana costs.') { out.push({ k: 'castFree' }); return true; }   // CR 118.9: an alternative cost
+  if (line === 'Compleated') { out.push({ k: 'compleated' }); return true; }                                                          // CR 702.150a
+  if ((m = line.match(/^This spell costs \{(\d+)\} less to cast if it targets an attacking creature\.$/))) { out.push({ k: 'costLess', n: +m[1], cond: { c: 'targetsAttacking' } }); return true; }
   if (line === 'You may play an additional land on each of your turns.') { out.push({ k: 'extraLand', n: 1 }); return true; }   // CR 305.2
   if (line === 'You may play lands from your graveyard.') { out.push({ k: 'landsFromGrave' }); return true; }
   if (line === "This spell can't be countered.") { out.push({ k: 'uncounterable' }); return true; }        // CR 113.6g
@@ -603,6 +621,11 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(AW_RE))) line = m[2];                                                         // CR 207.2c
   if ((m = line.match(/^(Immune) — (.+)$/))) line = m[2];                                           // CR 207.2d: a flavor word
   if ((m = line.match(/^[A-Z][\w']+(?: [A-Za-z']+)* — ((?:When|Whenever|At) .+)$/))) line = m[1];      // a flavour word (CR 207.2d): no rules meaning
+  if ((m = line.match(/^\[[−-]X\]: (.+)$/))) {                                                     // CR 606.4, 107.3k: [−X] — X is chosen as it is activated
+    const T = [], ops = parseEffects(T, Object.assign({}, ctx, { it: null }), m[1]);
+    ab.push(Object.assign({ k: 'act', loyalty: 'X', sorcery: true, cost: { mana: '', tap: false, sacSelf: false }, ops: ops }, T.length ? { tg: T } : {}));
+    return;
+  }
   if ((m = line.match(/^\[([+−-]?\d+)\]: (.+)$/))) {                                                // CR 606: a loyalty ability
     const n = +m[1].replace('−', '-'), T = [];
     const ops = parseEffects(T, Object.assign({}, ctx, { it: null }), m[2]);
@@ -796,7 +819,7 @@ export function compileCard(c, tokens, alt, room) {
         const modes = [];
         while (i + 1 < lines.length && /^• /.test(lines[i + 1])) { const text = lines[++i].slice(2), T = []; const ops = parseEffects(T, Object.assign({}, ctx, { it: 'self' }), text); modes.push(Object.assign({ text: text, ops: ops }, T.length ? { tg: T } : {})); }
         const tmp = []; parseTrigger(mo[1] + ', draw a card.', ctx, tmp);
-        d.ab.push(Object.assign(tmp[0], { ops: [], modes: modes }));
+        for (const tr of tmp) d.ab.push(Object.assign(tr, { ops: [], modes: modes }));
         continue;
       }
       const mt = lines[i].match(/^(Whenever .+), choose one that hasn't been chosen —$/);

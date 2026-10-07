@@ -11,6 +11,28 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "abuelos-awakening",
+    "styleId": "B",
+    "land": false,
+    "prompt": "master grade SD figure, compact heroic proportions, highly detailed armour plating, a ghostly old grandfather spirit with a kind stern face rising from an ancient carved lantern, glowing wings of light, in a candlelit family shrine. premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce.",
+    "subject": "a ghostly old grandfather spirit with a kind stern face rising from an ancient carved lantern, glowing wings of light",
+    "setting": "in a candlelit family shrine",
+    "style": "premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce",
+    "short": "master grade SD figure, compact heroic proportions, highly detailed armour plating, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "adarkar-wastes",
+    "styleId": "O",
+    "land": true,
+    "prompt": "landscape painting, scenery, a frozen white waste of ice ridges and blue glacial crevasses, under a pale arctic sky. arcane fantasy landscape painting, glowing ley lines in the earth, violet and cyan sky, crackling arcs of power.",
+    "subject": "a frozen white waste of ice ridges and blue glacial crevasses",
+    "setting": "under a pale arctic sky",
+    "style": "arcane fantasy landscape painting, glowing ley lines in the earth, violet and cyan sky, crackling arcs of power",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "alania-divergent-storm",
     "styleId": "E",
     "land": false,
@@ -704,6 +726,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "epharas-dispersal",
+    "styleId": "B",
+    "land": false,
+    "prompt": "master grade SD figure, compact heroic proportions, highly detailed armour plating, a charging warrior dissolving into scattered blue light and water droplets mid-stride, on a stone bridge over a river. premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce.",
+    "subject": "a charging warrior dissolving into scattered blue light and water droplets mid-stride",
+    "setting": "on a stone bridge over a river",
+    "style": "premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce",
+    "short": "master grade SD figure, compact heroic proportions, highly detailed armour plating, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "erode",
     "styleId": "C",
     "land": false,
@@ -767,6 +800,17 @@
     "setting": "in a dark castle corridor",
     "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
     "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "fallaji-archaeologist",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a desert scholar archaeologist in sand-coloured robes brushing dust from an ancient buried machine, in a sunlit excavation pit. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a desert scholar archaeologist in sand-coloured robes brushing dust from an ancient buried machine",
+    "setting": "in a sunlit excavation pit",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
   },
   {
@@ -1199,6 +1243,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "jace-the-perfected-mind",
+    "styleId": "J",
+    "land": false,
+    "prompt": "master grade super deformed soldier, stocky three heads tall, layered armour, a hooded blue mind mage half fused with gleaming white metal plating, eyes glowing cold blue, in a sterile white metal chamber. modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment.",
+    "subject": "a hooded blue mind mage half fused with gleaming white metal plating, eyes glowing cold blue",
+    "setting": "in a sterile white metal chamber",
+    "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
+    "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "jennifer-walters-the-sensational-she-hulk",
     "styleId": "C",
     "land": false,
@@ -1540,6 +1595,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "omniscience",
+    "styleId": "C",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a vast glowing blue eye of pure knowledge suspended over swirling galaxies of light, in an endless starry void. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a vast glowing blue eye of pure knowledge suspended over swirling galaxies of light",
+    "setting": "in an endless starry void",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "opt",
     "styleId": "L",
     "land": false,
@@ -1548,6 +1614,17 @@
     "setting": "in a stormy tower chamber",
     "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
     "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "oracle-of-tragedy",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a sorrowful blindfolded oracle wizard in blue robes, tears of light falling as visions swirl around her, in a ruined temple. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a sorrowful blindfolded oracle wizard in blue robes, tears of light falling as visions swirl around her",
+    "setting": "in a ruined temple",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
     "negativeExtra": ""
   },
   {
@@ -1581,6 +1658,17 @@
     "setting": "in a fog-choked marsh at night",
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "overlord-of-the-floodpits",
+    "styleId": "K",
+    "land": false,
+    "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a colossal tentacled sea horror avatar rising from a flooded pit, crowned with coral and bone, in a stormy drowned ruin. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a colossal tentacled sea horror avatar rising from a flooded pit, crowned with coral and bone",
+    "setting": "in a stormy drowned ruin",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
     "negativeExtra": ""
   },
   {
@@ -1870,6 +1958,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "roiling-dragonstorm",
+    "styleId": "D",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a towering storm of churning blue clouds with the shapes of dragons twisting inside the lightning, over a dark sea. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a towering storm of churning blue clouds with the shapes of dragons twisting inside the lightning",
+    "setting": "over a dark sea",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "rubblebelt-maverick",
     "styleId": "G",
     "land": false,
@@ -1923,6 +2022,28 @@
     "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
     "short": "super deformed dark knight, stocky three heads tall, spiked plate armour, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "scrollshift",
+    "styleId": "H",
+    "land": false,
+    "prompt": "super deformed dark knight, stocky three heads tall, spiked plate armour, a white-robed mage stepping through a doorway of folding white light, vanishing and reappearing, in a pale marble hall. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "a white-robed mage stepping through a doorway of folding white light, vanishing and reappearing",
+    "setting": "in a pale marble hall",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "super deformed dark knight, stocky three heads tall, spiked plate armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "seachrome-coast",
+    "styleId": "H",
+    "land": true,
+    "prompt": "landscape painting, scenery, a gleaming coastline of silver metallic rock against a calm blue sea, in bright morning light. gothic horror landscape painting, moonlit ruins and dead trees, rich crimson and black, deep shadow, dread.",
+    "subject": "a gleaming coastline of silver metallic rock against a calm blue sea",
+    "setting": "in bright morning light",
+    "style": "gothic horror landscape painting, moonlit ruins and dead trees, rich crimson and black, deep shadow, dread",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "seam-rip",

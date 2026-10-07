@@ -17,5 +17,5 @@
 - Log lines name a transformed permanent by its front face ("Esper Origins triggers" for Summon:
   Esper Maduin): log entries carry the card id, not the face. Carry the face with the id (about 25
   log sites) and let `tag` read it; the battlefield tile already shows the back face.
-- Golgari Graveyard (12), Azorius Control (15) and Domain Overlords (16) cards still show procedural art: the GPU was
+- Golgari Graveyard (12), Azorius Control (15), Domain Overlords (16) and Azorius Omniscience (11) cards still show procedural art: the GPU was
   busy with the owner's Hunyuan3D jobs on 2026-10-06. `python tools/gen-art-sdxl.py` renders whatever has no art.
