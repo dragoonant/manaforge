@@ -13,8 +13,6 @@
 - The AI pilots Izzet Prowess poorly (8 wins in 90 mixed sim games; it rarely sequences cheap
   spells for prowess, Vivi's mana or the Cutter's second-spell trigger). The rollout horizon ends
   at end of turn; an evaluator term for spells cast this turn would help.
-- 123 card illustrations are still procedural (Golgari Graveyard through Azorius Perilous Snare): the GPU
-  was busy with the owner's Hunyuan3D jobs on 2026-10-06. `python tools/gen-art-sdxl.py` renders whatever has no art.
 - Oblivious Bookworm reads "unless a permanent entered face down ... or you turned one face up": nothing in
   this engine turns a permanent face down, so the discard always happens. When a face-down mechanic
   arrives (morph, disguise, cloak), give that condition a real history.
