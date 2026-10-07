@@ -148,7 +148,12 @@
       case 'mode': return q.opts[0].id;
       case 'pickMilled': case 'dig': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'none'; }
       case 'discardUpTo': return 'done';
-      case 'gift': return 'no';
+      case 'gift': return q.opts.some(o => o.id === 'no') ? 'no' : q.opts[0].id;
+      case 'bargain': return 'none';
+      case 'harmonizeTap': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => b.p - a.p)[0]; return c ? c.id : 'none'; }
+      case 'manaCombo': return q.opts[0].id;
+      case 'payOrCounter': return 'pay';
+      case 'lookPick': return q.opts.slice().sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0].id;
       case 'handPick': return q.opts.slice().sort((a, b) => MF.manaValue(MF.parseMana(MF.def(s, b.iid).mana)) - MF.manaValue(MF.parseMana(MF.def(s, a.iid).mana)))[0].id;   // the most expensive card
       case 'trigOrder': return q.opts[0].id;
       case 'legend': return q.opts[0].id;
@@ -189,7 +194,7 @@
     return evalFor(s, me);
   }
   // Kinds where every answer is worth a roll-out when the AI itself is asked.
-  const SEARCH_KINDS = { gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
+  const SEARCH_KINDS = { bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
   function candidates(s, legal) {
     const seen = new Set(), out = [];

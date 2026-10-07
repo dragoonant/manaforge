@@ -220,6 +220,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "cori-steel-cutter",
+    "styleId": "B",
+    "land": false,
+    "prompt": "master grade SD figure, compact heroic proportions, highly detailed armour plating, a gleaming curved blade of blue steel crackling with red energy, held aloft by a martial monk in a fighting stance, in a mountain monastery courtyard at dusk. premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce.",
+    "subject": "a gleaming curved blade of blue steel crackling with red energy, held aloft by a martial monk in a fighting stance",
+    "setting": "in a mountain monastery courtyard at dusk",
+    "style": "premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce",
+    "short": "master grade SD figure, compact heroic proportions, highly detailed armour plating, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "coruscation-mage",
     "styleId": "F",
     "land": false,
@@ -248,6 +259,17 @@
     "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a shadowy assassin slashing a charging warrior down with a black blade, a trail of dark smoke, in a narrow alley at night. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
     "subject": "a shadowy assassin slashing a charging warrior down with a black blade, a trail of dark smoke",
     "setting": "in a narrow alley at night",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "drake-hatcher",
+    "styleId": "K",
+    "land": false,
+    "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a scarred mage warrior guarding a cracked glowing drake egg, a young blue drake clawing its way out, in a stormy cliffside nest. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a scarred mage warrior guarding a cracked glowing drake egg, a young blue drake clawing its way out",
+    "setting": "in a stormy cliffside nest",
     "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
     "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
     "negativeExtra": ""
@@ -407,6 +429,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "into-the-flood-maw",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a huge whirlpool maw of black water swallowing an armoured knight, a great fish jaw rising from the depths, in a stormy sea. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a huge whirlpool maw of black water swallowing an armoured knight, a great fish jaw rising from the depths",
+    "setting": "in a stormy sea",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "island",
     "styleId": "J",
     "land": true,
@@ -515,6 +548,17 @@
     "style": "action anime background art, bold flat shapes, hard cel shading, bright red sky, intense saturated colour",
     "short": "landscape painting, scenery, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "opt",
+    "styleId": "L",
+    "land": false,
+    "prompt": "master grade super deformed knight, three heads tall, frost-rimed steel armour, a battle seer peering into a glowing blue orb showing a flash of the coming fight, in a stormy tower chamber. cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war.",
+    "subject": "a battle seer peering into a glowing blue orb showing a flash of the coming fight",
+    "setting": "in a stormy tower chamber",
+    "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
+    "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
   },
   {
     "key": "overprotect",
@@ -649,6 +693,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "riverpyre-verge",
+    "styleId": "E",
+    "land": true,
+    "prompt": "landscape painting, scenery, a river of blue water running beside a channel of molten lava, steam billowing where they meet, at dusk. classic fantasy landscape illustration at dawn, luminous painterly realism, golden light and deep shadow.",
+    "subject": "a river of blue water running beside a channel of molten lava, steam billowing where they meet",
+    "setting": "at dusk",
+    "style": "classic fantasy landscape illustration at dawn, luminous painterly realism, golden light and deep shadow",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "rockface-village",
     "styleId": "L",
     "land": true,
@@ -704,6 +759,28 @@
     "negativeExtra": ""
   },
   {
+    "key": "shivan-reef",
+    "styleId": "B",
+    "land": true,
+    "prompt": "landscape painting, scenery, a jagged volcanic reef rising from a dark sea, lava glowing in its cracks, waves crashing, under a red sky. night scene, molten lava glowing against black rock, hyper detailed, cinematic lighting, dramatic scale.",
+    "subject": "a jagged volcanic reef rising from a dark sea, lava glowing in its cracks, waves crashing",
+    "setting": "under a red sky",
+    "style": "night scene, molten lava glowing against black rock, hyper detailed, cinematic lighting, dramatic scale",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "sleight-of-hand",
+    "styleId": "M",
+    "land": false,
+    "prompt": "super deformed hooded raider, stocky three heads tall, crude weapons, a sly duelist mage flicking a glowing spell between gloved fingers while hiding a dagger, in a dim tavern back room. matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace.",
+    "subject": "a sly duelist mage flicking a glowing spell between gloved fingers while hiding a dagger",
+    "setting": "in a dim tavern back room",
+    "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
+    "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "soulstone-sanctuary",
     "styleId": "M",
     "land": true,
@@ -715,6 +792,39 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "spell-pierce",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a battle mage driving a glowing blue spear through an enemy’s spell, the magic shattering into shards, in a ruined arcane hall. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a battle mage driving a glowing blue spear through an enemy’s spell, the magic shattering into shards",
+    "setting": "in a ruined arcane hall",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "spirebluff-canal",
+    "styleId": "L",
+    "land": true,
+    "prompt": "landscape painting, scenery, a narrow canal cut between tall red rock spires, dark water reflecting a stormy sky, at twilight. cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation.",
+    "subject": "a narrow canal cut between tall red rock spires, dark water reflecting a stormy sky",
+    "setting": "at twilight",
+    "style": "cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "stock-up",
+    "styleId": "L",
+    "land": false,
+    "prompt": "master grade super deformed knight, three heads tall, frost-rimed steel armour, a battle wizard snatching glowing spell cards of light out of a swirling vortex, in a crowded arcane armoury. cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war.",
+    "subject": "a battle wizard snatching glowing spell cards of light out of a swirling vortex",
+    "setting": "in a crowded arcane armoury",
+    "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
+    "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "stormcatch-mentor",
     "styleId": "D",
     "land": false,
@@ -723,6 +833,17 @@
     "setting": "on a windswept hilltop at dusk, storm overhead",
     "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
     "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "stormchasers-talent",
+    "styleId": "I",
+    "land": false,
+    "prompt": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, an otter storm-mage in a soaked coat summoning crackling blue lightning into a battle-ready otter warrior beside it, on a storm-lashed cliff. retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing.",
+    "subject": "an otter storm-mage in a soaked coat summoning crackling blue lightning into a battle-ready otter warrior beside it",
+    "setting": "on a storm-lashed cliff",
+    "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
+    "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
     "negativeExtra": ""
   },
   {
@@ -792,6 +913,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "thundering-falls",
+    "styleId": "G",
+    "land": true,
+    "prompt": "landscape painting, scenery, a colossal waterfall plunging into a red rock canyon, lightning striking the spray, under a black storm sky. gritty comic book landscape panel, heavy black inks, halftone shading, vivid flat colour, ominous sky.",
+    "subject": "a colossal waterfall plunging into a red rock canyon, lightning striking the spray",
+    "setting": "under a black storm sky",
+    "style": "gritty comic book landscape panel, heavy black inks, halftone shading, vivid flat colour, ominous sky",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "token-demon-6-6-b-flying",
     "styleId": "O",
     "land": false,
@@ -800,6 +932,50 @@
     "setting": "over a burning manor at night",
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "token-drake-2-2-u-flying",
+    "styleId": "J",
+    "land": false,
+    "prompt": "master grade super deformed soldier, stocky three heads tall, layered armour, a lean blue drake diving with claws extended, storm clouds behind, over a stormy sea. modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment.",
+    "subject": "a lean blue drake diving with claws extended, storm clouds behind",
+    "setting": "over a stormy sea",
+    "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
+    "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "token-fish-1-1-u",
+    "styleId": "F",
+    "land": false,
+    "prompt": "master grade super deformed fighter, stocky three heads tall, battle-scarred, a snapping armoured fish with jagged teeth leaping from dark water, in a churning river. loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy.",
+    "subject": "a snapping armoured fish with jagged teeth leaping from dark water",
+    "setting": "in a churning river",
+    "style": "loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy",
+    "short": "master grade super deformed fighter, stocky three heads tall, battle-scarred, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "token-monk-1-1-w-prowess",
+    "styleId": "A",
+    "land": false,
+    "prompt": "master grade super deformed warrior, three heads tall, heroic armoured figure, a fierce martial monk in a fighting stance, fists wrapped, eyes blazing, in a stone courtyard at dawn. oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood.",
+    "subject": "a fierce martial monk in a fighting stance, fists wrapped, eyes blazing",
+    "setting": "in a stone courtyard at dawn",
+    "style": "oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood",
+    "short": "master grade super deformed warrior, three heads tall, heroic armoured figure, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "token-otter-1-1-ur-prowess",
+    "styleId": "D",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a fierce otter battle-mage with crackling blue and red sparks around its paws, ready to strike, on a rain-soaked riverbank. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a fierce otter battle-mage with crackling blue and red sparks around its paws, ready to strike",
+    "setting": "on a rain-soaked riverbank",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
     "negativeExtra": ""
   },
   {
@@ -822,6 +998,17 @@
     "setting": "in a gloomy chapel",
     "style": "oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood",
     "short": "master grade super deformed warrior, three heads tall, heroic armoured figure, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "torch-the-tower",
+    "styleId": "H",
+    "land": false,
+    "prompt": "super deformed dark knight, stocky three heads tall, spiked plate armour, a fire mage blasting a stone watchtower with a torrent of flame, the tower collapsing in burning rubble, at night, embers raining. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "a fire mage blasting a stone watchtower with a torrent of flame, the tower collapsing in burning rubble",
+    "setting": "at night, embers raining",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "super deformed dark knight, stocky three heads tall, spiked plate armour, ",
     "negativeExtra": ""
   },
   {
@@ -880,6 +1067,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "vivi-ornitier",
+    "styleId": "H",
+    "land": false,
+    "prompt": "super deformed dark knight, stocky three heads tall, spiked plate armour, a small black mage with glowing yellow eyes in a shadowed face, a tall pointed straw hat and blue coat, hurling a roaring fireball from a wooden staff, on a burning battlefield at night. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "a small black mage with glowing yellow eyes in a shadowed face, a tall pointed straw hat and blue coat, hurling a roaring fireball from a wooden staff",
+    "setting": "on a burning battlefield at night",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "super deformed dark knight, stocky three heads tall, spiked plate armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "warren-elder",
     "styleId": "I",
     "land": false,
@@ -899,6 +1097,17 @@
     "setting": "above a dark lake under storm clouds",
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "wild-ride",
+    "styleId": "I",
+    "land": false,
+    "prompt": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, a howling berserker riding a charging war beast at full gallop, axe raised, through smoke on a scorched plain. retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing.",
+    "subject": "a howling berserker riding a charging war beast at full gallop, axe raised",
+    "setting": "through smoke on a scorched plain",
+    "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
+    "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
     "negativeExtra": ""
   },
   {

@@ -88,11 +88,12 @@
       for (const a of MF.legalActions(s)) {
         if (a.type === 'land') add(a.iid, a, 'Play ' + MF.cards[s.cards[a.iid].id].name);
         else if (a.type === 'cast') {
-          const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid) }); delete cost.xs;
+          const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); delete cost.xs;
+          if (a.via === 'harmonize') { add(a.iid, a, 'Cast ' + d.name + ' with harmonize — ' + MF.manaStr(cost) + ' (tap a creature to reduce it)'); if (!tray.includes(a.iid)) tray.push(a.iid); continue; }
           add(a.iid, a, 'Cast ' + (a.door != null ? d.doors[a.door].name + ' (door)' : a.alt ? d.alt.name + ' (' + (d.alt.kind === 'omen' ? 'Omen' : 'Adventure') + ')' : d.name) + ' — ' + MF.manaStr(cost));
         }
         else if (a.type === 'unlock') { const f = MF.cards[s.cards[a.iid].id].doors[a.door]; add(a.iid, a, 'Unlock ' + f.name + ' — ' + f.mana); }
-        else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
+        else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : ab.levelUp ? 'Level ' + ab.levelUp + ' — ' + ab.cost.mana : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
         else if (a.type === 'pass') btns.push({ a: a, label: T.passLabel(s, ui.human), cls: 'primary' });
       }
       btns.push({ ui: 'passTurn', label: 'Pass to end of turn', cls: 'ghost' });

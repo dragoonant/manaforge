@@ -81,6 +81,8 @@
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
     lifeOverStart: (x, c) => P(x.s, x.ctrl).life - P(x.s, x.ctrl).startLife >= c.n,            // "greater than your starting life total" (n 1), "at least 10 greater" (n 10) — CR 119.1
     giftPromised: x => !!(x.L && x.L.gift != null),                                            // CR 702.174k
+    bargained: x => !!(x.L && x.L.bargained),                                                  // CR 702.166b
+    yourTurn: x => x.s.ap === x.ctrl,
     noCounters: x => { const l = x.lki; return !!l && !Object.values(l.ctr || {}).some(n => n > 0); },   // "if it had no counters on it" — as it last existed (CR 603.10a)
   };
   MF.conds = CONDS;
@@ -135,7 +137,8 @@
       }
       case 'enters': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid) && (!a.firstEachTurn || ev.first);
       case 'unlock': return ev.iid === iid && ev.door === a.door;                                // "When you unlock this door" (CR 709.5h)
-      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
+      case 'levelUp': return ev.iid === iid && ev.level === a.level;                               // "When this Class becomes level N" (CR 716.2a)
+      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t)))));
       case 'dealsDamage': return ev.src === iid && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);
       case 'sacrificed': case 'dies': case 'leaves': return ev.iid === iid;
       case 'beginStep': return ev.step === a.step && (!a.yours || ev.ap === src.ctrl);
@@ -253,6 +256,7 @@
         s.cards[iid] = { iid: iid, id: op.id, owner: x.ctrl, ctrl: x.ctrl, zone: 'bf', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, tok: true };
         s.bf.push(iid);
         noteEntered(s, iid);
+        x.it = iid;                                                                              // "You may attach this Equipment to it"
         log(s, 'token', { who: x.ctrl, c: op.id });
         MF.emit(s, { t: 'enters', iid: iid, ctrl: x.ctrl });
       }
@@ -506,6 +510,54 @@
         }
       }
     },
+    // "Return target creature ... to its owner's hand" (CR 400.7: a new object there).
+    bounce(x, op) {
+      for (const i of MF.resolveRefs(x, op.on)) { const c = I(x.s, i); log(x.s, 'bounce', { who: c.owner, c: c.id }); MF.move(x.s, i, 'hand'); }
+    },
+    // "Return target instant or sorcery card from your graveyard to your hand."
+    graveToHand(x, op) {
+      for (const q of (x.t[op.on.t] || [])) { if (!q || q.c == null) continue; const c = I(x.s, q.c); if (c.zone !== 'grave') continue; log(x.s, 'toHand', { who: c.owner, c: c.id, revealed: true, from: 'graveyard' }); MF.move(x.s, q.c, 'hand'); }
+    },
+    // Spell Pierce: "Counter target noncreature spell unless its controller pays {2}" (CR 701.6, 118.12a).
+    counterUnless(x, op) {
+      const s = x.s, iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return;
+      const L = s.stack.find(l => l.kind === 'spell' && l.iid === iid), who = L.ctrl, need = MF.parseMana(op.pay);
+      if (MF.canPayMana(s, who, need)) {
+        const a = MF.ask(x.x, { who: who, kind: 'payOrCounter', src: x.src, spell: iid, pay: op.pay, opts: [{ id: 'pay' }, { id: 'decline' }] });
+        if (a === 'pay') { MF.payMana(x.x, who, need, iid, false); log(s, 'paidToSave', { who: who, c: L.id, mana: op.pay }); return; }
+      }
+      MF.counterSpell(s, L, x.L ? (x.L.srcId || x.L.id) : null);
+    },
+    // Stock Up, Sleight of Hand: look at the top N; put some into your hand, the rest on the bottom in any order.
+    lookPick(x, op) {
+      const s = x.s, p = P(s, x.ctrl), look = p.lib.slice(0, op.n), took = [];
+      if (!look.length) return;
+      for (let k = 0; k < op.take && took.length < look.length; k++) {
+        const left = look.filter(i => !took.includes(i));
+        if (left.length === op.take - k) { took.push.apply(took, left); break; }               // every remaining card goes to hand: not a choice
+        took.push(MF.ask(x.x, { who: x.ctrl, kind: 'lookPick', src: x.src, n: look.length, take: op.take, k: k + 1, look: look, opts: left.map(i => ({ id: i, iid: i })) }));
+      }
+      const rest = look.filter(i => !took.includes(i)), order = [], left = rest.slice();
+      while (left.length > 1 && new Set(left.map(i => I(s, i).id)).size > 1) {                 // "in any order": the player chooses, the first chosen goes deepest
+        const a = MF.ask(x.x, { who: x.ctrl, kind: 'scryOrder', where: 'bottom', opts: left.map(i => ({ id: i, iid: i })) });
+        order.push(a); left.splice(left.indexOf(a), 1);
+      }
+      p.lib.splice(0, look.length);
+      for (const i of took) MF.move(s, i, 'hand');
+      p.lib.push.apply(p.lib, order.concat(left));
+      log(s, 'lookPick', { who: x.ctrl, n: look.length, took: took.length, bottom: rest.length });
+    },
+    // Torch the Tower: "If a permanent dealt damage by this spell would die this turn, exile it instead."
+    dieExile(x) {
+      const s = x.s;
+      for (const i of s.bf) { const c = I(s, i); if ((c.dmgBy || []).includes(x.src)) s.effects.push({ k: 'dieExile', iid: i, until: 'eot' }); }
+    },
+    // A Class gains a level (CR 716.2a).
+    levelUp(x, op) {
+      const c = I(x.s, x.src); if (!c || c.zone !== 'bf') return;
+      c.level = op.n; log(x.s, 'levelUp', { who: x.ctrl, c: c.id, n: op.n });
+      MF.emit(x.s, { t: 'levelUp', iid: x.src, level: op.n });
+    },
     // Unstoppable Slasher: "return it to the battlefield tapped under its owner's control with two stun counters on it."
     returnFromGrave(x, op) {
       const s = x.s, g = x.ev && x.ev.to != null ? I(s, x.ev.to) : null;
@@ -518,7 +570,7 @@
       // The spell on the stack, or — if it has left — the spell as it last existed there (Alania's
       // rulings: the copy is made even if the original was countered before her ability resolved).
       const s = x.s, live = s.stack.find(L => L.lid === x.ev.lid);
-      const L0 = live ? { id: live.id, t: live.t, x: live.x, mode: live.mode, alt: live.alt, door: live.door, kicked: live.kicked, offspring: live.offspring, gift: live.gift } : x.ev.spell;
+      const L0 = live ? { id: live.id, t: live.t, x: live.x, mode: live.mode, alt: live.alt, door: live.door, kicked: live.kicked, offspring: live.offspring, gift: live.gift, bargained: live.bargained } : x.ev.spell;
       if (!L0) throw new Error('copySpell: the cast event carries no spell');
       const iid = s.nid++;
       s.cards[iid] = { iid: iid, id: L0.id, owner: x.ctrl, ctrl: x.ctrl, zone: 'stack', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, copySpell: true };
@@ -528,8 +580,9 @@
       const L = { lid: s.lid++, kind: 'spell', ctrl: x.ctrl, iid: iid, id: L0.id, t: JSON.parse(JSON.stringify(L0.t)), x: L0.x, mode: L0.mode, copy: true, spent: 0, from: 'copy', alt: L0.alt || null, kicked: !!L0.kicked, offspring: !!L0.offspring };
       if (L0.door != null) L.door = L0.door;
       if (L0.gift != null) L.gift = L0.gift;
+      if (L0.bargained) L.bargained = true;                                                     // a copy of a bargained spell is bargained (its rulings)
       const d = MF.faceDef(s, iid, !!L0.alt, L0.door), sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
-      const slots = sp && sp.modes ? (sp.modes[L0.mode].tg || []) : sp && sp.tg ? sp.tg : aura ? [{ f: aura.f }] : [];
+      const part = MF.spellPart(sp, L0), slots = part && part.tg ? part.tg : aura ? [{ f: aura.f }] : [];
       // CR 707.10c: new targets may be chosen for each target; one with no legal new choice stays unchanged (its ruling), even if illegal.
       slots.forEach((slot, si) => {
         const alone = Object.assign({}, slot); delete alone.diff;
@@ -549,6 +602,13 @@
   MF.giveGift = function (x, a, to) {
     log(x.s, 'gift', { who: x.ctrl, to: to, what: a.what });
     if (a.what === 'card') MF.draw(x.s, to, 1);
+    else if (a.what === 'tappedFish') {                                                         // CR 702.174f
+      const s = x.s, iid = s.nid++;
+      s.cards[iid] = { iid: iid, id: a.token, owner: to, ctrl: to, zone: 'bf', ts: s.ts++, tapped: true, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, tok: true };
+      s.bf.push(iid); noteEntered(s, iid);
+      log(s, 'token', { who: to, c: a.token, tapped: true });
+      MF.emit(s, { t: 'enters', iid: iid, ctrl: to });
+    }
     else throw new Error('gift not implemented: ' + a.what);
   };
   function noteEntered(s, iid) {                                                               // turn history: "if another creature entered the battlefield under your control this turn"
@@ -557,6 +617,15 @@
   }
   MF.noteEntered = noteEntered;
   MF.ops = OPS;
+  MF.resolveTargetSpell = (x, r) => { const q = (x.t[r.t] || [])[0]; return q && q.c != null && I(x.s, q.c) && I(x.s, q.c).zone === 'stack' ? q.c : null; };
+  // CR 701.6a: a countered spell leaves the stack without resolving; it goes to its owner's graveyard
+  // (a copy ceases to exist; harmonize exiles it).
+  MF.counterSpell = function (s, L, by) {
+    s.stack.splice(s.stack.indexOf(L), 1);
+    log(s, 'countered', { who: L.ctrl, c: L.id, by: by });
+    if (L.copy) { const c = I(s, L.iid); c.zone = 'moved'; c.to = null; return; }
+    MF.spellAway(s, L);
+  };
   MF.runOps = function (x, ops) {
     for (const op of ops) {
       const f = OPS[op.o];
@@ -604,7 +673,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
@@ -613,6 +682,7 @@
       if (d.un) continue;
       for (const a of d.ab.concat(d.alt ? d.alt.ab : [])) {
         for (const m of a.modes || []) walkOps(id, m.ops);                                      // a modal spell's modes (CR 700.2)
+        if (a.gift && a.gift.ops) walkOps(id, a.gift.ops);
         if (!ABKINDS.includes(a.k)) bad.push(id + ': ability kind with no rule: ' + a.k);
         walkOps(id, a.ops);
         if (a.cond && !CONDS[a.cond.c]) bad.push(id + ': no condition ' + a.cond.c);

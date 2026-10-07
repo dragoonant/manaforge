@@ -36,7 +36,8 @@ export function parseFilter(str) {
   if ((m = s.match(/^(another|other) (.*)$/))) { f.other = true; s = m[2]; }
   if ((m = s.match(/^basic (.*)$/))) { f.supers = ['Basic']; s = m[1]; }                                // CR 205.4a
   if ((m = s.match(/^non(land|creature|artifact) (.*)$/))) { f.notTypes = [m[1][0].toUpperCase() + m[1].slice(1)]; s = m[2]; }
-  if ((m = s.match(/^(creature|creatures|land|lands|artifact|enchantment|permanent|permanents)\b ?(.*)$/))) { if (NOUN[m[1]]) f.types = NOUN[m[1]]; s = m[2]; }
+  if ((m = s.match(/^creature or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Planeswalker']; s = m[1]; }
+  else if ((m = s.match(/^(creature|creatures|land|lands|artifact|enchantment|permanent|permanents)\b ?(.*)$/))) { if (NOUN[m[1]]) f.types = NOUN[m[1]]; s = m[2]; }
   else if ((m = s.match(/^([A-Z][a-z]+(?:-[a-z]+)?)\b ?(.*)$/))) { f.subtypes = [m[1].replace(/(?<=[^s])s$/, '').replace(/ves$/, 'f')]; s = m[2]; }   // a creature type, singular or plural ("Mouse", "Lizards", "Elves")
   else if ((m = s.match(/^(token)s?\b ?(.*)$/))) { f.tok = true; s = m[2]; }
   else throw new Fail('filter noun: ' + str);
@@ -69,6 +70,8 @@ function targetSlot(T, phrase) {
   // "any other target": other than an earlier target of the same object, or else other than its source.
   if (phrase === 'any other target') { if (T.length) T.push({ f: { any: true }, diff: T.length - 1 }); else T.push({ f: { any: true, other: true } }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^target (.+?), (.+?), (.+?), or (.+?) you control$/))) { T.push({ f: Object.assign(parseFilter('creature you control'), { subtypes: [m[1], m[2], m[3], m[4]] }) }); return { t: T.length - 1 }; }
+  if ((m = phrase.match(/^target (instant or sorcery|creature|land|permanent) card from your graveyard$/))) { T.push({ f: { card: 'grave', own: true, types: m[1] === 'instant or sorcery' ? ['Instant', 'Sorcery'] : m[1] === 'permanent' ? ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'] : [cap(m[1])] } }); return { t: T.length - 1 }; }
+  if ((m = phrase.match(/^target (noncreature )?spell$/))) { T.push({ f: Object.assign({ spell: true }, m[1] ? { notTypes: ['Creature'] } : {}) }); return { t: T.length - 1 }; }   // a spell on the stack (CR 115.1)
   if ((m = phrase.match(/^target (opponent|player)$/))) { T.push({ f: { player: m[1] === 'opponent' ? 'opp' : 'any' } }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^each of up to (\w+) target (.+)$/))) { T.push({ f: parseFilter(singular(m[2])), n: numOf(m[1]), upTo: true }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^up to (\w+) target (.+)$/))) { T.push({ f: parseFilter(singular(m[2])), n: numOf(m[1]), upTo: true }); return { t: T.length - 1 }; }
@@ -131,6 +134,12 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^(?:Then )?[Ii]f (.+?), (.+)$/))) return [{ o: 'if', cond: parseCond(m[1], ctx), ops: parseEffect(T, ctx, cap(m[2])) }];
   if ((m = s.match(/^Then (.+)$/))) return parseEffect(T, ctx, cap(m[1]));
   if ((m = s.match(/^(.+) and (scry \d+|draw a card|you gain \d+ life)$/))) return parseEffect(T, ctx, m[1]).concat(parseEffect(T, ctx, m[2]));
+  if ((m = s.match(/^(.+ counters? on ~) and it deals (\d+) damage to each opponent$/))) return parseEffect(T, ctx, m[1]).concat([{ o: 'damage', from: 'self', n: +m[2], to: 'eachOpp' }]);   // Vivi Ornitier
+  if ((m = s.match(/^[Pp]ut that many ([a-z]+) counters on (it|~)$/)) && ctx.evAmount) return [{ o: 'counter', on: 'self', n: { v: 'evAmount' }, kind: m[1] }];   // "that many": the damage just dealt
+  if ((m = s.match(/^[Rr]eturn (target .+?) to its owner's hand$/))) return [{ o: 'bounce', on: parseRef(T, ctx, m[1]) }];
+  if ((m = s.match(/^[Rr]eturn (target .+ card from your graveyard) to your hand$/))) return [{ o: 'graveToHand', on: parseRef(T, ctx, m[1]) }];
+  if ((m = s.match(/^[Cc]ounter (target (?:noncreature )?spell) unless its controller pays (\{[^ ]+\})$/))) return [{ o: 'counterUnless', on: parseRef(T, ctx, m[1]), pay: m[2] }];   // CR 701.6, 118.12a
+  if (/^[Yy]ou may attach ~ to it$/.test(s) && ctx.madeToken) return [{ o: 'may', what: 'attachToToken', ops: [{ o: 'attach', on: 'it' }] }];
   if ((m = s.match(/^[Pp]ut (a|an|one|two|three|\d+) \+1\/\+1 counters? on (.+)$/))) { const on = parseRef(T, ctx, m[2]); return [{ o: 'counter', on: on, n: numOf(m[1]), kind: '+1/+1' }]; }
   if ((m = s.match(/^[Dd]ouble the number of \+1\/\+1 counters on (.+)$/))) return [{ o: 'doubleCounters', on: parseRef(T, ctx, m[1]), kind: '+1/+1' }];
   if ((m = s.match(/^[Tt]ap (.+)$/))) return [{ o: 'tap', on: parseRef(T, ctx, m[1]) }];
@@ -155,7 +164,8 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Dd]iscard a card, then draw a card$/))) return [{ o: 'discard', n: 1 }, { o: 'draw', n: 1 }];
   if ((m = s.match(/^[Ss]earch your library for a basic land card, put it onto the battlefield( tapped)?, then shuffle$/))) return [{ o: 'searchBasic', tapped: !!m[1] }];   // CR 701.23
   if ((m = s.match(/^[Uu]ntap that land$/))) return [{ o: 'untapIt' }];
-  if ((m = s.match(/^[Cc]reate (a|an|one|two|three|\d+) (\d+)\/(\d+) (white|blue|black|red|green|colorless) (\w+) creature tokens?(?: with (.+))?$/))) {
+    if ((m = s.match(/^[Cc]reate (a|an|one|two|three|\d+) (\d+)\/(\d+) ((?:white|blue|black|red|green|colorless)(?: and (?:white|blue|black|red|green))?) (\w+) creature tokens?(?: with (.+))?$/))) {
+    ctx.madeToken = true;
     const id = ctx.token({ p: +m[2], t: +m[3], color: m[4], sub: m[5], kw: m[6] ? kwList(m[6]) : [] });
     return [{ o: 'token', id: id, n: numOf(m[1]) }];
   }
@@ -216,6 +226,14 @@ function parseEffects(T, ctx, text) {
     const who = parseRef(T, ctx, m[1]);
     return [{ o: 'may', what: 'oppDrawCopy', ops: [{ o: 'draw', n: 1, who: who }] }, { o: 'if', cond: { c: 'did' }, ops: [{ o: 'copySpell' }] }];
   }
+  // Stock Up / Sleight of Hand: look at the top N, put some into your hand, the rest on the bottom.
+  if ((m = t.match(/^look at the top (\w+) cards of your library\. Put (\w+) of them into your hand and the (?:rest|other) on the bottom of your library(?: in any order)?$/i))) return [{ o: 'lookPick', n: numOf(m[1]), take: numOf(m[2]) }];
+  // Torch the Tower: bargained instead deals 3 and scry 1 (CR 702.166c).
+  if ((m = t.match(/^~ deals (\d+) damage to (target creature or planeswalker)\. If this spell was bargained, instead it deals (\d+) damage to that permanent and you scry (\d+)$/))) {
+    const to = parseRef(T, ctx, m[2]);
+    return [{ o: 'if', cond: { c: 'bargained' }, ops: [{ o: 'damage', from: 'self', n: +m[3], to: to }, { o: 'scry', n: +m[4] }], else: [{ o: 'damage', from: 'self', n: +m[1], to: to }] }];
+  }
+  if (/^If a permanent dealt damage by ~ would die this turn, exile it instead$/.test(t)) return [{ o: 'dieExile' }];   // CR 614.1a: a replacement set up by the resolving spell
   // Duress / Cruelclaw's Heist: the revealed hand, the caster's choice, then discard or exile.
   if ((m = t.match(/^(target opponent) reveals their hand\. You choose an? (noncreature, nonland|nonland) card from it\. That player discards that card$/i))) {
     const who = parseRef(T, ctx, m[1].toLowerCase());
@@ -249,6 +267,7 @@ function parseCost(str) {
     else if (p === '{T}') cost.tap = true;
     else if (p === 'Sacrifice ~') cost.sacSelf = true;
     else if (/^Pay (\d+) life$/.test(p)) cost.life = +p.match(/\d+/)[0];                             // CR 119.4
+    else if (/^Remove (\w+) (\w+) counters from ~$/.test(p)) { const r = p.match(/^Remove (\w+) (\w+) counters from ~$/); cost.removeCtr = { n: numOf(r[1]), kind: r[2] }; }   // CR 118.3
     else throw new Fail('cost: ' + p);
   }
   return cost;
@@ -270,6 +289,9 @@ const EVENTS = [
   [/^the beginning of your upkeep$/, () => [{ on: 'beginStep', step: 'upkeep', yours: true }]],                       // CR 503.1a
   [/^(a creature you control.*) attacks$/, m => [{ on: 'attacks', who: parseFilter(m[1].replace(/^a /, '')) }]],
   [/^you cast a noncreature spell$/, () => [{ on: 'cast', spell: { notTypes: ['Creature'] } }]],
+  [/^you cast an instant or sorcery spell$/, () => [{ on: 'cast', spell: { types: ['Instant', 'Sorcery'] } }]],
+  [/^you cast your second spell each turn$/, () => [{ on: 'cast', spell: null, nth: 2 }]],                                  // flurry (an ability word, CR 207.2c)
+  [/^~ becomes level (\d)$/, m => [{ on: 'levelUp', who: 'self', level: +m[1] }]],                                       // CR 716.2a
   [/^you cast a spell$/, () => [{ on: 'cast', spell: null }]],
   [/^~ deals damage to an opponent$/, () => [{ on: 'dealsDamage', toOpp: true }]],
   [/^a player casts a noncreature spell$/, () => [{ on: 'cast', spell: { notTypes: ['Creature'] }, anyPlayer: true }]],
@@ -300,10 +322,10 @@ function parseTrigger(line, ctx, out) {
       for (const tr of trigs) {
         const T = []; const c2 = Object.assign({}, ctx, { it: tr.who && tr.who !== 'self' ? 'ev' : tr.who === 'self' ? 'self' : null });
         if (tr.on === 'cast') { c2.spellEv = true; if (tr.anyPlayer) c2.evPlayer = true; }
-        if (tr.on === 'dealsDamage' && tr.toPlayer) c2.evPlayer = true;
+        if (tr.on === 'dealsDamage' && tr.toPlayer) { c2.evPlayer = true; c2.evAmount = true; }
         if (tr.door) { if (ctx.door == null) throw new Fail('"unlock this door" on a card that is not a Room'); tr.door = ctx.door; }
         const ops = parseEffects(T, c2, cap(eff.replace(/^this creature\b/, '~')));
-        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer']) if (tr[k] != null) extra[k] = tr[k];
+        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level']) if (tr[k] != null) extra[k] = tr[k];
         out.push(Object.assign({ k: 'trig', on: tr.on, ops: ops }, tr.who ? { who: tr.who } : {}, tr.spell !== undefined ? { spell: tr.spell } : {}, tr.toOpp ? { toOpp: true } : {}, tr.lookBack ? { lookBack: true } : {}, T.length ? { tg: T } : {}, cond ? { cond: cond } : {}, extra));
       }
       return true;
@@ -354,7 +376,10 @@ function parseLine(line, ctx, d, kw, ab) {
     return;
   }
   if ((m = line.match(/^Cycling (\{[^ ]+\})$/))) { ab.push({ k: 'act', zone: 'hand', cycling: true, cost: { mana: m[1], tap: false, sacSelf: false, discardSelf: true }, ops: [{ o: 'draw', n: 1 }] }); return; }   // CR 702.29a
-  if ((m = line.match(/^Gift a card$/))) { ab.push({ k: 'gift', what: 'card' }); return; }       // CR 702.174a, e
+  if ((m = line.match(/^Gift a card$/))) { ab.push({ k: 'gift', what: 'card' }); return; }
+  if (line === 'Gift a tapped Fish') { ab.push({ k: 'gift', what: 'tappedFish', token: ctx.token({ p: 1, t: 1, color: 'blue', sub: 'Fish' }) }); return; }   // CR 702.174f
+  if (line === 'Bargain') { ab.push({ k: 'bargain' }); return; }                                   // CR 702.166a
+  if ((m = line.match(/^Harmonize (\{[^ ]+\})$/))) { ab.push({ k: 'harmonize', cost: m[1] }); return; }   // CR 702.180a       // CR 702.174a, e
   if ((m = line.match(/^Kicker (\{[^ ]+\})$/))) { ab.push({ k: 'kicker', cost: m[1] }); return; }      // CR 702.33a
   if ((m = line.match(/^Offspring (\{[^ ]+\})$/))) {                                              // CR 702.175a
     ab.push({ k: 'offspring', cost: m[1] });
@@ -368,13 +393,15 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(/^(As long as .+?\.) (~ gets an additional .+\.)$/))) { parseLine(m[1], ctx, d, kw, ab); parseLine(m[2], ctx, d, kw, ab); return; }   // Elenda: two statics in one paragraph
   if (parseStatic(line, ctx, ab, d)) return;
   if (parseTrigger(line, ctx, ab)) return;
-  if ((m = line.match(/^([^:]+): (.+)$/)) && /\{|Sacrifice/.test(m[1])) {                          // CR 602.1
+  if ((m = line.match(/^([^:]+): (.+)$/)) && /\{|Sacrifice|^Remove /.test(m[1])) {                          // CR 602.1
     const cost = parseCost(m[1]);
     let mm, body = m[2];
     if ((mm = body.match(/^Add \{([WUBRGC])\}(?: or \{([WUBRGC])\})?\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1]].concat(mm[2] ? [mm[2]] : []) }); return; }   // CR 605.1a
     if ((mm = body.match(/^Add \{([WUBRGC])\}\. Spend this mana only to cast a creature spell\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1]], only: 'creature' }); return; }   // CR 106.6
     if ((mm = body.match(/^Add \{([WUBRGC])\}(?: or \{([WUBRGC])\})?\. Activate only if (.+)\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1]].concat(mm[2] ? [mm[2]] : []), cond: parseCond(mm[3], ctx) }); return; }   // the Verges (CR 602.5b)
     if ((mm = body.match(/^Add \{([WUBRGC])\} or \{([WUBRGC])\}\. ~ deals (\d+) damage to you\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1], mm[2]], selfDamage: +mm[3] }); return; }   // pain lands: the damage is part of the effect
+    // Vivi Ornitier: X mana in any combination of two colours (CR 106.1a); X is read as it is activated.
+    if ((mm = body.match(/^Add X mana in any combination of \{([WUBRG])\} and\/or \{([WUBRG])\}, where X is ~'s power\. Activate only during your turn and only once each turn\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1], mm[2]], combo: true, amount: { v: 'power', of: 'self' }, cond: { c: 'yourTurn' }, oncePerTurn: true }); return; }
     if (body === 'Add one mana of any color.') { ab.push({ k: 'mana', cost: cost, cols: ['W', 'U', 'B', 'R', 'G'] }); return; }
     // Activation restrictions (CR 602.5): "Activate only as a sorcery.", "... only once each turn.", "Activate only if <cond>."
     const act = { k: 'act', cost: cost };
@@ -387,6 +414,12 @@ function parseLine(line, ctx, d, kw, ab) {
     }
     const T = []; const ops = parseEffects(T, Object.assign({}, ctx, { it: null }), body);
     ab.push(Object.assign(act, { ops: ops }, T.length ? { tg: T } : {}));
+    return;
+  }
+  if ((d.types.includes('Instant') || d.types.includes('Sorcery')) && (m = line.match(/^(.+)\. If the gift was promised, instead (.+)\.$/)) && !ab.some(a => a.k === 'spell')) {
+    const T1 = [], T2 = [];
+    const ops1 = parseEffects(T1, Object.assign({}, ctx, { it: null }), m[1]), ops2 = parseEffects(T2, Object.assign({}, ctx, { it: null }), cap(m[2]));
+    ab.push(Object.assign({ k: 'spell', ops: ops1 }, T1.length ? { tg: T1 } : {}, { gift: Object.assign({ ops: ops2 }, T2.length ? { tg: T2 } : {}) }));
     return;
   }
   if (d.types.includes('Instant') || d.types.includes('Sorcery')) {
@@ -411,7 +444,7 @@ export function normalize(text, name) {
   const short = name.includes(',') ? name.split(',')[0] : null;
   let t = text.replace(/\s*\([^)]*\)/g, '');                                                       // reminder text is display-only (CLAUDE.md regime 3)
   t = t.split(name).join('~'); if (short) t = t.replace(new RegExp('\\b' + short + '\\b(?!,)', 'g'), '~');
-  t = t.replace(/\b[Tt]his (creature|artifact|land|Aura|enchantment|permanent|Equipment)\b/g, '~');
+  t = t.replace(/\b[Tt]his (creature|artifact|land|Aura|enchantment|permanent|Equipment|Class)\b/g, '~');
   return t.split('\n').map(l => l.trim()).filter(Boolean);
 }
 // `alt`: the other face of an Adventure or Omen card (CR 715, 720), compiled as its own set of
@@ -440,7 +473,7 @@ export function compileCard(c, tokens, alt, room) {
   };
   if (alt) d.name = faceName;
   const twoPart = c.layout === 'adventure' && alt;
-  if (c.layout !== 'normal' && !twoPart) { d.un = 'layout ' + c.layout + ' is not compiled'; return d; }
+  if (c.layout !== 'normal' && c.layout !== 'class' && !twoPart) { d.un = 'layout ' + c.layout + ' is not compiled'; return d; }
   const ctx = { token: tokens, name: faceName, door: room ? room.door : null };
   try {
     for (const st of d.subtypes) if (BASIC_MANA[st]) d.ab.push({ k: 'mana', cost: { tap: true }, cols: [BASIC_MANA[st]] });   // CR 305.6: intrinsic
@@ -460,8 +493,14 @@ export function compileCard(c, tokens, alt, room) {
         d.ab.push({ k: 'spell', modes: modes });
         continue;
       }
+      // CR 716.2a: "[Cost]: Level N" — an activated ability (as a sorcery, only at level N-1); the abilities after it exist from level N.
+      const lv = c.layout === 'class' && lines[i].match(/^(\{[^:]+\}): Level (\d)$/);
+      if (lv) { ctx.level = +lv[2]; d.ab.push({ k: 'act', cost: { mana: lv[1], tap: false, sacSelf: false }, sorcery: true, levelUp: +lv[2], ops: [{ o: 'levelUp', n: +lv[2] }] }); continue; }
+      const n0 = d.ab.length;
       parseLine(lines[i], ctx, d, d.kw, d.ab);
+      if (ctx.level) for (let k = n0; k < d.ab.length; k++) d.ab[k].level = ctx.level;
     }
+    if (c.layout === 'class' && !ctx.level) throw new Fail('a Class with no level bar');
   } catch (e) {
     if (!(e instanceof Fail)) throw e;
     d.un = e.fail; d.kw = {}; d.ab = [];
@@ -485,9 +524,10 @@ const ROLES = {
 function tokenMaker(pack) {
   const mk = function (t) {
     const kws = t.kw || [];
-    const id = 'token-' + t.sub.toLowerCase() + '-' + t.p + '-' + t.t + '-' + (COLOR[t.color] || 'c').toLowerCase() + kws.map(k => '-' + k.toLowerCase()).join('');
-    const KWTEXT = { flying: 'Flying', lifelink: 'Lifelink', haste: 'Haste', vigilance: 'Vigilance', trample: 'Trample', deathtouch: 'Deathtouch', menace: 'Menace', reach: 'Reach' };
-    if (!pack[id]) pack[id] = { id: id, name: t.sub, token: true, mana: '', colors: COLOR[t.color] ? [COLOR[t.color]] : [], types: ['Creature'], subtypes: [t.sub], supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub, text: kws.map(k => KWTEXT[k]).join(', '), kw: Object.fromEntries(kws.map(k => [k, 1])), ab: [], layout: 'token' };
+    const cols = t.color.split(' and ').map(c => COLOR[c]).filter(Boolean);
+    const id = 'token-' + t.sub.toLowerCase() + '-' + t.p + '-' + t.t + '-' + (cols.join('') || 'c').toLowerCase() + kws.map(k => '-' + k.toLowerCase()).join('');
+    const KWTEXT = { flying: 'Flying', lifelink: 'Lifelink', haste: 'Haste', vigilance: 'Vigilance', trample: 'Trample', deathtouch: 'Deathtouch', menace: 'Menace', reach: 'Reach', prowess: 'Prowess' };
+    if (!pack[id]) pack[id] = { id: id, name: t.sub, token: true, mana: '', colors: cols, types: ['Creature'], subtypes: [t.sub], supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub, text: kws.map(k => KWTEXT[k]).join(', '), kw: Object.fromEntries(kws.map(k => [k, 1])), ab: [], layout: 'token' };
     return id;
   };
   mk.role = function (name) {

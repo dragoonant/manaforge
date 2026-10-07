@@ -1365,7 +1365,7 @@ window.MF.decks = {
    "amalia-benavides-aguirre: ability: Ward—Pay 3 life.",
    "lunar-convocation: intervening if: if you gained life this turn, each opponent loses 1 life.",
    "case-of-the-uneaten-feast: layout case is not compiled",
-   "moseo-veins-new-dean: effect: Create a 1/1 black and green Pest creature token with \"Whenever this token attacks, you gain 1 life.\"",
+   "moseo-veins-new-dean: keyword: \"Whenever this token attacks",
    "deep-cavern-bat: effect: Look at target opponent's hand",
    "voice-of-victory: ability: Mobilize 2",
    "aunt-may: condition: it's a Spider",
@@ -1534,8 +1534,7 @@ window.MF.decks = {
    "bitter-triumph: effect: As an additional cost to cast this spell, discard a card or pay 3 life",
    "the-wondrous-wasp: ability: Wasp's Sting — When ~ enters, tap up to one target creature. It loses all abilities for as long as ~ remains on the battlefield.",
    "spell-snare: effect: Counter target spell with mana value 2",
-   "wan-shi-tong-librarian: effect: Put X +1/+1 counters on him",
-   "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}"
+   "wan-shi-tong-librarian: effect: Put X +1/+1 counters on him"
   ],
   "tokens": []
  },
@@ -1672,8 +1671,7 @@ window.MF.decks = {
    "the-last-ronins-technique: effect: Sneak {1}{W}",
    "political-triumph: trigger event: a creature you control enters, scry 1 and put a plan counter on ~.",
    "voice-of-victory: ability: Mobilize 2",
-   "warleaders-call: ability: Creatures you control get +1/+1.",
-   "torch-the-tower: effect: Bargain"
+   "warleaders-call: ability: Creatures you control get +1/+1."
   ],
   "tokens": [
    "token-rabbit-1-1-w"
@@ -2168,13 +2166,13 @@ window.MF.decks = {
    "iron-shield-elf: ability: Discard a card: ~ gains indestructible until end of turn. Tap it.",
    "moonshadow: ability: ~ enters with six -1/-1 counters on it.",
    "hardened-academic: ability: Discard a card: ~ gains lifelink until end of turn.",
-   "cool-but-rude: layout class is not compiled",
+   "cool-but-rude: trigger event: you attack, you may discard a card. If you do, draw a card.",
    "bloodghast: ability: ~ has haste as long as an opponent has 10 or less life.",
    "practiced-offense: filter qualifier: target player controls",
    "carnage-crimson-chaos: effect: Return target creature card with mana value 3 or less from your graveyard to the battlefield",
    "inti-seneschal-of-the-sun: trigger event: you attack, you may discard a card. When you do, put a +1/+1 counter on target attacking creature. It gains trample until end of turn.",
    "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
-   "erode: filter qualifier: or planeswalker",
+   "erode: effect: Its controller may search their library for a basic land card, put it onto the battlefield tapped, then shuffle",
    "cecil-dark-knight-cecil-redeemed-paladin: layout transform is not compiled"
   ],
   "tokens": []
@@ -2612,7 +2610,7 @@ window.MF.decks = {
   "player": "Ian Robb",
   "rank": 2,
   "players": 139,
-  "registered": false,
+  "registered": true,
   "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
   "min": 60,
   "main": [
@@ -2723,20 +2721,13 @@ window.MF.decks = {
     "name": "Lithomantic Barrage"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "stormchasers-talent: layout class is not compiled",
-   "torch-the-tower: effect: Bargain",
-   "vivi-ornitier: effect: Add X mana in any combination of {U} and/or {R}, where X is ~'s power",
-   "wild-ride: effect: Harmonize {4}{R}",
-   "into-the-flood-maw: effect: Gift a tapped Fish",
-   "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}",
-   "cori-steel-cutter: trigger event: you cast your second spell each turn, create a 1/1 white Monk creature token with prowess. You may attach ~ to it.",
-   "stock-up: effect: Look at the top five cards of your library",
-   "drake-hatcher: effect: Put that many incubation counters on it",
-   "sleight-of-hand: effect: Look at the top two cards of your library"
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-otter-1-1-ur-prowess",
+   "token-fish-1-1-u",
+   "token-monk-1-1-w-prowess",
+   "token-drake-2-2-u-flying"
+  ]
  },
  "domain-overlords-fin": {
   "id": "domain-overlords-fin",
@@ -3087,9 +3078,7 @@ window.MF.decks = {
    "cavern-of-souls: ability: As ~ enters, choose a creature type.",
    "roiling-dragonstorm: trigger event: a Dragon you control enters, return ~ to its owner's hand.",
    "oracle-of-tragedy: trigger event: ~ enters or dies, choose one —",
-   "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}",
    "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
-   "stock-up: effect: Look at the top five cards of your library",
    "scrollshift: effect: Exile up to one target artifact, creature, or enchantment you control, then return it to the battlefield under its owner's control",
    "epharas-dispersal: condition: it targets an attacking creature",
    "omniscience: ability: You may cast spells from your hand without paying their mana costs.",
@@ -3254,10 +3243,9 @@ window.MF.decks = {
    "kutzils-flanker: effect: Choose one —",
    "get-lost: filter qualifier: , enchantment, or planeswalker",
    "beza-the-bounding-spring: effect: Create a Treasure token if an opponent controls more lands than you",
-   "no-more-lies: effect: Counter target spell unless its controller pays {3}",
+   "no-more-lies: condition: that spell is countered this way",
    "lay-down-arms: effect: Exile target creature with mana value less than or equal to the number of Plains you control",
    "temporary-lockdown: effect: Exile each nonland permanent with mana value 2 or less until ~ leaves the battlefield",
-   "stock-up: effect: Look at the top five cards of your library",
    "marang-river-regent-coil-and-catch: effect: Return up to two other target nonland permanents to their owners' hands",
    "ultima: filter noun: artifacts and creatures"
   ],
@@ -3747,7 +3735,6 @@ window.MF.decks = {
    "azure-beastbinder: ability: ~ can't be blocked by creatures with power 2 or greater.",
    "restless-reef: effect: Until end of turn, ~ becomes a 4/4 blue and black Shark creature with deathtouch",
    "enduring-curiosity: trigger event: a creature you control deals combat damage to a player, draw a card.",
-   "spell-pierce: effect: Counter target noncreature spell unless its controller pays {2}",
    "faerie-mastermind: trigger event: an opponent draws their second card each turn, you draw a card.",
    "deep-cavern-bat: effect: Look at target opponent's hand"
   ],

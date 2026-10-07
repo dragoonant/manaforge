@@ -11,3 +11,6 @@
 - The AI uses instants in 1.9% of the windows where it could: it rarely holds mana for a trick
   (handoff 11.8.4 predicted this). Add an evaluator term for untapped mana with an instant in hand.
 - Floating mana at priority (DEVIATIONS V1).
+- The AI pilots Izzet Prowess poorly (8 wins in 90 mixed sim games; it rarely sequences cheap
+  spells for prowess, Vivi's mana or the Cutter's second-spell trigger). The rollout horizon ends
+  at end of turn; an evaluator term for spells cast this turn would help.
