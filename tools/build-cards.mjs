@@ -257,7 +257,8 @@ function parseCost(str) {
 const EVENTS = [
   [/^~ enters and when you sacrifice it$/, () => [{ on: 'enters', who: 'self' }, { on: 'sacrificed', who: 'self', lookBack: true }]],
   [/^~ enters$/, () => [{ on: 'enters', who: 'self' }]],
-  [/^~ or (another creature you control .+) enters$/, m => [{ on: 'enters', who: { or: ['self', parseFilter(m[1])] } }]],
+  // "this creature or another creature you control with ...": the qualifier binds both (Fecund Greenshell's ruling counts its own static for itself).
+  [/^~ or (another creature you control .+) enters$/, m => { const f = parseFilter(m[1]), q = {}; for (const k in f) if (!['other', 'types', 'ctrl', 'subtypes'].includes(k)) q[k] = f[k]; return [{ on: 'enters', who: { or: [Object.keys(q).length ? { self: q } : 'self', f] } }]; }],
   [/^(another creature you control.*) enters$/, m => [{ on: 'enters', who: parseFilter(m[1]) }]],
   [/^~ attacks for the first time each turn$/, () => [{ on: 'attacks', who: 'self', firstEachTurn: true }]],
   [/^~ attacks$/, () => [{ on: 'attacks', who: 'self' }]],

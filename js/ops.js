@@ -119,6 +119,7 @@
   const subject = (s, iid, src, who, evIid) => {
     if (who === 'self') return evIid === iid;
     if (who.or) return who.or.some(w => subject(s, iid, src, w, evIid));
+    if (who.self) return evIid === iid && MF.matchChars(s, evIid, MF.chars(s, evIid), who.self, src.ctrl, iid);   // "this creature ... with toughness greater than its power"
     const c = s.cards[evIid]; if (!c || c.zone !== 'bf') return false;
     return MF.matchChars(s, evIid, MF.chars(s, evIid), who, src.ctrl, iid);
   };

@@ -112,7 +112,7 @@
   function ops(list) { return (list || []).map(op => D[op.o](op)).join('; then '); }
   const EV = { enters: 'enters', attacks: 'attacks', cast: 'you cast', dealsDamage: 'deals damage', sacrificed: 'you sacrifice it', beginStep: 'at the beginning of', dies: 'dies', dealtDamage: 'is dealt damage', targeted: 'becomes the target of a spell or ability you control for the first time each turn' };
   const art = t => (/^[aeiou]/i.test(t) ? 'an ' : 'a ') + t;
-  function who(w) { if (w === 'self') return 'this'; if (w && w.or) return w.or.map(who).join(' or '); return art(filt(w)); }
+  function who(w) { if (w === 'self') return 'this'; if (w && w.self) return 'this (if it is ' + filt(Object.assign({ types: ['Creature'] }, w.self)).replace(/^creature /, '') + ')'; if (w && w.or) return w.or.map(who).join(' or '); return art(filt(w)); }
   MF.describeAbility = function (a) {
     curTg = a.tg || []; named = new Set();
     switch (a.k) {
