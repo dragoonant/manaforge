@@ -18,6 +18,8 @@
     if (f.any) return (!f.other || iid !== srcIid) && ch.types.some(t => t === 'Creature' || t === 'Planeswalker' || t === 'Battle');   // CR 115.4: "any target"; "any other target"
     if (f.player) return false;
     if (f.types && !f.types.some(t => ch.types.includes(t))) return false;
+    if (f.allTypes && !f.allTypes.every(t => ch.types.includes(t))) return false;               // "enchantment creatures"
+    if (f.typesOrSub && !(f.typesOrSub.types.some(t => ch.types.includes(t)) || f.typesOrSub.subtypes.some(t => ch.subtypes.includes(t)))) return false;   // "creature or Vehicle"
     if (f.notTypes && f.notTypes.some(t => ch.types.includes(t))) return false;
     if (f.notSupers && f.notSupers.some(t => ch.supers.includes(t))) return false;   // "nonbasic"
     if (f.notSubtypes && f.notSubtypes.some(t => ch.subtypes.includes(t)) || (f.notSubtypes && ch.allCreatureTypes)) return false;   // "non-outlaw"
@@ -86,6 +88,7 @@
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
     addCostPaid: x => !!(x.L && x.L.addCostPaid),                                            // "if this spell's additional cost was paid", teamwork
     oppMore: (x, c) => { const me = P(x.s, x.ctrl), op = P(x.s, 1 - x.ctrl), n = (p, w) => w === 'life' ? p.life : w === 'hand' ? p.hand.length : x.s.bf.filter(i => I(x.s, i).ctrl === p.seat && MF.chars(x.s, i).types.includes(w === 'lands' ? 'Land' : 'Creature')).length; return n(op, c.what) > n(me, c.what); },   // Beza
+    targetsTapped: x => !!(x.targets && x.targets.some(sl => (sl || []).some(r => r && r.c != null && I(x.s, r.c) && I(x.s, r.c).zone === 'bf' && I(x.s, r.c).tapped))),   // Ride's End
     impendingTime: x => { const c = I(x.s, x.src); return !!c && !!c.impended && (c.ctr.time || 0) > 0; },   // CR 702.176a's intervening "if"
     castFromGrave: x => !!(x.L && x.L.from === 'grave'),                                           // "if this spell was cast from a graveyard"
     counterAtLeast: (x, c) => { const o = I(x.s, x.src); return !!o && (o.ctr[c.kind] || 0) >= c.n; },
@@ -765,6 +768,11 @@
       log(s, 'endTurn', { who: x.ctrl, c: x.L ? (x.L.srcId || x.L.id) : null });
       s.endTurnNow = true;
     },
+    // Zur: "becomes a creature in addition to its other types and has base power and base toughness each equal to its mana value" (layers 4 and 7b; no duration)
+    becomeCreatureMV(x, op) {
+      const s = x.s;
+      for (const i of MF.resolveRefs(x, op.on)) { const mv = MF.chars(s, i).mv; s.effects.push({ k: 'addTypes', iid: i, types: ['Creature'], ts: s.ts++ }, { k: 'setPT', iid: i, p: mv, t: mv, ts: s.ts++ }); log(s, 'becomesCreature', { who: x.ctrl, c: I(s, i).id, p: mv, tou: mv }); }
+    },
     // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
     selfFromGrave(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'grave') return; const n = MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); log(s, 'putOnto', { who: c.owner, c: I(s, n).id, tapped: false, from: 'graveyard' }); },
     removeCounter(x, op) { const c = I(x.s, x.src); if (!c || c.zone !== 'bf' || !(c.ctr[op.kind] > 0)) return; c.ctr[op.kind] = Math.max(0, c.ctr[op.kind] - op.n); log(x.s, 'removeCounters', { who: c.ctrl, c: c.id, n: op.n, ctr: op.kind }); },
@@ -980,7 +988,7 @@
   // CR 701.6a: a countered spell leaves the stack without resolving; it goes to its owner's graveyard
   // (a copy ceases to exist; harmonize exiles it).
   MF.counterSpell = function (s, L, by, exile) {
-    if (MF.chars(s, L.iid).ab.some(a => a.k === 'uncounterable')) { log(s, 'cantCounter', { who: L.ctrl, c: L.id }); return; }   // "This spell can't be countered" (CR 113.6g)
+    if (L.uncounterable || MF.chars(s, L.iid).ab.some(a => a.k === 'uncounterable')) { log(s, 'cantCounter', { who: L.ctrl, c: L.id }); return; }   // "This spell can't be countered" (CR 113.6g)
     s.stack.splice(s.stack.indexOf(L), 1);
     log(s, 'countered', { who: L.ctrl, c: L.id, by: by });
     if (L.copy) { const c = I(s, L.iid); c.zone = 'moved'; c.to = null; return; }
@@ -1031,9 +1039,10 @@
     log(s, 'prevented', { who: I(s, o.to.c).ctrl, c: I(s, o.to.c).id, n: n, src: o.srcChars ? o.srcChars.id : null });
     return 0;
   });
-  MF.costMods.push(function (s, who, iid, ch, cost) {
-    for (const a of ch.ab) if (a.k === 'costLess' && MF.cond({ s: s, ctrl: who, src: iid, flags: {} }, a.cond)) cost.g -= a.n;
-    for (const a of ch.ab) if (a.k === 'costLessPer') cost.g -= a.zones.reduce((n, z) => n + P(s, who)[z].filter(i => i !== iid && I(s, i).owner === who && a.f.types.some(ty => MF.def(s, i).types.includes(ty))).length, 0);   // "for each creature card in your graveyard" (CR 601.2f)
+  MF.costMods.push(function (s, who, iid, ch, cost, o) {
+    for (const a of ch.ab) if (a.k === 'costLess' && MF.cond({ s: s, ctrl: who, src: iid, flags: {}, targets: o && o.targets }, a.cond)) cost.g -= a.n;
+    for (const a of ch.ab) if (a.k === 'costLessPer' && a.domain) { const seen = new Set(); for (const i of s.bf) if (I(s, i).ctrl === who) { const c2 = MF.chars(s, i); if (c2.types.includes('Land')) for (const st of ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest']) if (c2.subtypes.includes(st)) seen.add(st); } cost.g -= seen.size; }   // domain
+    for (const a of ch.ab) if (a.k === 'costLessPer' && !a.domain) cost.g -= a.zones.reduce((n, z) => n + P(s, who)[z].filter(i => i !== iid && I(s, i).owner === who && a.f.types.some(ty => MF.def(s, i).types.includes(ty))).length, 0);   // "for each creature card in your graveyard" (CR 601.2f)
     for (const a of ch.ab) if (a.k === 'affinity') cost.g -= s.bf.filter(i => I(s, i).ctrl === who && MF.matchChars(s, i, MF.chars(s, i), a.f, who, iid)).length;   // CR 702.41a
     for (const p of s.bf) {
       const pc = I(s, p); if (pc.ctrl !== who) continue;
@@ -1044,7 +1053,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

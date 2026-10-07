@@ -1044,7 +1044,6 @@ window.MF.decks = {
   ],
   "compiles": false,
   "refused": [
-   "cavern-of-souls: ability: As ~ enters, choose a creature type.",
    "superior-spider-man: ability: Mind Swap — You may have ~ enter as a copy of any creature card in a graveyard, except his name is ~ and he's a 4/4 Spider Human Hero in addition to his other types. When you do, exile that card.",
    "bringer-of-the-last-gift: intervening if: if you cast it, each player sacrifices all other creatures they control. Then each player returns all creature cards from their graveyard that weren't put there this way to the battlefield.",
    "formidable-speaker: effect: Search your library for a creature card, reveal it, put it into your hand, then shuffle",
@@ -1202,7 +1201,6 @@ window.MF.decks = {
   ],
   "compiles": false,
   "refused": [
-   "cavern-of-souls: ability: As ~ enters, choose a creature type.",
    "the-lonely-mountain: effect: This ability costs {1} less to activate for each Equipment you control",
    "d-ins-company: condition: you control another Dwarf",
    "lavaspur-boots: keyword: ward {1}",
@@ -1954,7 +1952,6 @@ window.MF.decks = {
    "the-mind-stone: effect: Harness ~",
    "cryogen-relic: trigger event: ~ enters or leaves the battlefield, draw a card.",
    "spring-loaded-sawblades-bladewheel-chariot: filter noun: tapped creature an opponent controls",
-   "authority-of-the-consuls: ability: Creatures your opponents control enter tapped.",
    "braided-net-braided-quipu: ability: ~ enters with three net counters on it.",
    "dusk-rose-reliquary: ability: As an additional cost to cast this spell, sacrifice an artifact or creature.",
    "torpor-orb: ability: Creatures entering don't cause abilities to trigger.",
@@ -2668,7 +2665,7 @@ window.MF.decks = {
   "player": "Edgar Magalhaes",
   "rank": 9,
   "players": 14,
-  "registered": false,
+  "registered": true,
   "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
   "min": 60,
   "main": [
@@ -2815,20 +2812,12 @@ window.MF.decks = {
     "name": "Negate"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "high-noon: ability: Each player can't cast more than one spell each turn.",
-   "cavern-of-souls: ability: As ~ enters, choose a creature type.",
-   "overlord-of-the-hauntwoods: effect: Create a tapped colorless land token named Everywhere that is every basic land type",
-   "zur-eternal-schemer: ability: Enchantment creatures you control have deathtouch, lifelink, and hexproof.",
-   "rides-end: condition: it targets a tapped permanent",
-   "authority-of-the-consuls: ability: Creatures your opponents control enter tapped.",
-   "leyline-binding: ability: This spell costs {1} less to cast for each basic land type among lands you control."
-  ],
+  "compiles": true,
   "tokens": [
    "token-map",
    "token-treasure",
    "token-fish-1-1-u",
+   "token-everywhere",
    "token-insect-2-1-w-flying"
   ]
  },
@@ -2989,7 +2978,6 @@ window.MF.decks = {
   "refused": [
    "abuelos-awakening: effect: Return target artifact or non-Aura enchantment card from your graveyard to the battlefield with X additional +1/+1 counters on it",
    "fallaji-archaeologist: effect: You may put a noncreature, nonland card from among the cards milled this way into your hand",
-   "cavern-of-souls: ability: As ~ enters, choose a creature type.",
    "roiling-dragonstorm: trigger event: a Dragon you control enters, return ~ to its owner's hand.",
    "oracle-of-tragedy: effect: Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library",
    "scrollshift: effect: Exile up to one target artifact, creature, or enchantment you control, then return it to the battlefield under its owner's control",

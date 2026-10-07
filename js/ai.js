@@ -157,6 +157,11 @@
       case 'gift': return q.opts.some(o => o.id === 'no') ? 'no' : q.opts[0].id;
       case 'bargain': return 'none';
       case 'enterChoice': {
+        if (q.what === 'creatureType') {                                                        // the type most of its creature cards share
+          const n = {}; for (const i of P(s, me).hand.concat(P(s, me).lib, P(s, me).grave)) { const d = MF.def(s, i); if (d.types.includes('Creature')) for (const st of d.subtypes) n[st] = (n[st] || 0) + 1; }
+          const best = q.opts.map(o => o.id).filter(t => n[t]).sort((a, b) => n[b] - n[a])[0];
+          return best || q.opts[0].id;
+        }
         if (q.what !== 'basicType') return 'odd';
         const need = { W: 0, U: 0, B: 0, R: 0, G: 0 };                                        // the color its hand and library ask for most
         for (const i of P(s, me).hand.concat(P(s, me).lib)) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\{' + k + '\}', 'g')) || []).length;

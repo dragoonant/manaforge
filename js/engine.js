@@ -177,15 +177,22 @@
   function enterReplacements(s, n, o) {
     const c = I(s, n);
     const bc = baseChars(s, n);
+    if (bc.types.includes('Creature') && s.bf.some(i => i !== n && I(s, i).ctrl !== c.ctrl && chars(s, i).ab.some(a => a.k === 'oppCreaturesEnterTapped'))) c.tapped = true;   // "Creatures your opponents control enter tapped"
     if (bc.subtypes.includes('Saga') && bc.ab.some(a => a.chapter) && c.ctr.lore == null) c.ctr.lore = 1;   // CR 714.3a
     for (const a of baseChars(s, n).ab) {
       if (a.k === 'etbCounters') c.ctr[a.kind] = (c.ctr[a.kind] || 0) + a.n;
       if (a.k === 'enterChoice') {
         if (!o.x) throw new Error('a permanent with an entering choice was moved without the invocation to ask: ' + c.id);
-        const opts = a.what === 'basicType' ? ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'] : ['odd', 'even'];
+        let opts = a.what === 'basicType' ? ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'] : ['odd', 'even'];
+        if (a.what === 'creatureType') {                                                       // any creature type may be chosen (CR 205.3m); the ones in the player's cards are listed first
+          const p = P(s, c.ctrl), mine = new Set();
+          for (const i of p.hand.concat(p.lib, p.grave)) { const d0 = def(s, i); if (d0.types.includes('Creature')) for (const st of d0.subtypes) if (MF.CREATURE_TYPES.includes(st)) mine.add(st); }
+          opts = [...mine].sort().concat(MF.CREATURE_TYPES.filter(t0 => !mine.has(t0)));
+        }
         c.chosen = ask(o.x, { who: c.ctrl, kind: 'enterChoice', c: c.id, what: a.what, opts: opts.map(v => ({ id: v })) });
         log(s, 'chose', { who: c.ctrl, c: c.id, choice: c.chosen });
       }
+      if (a.k === 'oppCreaturesEnterTapped') {}   // read from the other side below
       if (a.k === 'etbTapped' && !(a.unless && MF.cond({ s: s, ctrl: c.ctrl, src: n, flags: {} }, a.unless))) c.tapped = true;
       if (a.k === 'etbPayOrTap' && !o.tapped) {                                                // put onto the battlefield tapped anyway: paying could change nothing, so nothing is asked
         if (!o.x) throw new Error('a land with an entering choice was moved without the invocation to ask: ' + c.id);
@@ -483,6 +490,7 @@
         if (a.k !== 'mana') return;
         if (a.cost.tap && c.tapped) return;
         if (a.only === 'creature' && !(ctx && ctx.creature)) return;
+        if (a.only === 'chosenType' && !(ctx && ctx.creature && (ctx.subtypes || []).includes(c.chosen))) return;
         if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid, flags: {} }, a.cond)) return;        // the Verges: "Activate only if you control ..."
         if (a.cost.life && P(s, who).life < a.cost.life) return;                                 // CR 119.4
         if (a.oncePerTurn && c.actTurn && c.actTurn['m' + i] === s.turn) return;                 // CR 602.5b
@@ -536,7 +544,11 @@
   };
   const poolTotal = p => p.W + p.U + p.B + p.R + p.G + p.C;
   // The pool that may pay this cost: creature-only mana (p.poolCre, a part of p.pool) only for a creature spell.
-  const usablePool = (p, ctx) => { if (ctx && ctx.creature) return Object.assign({}, p.pool); const u = {}; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) u[k] = p.pool[k] - ((p.poolCre && p.poolCre[k]) || 0); return u; };
+  const usablePool = (p, ctx) => {
+    if (p.poolCav && p.poolCav.length) { const u = usablePool0(p, ctx); for (const m of p.poolCav) if (!(ctx && ctx.creature && (ctx.subtypes || []).includes(m.type))) u[m.col]--; return u; }
+    return usablePool0(p, ctx);
+  };
+  const usablePool0 = (p, ctx) => { if (ctx && ctx.creature) return Object.assign({}, p.pool); const u = {}; for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) u[k] = p.pool[k] - ((p.poolCre && p.poolCre[k]) || 0); return u; };
   const canPayMana = MF.canPayMana = (s, who, need, ctx) => MF.hybridWays(need).some(w => !!solve(usablePool(P(s, who), ctx), manaSources(s, who, ctx), w));
   // How much mana a player could make right now: pool plus untapped sources (for the X question).
   MF.manaAvailable = (s, who, ctx) => { const per = new Map(); for (const m of manaSources(s, who, ctx)) per.set(m.iid, Math.max(per.get(m.iid) || 0, m.amount || 1)); let n = 0; for (const v of per.values()) n += v; return poolTotal(usablePool(P(s, who), ctx)) + n; };   // one activation per permanent
@@ -558,6 +570,7 @@
     const p = P(s, who);
     p.pool[col]++;
     if (a.only === 'creature') { p.poolCre = p.poolCre || emptyPool(); p.poolCre[col]++; }   // CR 106.6: mana with a spending restriction
+    if (a.only === 'chosenType') (p.poolCav = p.poolCav || []).push({ col: col, type: c.chosen, unc: !!a.uncounterable });
     if (a.cost.life) MF.loseLife(s, who, a.cost.life, 'pay', c.id);                         // CR 119.4: paying life is part of the cost
     log(s, 'mana', { who: who, c: c.id, col: col, only: a.only || null });
     if (a.cost.sacSelf) MF.sacrifice(s, iid);                                                 // part of the cost (CR 605.3b: still a mana ability)
@@ -605,6 +618,7 @@
           const spent = need[k] + (plan[k] || 0);
           p.pool[k] -= spent;
           if (ctx && ctx.creature && p.poolCre) p.poolCre[k] -= Math.min(p.poolCre[k], spent);   // creature-only mana is spent first on a creature spell
+          if (ctx && ctx.creature && p.poolCav) for (let j = 0; j < spent; j++) { const m = p.poolCav.findIndex(e => e.col === k && (ctx.subtypes || []).includes(e.type)); if (m < 0) break; if (p.poolCav[m].unc) ctx.usedCavern = true; p.poolCav.splice(m, 1); }   // restricted mana first; "that spell can't be countered"
         }
         log(s, 'pay', { who: who, mana: MF.manaStr(need) });
         return;
@@ -644,7 +658,7 @@
     const c = MF.parseMana(plotted ? '' : hz ? hz.cost : ch.mana);                            // CR 702.180a: an alternative cost
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
     if (o && o.extra) { const e = o.extra; for (const k in e) c[k] += e[k]; }
-    for (const f of MF.costMods) f(s, who, iid, ch, c);
+    for (const f of MF.costMods) f(s, who, iid, ch, c, o);
     if (o && o.reduce) c.g -= o.reduce;                                                       // harmonize: generic only (its ruling)
     c.g = Math.max(0, c.g);
     if (o && o.anyMana) for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) { c.g += c[k]; c[k] = 0; }   // CR 609.4b: "mana of any type can be spent" changes how it may be paid, not the cost
@@ -727,7 +741,7 @@
   }
   // CR 500.5: as a step ends, "until end of step" effects end, then mana empties.
   function endStep(s) {
-    for (const p of s.players) { if (poolTotal(p.pool)) log(s, 'manaEmpties', { who: p.seat, n: poolTotal(p.pool) }); p.pool = emptyPool(); p.poolCre = emptyPool(); }
+    for (const p of s.players) { if (poolTotal(p.pool)) log(s, 'manaEmpties', { who: p.seat, n: poolTotal(p.pool) }); p.pool = emptyPool(); p.poolCre = emptyPool(); p.poolCav = []; }
     let extra = false;
     if (s.step === 'eoc') {                                                                   // CR 511.3
       s.effects = s.effects.filter(e => e.until !== 'eoc');
@@ -1122,6 +1136,7 @@
     if (via === 'harmonize' && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === 'harmonize'))) return false;
     if (via === 'sneak' && !(d0.ab.some(a => a.k === 'sneak') && sneakWindow(s, who))) return false;
     if (s.bf.some(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); })) return false;   // "Your opponents can't cast spells during your turn" (CR 601.3)
+    if (P(s, who).h.cast >= 1 && s.bf.some(i => chars(s, i).ab.some(a => a.k === 'oneSpellPerTurn'))) return false;   // "Each player can't cast more than one spell each turn"
     if (d0.doors && door == null) return false;                                              // CR 709.3: a split card is cast as one of its halves
     const ch = faceChars(s, iid, alt, door), d = faceDef(s, iid, alt, door);
     if (ch.types.includes('Land')) return false;
@@ -1133,9 +1148,10 @@
     if (sp && sp.modes && !sp.modes.some(m => !m.tg || slotsLegalNow(s, who, iid, m.tg))) return false;   // CR 700.2a: a mode whose targets cannot be chosen cannot be chosen
     if (sp && sp.tg && !slotsLegalNow(s, who, iid, sp.tg) && !(sp.gift && slotsLegalNow(s, who, iid, sp.gift.tg || []))) return false;   // with a gift, its own targets (CR 702.174m)
     if (aura && !slotsLegalNow(s, who, iid, [{ f: aura.f }])) return false;
+    const tappedTg = sp && sp.tg && d.ab.some(a => a.k === 'costLess' && a.cond && a.cond.c === 'targetsTapped') ? MF.targetOptions(s, sp.tg[0], who, iid, []).find(r => r.c != null && I(s, r.c).tapped) : null;   // Ride's End: priced with a tapped target if one can be chosen
     let spreeExtra = null;
     if (sp && sp.spree) { const ms = sp.modes.filter(m => !m.tg || slotsLegalNow(s, who, iid, m.tg)).map(m => MF.parseMana(m.cost)).sort((a, b) => MF.manaValue(a) - MF.manaValue(b)); if (!ms.length) return false; spreeExtra = ms[0]; }
-    return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: spreeExtra }), { creature: ch.types.includes('Creature') });
+    return canPayMana(s, who, spellCost(s, who, iid, { x: 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: spreeExtra, targets: tappedTg ? [[tappedTg]] : null }), { creature: ch.types.includes('Creature'), subtypes: ch.subtypes });
   };
   // Harmonize: the most generic mana a tapped creature could take off (CR 702.180a).
   const harmonizeTappable = (s, who) => s.bf.filter(i => I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature'));
@@ -1239,6 +1255,7 @@
     if (P(s, who).hand.includes(iid) && chars(s, iid).ab.some((a, i) => a.k === 'act' && a.zone === 'hand' && canActivate(s, who, iid, i))) return null;   // it can be cycled
     if (s.priority !== who) return 'You do not have priority.';
     { const nc = s.bf.find(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); }); if (nc != null) return chars(s, nc).name + ': you can’t cast spells during the opponent’s turn.'; }
+    { const hn = s.bf.find(i => chars(s, i).ab.some(a => a.k === 'oneSpellPerTurn')); if (hn != null && P(s, who).h.cast >= 1) return chars(s, hn).name + ': each player can’t cast more than one spell each turn, and you have cast one.'; }
     const instant = ch.types.includes('Instant') || ch.kw.flash;
     if (!instant) {
       if (s.ap !== who) return 'Only instants and cards with flash can be cast on the opponent’s turn.';
@@ -1352,7 +1369,7 @@
     const c = I(s, iid);
     if (alt) c.asAlt = true;
     if (door != null) c.asDoor = door;
-    const ctx = { creature: d.types.includes('Creature') };                                   // what the mana is spent on (CR 106.6)
+    const ctx = { creature: d.types.includes('Creature'), subtypes: d.subtypes.slice() };      // what the mana is spent on (CR 106.6)
     const costRaw = MF.parseMana(d.mana);
     if (costRaw.x) {                                                                           // CR 601.2b, 107.3a: X is announced
       // The largest X whose total cost (reductions included, CR 601.2f) the player could pay.
@@ -1460,13 +1477,14 @@
     const part = sp && !sp.modes ? spellPart(sp, L) : null;
     if (part && part.tg) L.t = chooseTargets(x, who, iid, part.tg, 'spell', true);           // CR 601.2c
     if (aura) L.t = chooseTargets(x, who, iid, [{ f: aura.f }], 'aura', true);                 // CR 303.4a
-    const cost = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana, via: via, reduce: reduce, free: plotted });   // CR 601.2f
+    const cost = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana, via: via, reduce: reduce, free: plotted, targets: L.t });   // CR 601.2f
     if (hzTap != null) { I(s, hzTap).tapped = true; log(s, 'tapped', { who: who, c: I(s, hzTap).id }); }   // CR 702.180b
     if (L.bargainSac != null) MF.sacrifice(s, L.bargainSac);
     for (const f of addPay) f();
     if (sneakBack != null) { log(s, 'sneakReturn', { who: who, c: I(s, sneakBack).id }); move(s, sneakBack, 'hand'); }                                  // CR 702.166a: paid with the total cost (601.2h)
     payMana(x, who, cost, iid, true, ctx);                                                    // CR 601.2g-h
     L.spent = MF.manaValue(cost);                                                             // "the amount of mana spent to cast" (CR 601.2h)
+    if (ctx.usedCavern) L.uncounterable = true;                                               // Cavern of Souls
     const ch = chars(s, iid);
     const p = P(s, who);
     p.h.cast++;

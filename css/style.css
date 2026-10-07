@@ -106,7 +106,7 @@ a { color: var(--accent); }
 .ptitle { font-weight: 700; font-size: 1.02rem; }
 .pbody { color: #c4ccd6; font-size: .88rem; }
 .ptext-oracle { margin-top: .25rem; padding-left: .5rem; border-left: 2px solid #3b4b5f; color: #e3e7ec; }
-.pbtns { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; max-width: 50%; padding-right: 3rem; }
+.pbtns { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; max-width: 50%; padding-right: 3rem; max-height: 40vh; overflow-y: auto; align-content: flex-start; }   /* a long list (choose a creature type) scrolls inside the prompt */
 .tray { display: flex; gap: .3rem; }
 .prompt.wait { opacity: .8; } .prompt.over { justify-content: space-between; border-color: var(--accent); }
 .hand { display: flex; gap: .35rem; justify-content: center; overflow-x: auto; padding: .4rem .2rem .2rem; min-height: calc(var(--card-hand-w) * 1.4 + .6rem); }

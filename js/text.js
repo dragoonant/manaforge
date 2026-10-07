@@ -61,6 +61,7 @@
     exiledGrave: (e, v) => `${T.whose(e.who, v)[0].toUpperCase() + T.whose(e.who, v).slice(1)} graveyard is exiled: ${e.cs.map(tag).join(', ')}.`,
     endTurn: (e, v) => `${tag(e.c)} ends the turn: the stack is exiled, and the game skips to the cleanup step.`,
     exiledInsteadOfGrave: (e, v) => `${tag(e.c)} is exiled instead of going to the graveyard.`,
+    becomesCreature: (e, v) => `${tag(e.c)} becomes a ${e.p}/${e.tou} creature in addition to its other types.`,
     lore: (e, v) => `${tag(e.c)} gets a lore counter (${e.n}).`,
     sagaDone: (e, v) => `${tag(e.c)} has read its final chapter and is sacrificed.`,
     exiledCost: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'exile', 'exiles')} ${tag(e.c)} to pay a cost.`,
@@ -192,7 +193,9 @@
     lookPick: (s, q) => ({ title: `${C(s, q.src)}: choose a card for your hand (${q.k} of ${q.take})`, body: `Only you see these ${q.n} cards. The ones you don’t take go to the bottom of your library.`, labels: {} }),
     sneakReturn: (s, q) => ({ title: `Sneak ${C(s, q.src)}: return an unblocked attacker`, body: 'To pay the sneak cost, return one of your unblocked attacking creatures to your hand (CR 702.190). Click a glowing creature.', labels: {} }),
     sacToken: (s, q) => ({ title: `${C(s, q.src)}: sacrifice a token`, body: 'Sacrificing a token is part of the cost. Click a glowing token.', labels: {} }),
-    enterChoice: (s, q) => q.what === 'basicType'
+    enterChoice: (s, q) => q.what === 'creatureType'
+      ? ({ title: `${tag(q.c)} is entering: choose a creature type`, body: 'Any creature type may be chosen (CR 205.3m). The types among your own cards are listed first.', labels: Object.fromEntries(q.opts.map(o => [o.id, o.id])) })
+      : q.what === 'basicType'
       ? ({ title: `${tag(q.c)} is entering: choose a basic land type`, body: 'It becomes that land type and taps for its colour (CR 305.7). Then you may pay 2 life, or it enters tapped.', labels: Object.fromEntries(q.opts.map(o => [o.id, o.id + ' (' + { Plains: 'white', Island: 'blue', Swamp: 'black', Mountain: 'red', Forest: 'green' }[o.id] + ')'])) })
       : ({ title: `${tag(q.c)} is entering: choose odd or even`, body: 'Zero is even. Its ability refers to the quality you choose.', labels: { odd: 'Odd', even: 'Even' } }),
     mayPay: (s, q) => ({ title: `${C(s, q.src)}: pay ${q.mana ? symbols(q.mana) : q.life + ' life'}?`, body: `If you pay, the rest happens.${oracle(s, q.src)}`, labels: { yes: 'Pay ' + (q.mana ? q.mana.replace(/[{}]/g, '') : q.life + ' life'), no: 'Don’t pay' } }),

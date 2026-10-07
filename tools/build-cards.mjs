@@ -36,12 +36,14 @@ export function parseFilter(str) {
   if ((m = s.match(/^(another|other) (.*)$/))) { f.other = true; s = m[2]; }
   if ((m = s.match(/^basic (.*)$/))) { f.supers = ['Basic']; s = m[1]; }
   if ((m = s.match(/^nonbasic (.*)$/))) { f.notSupers = ['Basic']; s = m[1]; }
+  if ((m = s.match(/^non-Aura (.*)$/))) { f.notSubtypes = ['Aura']; s = m[1]; }
   if ((m = s.match(/^non-outlaw (.*)$/))) { f.notSubtypes = ['Assassin', 'Mercenary', 'Pirate', 'Rogue', 'Warlock']; s = m[1]; }   // CR 700.12                                // CR 205.4a
   if ((m = s.match(/^non(land|creature|artifact) (.*)$/))) { f.notTypes = [m[1][0].toUpperCase() + m[1].slice(1)]; s = m[2]; }
   if ((m = s.match(/^creature or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Planeswalker']; s = m[1]; }
   else if ((m = s.match(/^creature, enchantment, or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Enchantment', 'Planeswalker']; s = m[1]; }
   else if ((m = s.match(/^artifact or enchantment\b ?(.*)$/))) { f.types = ['Artifact', 'Enchantment']; s = m[1]; }
   else if ((m = s.match(/^artifact or creature\b ?(.*)$/))) { f.types = ['Artifact', 'Creature']; s = m[1]; }
+  else if ((m = s.match(/^creature or Vehicle\b ?(.*)$/))) { f.typesOrSub = { types: ['Creature'], subtypes: ['Vehicle'] }; s = m[1]; }
   else if ((m = s.match(/^artifacts and creatures\b ?(.*)$/))) { f.types = ['Artifact', 'Creature']; s = m[1]; }
   else if ((m = s.match(/^creature or artifact\b ?(.*)$/))) { f.types = ['Creature', 'Artifact']; s = m[1]; }
   else if ((m = s.match(/^attacking creatures?\b ?(.*)$/))) { f.types = ['Creature']; f.attacking = true; s = m[1]; }
@@ -194,13 +196,16 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may put a (permanent|creature|land) card from among the milled cards into your hand$/))) return [{ o: 'pickMilled', type: m[1] }];   // CR 701.17c
   if ((m = s.match(/^[Uu]ntap (target .+)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
   if (/^[Uu]ntap ~$/.test(s)) return [{ o: 'untap', on: 'self' }];
+  if ((m = s.match(/^[Ii]t deals (\d+) damage to (any target)$/)) && ctx.it == null) return [{ o: 'damage', from: 'self', to: parseRef(T, ctx, m[2]), n: +m[1] }];   // High Noon: "It" is the sacrificed enchantment
+  if (/^[Cc]reate a tapped colorless land token named Everywhere that is every basic land type$/.test(s)) return [{ o: 'token', id: ctx.token.everywhere(), n: 1, tapped: true }];
+  if ((m = s.match(/^(target non-Aura enchantment you control) becomes a creature in addition to its other types and has base power and base toughness each equal to its mana value$/i))) return [{ o: 'becomeCreatureMV', on: parseRef(T, ctx, m[1]) }];   // layers 4 and 7b
   if ((m = s.match(/^[Ss]urveil (\d+), then draw a card$/))) return [{ o: 'surveil', n: +m[1] }, { o: 'draw', n: 1 }];
   if ((m = s.match(/^[Dd]raw two cards, then discard a card$/))) return [{ o: 'draw', n: 2 }, { o: 'discard', n: 1 }];
   if ((m = s.match(/^[Ee]xile (target player)'s graveyard$/))) return [{ o: 'exileGrave', who: parseRef(T, ctx, m[1]) }];
   if (/^[Ee]nd the turn$/.test(s)) return [{ o: 'endTurn' }];                                       // CR 724.1
   if ((m = s.match(/^[Ee]xile each (nonland permanent with mana value \d+ or less) until ~ leaves the battlefield$/))) return [{ o: 'exileUntilLeaves', on: { each: parseFilter(m[1]) } }];   // CR 610.3
   if ((m = s.match(/^[Rr]eturn up to two other target (nonland permanents) to their owners' hands$/))) { T.push({ f: Object.assign(parseFilter(m[1].replace(/s$/, '')), { other: true }), n: 2, upTo: true }); return [{ o: 'bounce', on: { t: T.length - 1 } }]; }
-  if (/^[Ii]ts controller creates two Map tokens$/.test(s) && T.length) return [{ o: 'token', id: 'token-map', n: 2, forCtrlOf: { t: T.length - 1 } }];
+  if (/^[Ii]ts controller creates two Map tokens$/.test(s) && T.length) return [{ o: 'token', id: ctx.token.map(), n: 2, forCtrlOf: { t: T.length - 1 } }];
   if (/^[Ii]ts controller gains 3 life$/.test(s) && T.length) return [{ o: 'gain', n: 3, forCtrlOf: { t: T.length - 1 } }];
   if ((m = s.match(/^[Pp]ut a (flying|deathtouch|lifelink) counter, an? (flying|deathtouch|lifelink) counter, and an? (flying|deathtouch|lifelink) counter on (target creature)$/))) { const on = parseRef(T, ctx, m[4]); return [m[1], m[2], m[3]].map(k => ({ o: 'counter', on: on, n: 1, kind: k })); }   // CR 122.1b
   if (/^[Mm]ill four cards, then you may return a non-Avatar creature card or a planeswalker card from your graveyard to your hand$/.test(s)) return [{ o: 'mill', n: 4 }, { o: 'chooseFromGrave', fs: [{ types: ['Creature'], notSubtypes: ['Avatar'] }, { types: ['Planeswalker'] }], n: 1, to: 'hand' }];
@@ -215,7 +220,7 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may search your library for up to (one|two|three) (artifact, creature, and\/or enchantment) cards with mana value (\d+) or less, reveal them, put them into your hand, then shuffle$/))) return [{ o: 'may', what: 'searchCards', ops: [{ o: 'tutorUpTo', n: numOf(m[1]), f: { types: ['Artifact', 'Creature', 'Enchantment'], mvLE: +m[3] }, reveal: true }] }];
   if (/^After this phase, there is an additional combat phase$/.test(s)) return [{ o: 'extraCombat' }];   // CR 500.8
   if ((m = s.match(/^(.+?) fights (.+)$/))) return [{ o: 'fight', a: parseRef(T, ctx, m[1]), b: parseRef(T, ctx, m[2]) }];   // CR 701.14
-  if ((m = s.match(/^[Ee]xile (target creature or planeswalker)$/))) return [{ o: 'exile', on: parseRef(T, ctx, m[1]) }];
+  if ((m = s.match(/^[Ee]xile (target creature or (?:planeswalker|Vehicle))$/))) return [{ o: 'exile', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Ee]xile (target creature with mana value less than or equal to the number of \w+ you control)$/))) return [{ o: 'exile', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Ee]xile target card from a graveyard$/))) { T.push({ f: { card: 'grave' } }); return [{ o: 'exile', on: { t: T.length - 1 }, link: true }]; }   // CR 607.2a: linked to "exiled with"
   if ((m = s.match(/^[Ss]earch your library for a basic land card, reveal it, put it into your hand, then shuffle$/))) return [{ o: 'searchBasic', toHand: true }];
@@ -448,6 +453,7 @@ const EVENTS = [
   [/^one or more cards leave your graveyard$/, () => [{ on: 'leftGraveBatch', you: true }]],
   [/^one or more permanent cards are put into your graveyard from anywhere while ~ has an? (-1\/-1|\+1\/\+1) counter on it$/, m => [{ on: 'toGraveBatch', you: true, evCond: { c: 'hasCounter', kind: m[1] } }]],
   [/^you attack$/, () => [{ on: 'attackWith' }]],
+  [/^a creature an opponent controls enters$/, () => [{ on: 'enters', who: { types: ['Creature'], ctrl: 'opp' } }]],
   [/^~ enters and whenever you cast a spell with mana value (\d+) or greater$/, m => [{ on: 'enters', who: 'self' }, { on: 'cast', spell: { mvGE: +m[1] } }]],
   [/^a creature you control becomes the target of a spell or ability an opponent controls$/, () => [{ on: 'targeted', ownCreature: true, byOpp: true, permOnly: true }]],
   [/^you cast a spell with mana value (\d+) or greater$/, m => [{ on: 'cast', spell: { mvGE: +m[1] } }]],
@@ -560,6 +566,12 @@ function parseStatic(line, ctx, out, d) {
   if (line === 'As an additional cost to cast this spell, discard a card or sacrifice a permanent.') { out.push({ k: 'addCost', what: 'discardOrSac' }); return true; }   // CR 601.2f
   if (line === "~'s power is equal to the number of permanent cards in your graveyard and its toughness is equal to that number plus 1.") { out.push({ k: 'cda', p: true, t: true, tPlus: 1, v: { v: 'graveCount', f: { types: ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'] } } }); return true; }   // CR 604.3
   if ((m = line.match(/^Impending (\d+)—(\{[^ ]+\})$/))) { out.push({ k: 'impending', n: +m[1], cost: m[2] }, { k: 'trig', on: 'beginStep', step: 'end', yours: true, cond: { c: 'impendingTime' }, ops: [{ o: 'removeCounter', kind: 'time', n: 1 }], fromKeyword: 'impending' }); return true; }   // CR 702.176a
+  if (line === "Each player can't cast more than one spell each turn.") { out.push({ k: 'oneSpellPerTurn' }); return true; }   // CR 101.2: a "can't" wins
+  if (line === 'As ~ enters, choose a creature type.') { out.push({ k: 'enterChoice', what: 'creatureType' }); return true; }   // CR 614.12a
+  if (line === 'Creatures your opponents control enter tapped.') { out.push({ k: 'oppCreaturesEnterTapped' }); return true; }   // CR 614.1d
+  if ((m = line.match(/^Enchantment creatures you control have (.+)\.$/))) { out.push({ k: 'static', affects: { allTypes: ['Enchantment', 'Creature'], ctrl: 'you' }, grant: kwList(m[1]) }); return true; }
+  if (line === 'This spell costs {1} less to cast for each basic land type among lands you control.') { out.push({ k: 'costLessPer', domain: true, f: { types: ['Land'] }, zones: [] }); return true; }   // domain (CR 207.2c)
+  if ((m = line.match(/^This spell costs \{(\d+)\} less to cast if it targets a tapped permanent\.$/))) { out.push({ k: 'costLess', n: +m[1], cond: { c: 'targetsTapped' } }); return true; }   // CR 601.2f: after targets are chosen
   if (line === 'You may play an additional land on each of your turns.') { out.push({ k: 'extraLand', n: 1 }); return true; }   // CR 305.2
   if (line === 'You may play lands from your graveyard.') { out.push({ k: 'landsFromGrave' }); return true; }
   if (line === "This spell can't be countered.") { out.push({ k: 'uncounterable' }); return true; }        // CR 113.6g
@@ -657,6 +669,7 @@ function parseLine(line, ctx, d, kw, ab) {
     // Vivi Ornitier: X mana in any combination of two colours (CR 106.1a); X is read as it is activated.
     if ((mm = body.match(/^Add X mana in any combination of \{([WUBRG])\} and\/or \{([WUBRG])\}, where X is ~'s power\. Activate only during your turn and only once each turn\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1], mm[2]], combo: true, amount: { v: 'power', of: 'self' }, cond: { c: 'yourTurn' }, oncePerTurn: true }); return; }
     if (body === 'Add one mana of any color.') { ab.push({ k: 'mana', cost: cost, cols: ['W', 'U', 'B', 'R', 'G'] }); return; }
+    if (body === "Add one mana of any color. Spend this mana only to cast a creature spell of the chosen type, and that spell can't be countered.") { ab.push({ k: 'mana', cost: cost, cols: ['W', 'U', 'B', 'R', 'G'], only: 'chosenType', uncounterable: true }); return; }   // CR 106.6
     // Activation restrictions (CR 602.5): "Activate only as a sorcery.", "... only once each turn.", "Activate only if <cond>."
     const act = { k: 'act', cost: cost };
     if (cost.zone) { act.zone = cost.zone; delete cost.zone; }
@@ -835,6 +848,11 @@ function tokenMaker(pack) {
   mk.map = function () {
     const id = 'token-map';
     if (!pack[id]) pack[id] = { id: id, name: 'Map', token: true, mana: '', colors: [], types: ['Artifact'], subtypes: ['Map'], supers: [], power: null, toughness: null, typeLine: 'Token Artifact — Map', text: '{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only as a sorcery.', kw: {}, ab: [{ k: 'act', cost: { mana: '{1}', tap: true, sacSelf: true }, sorcery: true, tg: [{ f: { types: ['Creature'], ctrl: 'you' } }], ops: [{ o: 'explore', on: { t: 0 } }] }], layout: 'token' };
+    return id;
+  };
+  mk.everywhere = function () {
+    const id = 'token-everywhere', TYPES = ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'];
+    if (!pack[id]) pack[id] = { id: id, name: 'Everywhere', token: true, mana: '', colors: [], types: ['Land'], subtypes: TYPES, supers: [], power: null, toughness: null, typeLine: 'Token Land — Plains Island Swamp Mountain Forest', text: '', kw: {}, ab: TYPES.map(st => ({ k: 'mana', cost: { tap: true }, cols: [BASIC_MANA[st]] })), layout: 'token' };
     return id;
   };
   mk.treasure = function () {                                                                     // CR 111.10a

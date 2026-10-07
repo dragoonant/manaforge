@@ -18,6 +18,8 @@
     if (f.player) return f.player === 'opp' ? 'opponent' : f.player === 'you' ? 'you' : 'player';
     const w = [];
     if (f.other) w.push('other');
+    if (f.allTypes) return w.concat([f.allTypes.join(' ').toLowerCase()]).join(' ') + (f.ctrl === 'you' ? ' you control' : '');
+    if (f.typesOrSub) w.push(f.typesOrSub.types.join('/').toLowerCase() + ' or ' + f.typesOrSub.subtypes.join('/'));
     if (f.notTypes) w.push('non' + f.notTypes.join('/').toLowerCase());
     if (f.supers) w.push(f.supers.join(' ').toLowerCase()); if (f.notSupers) w.push('non' + f.notSupers.join('').toLowerCase());
     w.push(f.subtypes ? f.subtypes.join('/') + (f.types && !f.types.includes('Creature') ? ' ' + f.types.join('/').toLowerCase() : '') : f.types ? f.types.join('/').toLowerCase() : f.tok ? 'token' : 'permanent');   // "Lizard, Mouse, Otter, or Raccoon you control"
@@ -86,6 +88,7 @@
     notSolved: () => 'this Case is not solved',
     descended: () => 'you descended this turn',
     castFromGrave: () => 'this spell was cast from a graveyard',
+    targetsTapped: () => 'it targets a tapped permanent',
     oppMore: c => 'an opponent ' + ({ lands: 'controls more lands', life: 'has more life', creatures: 'controls more creatures', hand: 'has more cards in hand' })[c.what] + ' than you',
     impendingTime: () => 'its impending cost was paid and it has a time counter on it',
     counterAtLeast: c => 'it has ' + (['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][c.n] || c.n) + ' or more ' + c.kind + ' counters on it',
@@ -104,13 +107,14 @@
     pump: op => { if (op.p && op.p.v === 'power') return 'double the power of ' + ref(op.on) + ' until end of turn'; const pt = (op.p != null || op.t != null) && (op.p !== 0 || op.t !== 0); return ref(op.on) + (pt ? ' gets ' + sgn(op.p) + '/' + sgn(op.t) : '') + (op.grant ? (pt ? ' and' : '') + ' gains ' + op.grant.map(k => KWNAME[k]).join(', ') : '') + ' until end of turn'; },
     unblockable: op => ref(op.on) + ' can’t be blocked this turn',
     scry: op => 'scry ' + N(op.n),
-    token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); if (!d.types.includes('Creature')) return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + d.name + ' token' + (op.n === 1 ? '' : 's') + (d.text ? ' (“' + d.text + '”)' : ''); return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : '') + (d.text && !kws.length ? ' with “' + d.text + '”' : '') + (op.attacking ? ' that are tapped and attacking' : '') + (op.attackingIf ? '; if ' + cond(op.attackingIf) + ', they enter tapped and attacking' : '') + (op.sacEnd ? '; sacrifice them at the beginning of the next end step' : ''); },
+    token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); if (!d.types.includes('Creature')) return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + (op.tapped ? 'tapped ' : '') + d.name + ' token' + (op.n === 1 ? '' : 's') + (d.text ? ' (“' + d.text + '”)' : d.types.includes('Land') ? ' (a ' + d.types.join(' ').toLowerCase() + ' — ' + d.subtypes.join(' ') + ')' : ''); return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : '') + (d.text && !kws.length ? ' with “' + d.text + '”' : '') + (op.attacking ? ' that are tapped and attacking' : '') + (op.attackingIf ? '; if ' + cond(op.attackingIf) + ', they enter tapped and attacking' : '') + (op.sacEnd ? '; sacrifice them at the beginning of the next end step' : ''); },
     tokenCopy: op => 'create a token that’s a copy of ' + ref(op.of) + (op.except && op.except.pt ? ', except it is ' + op.except.pt.join('/') : ''),
     destroy: op => 'destroy ' + ref(op.on),
     damage: op => ref(op.from) + ' deals ' + N(op.n) + ' damage to ' + ref(op.to),
     draw: op => (op.who ? ref(op.who) + ' draws ' : 'draw ') + N(op.n) + ' card' + (op.n === 1 ? '' : 's'),
     discard: op => 'discard ' + op.n + ' card' + (op.n === 1 ? '' : 's') + ' of your choice',
     gain: op => (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] gains ' : 'gain ') + N(op.n) + ' life',
+    becomeCreatureMV: op => ref(op.on) + ' becomes a creature in addition to its other types with base power and base toughness each equal to its mana value',
     exileGrave: op => 'exile ' + ref(op.who) + '’s graveyard',
     endTurn: () => 'end the turn (exile everything on the stack, including this; skip to the cleanup step)',
     lookTop: op => 'look at the top card of your library; if it is a ' + op.type.toLowerCase() + ', you may put it onto the battlefield tapped, otherwise put it into your hand',
@@ -196,7 +200,7 @@
     if (a.level > 1) { const b = Object.assign({}, a); delete b.level; return 'Level ' + a.level + ': ' + MF.describeAbility(b); }   // CR 716.2a
     switch (a.k) {
       case 'mana': if (a.combo) return a.cost.mana + ': add X mana in any combination of ' + a.cols.map(c => '{' + c + '}').join(' and/or ') + ', where X is this creature’s power (only during your turn, only once each turn)';
-        return [a.cost.tap ? '{T}' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': add ' + (a.cols.length === 5 ? 'one mana of any color' : a.cols.map(c => '{' + c + '}').join(' or ')) + (a.only ? ' (spend only on a creature spell)' : '') + (a.cond ? ' — only if ' + cond(a.cond) : '') + (a.selfDamage ? '; this deals ' + a.selfDamage + ' damage to you' : '');
+        return [a.cost.tap ? '{T}' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': add ' + (a.cols.length === 5 ? 'one mana of any color' : a.cols.map(c => '{' + c + '}').join(' or ')) + (a.only === 'chosenType' ? ' (spend only on a creature spell of the chosen type; that spell can’t be countered)' : a.only ? ' (spend only on a creature spell)' : '') + (a.cond ? ' — only if ' + cond(a.cond) : '') + (a.selfDamage ? '; this deals ' + a.selfDamage + ' damage to you' : '');
       case 'etbPayOrTap': return 'as this enters, you may pay ' + a.life + ' life; if you don’t, it enters tapped';
       case 'act': if (a.loyalty != null) return '[' + (a.loyalty > 0 ? '+' + a.loyalty : a.loyalty === 0 ? '0' : '−' + (-a.loyalty)) + ']: ' + ops(a.ops) + ' (loyalty ability: once a turn, as a sorcery)';
         if (a.ninjutsu) return 'ninjutsu ' + a.cost.mana + ' (' + a.cost.mana + ', return an unblocked attacker you control to hand: put this onto the battlefield from your hand tapped and attacking)';
@@ -207,7 +211,9 @@
         return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.discard ? 'discard a card' : '', a.cost.discardSelf ? 'discard this card' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : '', a.cost.exileSelf ? (a.zone === 'grave' ? 'exile this card from your graveyard' : 'exile this') : '', a.cost.crew ? 'crew ' + a.cost.crew + ' (tap any number of other untapped creatures you control with total power ' + a.cost.crew + ' or more)' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
       case 'evasion': return a.blockerNot.notSubtypes ? 'this can’t be blocked by non-' + a.blockerNot.notSubtypes.join('/') + ' creatures' : 'this can’t be blocked by ' + filt(Object.assign({ types: ['Creature'] }, a.blockerNot)).replace('creature', 'creatures');
       case 'oppDieExile': return 'if a creature an opponent controls would die, exile it instead';
-      case 'enterChoice': return 'as this enters, choose ' + (a.what === 'basicType' ? 'a basic land type' : 'odd or even');
+      case 'enterChoice': return 'as this enters, choose ' + (a.what === 'basicType' ? 'a basic land type' : a.what === 'creatureType' ? 'a creature type' : 'odd or even');
+      case 'oneSpellPerTurn': return 'each player can’t cast more than one spell each turn';
+      case 'oppCreaturesEnterTapped': return 'creatures your opponents control enter tapped';
       case 'reflexiveBody': return (a.cond ? 'if ' + cond(a.cond) + ', ' : '') + ops(a.ops);
       case 'etbCounters': return 'this enters with ' + a.n + ' ' + a.kind + ' counters on it';
       case 'flashback': return 'flashback ' + a.cost + ' (you may cast this from your graveyard for ' + a.cost + '; then exile it)';
@@ -264,7 +270,8 @@
         if (a.pv) return 'this gets +1/+1 for each other ' + filt(a.pv.f).replace(' you control', '') + ' you control';
         return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + (typeof a.affects === 'string' ? (a.affects === 'self' ? 'this' : 'the ' + a.affects + ' creature') : 'each ' + filt(a.affects)) + (a.p || a.t ? ' gets ' + sgn(a.p) + '/' + sgn(a.t) : '') + (a.grant ? (a.p || a.t ? ' and' : '') + ' has ' + a.grant.map(k => KWNAME[k]).join(', ') : '') + (a.grantAb ? ' and ' + a.grantAb.map(g => MF.describeAbility(g)).join(', ') : '');
       case 'cda': return a.tPlus ? 'power is equal to ' + N(a.v) + ' and toughness is equal to that number plus ' + a.tPlus : (a.t === false ? 'power is equal to ' : 'power and toughness each equal ') + N(a.v);
-      case 'costLessPer': return 'this spell costs {1} less to cast for each ' + (a.f.types.length > 2 ? 'permanent' : a.f.types.join('/').toLowerCase()) + ' card ' + (a.zones.length > 1 ? 'you own in exile and in your graveyard' : 'in your graveyard');
+      case 'costLessPer': if (a.domain) return 'domain — this spell costs {1} less to cast for each basic land type among lands you control';
+        return 'this spell costs {1} less to cast for each ' + (a.f.types.length > 2 ? 'permanent' : a.f.types.join('/').toLowerCase()) + ' card ' + (a.zones.length > 1 ? 'you own in exile and in your graveyard' : 'in your graveyard');
       case 'preventCombatToSelf': return 'prevent all combat damage that would be dealt to this';
       case 'impending': return 'impending ' + a.n + '—' + a.cost + ' (you may cast it for ' + a.cost + '; it enters with ' + a.n + ' time counters and isn’t a creature while it has any)';
       case 'chosenLandType': return 'this is the chosen basic land type (and taps for its color)';
