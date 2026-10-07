@@ -6,12 +6,14 @@
   const MF = window.MF;
   const KWNAME = { flying: 'flying', reach: 'reach', firstStrike: 'first strike', doubleStrike: 'double strike', deathtouch: 'deathtouch', lifelink: 'lifelink', trample: 'trample', vigilance: 'vigilance', haste: 'haste', menace: 'menace', defender: 'defender', flash: 'flash', hexproof: 'hexproof', indestructible: 'indestructible', prowess: 'prowess', shroud: 'shroud' };
   MF.KWNAME = KWNAME;
-  const VN = { oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control' };
+  const VN = { halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control' };
   const N = n => typeof n === 'number' ? String(n) : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
   function filt(f) {
     if (!f) return 'anything';
     if (f.any) return 'any target';
     if (f.card) return (f.types ? f.types.join(' or ').toLowerCase() + ' ' : '') + 'card' + (f.mvLEv ? ' with mana value X or less (X = the life you gained this turn)' : '') + ' from ' + (f.own ? 'your graveyard' : 'a graveyard');
+    if (f.ability) return 'activated or triggered ability';
+    if (f.spell && f.mvIs != null) return 'spell with mana value ' + f.mvIs;
     if (f.spell) return (f.notTypes ? f.notTypes.map(x => 'non' + x.toLowerCase()).join(' ') + ' ' : '') + 'spell';
     if (f.player) return f.player === 'opp' ? 'opponent' : f.player === 'you' ? 'you' : 'player';
     const w = [];
@@ -27,6 +29,7 @@
     if (f.kw) w.push('with ' + KWNAME[f.kw]); if (f.notKw) w.push('without ' + KWNAME[f.notKw]);
     if (f.tokOrSub) w.push('that is a token or a ' + f.tokOrSub);
     if (f.attacking) w.push('attacking');
+    if (f.notSubtypes) w.unshift('non-outlaw');
     if (f.tok && f.types) w.push('token');
     if (f.mvLE != null) w.push('with mana value ' + f.mvLE + ' or less');
     if (f.ptSumLE != null) w.push('with total power and toughness ' + f.ptSumLE + ' or less');
@@ -77,6 +80,7 @@
     lkiType: c => 'it was a ' + c.type.toLowerCase(),
     selfPowerIs: c => 'its power is exactly ' + c.n,
     notSolved: () => 'this Case is not solved',
+    addCostPaid: () => 'this spell’s additional cost was paid',
     hasCounter: c => 'it has one or more ' + c.kind + ' counters',
     lifeAtMostHalfStart: () => 'your life total is less than or equal to half your starting life total',
     yourTurn: () => 'it is your turn',
@@ -107,16 +111,18 @@
     handPick: op => op.look ? 'look at ' + ref(op.who) + '’s hand; you may exile a nonland card from it until this leaves the battlefield' : ref(op.who) + ' reveals their hand; you choose a ' + (op.f.notTypes || []).map(x => 'non' + x.toLowerCase()).join(', ') + ' card from it; ' + (op.then === 'discard' ? 'that player discards it' : 'exile it' + (op.castIfGift ? '; if the gift was promised, you may cast it while it remains exiled, spending mana of any type' : '')),
     bounce: op => 'return ' + ref(op.on) + ' to its owner’s hand',
     graveToHand: op => 'return ' + ref(op.on) + ' to your hand',
-    counterUnless: op => 'counter ' + ref(op.on) + ' unless its controller pays ' + op.pay,
+    counterUnless: op => 'counter ' + ref(op.on) + ' unless its controller pays ' + op.pay + (op.payIf ? ' (' + op.payIf.pay + ' instead if this spell was cast using teamwork)' : ''),
     lookPick: op => 'look at the top ' + op.n + ' cards of your library; put ' + op.take + ' of them into your hand and the rest on the bottom in any order',
     dieExile: () => 'if a permanent dealt damage by this would die this turn, exile it instead',
+    counterTarget: op => 'counter ' + ref(op.on),
+    counterAbility: op => 'counter ' + ref(op.on) + (op.loseWhile ? '; if it was an ability of an artifact, creature or planeswalker, that permanent loses all abilities for as long as this remains on the battlefield' : ''),
     shuffleIntoLib: op => 'shuffle this and ' + ref(op.on[1]) + ' into their owners’ libraries',
     transform: () => 'transform this',
     emblem: op => 'you get an emblem with “' + op.text + '”',
     choose: op => 'choose up to one ' + filt(op.f) + ' (not targeted)',
     chooseFromGrave: op => 'return up to ' + op.n + ' ' + op.types.join('/').toLowerCase() + ' cards from your graveyard to your hand',
     sacGreatestPower: () => 'each opponent sacrifices a creature with the greatest power among creatures they control',
-    loseAbilities: op => ref(op.on) + ' loses all abilities until your next turn; if it is a creature, it has base power and toughness ' + op.basePT.join('/') + ' until your next turn',
+    loseAbilities: op => op.whileSrc ? ref(op.on) + ' loses all abilities for as long as this remains on the battlefield' : ref(op.on) + ' loses all abilities until your next turn; if it is a creature, it has base power and toughness ' + op.basePT.join('/') + ' until your next turn',
     ninjutsuEnter: () => 'put this card onto the battlefield from your hand tapped and attacking',
     explore: () => 'this explores (reveal the top card: a land goes to your hand; otherwise a +1/+1 counter on this, and you may put the card into your graveyard)',
     moveCounters: op => 'put its counters on ' + ref(op.to),
@@ -170,6 +176,7 @@
         return [a.cost.mana, a.cost.tap ? '{T}' : '', a.cost.sacSelf ? 'sacrifice this' : '', a.cost.sacToken ? 'sacrifice a token' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : ''].filter(Boolean).join(', ') + ': ' + ops(a.ops) + (a.sorcery ? ' (only as a sorcery)' : '') + (a.cond ? ' (activate only if ' + cond(a.cond) + ')' : '') + (a.oncePerTurn ? ' (only once each turn)' : '') + (a.once ? ' (only once)' : '');
       case 'evasion': return 'this can’t be blocked by ' + filt(Object.assign({ types: ['Creature'] }, a.blockerNot)).replace('creature', 'creatures');
       case 'oppDieExile': return 'if a creature an opponent controls would die, exile it instead';
+      case 'addCost': return a.what === 'blight' ? 'as an additional cost, you may blight ' + a.n + ' (put ' + a.n + ' -1/-1 counter on a creature you control)' : a.what === 'teamwork' ? 'teamwork ' + a.n + ' (as an additional cost, you may tap creatures you control with total power ' + a.n + ' or more)' : 'as an additional cost, discard a card or pay ' + a.life + ' life';
       case 'warp': return 'warp ' + a.cost + ' (you may cast this from your hand for ' + a.cost + '; exile it at the beginning of the next end step, and you may cast it from exile on a later turn)';
       case 'sneak': return 'sneak ' + a.cost + ' (you may cast this for ' + a.cost + ' during your declare blockers step by returning an unblocked attacker you control to its owner’s hand)';
       case 'oppNoCast': return 'your opponents can’t cast spells during your turn';
@@ -188,6 +195,7 @@
         else if (a.on === 'dealsDamage') e = 'Whenever this deals ' + (a.combat ? 'combat ' : '') + 'damage' + (a.toOpp ? ' to an opponent' : a.toPlayer ? ' to a player' : '');
         else if (a.on === 'unlock') e = 'When you unlock this door';
         else if (a.on === 'gainLife') e = 'Whenever you gain life';
+        else if (a.on === 'search') e = 'Whenever ' + (a.opp ? 'an opponent searches their library' : 'you search your library');
         else if (a.on === 'drawCard') e = 'Whenever ' + (a.opp ? 'an opponent draws' : 'you draw') + (a.nth ? ' their second card each turn' : ' a card');
         else if (a.on === 'dealsDamage' && a.who && a.who !== 'self') e = 'Whenever ' + who(a.who) + ' deals ' + (a.combat ? 'combat ' : '') + 'damage' + (a.toPlayer ? ' to a player' : '');
         else if (a.on === 'beginStep' && !a.yours && a.step === 'end') e = 'At the beginning of each end step';

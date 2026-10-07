@@ -34,7 +34,8 @@ export function parseFilter(str) {
   let s = str.trim(); const f = {};
   let m;
   if ((m = s.match(/^(another|other) (.*)$/))) { f.other = true; s = m[2]; }
-  if ((m = s.match(/^basic (.*)$/))) { f.supers = ['Basic']; s = m[1]; }                                // CR 205.4a
+  if ((m = s.match(/^basic (.*)$/))) { f.supers = ['Basic']; s = m[1]; }
+  if ((m = s.match(/^non-outlaw (.*)$/))) { f.notSubtypes = ['Assassin', 'Mercenary', 'Pirate', 'Rogue', 'Warlock']; s = m[1]; }   // CR 700.12                                // CR 205.4a
   if ((m = s.match(/^non(land|creature|artifact) (.*)$/))) { f.notTypes = [m[1][0].toUpperCase() + m[1].slice(1)]; s = m[2]; }
   if ((m = s.match(/^creature or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Planeswalker']; s = m[1]; }
   else if ((m = s.match(/^creature or artifact\b ?(.*)$/))) { f.types = ['Creature', 'Artifact']; s = m[1]; }
@@ -72,7 +73,8 @@ function targetSlot(T, phrase) {
   if (phrase === 'any other target') { if (T.length) T.push({ f: { any: true }, diff: T.length - 1 }); else T.push({ f: { any: true, other: true } }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^target (.+?), (.+?), (.+?), or (.+?) you control$/))) { T.push({ f: Object.assign(parseFilter('creature you control'), { subtypes: [m[1], m[2], m[3], m[4]] }) }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^target (instant or sorcery|creature|land|permanent) card from your graveyard$/))) { T.push({ f: { card: 'grave', own: true, types: m[1] === 'instant or sorcery' ? ['Instant', 'Sorcery'] : m[1] === 'permanent' ? ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'] : [cap(m[1])] } }); return { t: T.length - 1 }; }
-  if ((m = phrase.match(/^target (noncreature )?spell$/))) { T.push({ f: Object.assign({ spell: true }, m[1] ? { notTypes: ['Creature'] } : {}) }); return { t: T.length - 1 }; }   // a spell on the stack (CR 115.1)
+  if ((m = phrase.match(/^target (noncreature )?spell(?: with mana value (\d+))?$/))) { T.push({ f: Object.assign({ spell: true }, m[1] ? { notTypes: ['Creature'] } : {}, m[2] ? { mvIs: +m[2] } : {}) }); return { t: T.length - 1 }; }
+  if (phrase === 'up to one target activated or triggered ability') { T.push({ f: { ability: true }, n: 1, upTo: true }); return { t: T.length - 1 }; }   // CR 115.1b: abilities on the stack   // a spell on the stack (CR 115.1)
   if ((m = phrase.match(/^up to one target artifact, creature, or planeswalker an opponent controls$/))) { T.push({ f: { types: ['Artifact', 'Creature', 'Planeswalker'], ctrl: 'opp' }, n: 1, upTo: true }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^target (opponent|player)$/))) { T.push({ f: { player: m[1] === 'opponent' ? 'opp' : 'any' } }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^each of up to (\w+) target (.+)$/))) { T.push({ f: parseFilter(singular(m[2])), n: numOf(m[1]), upTo: true }); return { t: T.length - 1 }; }
@@ -87,6 +89,7 @@ function parseRef(T, ctx, phrase) {
   if (p === '~') return 'self';
   if (p === 'enchanted creature') return 'enchanted';
   if (p === 'equipped creature') return 'equipped';
+  if (p === 'him' || p === 'her') p = 'it';
   if (p === 'that creature' || p === 'it' || p === 'itself') { if (ctx.it) return ctx.it; throw new Fail('"' + p + '" with nothing to refer to'); }
   if (p === 'that player' && ctx.evPlayer) return 'evPlayer';
   if (p === 'each opponent') return 'eachOpp';
@@ -135,6 +138,7 @@ export function parseCond(str, ctx) {
   if ((m = c.match(/^it's an? ([A-Z]\w+)$/)) && ctx.it === 'ev') return { c: 'evIs', f: { subtypes: [m[1]] } };
   if (c === 'it was a creature') return { c: 'lkiType', type: 'Creature' };
   if (c === 'your life total is less than or equal to half your starting life total') return { c: 'lifeAtMostHalfStart' };
+  if (c === "this spell's additional cost was paid") return { c: 'addCostPaid' };                   // CR 601.2b
   if ((m = c.match(/^its power is exactly (\d+)$/))) return { c: 'selfPowerIs', n: +m[1] };
   if ((m = c.match(/^there are (\w+) or more card types among cards in your graveyard$/))) return { c: 'graveTypes', n: numOf(m[1]) };   // delirium (CR 207.2c ability word)
   if ((m = c.match(/^there are (\w+) or more card types among cards exiled with ~$/))) return { c: 'exiledWithTypes', n: numOf(m[1]) };   // CR 607.2a: linked
@@ -191,6 +195,11 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^(.+?) if (you've gained .+ this turn|you gained .+ this turn)$/))) return [{ o: 'if', cond: parseCond(m[2], ctx), ops: parseEffect(T, ctx, m[1]) }];
   if ((m = s.match(/^([Dd]estroy .+) if (its power is exactly \d+)$/))) return [{ o: 'if', cond: parseCond(m[2], ctx), ops: parseEffect(T, ctx, cap(m[1])) }];
   if (/^~ explores$/.test(s)) return [{ o: 'explore' }];
+  if ((m = s.match(/^[Cc]ounter (target (?:noncreature )?spell(?: with mana value \d+)?)$/))) return [{ o: 'counterTarget', on: parseRef(T, ctx, m[1]) }];   // CR 701.6a
+  if ((m = s.match(/^([Tt]arget creature you control) explores$/))) return [{ o: 'explore', on: parseRef(T, ctx, m[1].toLowerCase()) }];
+  if (/^[Cc]reate a Map token$/.test(s)) return [{ o: 'token', id: ctx.token.map(), n: 1 }];              // CR 111.10s
+  if ((m = s.match(/^[Pp]ut X \+1\/\+1 counters on (.+)$/))) return [{ o: 'counter', on: parseRef(T, ctx, m[1]), n: { v: 'x' }, kind: '+1/+1' }];
+  if (/^[Dd]raw half X cards, rounded down$/.test(s)) return [{ o: 'draw', n: { v: 'halfX' } }];   // CR 107.1a
   if ((m = s.match(/^[Ss]huffle ~ and (target .+) into their owners' libraries$/))) return [{ o: 'shuffleIntoLib', on: ['self', parseRef(T, ctx, m[1])] }];
   if (/^[Uu]ntap ~ and transform it$/.test(s)) return [{ o: 'untap', on: 'self' }, { o: 'transform' }];   // CR 701.27
   if (/^[Yy]ou lose that much life$/.test(s) && ctx.evAmount) return [{ o: 'loseLife', who: 'you', n: { v: 'evAmount' } }];
@@ -270,6 +279,12 @@ function parseEffects(T, ctx, text) {
     const who = parseRef(T, ctx, m[1]);
     return [{ o: 'may', what: 'oppDrawCopy', ops: [{ o: 'draw', n: 1, who: who }] }, { o: 'if', cond: { c: 'did' }, ops: [{ o: 'copySpell' }] }];
   }
+  // Tishana's Tidebinder: counter an ability; its permanent loses all abilities while this remains (CR 701.6a, 611.2b)
+  if ((m = t.match(/^counter (up to one target activated or triggered ability)\. If an ability of an artifact, creature, or planeswalker is countered this way, that permanent loses all abilities for as long as ~ remains on the battlefield$/i))) return [{ o: 'counterAbility', on: parseRef(T, ctx, m[1].toLowerCase()), loseWhile: true }];
+  // The Wondrous Wasp: "tap up to one target creature. It loses all abilities for as long as ~ remains on the battlefield."
+  if ((m = t.match(/^tap (up to one target creature)\. It loses all abilities for as long as ~ remains on the battlefield$/i))) { const on = parseRef(T, ctx, m[1].toLowerCase()); return [{ o: 'tap', on: on }, { o: 'loseAbilities', on: on, whileSrc: true }]; }
+  // We Say Thee Nay!: the teamwork version asks {4}
+  if ((m = t.match(/^counter (target spell) unless its controller pays (\{[^ ]+\})\. Counter that spell unless its controller pays (\{[^ ]+\}) instead if this spell was cast using teamwork$/i))) return [{ o: 'counterUnless', on: parseRef(T, ctx, m[1]), pay: m[2], payIf: { c: 'addCostPaid', pay: m[3] } }];
   // Gix's Command: "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn." — chosen on resolution (its ruling)
   if ((m = t.match(/^put (\w+) \+1\/\+1 counters on up to one creature\. It gains (\w+) until end of turn$/i))) return [{ o: 'choose', f: { types: ['Creature'] }, upTo: true }, { o: 'counter', on: 'it', n: numOf(m[1]), kind: '+1/+1' }, { o: 'pump', on: 'it', grant: kwList(m[2]) }];
   // Azure Beastbinder: loses all abilities and becomes 2/2 until your next turn (layers 6 and 7b)
@@ -341,6 +356,7 @@ const EVENTS = [
   [/^~ or another (creature or artifact) you control enters$/, m => [{ on: 'enters', who: { or: ['self', Object.assign(parseFilter(m[1]), { other: true, ctrl: 'you' })] } }]],
   [/^you gain life$/, () => [{ on: 'gainLife' }]],
   [/^you draw a card$/, () => [{ on: 'drawCard', you: true }]],
+  [/^an opponent searches their library$/, () => [{ on: 'search', opp: true }]],
   [/^an opponent draws a card$/, () => [{ on: 'drawCard', opp: true }]],
   [/^an opponent draws their second card each turn$/, () => [{ on: 'drawCard', opp: true, nth: 2 }]],
   [/^the beginning of each end step$/, () => [{ on: 'beginStep', step: 'end' }]],
@@ -451,7 +467,7 @@ function parseStatic(line, ctx, out, d) {
 function parseLine(line, ctx, d, kw, ab) {
   let m;
   if ((m = line.match(AW_RE))) line = m[2];                                                         // CR 207.2c
-  if ((m = line.match(/^[A-Z][a-z]+(?: [A-Za-z]+)? — ((?:When|Whenever|At) .+)$/))) line = m[1];      // a flavour word (CR 207.2d): no rules meaning
+  if ((m = line.match(/^[A-Z][\w']+(?: [A-Za-z']+)* — ((?:When|Whenever|At) .+)$/))) line = m[1];      // a flavour word (CR 207.2d): no rules meaning
   if ((m = line.match(/^\[([+−-]?\d+)\]: (.+)$/))) {                                                // CR 606: a loyalty ability
     const n = +m[1].replace('−', '-'), T = [];
     const ops = parseEffects(T, Object.assign({}, ctx, { it: null }), m[2]);
@@ -479,6 +495,9 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(/^To solve — (.+)\.$/))) { ab.push({ k: 'trig', on: 'beginStep', step: 'end', yours: true, cond: { c: 'all', of: [parseCond(m[1].replace(/^You/, 'you'), ctx), { c: 'notSolved' }] }, solveTrig: true, ops: [{ o: 'solve' }] }); return; }   // CR 719.3a
   if ((m = line.match(/^Solved — (.+)$/))) { const n0 = ab.length; parseLine(m[1], ctx, d, kw, ab); for (let k = n0; k < ab.length; k++) ab[k].solved = true; return; }   // CR 719.3c
   if ((m = line.match(/^Sneak (\{[^ ]+\})$/))) { ab.push({ k: 'sneak', cost: m[1] }); return; }   // CR 702.190a
+  if ((m = line.match(/^As an additional cost to cast this spell, you may blight (\d+)\.$/))) { ab.push({ k: 'addCost', what: 'blight', n: +m[1], optional: true }); return; }   // CR 701.68a
+  if ((m = line.match(/^As an additional cost to cast this spell, discard a card or pay (\d+) life\.$/))) { ab.push({ k: 'addCost', what: 'discardOrLife', life: +m[1] }); return; }
+  if ((m = line.match(/^Teamwork (\d+)$/))) { ab.push({ k: 'addCost', what: 'teamwork', n: +m[1], optional: true }); return; }   // CR 702.194a
   if (line === 'Bargain') { ab.push({ k: 'bargain' }); return; }                                   // CR 702.166a
   if ((m = line.match(/^Harmonize (\{[^ ]+\})$/))) { ab.push({ k: 'harmonize', cost: m[1] }); return; }   // CR 702.180a       // CR 702.174a, e
   if ((m = line.match(/^Kicker (\{[^ ]+\})$/))) { ab.push({ k: 'kicker', cost: m[1] }); return; }      // CR 702.33a
@@ -640,6 +659,11 @@ function tokenMaker(pack) {
     const KWTEXT = { flying: 'Flying', lifelink: 'Lifelink', haste: 'Haste', vigilance: 'Vigilance', trample: 'Trample', deathtouch: 'Deathtouch', menace: 'Menace', reach: 'Reach', prowess: 'Prowess' };
     if (t.ab) { const id2 = id + '-' + t.abText.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, ''); if (!pack[id2]) pack[id2] = { id: id2, name: t.sub.trim(), token: true, mana: '', colors: cols, types: ['Creature'], subtypes: t.sub.trim().split(' '), supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub.trim(), text: t.abText, kw: {}, ab: t.ab, layout: 'token' }; return id2; }
     if (!pack[id]) pack[id] = { id: id, name: t.sub.trim(), token: true, mana: '', colors: cols, types: ['Creature'], subtypes: t.sub.trim().split(' '), supers: [], power: t.p, toughness: t.t, typeLine: 'Token Creature — ' + t.sub.trim(), text: kws.map(k => KWTEXT[k]).join(', '), kw: Object.fromEntries(kws.map(k => [k, 1])), ab: [], layout: 'token' };
+    return id;
+  };
+  mk.map = function () {
+    const id = 'token-map';
+    if (!pack[id]) pack[id] = { id: id, name: 'Map', token: true, mana: '', colors: [], types: ['Artifact'], subtypes: ['Map'], supers: [], power: null, toughness: null, typeLine: 'Token Artifact — Map', text: '{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only as a sorcery.', kw: {}, ab: [{ k: 'act', cost: { mana: '{1}', tap: true, sacSelf: true }, sorcery: true, tg: [{ f: { types: ['Creature'], ctrl: 'you' } }], ops: [{ o: 'explore', on: { t: 0 } }] }], layout: 'token' };
     return id;
   };
   mk.treasure = function () {                                                                     // CR 111.10a

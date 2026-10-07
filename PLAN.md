@@ -35,25 +35,28 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-06 — the championship decks (D15) under way: 7 of 20 registered; a per-card audit done.**
+**2026-10-06 — the championship decks (D15) under way: 8 of 20 registered; a per-card audit done.**
 
+- Dimir (Bitter Triumph) brought additional costs (blight 701.68, teamwork 702.194, discard-or-life),
+  abilities on the stack as targets and countering them, "for as long as ~ remains" (611.2b), Map
+  tokens (111.10s), outlaws (700.12), X on a permanent (107.3m), search events.
 - Dimir Midrange brought planeswalkers (CR 306, 606, 704.5i, 120.3c; attacking them, 508.1b — V4
   closed), ninjutsu (702.49), transforming double-faced cards (712), emblems (114), layer 6 in
   timestamp order with "loses all abilities", "until your next turn", choose-two modes, draw events.
 - Registered: Mono-Red Aggro (PT Final Fantasy #1), Gruul Delirium (#35), Orzhov Demons (#28), Izzet
-  Prowess (#2) and Dimir Midrange; from the Hobbit era, Boros (Belladonna Took) and Orzhov (Amalia Benavides Aguirre) — beside the two Starter Kits. Boros
+  Prowess (#2) and Dimir Midrange; from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre) and Dimir (Bitter Triumph) — beside the two Starter Kits. Boros
   brought delayed triggers (CR 603.7), mobilize (702.181), creatures entering attacking (508.4),
   sneak (702.190), Treasure (111.10a), "can't cast spells" (601.3), plan counters. Orzhov (Amalia) brought ward (702.21), explore (701.44), warp (702.185), Cases
   (719), exile-until-it-leaves (610.3), returning as a non-creature, life-gained/lost conditions. Izzet brought Class levels (CR 716), bargain (702.166),
   harmonize (702.180), counterspells, X-mana abilities, flurry, gift-dependent targets. Orzhov brought Rooms (CR 709.5), stun counters (122.1d), gift
   (702.174), cycling (702.29), hexproof from (702.11d), a life-loss replacement, hand reveals. Gruul brought modal spells (CR 700.2), fight (701.14), extra
   combat phases (500.8), linked exile, mill/surveil, "can't attack or block unless".
-- Gates: `tools/test.mjs` 152/152; audit 134 cards 0 FAIL / 0 WARN; check-pages clean (101 log types,
-  46 question kinds); `tools/sim.mjs` 135 mixed games; `tools/policy-sweep.mjs` 90 games, 0 violations.
+- Gates: `tools/test.mjs` 162/162; audit 146 cards 0 FAIL / 0 WARN; check-pages clean (102 log types,
+  50 question kinds); `tools/sim.mjs` 100 mixed games; `tools/policy-sweep.mjs` 60 games, 0 violations.
 - Audit (2026-10-06): all 83 cards then registered checked against Oracle text, rulings and the CR;
   13 defects fixed, each with a test (tests/08); DEVIATIONS V3 closed, V4 opened.
-- Art: all 149 keys painted in the fifteen-style mix (D17), reviewed on contact sheets.
-- Next: the remaining 5 Pro Tour Final Fantasy and 8 Hobbit-era archetypes, closest first.
+- Art: all 162 keys painted in the fifteen-style mix (D17), reviewed on contact sheets.
+- Next: the remaining 5 Pro Tour Final Fantasy and 7 Hobbit-era archetypes, closest first.
 
 **2026-10-03, end of the first session — playable against the AI, private and local.**
 

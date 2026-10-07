@@ -77,6 +77,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "bitter-triumph",
+    "styleId": "L",
+    "land": false,
+    "prompt": "master grade super deformed knight, three heads tall, frost-rimed steel armour, a gaunt sorcerer crushing a fallen knight under a wave of black shadow, blood on his own hands, on a ruined battlefield at dusk. cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war.",
+    "subject": "a gaunt sorcerer crushing a fallen knight under a wave of black shadow, blood on his own hands",
+    "setting": "on a ruined battlefield at dusk",
+    "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
+    "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "bleachbone-verge",
     "styleId": "C",
     "land": true,
@@ -374,6 +385,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "dream-beavers",
+    "styleId": "I",
+    "land": false,
+    "prompt": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, a nightmarish shadow beaver with batlike wings and glowing eyes, gnawing at a sleeping soldier, in a misty dreamscape. retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing.",
+    "subject": "a nightmarish shadow beaver with batlike wings and glowing eyes, gnawing at a sleeping soldier",
+    "setting": "in a misty dreamscape",
+    "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
+    "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "druid-of-the-spade",
     "styleId": "D",
     "land": false,
@@ -625,6 +647,17 @@
     "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
     "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "hidden-lair",
+    "styleId": "D",
+    "land": true,
+    "prompt": "landscape painting, scenery, a hidden cave lair behind a waterfall, dark passages leading inward, at night. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a hidden cave lair behind a waterfall, dark passages leading inward",
+    "setting": "at night",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "hinterland-sanctifier",
@@ -979,6 +1012,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "requiting-hex",
+    "styleId": "E",
+    "land": false,
+    "prompt": "chunky super deformed fantasy soldier, four heads tall, detailed gear, a hag witch hurling a withering black curse that rots a charging soldier, in a dead swamp. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "a hag witch hurling a withering black curse that rots a charging soldier",
+    "setting": "in a dead swamp",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "chunky super deformed fantasy soldier, four heads tall, detailed gear, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "restless-reef",
     "styleId": "H",
     "land": true,
@@ -1089,6 +1133,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "shoot-the-sheriff",
+    "styleId": "E",
+    "land": false,
+    "prompt": "chunky super deformed fantasy soldier, four heads tall, detailed gear, a masked gunslinger outlaw firing a smoking pistol at an armoured lawman, on a dusty frontier street at noon. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "a masked gunslinger outlaw firing a smoking pistol at an armoured lawman",
+    "setting": "on a dusty frontier street at noon",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "chunky super deformed fantasy soldier, four heads tall, detailed gear, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "sleight-of-hand",
     "styleId": "M",
     "land": false,
@@ -1133,6 +1188,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "spell-snare",
+    "styleId": "I",
+    "land": false,
+    "prompt": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, a sly mage snatching a glowing spell out of the air with a net of blue light, in a tower study. retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing.",
+    "subject": "a sly mage snatching a glowing spell out of the air with a net of blue light",
+    "setting": "in a tower study",
+    "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
+    "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "spirebluff-canal",
     "styleId": "L",
     "land": true,
@@ -1142,6 +1208,17 @@
     "style": "cold moonlit fantasy landscape painting, frost and snow, pale blue and silver palette, bleak winter desolation",
     "short": "landscape painting, scenery, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "spyglass-siren",
+    "styleId": "K",
+    "land": false,
+    "prompt": "super deformed war-scarred fighter, chunky three heads tall, battered armour, a winged siren pirate perched on a ship mast, peering through a brass spyglass, over a stormy sea. thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality.",
+    "subject": "a winged siren pirate perched on a ship mast, peering through a brass spyglass",
+    "setting": "over a stormy sea",
+    "style": "thick impasto oil paint, palette knife texture, bold heavy strokes, smouldering orange and black, raw brutality",
+    "short": "super deformed war-scarred fighter, chunky three heads tall, battered armour, ",
+    "negativeExtra": ""
   },
   {
     "key": "stadium-headliner",
@@ -1276,6 +1353,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "the-wondrous-wasp",
+    "styleId": "D",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a small armoured hero with insect wings and glowing stingers diving to strike a huge brute, over a city rooftop at night. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a small armoured hero with insect wings and glowing stingers diving to strike a huge brute",
+    "setting": "over a city rooftop at night",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "thieving-otter",
     "styleId": "E",
     "land": false,
@@ -1307,6 +1395,17 @@
     "style": "gritty comic book landscape panel, heavy black inks, halftone shading, vivid flat colour, ominous sky",
     "short": "landscape painting, scenery, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "tishanas-tidebinder",
+    "styleId": "B",
+    "land": false,
+    "prompt": "master grade SD figure, compact heroic proportions, highly detailed armour plating, a scarred merfolk war-wizard in coral armour binding a glowing spell in coils of water, the spell dissolving, in a tidal cave. premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce.",
+    "subject": "a scarred merfolk war-wizard in coral armour binding a glowing spell in coils of water, the spell dissolving",
+    "setting": "in a tidal cave",
+    "style": "premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce",
+    "short": "master grade SD figure, compact heroic proportions, highly detailed armour plating, ",
+    "negativeExtra": ""
   },
   {
     "key": "token-bat-1-1-b-flying",
@@ -1362,6 +1461,17 @@
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "token-map",
+    "styleId": "H",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a brass explorer compass and spyglass on a weathered leather satchel, a dagger beside them, by candlelight. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "a brass explorer compass and spyglass on a weathered leather satchel, a dagger beside them",
+    "setting": "by candlelight",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "token-monk-1-1-w-prowess",
@@ -1584,6 +1694,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "wan-shi-tong-librarian",
+    "styleId": "E",
+    "land": false,
+    "prompt": "chunky super deformed fantasy soldier, four heads tall, detailed gear, a towering owl spirit with a pale mask-like face, wings spread over endless shelves of forbidden knowledge, in a vast desert library. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "a towering owl spirit with a pale mask-like face, wings spread over endless shelves of forbidden knowledge",
+    "setting": "in a vast desert library",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "chunky super deformed fantasy soldier, four heads tall, detailed gear, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "warleaders-call",
     "styleId": "D",
     "land": false,
@@ -1614,6 +1735,28 @@
     "setting": "above a dark lake under storm clouds",
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "watery-grave",
+    "styleId": "F",
+    "land": true,
+    "prompt": "landscape painting, scenery, a sunken graveyard of tombstones half drowned in a black lagoon, under a pale moon. loose ink and watercolour landscape, bleeding pigment washes, deep indigo and rust, splattered paint, brooding sky.",
+    "subject": "a sunken graveyard of tombstones half drowned in a black lagoon",
+    "setting": "under a pale moon",
+    "style": "loose ink and watercolour landscape, bleeding pigment washes, deep indigo and rust, splattered paint, brooding sky",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "we-say-thee-nay",
+    "styleId": "H",
+    "land": false,
+    "prompt": "super deformed dark knight, stocky three heads tall, spiked plate armour, a pair of armoured warriors standing back to back, raising shields that shatter an incoming spell, in a ruined temple. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "a pair of armoured warriors standing back to back, raising shields that shatter an incoming spell",
+    "setting": "in a ruined temple",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "super deformed dark knight, stocky three heads tall, spiked plate armour, ",
     "negativeExtra": ""
   },
   {

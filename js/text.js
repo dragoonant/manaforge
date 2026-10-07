@@ -58,9 +58,10 @@
     exiledInstead: (e, v) => `${tag(e.c)} would die, and is exiled instead.`,
     harmonizeExile: (e, v) => `${tag(e.c)} is exiled (cast with harmonize).`,
     bounce: (e, v) => `${tag(e.c)} returns to ${T.whose(e.who, v)} hand.`,
-    countered: (e, v) => `${T.whose(e.who, v)[0].toUpperCase() + T.whose(e.who, v).slice(1)} ${tag(e.c)} is countered${e.by ? ' by ' + tag(e.by) : ''}.`,
+    countered: (e, v) => `${T.whose(e.who, v)[0].toUpperCase() + T.whose(e.who, v).slice(1)} ${tag(e.c)}${e.ab ? '’s ability' : ''} is countered${e.by ? ' by ' + tag(e.by) : ''}.`,
     paidToSave: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'pay', 'pays')} ${symbols(e.mana)}; ${tag(e.c)} is not countered.`,
     lookPick: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'look', 'looks')} at ${plural(e.n, 'card')}, ${V(e.who, v, 'put', 'puts')} ${e.took} into hand and ${e.bottom} on the bottom.`,
+    blight: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'blight', 'blights')} ${e.n}: ${tag(e.c)} gets a -1/-1 counter.`,
     loyalty: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'activate', 'activates')} a loyalty ability of ${tag(e.c)} (${e.n > 0 ? '+' + e.n : e.n === 0 ? '0' : '−' + (-e.n)}; loyalty ${e.left}).`,
     loyaltyLoss: (e, v) => `${tag(e.srcId)} deals <b>${e.n}</b> damage to ${tag(e.c)}: loyalty ${e.left}.`,
     ninjutsuReturn: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'return', 'returns')} the unblocked ${tag(e.c)} to hand for the ninjutsu of ${tag(e.card)}.`,
@@ -159,7 +160,7 @@
     target: (s, q) => {
       const d = MF.cards[MF.view(s).cards[q.src].id];
       const slotText = q.n > 1 ? ` (${q.picked.length} of up to ${q.n} chosen)` : '';
-      return { title: `Choose a target for ${C(s, q.src)}${slotText}`, body: `Glowing cards and players can be chosen. ${q.upTo || q.picked.length ? 'You may stop choosing.' : ''}${oracle(s, q.src)}`, labels: { done: q.picked.length ? 'Done choosing targets' : 'Choose no target', p0: T._viewer === 0 ? 'Target yourself' : 'Target the opponent', p1: T._viewer === 1 ? 'Target yourself' : 'Target the opponent' } };
+      return { title: `Choose a target for ${C(s, q.src)}${slotText}`, body: `Glowing cards and players can be chosen. ${q.upTo || q.picked.length ? 'You may stop choosing.' : ''}${oracle(s, q.src)}`, labels: { ...Object.fromEntries(q.opts.filter(o => o.lid != null).map(o => [o.id, 'Target ' + (MF.cards[o.abSrc] ? MF.cards[o.abSrc].name : 'that') + '’s ability on the stack'])), done: q.picked.length ? 'Done choosing targets' : 'Choose no target', p0: T._viewer === 0 ? 'Target yourself' : 'Target the opponent', p1: T._viewer === 1 ? 'Target yourself' : 'Target the opponent' } };
     },
     attack: (s, q) => ({ title: q.chosen.length ? `Attacking with ${plural(q.chosen.length, 'creature')}` : 'Declare attackers', body: 'Click your creatures to attack with them; attacking taps a creature unless it has vigilance. Then confirm. Creatures with summoning sickness (entered this turn, without haste) cannot attack.', labels: { done: q.chosen.length ? `Attack with ${plural(q.chosen.length, 'creature')}` : 'Don’t attack', undo: 'Undo the last' } }),
     block: (s, q) => { const n = Object.keys(q.assign).length; return { title: n ? `Blocking with ${plural(n, 'creature')}` : 'Declare blockers', body: 'Click one of your untapped creatures, then choose which attacker it blocks. Flying attackers can be blocked only by flying or reach; menace needs two or more blockers.', labels: { done: n ? `Confirm ${plural(n, 'block')}` : 'Don’t block', undo: 'Undo the last' } }; },
@@ -175,6 +176,10 @@
     lookPick: (s, q) => ({ title: `${C(s, q.src)}: choose a card for your hand (${q.k} of ${q.take})`, body: `Only you see these ${q.n} cards. The ones you don’t take go to the bottom of your library.`, labels: {} }),
     sneakReturn: (s, q) => ({ title: `Sneak ${C(s, q.src)}: return an unblocked attacker`, body: 'To pay the sneak cost, return one of your unblocked attacking creatures to your hand (CR 702.190). Click a glowing creature.', labels: {} }),
     sacToken: (s, q) => ({ title: `${C(s, q.src)}: sacrifice a token`, body: 'Sacrificing a token is part of the cost. Click a glowing token.', labels: {} }),
+    addCostYes: (s, q) => ({ title: `${C(s, q.src)}: pay the additional cost?`, body: q.what === 'blight' ? `You may blight ${q.n}: put ${q.n} -1/-1 counter on a creature you control (CR 701.68).${oracle(s, q.src)}` : `Teamwork ${q.n}: you may tap creatures you control with total power ${q.n} or more (CR 702.194).${oracle(s, q.src)}`, labels: { yes: q.what === 'blight' ? 'Blight ' + q.n : 'Use teamwork', no: 'Don’t pay it' } }),
+    blightOn: (s, q) => ({ title: `Blight ${q.n}: which creature gets the -1/-1 counter?`, body: 'Click one of your glowing creatures.', labels: {} }),
+    teamworkTap: (s, q) => ({ title: `Teamwork ${q.n}: tap creatures (total power ${q.total} so far)`, body: `Tap creatures you control until their total power is ${q.n} or more.`, labels: { done: 'Done tapping' } }),
+    discardOrLife: (s, q) => ({ title: `${C(s, q.src)}: discard a card or pay ${q.life} life`, body: `An additional cost to cast it. Your life: ${s.players[q.who].life}.`, labels: { discard: 'Discard a card', life: 'Pay ' + q.life + ' life' } }),
     attackWhom: (s, q) => ({ title: `${C(s, q.src)} attacks whom?`, body: 'The defending player controls a planeswalker. Choose the player or a planeswalker for this attacker (CR 508.1b).', labels: Object.fromEntries(q.opts.map(o => [o.id, o.seat != null ? 'Attack the opponent' : 'Attack ' + MF.cards[MF.view(s).cards[o.iid].id].name])) }),
     ninjutsuReturn: (s, q) => ({ title: `Ninjutsu ${C(s, q.src)}: return an unblocked attacker`, body: 'Return one of your unblocked attacking creatures to your hand; this enters tapped and attacking in its place (CR 702.49).', labels: {} }),
     chooseObj: (s, q) => ({ title: `${C(s, q.src)}: choose up to one creature`, body: `Not targeted: chosen as it resolves.${oracle(s, q.src)}`, labels: { none: 'Choose none' } }),

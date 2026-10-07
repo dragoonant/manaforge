@@ -1387,7 +1387,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (august-24-2026)",
   "rank": null,
   "players": 8,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -1510,19 +1510,10 @@ window.MF.decks = {
     "name": "Disdainful Stroke"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
-   "spyglass-siren: effect: Create a Map token",
-   "tishanas-tidebinder: effect: Counter up to one target activated or triggered ability",
-   "shoot-the-sheriff: filter noun: non-outlaw creature",
-   "we-say-thee-nay: effect: Teamwork 2",
-   "bitter-triumph: effect: As an additional cost to cast this spell, discard a card or pay 3 life",
-   "the-wondrous-wasp: ability: Wasp's Sting — When ~ enters, tap up to one target creature. It loses all abilities for as long as ~ remains on the battlefield.",
-   "spell-snare: effect: Counter target spell with mana value 2",
-   "wan-shi-tong-librarian: effect: Put X +1/+1 counters on him"
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-map"
+  ]
  },
  "boros-belladonna-took-hob": {
   "id": "boros-belladonna-took-hob",
@@ -2151,7 +2142,6 @@ window.MF.decks = {
    "practiced-offense: filter qualifier: target player controls",
    "carnage-crimson-chaos: effect: Return target creature card with mana value 3 or less from your graveyard to the battlefield",
    "inti-seneschal-of-the-sun: trigger event: you attack, you may discard a card. When you do, put a +1/+1 counter on target attacking creature. It gains trample until end of turn.",
-   "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
    "erode: effect: Its controller may search their library for a basic land card, put it onto the battlefield tapped, then shuffle"
   ],
   "tokens": []
@@ -2307,7 +2297,7 @@ window.MF.decks = {
    "pawpatch-recruit: trigger event: a creature you control becomes the target of a spell or ability an opponent controls, put a +1/+1 counter on target creature you control other than that creature.",
    "leatherhead-swamp-stalker: ability: ~ enters with a hexproof counter on her.",
    "spider-manifestation: trigger event: you cast a spell with mana value 4 or greater, untap ~.",
-   "ouroboroid: effect: Put X +1/+1 counters on each creature you control, where X is ~'s power",
+   "ouroboroid: filter qualifier: , where X is ~'s power",
    "surrak-elusive-hunter: ability: This spell can't be countered.",
    "seam-rip: effect: Exile target nonland permanent an opponent controls with mana value 2 or less until ~ leaves the battlefield",
    "jennifer-walters-the-sensational-she-hulk: layout modal_dfc is not compiled",
@@ -2436,13 +2426,11 @@ window.MF.decks = {
    "iridescent-vinelasher: trigger event: a land you control enters, ~ deals 1 damage to target opponent.",
    "nighthowl-pursuer: trigger event: ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn.",
    "desolation-prowler: ability: Pay 2 life: ~ gets +2/+2 until end of turn. Activate only once each turn.",
-   "shoot-the-sheriff: filter noun: non-outlaw creature",
    "forsaken-miner: trigger event: you commit a crime, you may pay {B}. If you do, return this card from your graveyard to the battlefield.",
    "sunset-saboteur: ability: Ward—Discard a card.",
    "corpses-of-the-lost: ability: Skeletons you control get +1/+0 and have haste.",
    "gollum-riddle-master: ability: As ~ enters, choose odd or even.",
    "dark-knights-greatsword: ability: Job select",
-   "requiting-hex: effect: As an additional cost to cast this spell, you may blight 1",
    "dissection-practice: effect: Target opponent loses 1 life"
   ],
   "tokens": []
@@ -3213,7 +3201,6 @@ window.MF.decks = {
   ],
   "compiles": false,
   "refused": [
-   "negate: effect: Counter target noncreature spell",
    "cathar-commando: filter qualifier: or enchantment",
    "three-steps-ahead: effect: Spree",
    "dreams-of-laguna: effect: Surveil 1, then draw a card",

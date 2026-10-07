@@ -93,6 +93,7 @@
     }
     const score = o => {
       if (o.seat != null) return harmful ? (o.seat !== me ? 3 : -50) : (o.seat === me ? 1 : -50);
+      if (o.lid != null) return o.ctrl !== me ? 3 : -50;                                          // an ability on the stack: counter the opponent's
       const mine = I(s, o.iid).ctrl === me, v = permValue(s, o.iid);
       return harmful ? (mine ? -50 - v : v) : (mine ? v + (s.combat && s.combat.attackers.includes(o.iid) ? 3 : 0) : -50);
     };
@@ -150,6 +151,10 @@
       case 'discardUpTo': return 'done';
       case 'gift': return q.opts.some(o => o.id === 'no') ? 'no' : q.opts[0].id;
       case 'bargain': return 'none';
+      case 'addCostYes': return 'no';
+      case 'blightOn': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
+      case 'teamworkTap': return q.opts.some(o => o.id === 'done') ? 'done' : q.opts.filter(o => o.iid != null).sort((a, b) => MF.chars(s, b.iid).p - MF.chars(s, a.iid).p)[0].id;
+      case 'discardOrLife': return q.opts.some(o => o.id === 'life') && P(s, me).life > 10 ? 'life' : q.opts[0].id;
       case 'attackWhom': return q.opts[0].id;
       case 'ninjutsuReturn': case 'sacrificeOne': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
       case 'chooseObj': { const mine = q.opts.filter(o => o.iid != null && I(s, o.iid).ctrl === me).sort((a, b) => permValue(s, b.iid) - permValue(s, a.iid)); return mine.length ? mine[0].id : 'none'; }
@@ -201,7 +206,7 @@
     return evalFor(s, me);
   }
   // Kinds where every answer is worth a roll-out when the AI itself is asked.
-  const SEARCH_KINDS = { attackWhom: 1, wardPay: 1, bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
+  const SEARCH_KINDS = { addCostYes: 1, attackWhom: 1, wardPay: 1, bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
   function candidates(s, legal) {
     const seen = new Set(), out = [];

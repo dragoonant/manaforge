@@ -127,6 +127,7 @@
       if (o.ctr) nc.ctr = Object.assign({}, o.ctr);
       const dl = def(s, n); if (dl.loyalty != null && dl.types.includes('Planeswalker') && nc.ctr.loyalty == null) nc.ctr.loyalty = dl.loyalty;   // CR 306.5b                                           // "enters with N counters" (CR 122.6)
       if (o.door != null) nc.unlocked = [o.door === 0, o.door === 1];
+      if (o.xPaid) nc.xPaid = o.xPaid;
       if (o.warp) (s.delayed = s.delayed || []).push({ src: n, ctrl: nc.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', ops: [{ o: 'warpExile', iid: n }] } });   // CR 702.185a                         // CR 709.5d: the half that was cast enters unlocked
       enterReplacements(s, n, o);
     }
@@ -137,6 +138,7 @@
       for (const k of s.bf) { const a = I(s, k); if (a.att === iid) a.att = -1; }            // what was attached to it is now attached to nothing (SBA 704.5m/n)
       if (s.combat) removeFromCombat(s, iid);                                                // CR 506.4
       if (zone === 'exile' && lki.types.includes('Creature')) { s.exiledCre = s.exiledCre || {}; s.exiledCre[lki.ctrl] = (s.exiledCre[lki.ctrl] || 0) + 1; }   // "creatures that were exiled under your opponents' control this turn"
+      s.effects = s.effects.filter(e => e.whileSrc !== iid);                                   // CR 611.2b: "for as long as ~ remains on the battlefield"
       emit(s, { t: 'leaves', iid: iid, to: zone, lki: lki });
       for (const e of s.effects.filter(e => e.k === 'exileUntil' && e.src === iid)) {           // CR 610.3: the exiled card returns, to its owner's hand
         s.effects.splice(s.effects.indexOf(e), 1);
@@ -602,12 +604,13 @@
   // A target reference is { p: seat } or { c: iid }.
   const targetable = MF.targetable = function (s, ref, slot, who, srcIid) {
     if (ref.p != null) return MF.matchPlayer(s, ref.p, slot.f, who);
+    if (ref.a != null) return !!(slot.f && slot.f.ability) && s.stack.some(L => L.lid === ref.a && L.kind !== 'spell');   // an activated or triggered ability on the stack
     const c = s.cards[ref.c];
     if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card && (!slot.f.own || c.owner === who) && (!slot.f.types || slot.f.types.some(ty => def(s, ref.c).types.includes(ty))) && (!slot.f.mvLEv || chars(s, ref.c).mv <= MF.num({ s: s, ctrl: who, src: srcIid }, slot.f.mvLEv));   // a card in a graveyard: its own characteristics
     if (slot.f && slot.f.spell) {                                                             // a spell on the stack (CR 115.1); not itself (115.5)
       if (!c || c.zone !== 'stack' || ref.c === srcIid || !s.stack.some(L => L.kind === 'spell' && L.iid === ref.c)) return false;
       const ch = chars(s, ref.c);
-      return !(slot.f.notTypes || []).some(ty => ch.types.includes(ty));
+      return !(slot.f.notTypes || []).some(ty => ch.types.includes(ty)) && (slot.f.mvIs == null || ch.mv === slot.f.mvIs);
     }
     if (!c || c.zone !== 'bf') return false;
     const ch = chars(s, ref.c);
@@ -624,10 +627,11 @@
     if (MF.slotTakesPlayers(slot.f)) for (const seat of [who, 1 - who]) if (targetable(s, { p: seat }, slot, who, srcIid)) out.push({ p: seat });
     if (slot.f && slot.f.card) { for (const p of s.players) for (const iid of p[slot.f.card]) if (targetable(s, { c: iid }, slot, who, srcIid)) out.push({ c: iid }); }
     else if (slot.f && slot.f.spell) { for (const L of s.stack) if (L.kind === 'spell' && targetable(s, { c: L.iid }, slot, who, srcIid)) out.push({ c: L.iid }); }
+    else if (slot.f && slot.f.ability) { for (const L of s.stack) if (L.kind !== 'spell') out.push({ a: L.lid }); }
     else if (MF.slotTakesObjects(slot.f)) for (const iid of s.bf) if (targetable(s, { c: iid }, slot, who, srcIid)) out.push({ c: iid });
     return out.filter(r => !(chosen || []).some(q => q.p === r.p && q.c === r.c));
   };
-  const refId = r => r.p != null ? 'p' + r.p : 'c' + r.c;
+  const refId = r => r.p != null ? 'p' + r.p : r.a != null ? 'a' + r.a : 'c' + r.c;
   MF.refId = refId;
   // Choose targets for each slot. A slot with "up to N" may take fewer. Different instances of
   // the word "target" on one object may not take the same object (CR 115.3) only when the text
@@ -638,13 +642,13 @@
       const picked = [];
       const n = slot.n || 1;
       for (let k = 0; k < n; k++) {
-        const opts = MF.targetOptions(s, slot, who, srcIid, picked).map(r => Object.assign({ id: refId(r) }, r.c != null ? { iid: r.c } : { seat: r.p }));
+        const opts = MF.targetOptions(s, slot, who, srcIid, picked).map(r => Object.assign({ id: refId(r) }, r.c != null ? { iid: r.c } : r.a != null ? { lid: r.a, ctrl: s.stack.find(L => L.lid === r.a).ctrl, abSrc: s.stack.find(L => L.lid === r.a).srcId } : { seat: r.p }));
         if (slot.diff != null) for (const r of out[slot.diff] || []) { const i = opts.findIndex(o => o.id === refId(r)); if (i >= 0) opts.splice(i, 1); }
         if (slot.upTo || k > 0) opts.push({ id: 'done' });
         if (!opts.length || (opts.length === 1 && opts[0].id === 'done')) { if (slot.upTo || k > 0) break; throw new Illegal('no legal target'); }
         const a = ask(x, { who: who, kind: 'target', src: srcIid, srcKind: kindSrc, slot: si, n: n, upTo: !!slot.upTo, picked: picked.map(refId), opts: opts, cancel: cancel });
         if (a === 'done') break;
-        picked.push(a[0] === 'p' ? { p: +a.slice(1) } : { c: +a.slice(1) });
+        picked.push(a[0] === 'p' ? { p: +a.slice(1) } : a[0] === 'a' ? { a: +a.slice(1) } : { c: +a.slice(1) });
       }
       out.push(picked);
     });
@@ -989,7 +993,7 @@
   // The event's object as a player can tell it apart: identical new tokens are indistinguishable (CLAUDE.md rule 11).
   function evLook(s, iid) { const c = s.cards[iid]; return c ? [c.id, !!c.tok, c.ctrl, c.tapped, c.ctr, c.copy || null] : iid; }
   function trigLabelData(s, t) { return { src: t.lki ? t.lki.id : I(s, t.src).id, ab: t.ab, inl: typeof t.inl === 'string' ? t.inl : null, ev: t.ev.t }; }
-  const refLabel = MF.refLabel = (s, r) => r.p != null ? { p: r.p } : { c: I(s, r.c).id, iid: r.c };
+  const refLabel = MF.refLabel = (s, r) => r.p != null ? { p: r.p } : r.a != null ? { c: (s.stack.find(L => L.lid === r.a) || {}).srcId, ab: true } : { c: I(s, r.c).id, iid: r.c };
 
   // -------------------------------------------------------------------------------------------
   // What may be done (CR 117.1, 116, 601, 602)
@@ -1018,7 +1022,8 @@
   const canCast = MF.canCast = function (s, who, iid, alt, door, via) {                      // CR 601.2e
     const d0 = def(s, iid);
     if (I(s, iid).zone === 'grave' && via !== 'harmonize' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
-    if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;   // CR 702.185a: from your hand
+    if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;
+    for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrLife' && P(s, who).hand.filter(i => i !== iid).length === 0 && P(s, who).life < a.life) return false;   // a mandatory additional cost that can't be paid   // CR 702.185a: from your hand
     if (via === 'harmonize' && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === 'harmonize'))) return false;
     if (via === 'sneak' && !(d0.ab.some(a => a.k === 'sneak') && sneakWindow(s, who))) return false;
     if (s.bf.some(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); })) return false;   // Voice of Victory
@@ -1257,6 +1262,35 @@
       const opts = s.bf.filter(i => I(s, i).ctrl === who && (I(s, i).tok || chars(s, i).types.some(ty => ty === 'Artifact' || ty === 'Enchantment'))).map(i => ({ id: i, iid: i }));
       if (opts.length) { opts.push({ id: 'none' }); const a2 = ask(x, { who: who, kind: 'bargain', src: iid, opts: opts, cancel: true }); if (a2 !== 'none') { L.bargained = true; L.bargainSac = a2; } }
     }
+    // Additional costs announced (CR 601.2b) and paid with the rest (601.2h).
+    const addPay = [];
+    for (const a of d.ab) if (a.k === 'addCost') {
+      if (a.what === 'blight') {                                                              // CR 701.68a: blight N — N -1/-1 counters on a creature you control
+        const cre = s.bf.filter(i => I(s, i).ctrl === who && chars(s, i).types.includes('Creature'));
+        if (!cre.length) continue;                                                             // it can't be paid: not a choice
+        if (ask(x, { who: who, kind: 'addCostYes', src: iid, what: 'blight', n: a.n, opts: [{ id: 'yes' }, { id: 'no' }], cancel: true }) !== 'yes') continue;
+        const on = ask(x, { who: who, kind: 'blightOn', src: iid, n: a.n, opts: cre.map(i => ({ id: i, iid: i })), cancel: true });
+        L.addCostPaid = true; addPay.push(() => { I(s, on).ctr['-1/-1'] = (I(s, on).ctr['-1/-1'] || 0) + a.n; log(s, 'blight', { who: who, c: I(s, on).id, n: a.n }); });
+      } else if (a.what === 'teamwork') {                                                     // CR 702.194a: tap creatures with total power N or more
+        const cre = s.bf.filter(i => I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature'));
+        if (cre.reduce((t, i) => t + Math.max(0, chars(s, i).p), 0) < a.n) continue;
+        if (ask(x, { who: who, kind: 'addCostYes', src: iid, what: 'teamwork', n: a.n, opts: [{ id: 'yes' }, { id: 'no' }], cancel: true }) !== 'yes') continue;
+        const tapped = []; let tot = 0;
+        for (;;) {
+          const opts = cre.filter(i => !tapped.includes(i)).map(i => ({ id: i, iid: i }));
+          if (tot >= a.n) opts.push({ id: 'done' });
+          const c2 = ask(x, { who: who, kind: 'teamworkTap', src: iid, n: a.n, total: tot, opts: opts, cancel: true });
+          if (c2 === 'done') break; tapped.push(c2); tot += Math.max(0, chars(s, c2).p);
+        }
+        L.addCostPaid = true; addPay.push(() => { for (const i of tapped) { I(s, i).tapped = true; log(s, 'tapped', { who: who, c: I(s, i).id }); } });
+      } else if (a.what === 'discardOrLife') {                                                // Bitter Triumph: mandatory, one of the two
+        const canDiscard = P(s, who).hand.length > 0, canLife = P(s, who).life >= a.life;
+        if (!canDiscard && !canLife) throw new Illegal('cannot pay the additional cost');
+        const way = ask(x, { who: who, kind: 'discardOrLife', src: iid, life: a.life, opts: [canDiscard ? { id: 'discard' } : null, canLife ? { id: 'life' } : null].filter(Boolean), cancel: true });
+        if (way === 'discard') { const card = ask(x, { who: who, kind: 'discard', src: iid, left: 1, opts: P(s, who).hand.map(i => ({ id: i, iid: i })), cancel: true }); addPay.push(() => MF.discard(s, card)); }
+        else addPay.push(() => MF.loseLife(s, who, a.life, 'pay', card.id));
+      }
+    }
     // CR 702.174a: "Gift a card" — as an additional cost you may choose an opponent; that is promising
     // the gift. With one opponent the opponent is not a choice; whether to promise is.
     for (const a of d.ab) if (a.k === 'gift') {
@@ -1294,6 +1328,7 @@
     const cost = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana, via: via, reduce: reduce });   // CR 601.2f
     if (hzTap != null) { I(s, hzTap).tapped = true; log(s, 'tapped', { who: who, c: I(s, hzTap).id }); }   // CR 702.180b
     if (L.bargainSac != null) MF.sacrifice(s, L.bargainSac);
+    for (const f of addPay) f();
     if (sneakBack != null) { log(s, 'sneakReturn', { who: who, c: I(s, sneakBack).id }); move(s, sneakBack, 'hand'); }                                  // CR 702.166a: paid with the total cost (601.2h)
     payMana(x, who, cost, iid, true, ctx);                                                    // CR 601.2g-h
     L.spent = MF.manaValue(cost);                                                             // "the amount of mana spent to cast" (CR 601.2h)
@@ -1422,6 +1457,7 @@
         const o = { ctrl: L.ctrl, x: x, spent: L.spent, offspringPaid: !!L.offspring, castFromHand: L.from === 'hand' };
         if (L.door != null) o.door = L.door;                                                   // CR 709.5d
         if (L.warp) o.warp = true;
+        if (L.x) o.xPaid = L.x;
         if (aura) o.att = lt.t[0][0].c;                                                        // CR 608.3c
         for (const a of d.ab) if (a.k === 'enterAsCopy') { const cp = MF.askEnterAsCopy(X, a, L); if (cp) o.copy = cp; }   // CR 614.1c, 707: a replacement with a choice, asked as it would enter
         move(s, L.iid, 'bf', o);
