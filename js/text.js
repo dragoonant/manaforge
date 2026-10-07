@@ -34,7 +34,7 @@
     bottomed: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${plural(e.n, 'card')} on the bottom of the library.`,
     turn: (e, v) => `<span class="turnline">Turn ${e.n} — ${e.who === v ? 'your turn' : 'the opponent’s turn'}</span>`,
     land: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'play', 'plays')} ${tag(e.c)}${e.from === 'exile' ? ' from exile' : ''}.`,
-    cast: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'cast', 'casts')} ${e.face ? '<b>' + esc(e.face) + '</b> (the ' + (e.alt === 'omen' ? 'Omen' : e.alt === 'door' ? 'door' : 'Adventure') + ' of ' + tag(e.c) + ')' : tag(e.c)}${e.gift ? ', promising a gift' : ''}${e.bargained ? ', bargained' : ''}${e.harmonize ? ' from the graveyard with harmonize' : ''}${e.sneak ? ' for its sneak cost' : ''}${e.warp ? ' for its warp cost' : ''}${e.x != null ? ' with X = ' + e.x : ''}${e.from === 'exile' ? ' from exile' : ''}${e.offspring ? ', paying offspring' : ''}${e.kicked ? ', kicked' : ''}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
+    cast: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'cast', 'casts')} ${e.face ? '<b>' + esc(e.face) + '</b> (the ' + (e.alt === 'omen' ? 'Omen' : e.alt === 'door' ? 'door' : 'Adventure') + ' of ' + tag(e.c) + ')' : tag(e.c)}${e.gift ? ', promising a gift' : ''}${e.bargained ? ', bargained' : ''}${e.harmonize ? ' from the graveyard with harmonize' : ''}${e.sneak ? ' for its sneak cost' : ''}${e.warp ? ' for its warp cost' : ''}${e.via === 'flashback' ? ' with flashback' : e.via === 'mayhem' ? ' with mayhem' : ''}${e.x != null ? ' with X = ' + e.x : ''}${e.from === 'exile' ? ' from exile' : ''}${e.offspring ? ', paying offspring' : ''}${e.kicked ? ', kicked' : ''}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
     omenShuffle: (e, v) => `${tag(e.c)} is shuffled into ${T.whose(e.who, v)} library (Omen).`,
     adventureExile: (e, v) => `${tag(e.c)} goes on an adventure: exiled, and ${e.who === v ? 'you' : 'the opponent'} may cast the creature from exile later.`,
     animate: (e) => `${tag(e.c)} becomes a ${e.p}/${e.tou} creature with ${e.kws.map(k => MF.KWNAME[k]).join(', ')} and all creature types. It’s still a land.`,
@@ -56,7 +56,7 @@
     manaCombo: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'activate', 'activates')} ${tag(e.c)} for ${e.cols.split('').map(sym).join('')}.`,
     removeCounters: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'remove', 'removes')} ${e.n} ${e.ctr} counters from ${tag(e.c)}.`,
     exiledInstead: (e, v) => `${tag(e.c)} would die, and is exiled instead.`,
-    harmonizeExile: (e, v) => `${tag(e.c)} is exiled (cast with harmonize).`,
+    harmonizeExile: (e, v) => `${tag(e.c)} is exiled (cast with ${e.via || 'harmonize'}).`,
     bounce: (e, v) => `${tag(e.c)} returns to ${T.whose(e.who, v)} hand.`,
     countered: (e, v) => `${T.whose(e.who, v)[0].toUpperCase() + T.whose(e.who, v).slice(1)} ${tag(e.c)}${e.ab ? '’s ability' : ''} is countered${e.by ? ' by ' + tag(e.by) : ''}.`,
     paidToSave: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'pay', 'pays')} ${symbols(e.mana)}; ${tag(e.c)} is not countered.`,
@@ -203,6 +203,9 @@
     lookTop: (s, q) => ({ title: `${C(s, q.src)}: the top card is a land`, body: 'You may put it onto the battlefield tapped. If you don’t, it goes into your hand.', labels: { yes: 'Put it onto the battlefield tapped', no: 'Put it into my hand' } }),
     may: (s, q) => q.what === 'oppDrawCopy'
       ? ({ title: `${C(s, q.src)}: copy that spell?`, body: 'If you let the opponent draw a card, you copy the spell, and may choose new targets for the copy.', labels: { yes: 'Opponent draws a card — copy it', no: 'Don’t copy' } })
+      : q.what === 'discard' ? ({ title: `${C(s, q.src)}: discard a card?`, body: `You may discard a card.${oracle(s, q.src)}`, labels: { yes: 'Discard a card', no: 'Don’t discard' } })
+      : q.what === 'returnFromGrave' ? ({ title: `${C(s, q.src)}: return it from your graveyard?`, body: `You may return this card from your graveyard to the battlefield.${oracle(s, q.src)}`, labels: { yes: 'Return it to the battlefield', no: 'Leave it' } })
+      : q.what === 'search' ? ({ title: `${C(s, q.src)}: search for a basic land?`, body: 'You may search your library for a basic land card and put it onto the battlefield tapped, then shuffle.', labels: { yes: 'Search', no: 'Don’t search' } })
       : q.what === 'mill' ? ({ title: `${C(s, q.src)}: mill a card?`, body: `You may put the top card of your library into your graveyard.${oracle(s, q.src)}`, labels: { yes: 'Mill the top card', no: 'Don’t mill' } })
       : q.what === 'digOnto' ? ({ title: `Put ${tag(q.c)} onto the battlefield?`, body: 'Its mana value is low enough: it may go onto the battlefield and gain haste until end of turn. Otherwise it goes into your hand.', labels: { yes: 'Onto the battlefield, with haste', no: 'Into my hand' } })
       : ({ title: `${C(s, q.src)}`, body: oracle(s, q.src), labels: { yes: 'Yes', no: 'No' } }),

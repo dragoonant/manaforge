@@ -178,7 +178,7 @@
       case 'assign': return q.trample ? q.opts[q.opts.length - 1].id : q.opts[0].id;      // trample: lethal to the blocker, the rest to the player
       case 'target': return targetPolicy(s, q);
       case 'block': return blockPolicy(s, q);
-      case 'attack': return 'done';
+      case 'attack': { if (q.opts.some(o => o.id === 'done')) return 'done'; const m = q.opts.find(o => o.iid != null && MF.chars(s, o.iid).ab.some(a => a.k === 'mustAttack')); return m ? m.id : q.opts[0].id; }   // CR 508.1d: a requirement first
       default: return undefined;
     }
   }

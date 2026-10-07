@@ -99,6 +99,28 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "blood-crypt",
+    "styleId": "D",
+    "land": true,
+    "prompt": "landscape painting, scenery, a red-lit crypt of carved stone coffins and dripping blood channels, deep underground. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a red-lit crypt of carved stone coffins and dripping blood channels",
+    "setting": "deep underground",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "bloodghast",
+    "styleId": "G",
+    "land": false,
+    "prompt": "master grade super deformed brawler, three heads tall, heavy armour, snarling, a gaunt vampire spirit with hollow glowing eyes clawing its way out of an open grave, in a misty graveyard at night. gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action.",
+    "subject": "a gaunt vampire spirit with hollow glowing eyes clawing its way out of an open grave",
+    "setting": "in a misty graveyard at night",
+    "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
+    "short": "master grade super deformed brawler, three heads tall, heavy armour, snarling, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "bloodletter-of-aclazotz",
     "styleId": "D",
     "land": false,
@@ -182,6 +204,17 @@
     "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a grim veteran rabbit knight-commander with long battle-torn ears and a scarred muzzle, dented steel plate armour, round iron shield and a long spear, roaring an order with the spear levelled at the enemy, on a battlefield beneath giant oak roots, arrows and embers in the air, smoke behind. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
     "subject": "a grim veteran rabbit knight-commander with long battle-torn ears and a scarred muzzle, dented steel plate armour, round iron shield and a long spear, roaring an order with the spear levelled at the enemy",
     "setting": "on a battlefield beneath giant oak roots, arrows and embers in the air, smoke behind",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "carnage-crimson-chaos",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a hulking crimson blood fiend with spiked bone armour and long hooked claws, roaring, in a ruined burning city street at night. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a hulking crimson blood fiend with spiked bone armour and long hooked claws, roaring",
+    "setting": "in a ruined burning city street at night",
     "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
     "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
@@ -284,6 +317,17 @@
     "style": "thick impasto oil landscape, palette knife texture, bold heavy strokes, smouldering orange and black sky",
     "short": "landscape painting, scenery, ",
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
+    "key": "cool-but-rude",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a scarred grown brawler mage in a battered leather coat shoving past an armoured guard while hurling a fireball, in a smoky city street at night. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a scarred grown brawler mage in a battered leather coat shoving past an armoured guard while hurling a fireball",
+    "setting": "in a smoky city street at night",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
+    "negativeExtra": ""
   },
   {
     "key": "copperline-gorge",
@@ -459,6 +503,17 @@
     "setting": "in a misty meadow at dawn",
     "style": "loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy",
     "short": "master grade super deformed fighter, stocky three heads tall, battle-scarred, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "erode",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a white wind of sand and light eroding an armoured giant into dust, in a vast desert canyon. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a white wind of sand and light eroding an armoured giant into dust",
+    "setting": "in a vast desert canyon",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
   },
   {
@@ -638,6 +693,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "hardened-academic",
+    "styleId": "I",
+    "land": false,
+    "prompt": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, a fierce bird cleric in battle robes diving with a burning tome blade raised, over a burning academy tower. retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing.",
+    "subject": "a fierce bird cleric in battle robes diving with a burning tome blade raised",
+    "setting": "over a burning academy tower",
+    "style": "retro pulp fantasy airbrush painting, saturated sunset colours, glossy highlights, savage heroic energy, mid-swing",
+    "short": "master grade super deformed barbarian warrior, three heads tall, muscular and scarred, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "heartfire-hero",
     "styleId": "I",
     "land": false,
@@ -704,6 +770,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "inti-seneschal-of-the-sun",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a sun knight in golden armour charging with a blazing sword, a sunburst behind him, on a scorched plain at noon. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a sun knight in golden armour charging with a blazing sword, a sunburst behind him",
+    "setting": "on a scorched plain at noon",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "into-the-flood-maw",
     "styleId": "O",
     "land": false,
@@ -712,6 +789,17 @@
     "setting": "in a stormy sea",
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "iron-shield-elf",
+    "styleId": "A",
+    "land": false,
+    "prompt": "master grade super deformed warrior, three heads tall, heroic armoured figure, a grim elf warrior bracing behind a huge iron tower shield as arrows shatter against it, on a muddy battlefield. oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood.",
+    "subject": "a grim elf warrior bracing behind a huge iron tower shield as arrows shatter against it",
+    "setting": "on a muddy battlefield",
+    "style": "oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood",
+    "short": "master grade super deformed warrior, three heads tall, heroic armoured figure, ",
     "negativeExtra": ""
   },
   {
@@ -803,6 +891,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "marauding-mako",
+    "styleId": "D",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a snarling shark pirate in a torn coat swinging a cutlass, water streaming from its jaws, on the deck of a burning ship. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a snarling shark pirate in a torn coat swinging a cutlass, water streaming from its jaws",
+    "setting": "on the deck of a burning ship",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "mind-spring",
     "styleId": "L",
     "land": false,
@@ -833,6 +932,17 @@
     "setting": "in a smoky war camp lit by fire",
     "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
     "short": "master grade super deformed brawler, three heads tall, heavy armour, snarling, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "moonshadow",
+    "styleId": "H",
+    "land": false,
+    "prompt": "super deformed dark knight, stocky three heads tall, spiked plate armour, a looming shadow elemental of living darkness with pale moonlit eyes, tendrils reaching outward, in a ruined moonlit courtyard. gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace.",
+    "subject": "a looming shadow elemental of living darkness with pale moonlit eyes, tendrils reaching outward",
+    "setting": "in a ruined moonlit courtyard",
+    "style": "gothic horror painting, candlelit deep shadows, rich crimson and black, baroque detail, dread and menace",
+    "short": "super deformed dark knight, stocky three heads tall, spiked plate armour, ",
     "negativeExtra": ""
   },
   {
@@ -943,6 +1053,17 @@
     "setting": "in a torchlit council hall",
     "style": "loose ink and watercolour illustration, bleeding pigment washes, deep crimson and indigo, splattered paint, raw violent energy",
     "short": "master grade super deformed fighter, stocky three heads tall, battle-scarred, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "practiced-offense",
+    "styleId": "D",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a squad of drilled white-armoured soldiers advancing in a tight shield wall, spears levelled, on a dusty training field at dawn. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a squad of drilled white-armoured soldiers advancing in a tight shield wall, spears levelled",
+    "setting": "on a dusty training field at dawn",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
     "negativeExtra": ""
   },
   {

@@ -92,6 +92,7 @@
         else if (a.type === 'cast') {
           const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); delete cost.xs;
           if (s.cards[a.iid].zone !== 'hand' && !tray.includes(a.iid)) tray.push(a.iid);                // castable from a graveyard or exile: shown in the tray
+          if (a.via === 'flashback' || a.via === 'mayhem') { add(a.iid, a, 'Cast ' + d.name + ' with ' + a.via + ' — ' + MF.manaStr(cost)); continue; }
           if (a.via === 'warp') { add(a.iid, a, 'Cast ' + d.name + ' for its warp cost — ' + MF.manaStr(cost) + ' (exiled at end step; recast later)'); continue; }
           if (a.via === 'sneak') { add(a.iid, a, 'Cast ' + d.name + ' for its sneak cost — ' + MF.manaStr(cost) + ' (return an unblocked attacker)'); continue; }
           if (a.via === 'harmonize') { add(a.iid, a, 'Cast ' + d.name + ' with harmonize — ' + MF.manaStr(cost) + ' (tap a creature to reduce it)'); if (!tray.includes(a.iid)) tray.push(a.iid); continue; }

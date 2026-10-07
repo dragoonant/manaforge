@@ -94,9 +94,18 @@
   MF.zoneArr = zoneArr;
   // The zone-move door. o: { top, bottom, ctrl, tapped, x (the invocation, so a replacement that
   // asks can ask), why }. Returns the new object's iid.
+  // Simultaneous events (CR 603.2c): discards, cards leaving a graveyard and permanent cards put into
+  // one are counted per instruction, and "one or more" triggers see the batch once (MF.batchFlush).
+  MF.batchNote = function (s, kind, who) { const b = s.batchAcc || (s.batchAcc = {}); const k = kind + ':' + who; b[k] = (b[k] || 0) + 1; };
+  MF.batchFlush = function (s) {
+    const b = s.batchAcc; if (!b) return; s.batchAcc = null;
+    for (const k in b) { const [kind, who] = k.split(':'); emit(s, { t: kind, who: +who, n: b[k] }); }
+  };
   const move = MF.move = function (s, iid, zone, o) {
     o = o || {};
     const c = I(s, iid), from = c.zone;
+    if (from === 'grave' && zone !== 'grave') MF.batchNote(s, 'leftGraveBatch', c.owner);   // "Whenever one or more cards leave your graveyard"
+    if (zone === 'grave' && !c.tok && def(s, iid).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))) MF.batchNote(s, 'toGraveBatch', c.owner);   // "permanent cards put into your graveyard from anywhere"
     if (from === 'bf' && zone === 'grave' && chars(s, iid).types.includes('Creature') && s.bf.some(v => v !== iid && chars(s, v).ctrl !== c.ctrl && chars(s, v).ab.some(a => a.k === 'oppDieExile'))) {
       log(s, 'exiledInstead', { who: c.owner, c: c.id }); zone = 'exile';                    // its rulings: no "dies" trigger
     }
@@ -163,6 +172,7 @@
   function enterReplacements(s, n, o) {
     const c = I(s, n);
     for (const a of baseChars(s, n).ab) {
+      if (a.k === 'etbCounters') c.ctr[a.kind] = (c.ctr[a.kind] || 0) + a.n;
       if (a.k === 'etbTapped' && !(a.unless && MF.cond({ s: s, ctrl: c.ctrl, src: n, flags: {} }, a.unless))) c.tapped = true;
       if (a.k === 'etbPayOrTap' && !o.tapped) {                                                // put onto the battlefield tapped anyway: paying could change nothing, so nothing is asked
         if (!o.x) throw new Error('a land with an entering choice was moved without the invocation to ask: ' + c.id);
@@ -314,6 +324,7 @@
     const l6 = [];
     for (const st of statics) if (st.a.k === 'static' && st.a.grant) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) for (const k of st.a.grant) out[i].kw[k] = (out[i].kw[k] || 0) + 1; } });
     for (const e of s.effects) if ((e.k === 'grant' || e.k === 'animate') && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { for (const k of e.kws) out[e.iid].kw[k] = (out[e.iid].kw[k] || 0) + 1; } });
+    for (const e of s.effects) if (e.k === 'grantAb' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].ab = out[e.iid].ab.concat(e.abs); } });
     for (const e of s.effects) if (e.k === 'loseAll' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].kw = {}; out[e.iid].ab = out[e.iid].ab.map(() => LOCKED); lost.add(e.iid); } });   // Azure Beastbinder: "loses all abilities"
     l6.sort((x, y) => x.ts - y.ts); for (const op of l6) op.run();
     // Layer 7a: characteristic-defining abilities.
@@ -406,6 +417,8 @@
         if (!!a.lookBack !== !!lki) continue;                                                 // CR 603.10a: leaves-the-battlefield triggers look back in time
         if (!MF.trigMatch(s, iid, src, a, ev)) continue;
         if (a.cond && !MF.cond(ctxFor(s, { kind: 'trig', ctrl: src.ctrl, src: iid, ev: ev, lki: lki || null, t: [] }), a.cond)) continue;   // CR 603.4: an intervening "if" is checked as the event happens
+        if (a.evCond && !MF.cond(ctxFor(s, { kind: 'trig', ctrl: src.ctrl, src: iid, ev: ev, lki: lki || null, t: [] }), a.evCond)) continue;   // "while ~ has a -1/-1 counter": as it triggers only
+        if (a.zone === 'grave') continue;                                                      // a graveyard ability does not function on the battlefield
         if (a.oncePerTurn) { const oc = s.cards[iid]; if (oc.trigTurn && oc.trigTurn[i] === s.turn) continue; oc.trigTurn = oc.trigTurn || {}; oc.trigTurn[i] = s.turn; }   // "This ability triggers only once each turn"
         s.trigs.push({ src: iid, ab: i, ctrl: src.ctrl, ev: ev, lki: lki || null });
       }
@@ -414,6 +427,10 @@
       }
     };
     for (const iid of s.bf.slice()) scan(iid, null);
+    for (const p of s.players) for (const gi of p.grave.slice()) {                           // CR 113.6m: abilities that function in a graveyard
+      const gab = def(s, gi).ab;
+      for (let i = 0; i < gab.length; i++) { const a = gab[i]; if (a.k !== 'trig' || a.zone !== 'grave' || a.on !== ev.t) continue; const gsrc = chars(s, gi); if (!MF.trigMatch(s, gi, gsrc, a, ev)) continue; s.trigs.push({ src: gi, ab: i, ctrl: gsrc.ctrl, ev: ev, lki: null }); }
+    }
     for (const d of (s.delayed || []).slice()) {                                             // CR 603.7: delayed triggered abilities
       if (d.ab.on !== ev.t || !MF.trigMatch(s, d.src, { ctrl: d.ctrl }, d.ab, ev)) continue;
       s.trigs.push({ src: d.src, ab: -1, inl: d.ab, ctrl: d.ctrl, ev: ev, lki: null });
@@ -585,7 +602,7 @@
   MF.costMods = [];          // (s, who, iid, d, cost) => void: js/ops.js registers "costs {1} less"
   const spellCost = MF.spellCost = function (s, who, iid, o) {
     const ch = faceChars(s, iid, o && o.alt, o && o.door);
-    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
+    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
     const c = MF.parseMana(hz ? hz.cost : ch.mana);                                           // CR 702.180a: an alternative cost
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
     if (o && o.extra) { const e = o.extra; for (const k in e) c[k] += e[k]; }
@@ -716,7 +733,7 @@
       case 'fsdamage': s.todo.push({ t: 'combatDamage', first: true, answers: [] }); return;    // CR 510, 702.7b
       case 'damage': s.todo.push({ t: 'combatDamage', first: false, answers: [] }); return;
       case 'eoc': emit(s, { t: 'beginStep', step: 'eoc', ap: ap }); setPriority(s, ap); return;  // CR 511.1
-      case 'end': emit(s, { t: 'beginStep', step: 'end', ap: ap }); setPriority(s, ap); return;  // CR 513.1
+      case 'end': s.effects = s.effects.filter(e => !(e.until === 'nextEndStep' && e.who === ap)); emit(s, { t: 'beginStep', step: 'end', ap: ap }); setPriority(s, ap); return;  // CR 513.1
       case 'cleanup': s.todo.push({ t: 'cleanup', who: ap, answers: [] }); return;            // CR 514
       default: throw new Error('stepFlow: unknown step ' + s.step);
     }
@@ -758,7 +775,8 @@
     for (;;) {
       const opts = s.bf.filter(i => !chosen.includes(i) && canAttack(s, i)).map(i => ({ id: i, iid: i }));
       if (!opts.length && !chosen.length) break;                                             // nothing could attack: not a choice
-      opts.push({ id: 'done' });
+      const must = opts.filter(o => chars(s, o.iid).ab.some(a => a.k === 'mustAttack'));       // CR 508.1d: requirements obeyed where possible
+      if (!must.length) opts.push({ id: 'done' });
       if (chosen.length) opts.push({ id: 'undo' });
       const a = ask(x, { who: who, kind: 'attack', chosen: chosen.slice(), opts: opts });
       if (a === 'done') break;
@@ -1003,7 +1021,7 @@
   // Cards a player may cast or play from somewhere other than hand: an effect names them (Alania's Pathmaker).
   function playableZones(s, who) {
     const out = P(s, who).hand.slice();
-    for (const iid of P(s, who).grave) if (def(s, iid).ab.some(a => a.k === 'harmonize')) out.push(iid);   // CR 702.180a
+    for (const iid of P(s, who).grave) if (def(s, iid).ab.some(a => a.k === 'harmonize' || a.k === 'flashback' || a.k === 'mayhem')) out.push(iid);   // CR 702.180a, 702.34a, 702.187b
     for (const e of s.effects) if (e.k === 'mayPlay' && e.who === who && I(s, e.iid) && (I(s, e.iid).zone === 'exile' || I(s, e.iid).zone === 'grave') && !(e.afterTurn != null && s.turn <= e.afterTurn) && !out.includes(e.iid)) out.push(e.iid);
     return out;
   }
@@ -1021,9 +1039,10 @@
   const sneakWindow = (s, who) => s.ap === who && s.step === 'blockers' && s.priority === who && unblockedAttackers(s, who).length > 0;
   const canCast = MF.canCast = function (s, who, iid, alt, door, via) {                      // CR 601.2e
     const d0 = def(s, iid);
-    if (I(s, iid).zone === 'grave' && via !== 'harmonize' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
+    if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
     if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrLife' && P(s, who).hand.filter(i => i !== iid).length === 0 && P(s, who).life < a.life) return false;   // a mandatory additional cost that can't be paid   // CR 702.185a: from your hand
+    if ((via === 'flashback' || via === 'mayhem') && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === via) || (via === 'mayhem' && I(s, iid).discardedTurn !== s.turn))) return false;
     if (via === 'harmonize' && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === 'harmonize'))) return false;
     if (via === 'sneak' && !(d0.ab.some(a => a.k === 'sneak') && sneakWindow(s, who))) return false;
     if (s.bf.some(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); })) return false;   // Voice of Victory
@@ -1058,6 +1077,7 @@
     if (a.levelUp && (c.level || 1) !== a.levelUp - 1) return false;                           // CR 716.2a: only if this Class is level N-1
     if (a.cost.removeCtr && (c.ctr[a.cost.removeCtr.kind] || 0) < a.cost.removeCtr.n) return false;
     if (a.cost.life && P(s, who).life < a.cost.life) return false;                             // CR 119.4
+    if (a.cost.discard && P(s, who).hand.filter(i => i !== iid).length < a.cost.discard) return false;
     if (a.cost.sacToken && !s.bf.some(i => I(s, i).ctrl === who && I(s, i).tok)) return false;
     if (a.oncePerTurn && c.actTurn && c.actTurn[i] === s.turn) return false;                  // CR 602.5b: "Activate only once each turn"
     const need = MF.parseMana(a.cost.mana || '');
@@ -1083,7 +1103,7 @@
       const d = def(s, iid);
       if (canPlayLand(s, who, iid)) out.push({ type: 'land', iid: iid });
       else if (d.doors) { for (let k = 0; k < d.doors.length; k++) if (canCast(s, who, iid, false, k)) out.push({ type: 'cast', iid: iid, door: k }); }   // CR 709.3
-      else if (I(s, iid).zone === 'grave') { if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
+      else if (I(s, iid).zone === 'grave') { for (const v of ['flashback', 'mayhem']) if (canCast(s, who, iid, false, null, v)) out.push({ type: 'cast', iid: iid, via: v }); if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
       else if (d.ab.some(a => a.k === 'warp') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'warp')) out.push({ type: 'cast', iid: iid, via: 'warp' }); }
       else if (d.ab.some(a => a.k === 'sneak') && canCast(s, who, iid, false, null, 'sneak')) { out.push({ type: 'cast', iid: iid, via: 'sneak' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }
       else if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid });
@@ -1209,6 +1229,8 @@
     const c = I(s, iid);
     log(s, 'discard', { who: c.owner, c: c.id });
     const n = move(s, iid, 'grave');
+    I(s, n).discardedTurn = s.turn;                                                           // mayhem: "if you discarded this card this turn" (CR 702.187b)
+    MF.batchNote(s, 'discardBatch', c.owner);
     emit(s, { t: 'discarded', who: c.owner, iid: n });
     return n;
   };
@@ -1231,7 +1253,8 @@
     const iid = move(s, iid0, 'stack', { ctrl: who });                                        // CR 601.2a
     const L = { lid: s.lid++, kind: 'spell', ctrl: who, iid: iid, id: card.id, t: [], x: 0, from: from, alt: alt ? d.kind : null };
     if (door != null) L.door = door;
-    if (via === 'harmonize') L.harmonize = true;
+    if (via === 'harmonize' || via === 'flashback') L.harmonize = true;                      // both exile it whenever it would leave the stack (702.34a, 702.180a)
+    if (via) L.via = via;
     if (via === 'sneak') L.sneak = true;
     if (via === 'warp') L.warp = true;
     s.stack.push(L);
@@ -1371,6 +1394,7 @@
       L.ninjaTarget = (s.combat.target && s.combat.target[back]) || { p: 1 - who };
       log(s, 'ninjutsuReturn', { who: who, c: I(s, back).id, card: c.id }); move(s, back, 'hand');
     }
+    if (a.cost.discard) { const card = ask(x, { who: who, kind: 'discard', src: iid, left: 1, opts: P(s, who).hand.filter(i => i !== iid).map(i => ({ id: i, iid: i })), cancel: true }); MF.discard(s, card); }
     if (a.cost.sacToken) { const opts = s.bf.filter(i => I(s, i).ctrl === who && I(s, i).tok).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('no token to sacrifice'); MF.sacrifice(s, ask(x, { who: who, kind: 'sacToken', src: iid, opts: opts, cancel: true })); }
     payMana(x, who, MF.parseMana(a.cost.mana || ''), iid, true);
     if (a.once) c.usedOnce = true;
@@ -1477,7 +1501,7 @@
   // An instant or sorcery leaving the stack (resolved, fizzled, countered): its owner's graveyard,
   // or exile if its harmonize cost was paid (CR 702.180a).
   const spellAway = MF.spellAway = function (s, L) {
-    if (L.harmonize) { const n = move(s, L.iid, 'exile'); log(s, 'harmonizeExile', { who: L.ctrl, c: I(s, n).id }); return n; }
+    if (L.harmonize) { const n = move(s, L.iid, 'exile'); log(s, 'harmonizeExile', { who: L.ctrl, c: I(s, n).id, via: L.via || 'harmonize' }); return n; }
     return move(s, L.iid, 'grave');
   };
   function afterResolve(s) { if (s.winner == null) setPriority(s, s.ap); }                    // CR 117.3b
@@ -1495,7 +1519,7 @@
         const inv = s.todo[0];
         const c = clone(s); c.todo.shift();
         const x = { s: c, inv: inv, ai: 0 };
-        try { EXEC[inv.t](x); s = c; }
+        try { EXEC[inv.t](x); MF.batchFlush(c); s = c; }
         catch (e) {
           if (e instanceof Ask) { s.pending = { q: e.ask }; c.log = c.log.slice(); Object.defineProperty(s.pending, 'view', { value: freeze(c), enumerable: false }); return freeze(s); }
           if (e instanceof Illegal && PLAYER_ACTS[inv.t]) { s.todo.shift(); log(s, 'undone', { who: inv.who, why: e.illegal }); continue; }   // CR 733.1: the action is reversed

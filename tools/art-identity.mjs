@@ -99,6 +99,18 @@ export const CARDS = {
   'thornspire-verge': { land: true, subject: 'a jagged spire of red rock wrapped in giant black thorn vines, a forest edge burning at its base', setting: 'at a smoky dusk' },
   'commercial-district': { land: true, subject: 'an empty crowded city market district of stone arches and shuttered stalls, lanterns guttering', setting: 'at night in heavy rain' },
   'copperline-gorge': { land: true, subject: 'a deep gorge of copper-veined red rock with a thin river and gnarled trees clinging to the walls', setting: 'at sunset, long shadows' },
+  // ---- Mardu (Bloodghast), Hobbit-era Arena Standard ----
+  'bloodghast': { subject: 'a gaunt vampire spirit with hollow glowing eyes clawing its way out of an open grave', setting: 'in a misty graveyard at night' },
+  'marauding-mako': { subject: 'a snarling shark pirate in a torn coat swinging a cutlass, water streaming from its jaws', setting: 'on the deck of a burning ship' },
+  'iron-shield-elf': { subject: 'a grim elf warrior bracing behind a huge iron tower shield as arrows shatter against it', setting: 'on a muddy battlefield' },
+  'moonshadow': { subject: 'a looming shadow elemental of living darkness with pale moonlit eyes, tendrils reaching outward', setting: 'in a ruined moonlit courtyard' },
+  'hardened-academic': { subject: 'a fierce bird cleric in battle robes diving with a burning tome blade raised', setting: 'over a burning academy tower' },
+  'cool-but-rude': { subject: 'a scarred grown brawler mage in a battered leather coat shoving past an armoured guard while hurling a fireball', setting: 'in a smoky city street at night' },
+  'practiced-offense': { subject: 'a squad of drilled white-armoured soldiers advancing in a tight shield wall, spears levelled', setting: 'on a dusty training field at dawn' },
+  'carnage-crimson-chaos': { subject: 'a hulking crimson blood fiend with spiked bone armour and long hooked claws, roaring', setting: 'in a ruined burning city street at night' },
+  'inti-seneschal-of-the-sun': { subject: 'a sun knight in golden armour charging with a blazing sword, a sunburst behind him', setting: 'on a scorched plain at noon' },
+  'erode': { subject: 'a white wind of sand and light eroding an armoured giant into dust', setting: 'in a vast desert canyon' },
+  'blood-crypt': { land: true, subject: 'a red-lit crypt of carved stone coffins and dripping blood channels', setting: 'deep underground' },
   // ---- Dimir (Bitter Triumph), Hobbit-era Arena Standard ----
   'bitter-triumph': { subject: 'a gaunt sorcerer crushing a fallen knight under a wave of black shadow, blood on his own hands', setting: 'on a ruined battlefield at dusk' },
   'requiting-hex': { subject: 'a hag witch hurling a withering black curse that rots a charging soldier', setting: 'in a dead swamp' },

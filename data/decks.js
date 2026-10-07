@@ -1047,7 +1047,7 @@ window.MF.decks = {
    "cavern-of-souls: ability: As ~ enters, choose a creature type.",
    "superior-spider-man: ability: Mind Swap — You may have ~ enter as a copy of any creature card in a graveyard, except his name is ~ and he's a 4/4 Spider Human Hero in addition to his other types. When you do, exile that card.",
    "bringer-of-the-last-gift: intervening if: if you cast it, each player sacrifices all other creatures they control. Then each player returns all creature cards from their graveyard that weren't put there this way to the battlefield.",
-   "formidable-speaker: effect: You may discard a card",
+   "formidable-speaker: effect: Search your library for a creature card, reveal it, put it into your hand, then shuffle",
    "oblivious-bookworm: effect: You may draw a card",
    "overlord-of-the-balemurk: ability: Impending 5—{1}{B}",
    "town-greeter: effect: You may put a land card from among them into your hand",
@@ -1207,7 +1207,7 @@ window.MF.decks = {
   "refused": [
    "cavern-of-souls: ability: As ~ enters, choose a creature type.",
    "the-lonely-mountain: effect: This ability costs {1} less to activate for each Equipment you control",
-   "d-ins-company: ability: ~ has lifelink as long as you control another Dwarf.",
+   "d-ins-company: condition: you control another Dwarf",
    "lavaspur-boots: keyword: ward {1}",
    "k-li-the-resourceful: ability: Storied",
    "thorin-mountain-king: effect: Attach any number of target Equipment you control to target creature you control",
@@ -1792,10 +1792,9 @@ window.MF.decks = {
    "demolition-field: filter noun: nonbasic land an opponent controls",
    "icetill-explorer: ability: You may play an additional land on each of your turns.",
    "esper-origins-summon-esper-maduin: condition: this spell was cast from a graveyard",
-   "sazhs-chocobo: trigger event: a land you control enters, put a +1/+1 counter on ~.",
    "earthbender-ascension: effect: Earthbend 2",
    "meltstriders-resolve: ability: Enchant creature you control",
-   "mightform-harmonizer: trigger event: a land you control enters, double the power of target creature you control until end of turn.",
+   "mightform-harmonizer: effect: Double the power of target creature you control until end of turn",
    "sapling-nursery: ability: Affinity for Forests",
    "surrak-elusive-hunter: ability: This spell can't be countered.",
    "lumbering-worldwagon: ability: This Vehicle's power is equal to the number of lands you control."
@@ -1960,7 +1959,7 @@ window.MF.decks = {
   "refused": [
    "castle-doom: effect: Add one mana of any color",
    "petrified-hamlet: effect: Choose a land card name",
-   "fomori-vault: cost: Discard a card",
+   "fomori-vault: effect: Look at the top X cards of your library, where X is the number of artifacts you control",
    "united-battlefront: effect: Look at the top seven cards of your library",
    "simulacrum-synthesizer: trigger event: another artifact you control with mana value 3 or greater enters, create a 0/0 colorless Construct artifact creature token with \"This token gets +1/+1 for each artifact you control.\"",
    "perilous-snare: ability: Start your engines!",
@@ -2000,7 +1999,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (september-14-2026)",
   "rank": null,
   "players": 7,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -2131,19 +2130,7 @@ window.MF.decks = {
     "name": "Pyroclasm"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "marauding-mako: trigger event: you discard one or more cards, put that many +1/+1 counters on ~.",
-   "iron-shield-elf: ability: Discard a card: ~ gains indestructible until end of turn. Tap it.",
-   "moonshadow: ability: ~ enters with six -1/-1 counters on it.",
-   "hardened-academic: ability: Discard a card: ~ gains lifelink until end of turn.",
-   "cool-but-rude: trigger event: you attack, you may discard a card. If you do, draw a card.",
-   "bloodghast: ability: ~ has haste as long as an opponent has 10 or less life.",
-   "practiced-offense: filter qualifier: target player controls",
-   "carnage-crimson-chaos: effect: Return target creature card with mana value 3 or less from your graveyard to the battlefield",
-   "inti-seneschal-of-the-sun: trigger event: you attack, you may discard a card. When you do, put a +1/+1 counter on target attacking creature. It gains trample until end of turn.",
-   "erode: effect: Its controller may search their library for a basic land card, put it onto the battlefield tapped, then shuffle"
-  ],
+  "compiles": true,
   "tokens": []
  },
  "selesnya-llanowar-elves-hob": {
@@ -2293,7 +2280,6 @@ window.MF.decks = {
    "multiversal-passage: ability: As ~ enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters tapped.",
    "ba-sing-se: effect: Earthbend 2",
    "brightglass-gearhulk: effect: You may search your library for up to two artifact, creature, and/or enchantment cards with mana value 1 or less, reveal them, put them into your hand, then shuffle",
-   "practiced-offense: filter qualifier: target player controls",
    "pawpatch-recruit: trigger event: a creature you control becomes the target of a spell or ability an opponent controls, put a +1/+1 counter on target creature you control other than that creature.",
    "leatherhead-swamp-stalker: ability: ~ enters with a hexproof counter on her.",
    "spider-manifestation: trigger event: you cast a spell with mana value 4 or greater, untap ~.",
@@ -2423,7 +2409,6 @@ window.MF.decks = {
   "compiles": false,
   "refused": [
    "realm-of-koh: token ability: This token can't block or be blocked by non-Spirit creatures.",
-   "iridescent-vinelasher: trigger event: a land you control enters, ~ deals 1 damage to target opponent.",
    "nighthowl-pursuer: trigger event: ~ attacks while you control a creature with power 4 or greater, ~ gets +2/+2 until end of turn.",
    "desolation-prowler: ability: Pay 2 life: ~ gets +2/+2 until end of turn. Activate only once each turn.",
    "forsaken-miner: trigger event: you commit a crime, you may pay {B}. If you do, return this card from your graveyard to the battlefield.",

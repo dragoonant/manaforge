@@ -82,6 +82,7 @@
     graveCount: (x, c) => P(x.s, x.ctrl).grave.length >= c.n,
     oppLostLife: x => (P(x.s, 1 - x.ctrl).h.lostLife || 0) > 0,
     addCostPaid: x => !!(x.L && x.L.addCostPaid),                                            // "if this spell's additional cost was paid", teamwork
+    oppLifeLE: (x, c) => P(x.s, 1 - x.ctrl).life <= c.n,                                          // "as long as an opponent has 10 or less life"
     sneakPaid: x => !!(x.L && x.L.sneak),                                                      // CR 702.190b
     gainedAtLeast: (x, c) => (P(x.s, x.ctrl).h.gained || 0) >= c.n,                            // "if you gained life this turn", "3 or more life"
     lostLifeThisTurn: x => (P(x.s, x.ctrl).h.lostLife || 0) > 0,
@@ -157,6 +158,7 @@
       case 'enters': case 'blocks': case 'becomesBlocked': return subject(s, iid, src, a.who, ev.iid) && (!a.firstEachTurn || ev.first);
       case 'unlock': return ev.iid === iid && ev.door === a.door;                                // "When you unlock this door" (CR 709.5h)
       case 'levelUp': return ev.iid === iid && ev.level === a.level;
+      case 'discardBatch': case 'leftGraveBatch': case 'toGraveBatch': case 'discarded': return !a.you || ev.who === src.ctrl;
       case 'search': return a.opp ? ev.who !== src.ctrl : ev.who === src.ctrl;
       case 'drawCard': return (!a.you || ev.who === src.ctrl) && (!a.opp || ev.who !== src.ctrl) && (!a.nth || ev.nth === a.nth);
       case 'counterPut': return ev.iid === iid && (!a.ctrKind || ev.kind === a.ctrKind) && (!a.nth || (ev.before < a.nth && ev.after >= a.nth));   // "When the fourth plan counter is put on this"                               // "When this Class becomes level N" (CR 716.2a)
@@ -167,6 +169,7 @@
       case 'gainLife': return ev.who === src.ctrl;
       // Valiant: "becomes the target of a spell or ability you control for the first time each turn".
       case 'targeted': return ev.iid === iid && (!a.byYou || ev.by === src.ctrl) && (!a.byOpp || ev.by !== src.ctrl) && (!a.firstEachTurn || ev.firstThisTurn);
+      case 'reflexive': return false;
       case 'attackWith': return ev.ctrl === src.ctrl && (!a.sub || ev.subtypes.includes(a.sub) || ev.anyType);   // CR 508.3c: once for the declaration; "all creature types" counts (CR 205.3m)
       case 'dealtDamage': return ev.iid === iid;
       default: return false;
@@ -192,6 +195,7 @@
     if (r === 'ev') return onBf(x.ev && x.ev.iid) ? [x.ev.iid] : [];
     if (r === 'it') return x.it != null ? [x.it] : [];
     if (r.t != null) return (x.t[r.t] || []).filter(q => q && q.c != null).map(q => q.c);
+    if (r.each && r.each.ctrlOfT != null) { const ps = (x.t[r.each.ctrlOfT] || []).filter(q => q && q.p != null).map(q => q.p); return s.bf.filter(i => ps.includes(MF.chars(s, i).ctrl) && MF.matchChars(s, i, MF.chars(s, i), Object.assign({}, r.each, { ctrlOfT: undefined }), x.ctrl, x.src)); }   // "each creature target player controls"
     if (r.each) return s.bf.filter(i => MF.matchChars(s, i, MF.chars(s, i), r.each, x.ctrl, x.src));
     throw new Error('unknown reference ' + JSON.stringify(r));
   };
@@ -337,6 +341,12 @@
     },
     // CR 701.23: search the library for a basic land card (the player chooses; finding nothing is allowed, 701.23b), put it onto the battlefield, shuffle.
     searchBasic(x, op) {
+      if (op.whoT != null) {                                                                     // Erode: "Its controller may search ..." — the destroyed permanent's controller
+        const q = (x.t[op.whoT] || [])[0]; if (!q || q.c == null) return;
+        const who = I(x.s, q.c).ctrl;
+        if (op.may && MF.ask(x.x, { who: who, kind: 'may', src: x.src, what: 'search', opts: [{ id: 'yes' }, { id: 'no' }] }) !== 'yes') return;
+        return OPS.searchBasic(Object.assign({}, x, { ctrl: who }), { tapped: op.tapped, toHand: op.toHand });
+      }
       const s = x.s, p = P(s, x.ctrl);
       const opts = p.lib.filter(i => { const d = MF.def(s, i); return d.types.includes('Land') && d.supers.includes('Basic'); }).map(i => ({ id: i, iid: i }));
       const seen = new Set(), uniq = opts.filter(o => { const id = I(s, o.iid).id; if (seen.has(id)) return false; seen.add(id); return true; });   // identical basics are one choice
@@ -501,7 +511,8 @@
       const id = I(s, p.lib[0]).id;
       const n = MF.move(s, p.lib[0], 'exile');
       const turn = op.until === 'eot' ? s.turn : s.ap === x.ctrl ? s.turn + 2 : s.turn + 1;    // "until end of turn" / "until the end of your next turn"
-      s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, until: 'endOfTurn', turn: turn });
+      if (op.until === 'nextEndStep') s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, until: 'nextEndStep' });   // Inti: until your next end step begins
+      else s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, until: 'endOfTurn', turn: turn });
       log(s, 'impulse', { who: x.ctrl, c: id, until: turn });
       x.it = n;
     },
@@ -614,6 +625,22 @@
       const n = MF.move(s, x.src, 'bf', { ctrl: x.ctrl, tapped: true, x: x.x, attacking: x.L.ninjaTarget || { p: 1 - x.ctrl } });
       log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: true, from: 'hand', attacking: true });
     },
+    // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
+    selfFromGrave(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'grave') return; const n = MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); log(s, 'putOnto', { who: c.owner, c: I(s, n).id, tapped: false, from: 'graveyard' }); },
+    removeCounter(x, op) { const c = I(x.s, x.src); if (!c || c.zone !== 'bf' || !(c.ctr[op.kind] > 0)) return; c.ctr[op.kind] = Math.max(0, c.ctr[op.kind] - op.n); log(x.s, 'removeCounters', { who: c.ctrl, c: c.id, n: op.n, ctr: op.kind }); },
+    // Cool but Rude: "search your library for a card, put it into your hand, shuffle, then discard a card at random."
+    tutor(x) {
+      const s = x.s, p = P(s, x.ctrl);
+      MF.emit(s, { t: 'search', who: x.ctrl });
+      const seen = new Set(), opts = p.lib.filter(i => { const id = I(s, i).id; if (seen.has(id)) return false; seen.add(id); return true; }).map(i => ({ id: i, iid: i }));
+      opts.push({ id: 'none' });
+      const a = MF.ask(x.x, { who: x.ctrl, kind: 'search', src: x.src, what: 'card', opts: opts });
+      if (a !== 'none') { MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: I(s, a).id, revealed: false, from: 'library' }); } else log(s, 'searchNothing', { who: x.ctrl });
+      MF.shuffle(s, p.lib);
+    },
+    discardRandom(x) { const s = x.s, p = P(s, x.ctrl); if (!p.hand.length) return; MF.discard(s, p.hand[MF.randInt(s, p.hand.length)]); },   // random: inside apply (CLAUDE.md rule 9)
+    // CR 603.12: a reflexive triggered ability — triggers at once; its targets are chosen as it goes on the stack.
+    reflexive(x, op) { x.s.trigs.push({ src: x.src, ab: -1, inl: op.ab, ctrl: x.ctrl, ev: x.ev || { t: 'reflexive' }, lki: x.lki || null }); },
     // CR 603.7: "Whenever you attack this turn, ..." — a delayed triggered ability with a duration.
     delayed(x, op) {
       (x.s.delayed = x.s.delayed || []).push({ src: x.src, ctrl: x.ctrl, until: op.duration === 'turn' ? 'eot' : null, once: op.duration !== 'turn', ab: { k: 'trig', on: op.on, ops: op.ops } });
@@ -648,7 +675,8 @@
     },
     // Moseo: "return up to one target creature card ... from your graveyard to the battlefield".
     graveToBattlefield(x, op) {
-      for (const q of (x.t[op.on.t] || [])) { if (!q || q.c == null) continue; const c = I(x.s, q.c); if (c.zone !== 'grave') continue; const n = MF.move(x.s, q.c, 'bf', { ctrl: x.ctrl, x: x.x }); log(x.s, 'putOnto', { who: x.ctrl, c: I(x.s, n).id, tapped: false, from: 'graveyard' }); }
+      for (const q of (x.t[op.on.t] || [])) { if (!q || q.c == null) continue; const c = I(x.s, q.c); if (c.zone !== 'grave') continue; const n = MF.move(x.s, q.c, 'bf', { ctrl: x.ctrl, x: x.x }); log(x.s, 'putOnto', { who: x.ctrl, c: I(x.s, n).id, tapped: false, from: 'graveyard' });
+        if (op.grantAb) x.s.effects.push({ k: 'grantAb', iid: n, abs: op.grantAb, ts: x.s.ts++ }); }   // Carnage: "It gains ..." for as long as it stays
     },
     // Case of the Uneaten Feast: "Creature cards in your graveyard gain 'You may cast this card from your graveyard' until end of turn."
     graveCastable(x, op) {
@@ -811,6 +839,7 @@
       const f = OPS[op.o];
       if (!f) throw new Error('no op handler: ' + op.o);
       f(x, op);
+      MF.batchFlush(x.s);                                                                        // one instruction, one batch of simultaneous events
       if (x.s.winner != null) return;
     }
   };
@@ -853,7 +882,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

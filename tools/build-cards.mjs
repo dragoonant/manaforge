@@ -39,6 +39,7 @@ export function parseFilter(str) {
   if ((m = s.match(/^non(land|creature|artifact) (.*)$/))) { f.notTypes = [m[1][0].toUpperCase() + m[1].slice(1)]; s = m[2]; }
   if ((m = s.match(/^creature or planeswalker\b ?(.*)$/))) { f.types = ['Creature', 'Planeswalker']; s = m[1]; }
   else if ((m = s.match(/^creature or artifact\b ?(.*)$/))) { f.types = ['Creature', 'Artifact']; s = m[1]; }
+  else if ((m = s.match(/^attacking creatures?\b ?(.*)$/))) { f.types = ['Creature']; f.attacking = true; s = m[1]; }
   else if ((m = s.match(/^(creature|creatures|land|lands|artifact|enchantment|permanent|permanents)\b ?(.*)$/))) { if (NOUN[m[1]]) f.types = NOUN[m[1]]; s = m[2]; }
   else if ((m = s.match(/^([A-Z][a-z]+(?:-[a-z]+)?)\b ?(.*)$/))) { f.subtypes = [m[1].replace(/(?<=[^s])s$/, '').replace(/ves$/, 'f')]; s = m[2]; }   // a creature type, singular or plural ("Mouse", "Lizards", "Elves")
   else if ((m = s.match(/^(token)s?\b ?(.*)$/))) { f.tok = true; s = m[2]; }
@@ -94,6 +95,7 @@ function parseRef(T, ctx, phrase) {
   if (p === 'that player' && ctx.evPlayer) return 'evPlayer';
   if (p === 'each opponent') return 'eachOpp';
   let m;
+  if ((m = p.match(/^each creature (target player) controls$/))) { const r = targetSlot(T, m[1]); return { each: { types: ['Creature'], ctrlOfT: r.t } }; }
   if ((m = p.match(/^each (.+)$/))) return { each: parseFilter(m[1]) };
   if ((m = p.match(/^all (.+)$/))) return { each: parseFilter(singular(m[1])) };
   if ((m = p.match(/^(creatures you control|other creatures you control)$/))) return { each: parseFilter(m[1]) };
@@ -138,7 +140,8 @@ export function parseCond(str, ctx) {
   if ((m = c.match(/^it's an? ([A-Z]\w+)$/)) && ctx.it === 'ev') return { c: 'evIs', f: { subtypes: [m[1]] } };
   if (c === 'it was a creature') return { c: 'lkiType', type: 'Creature' };
   if (c === 'your life total is less than or equal to half your starting life total') return { c: 'lifeAtMostHalfStart' };
-  if (c === "this spell's additional cost was paid") return { c: 'addCostPaid' };                   // CR 601.2b
+  if (c === "this spell's additional cost was paid") return { c: 'addCostPaid' };
+  if ((m = c.match(/^an opponent has (\d+) or less life$/))) return { c: 'oppLifeLE', n: +m[1] };                   // CR 601.2b
   if ((m = c.match(/^its power is exactly (\d+)$/))) return { c: 'selfPowerIs', n: +m[1] };
   if ((m = c.match(/^there are (\w+) or more card types among cards in your graveyard$/))) return { c: 'graveTypes', n: numOf(m[1]) };   // delirium (CR 207.2c ability word)
   if ((m = c.match(/^there are (\w+) or more card types among cards exiled with ~$/))) return { c: 'exiledWithTypes', n: numOf(m[1]) };   // CR 607.2a: linked
@@ -153,7 +156,7 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^Then (.+)$/))) return parseEffect(T, ctx, cap(m[1]));
   if ((m = s.match(/^(.+) and (scry \d+|draw a card|you gain \d+ life)$/))) return parseEffect(T, ctx, m[1]).concat(parseEffect(T, ctx, m[2]));
   if ((m = s.match(/^(.+ counters? on ~) and it deals (\d+) damage to each opponent$/))) return parseEffect(T, ctx, m[1]).concat([{ o: 'damage', from: 'self', n: +m[2], to: 'eachOpp' }]);   // Vivi Ornitier
-  if ((m = s.match(/^[Pp]ut that many ([a-z]+) counters on (it|~)$/)) && ctx.evAmount) return [{ o: 'counter', on: 'self', n: { v: 'evAmount' }, kind: m[1] }];   // "that many": the damage just dealt
+  if ((m = s.match(/^[Pp]ut that many (\+1\/\+1|[a-z]+) counters on (it|~)$/)) && ctx.evAmount) return [{ o: 'counter', on: 'self', n: { v: 'evAmount' }, kind: m[1] }];   // "that many": the damage just dealt
   if ((m = s.match(/^[Rr]eturn (target .+?) to its owner's hand$/))) return [{ o: 'bounce', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Rr]eturn (target .+ card from your graveyard) to your hand$/))) return [{ o: 'graveToHand', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Cc]ounter (target (?:noncreature )?spell) unless its controller pays (\{[^ ]+\})$/))) return [{ o: 'counterUnless', on: parseRef(T, ctx, m[1]), pay: m[2] }];   // CR 701.6, 118.12a
@@ -195,6 +198,13 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^(.+?) if (you've gained .+ this turn|you gained .+ this turn)$/))) return [{ o: 'if', cond: parseCond(m[2], ctx), ops: parseEffect(T, ctx, m[1]) }];
   if ((m = s.match(/^([Dd]estroy .+) if (its power is exactly \d+)$/))) return [{ o: 'if', cond: parseCond(m[2], ctx), ops: parseEffect(T, ctx, cap(m[1])) }];
   if (/^~ explores$/.test(s)) return [{ o: 'explore' }];
+  if (/^[Tt]ap it$/.test(s) && ctx.it === 'self') return [{ o: 'tap', on: 'self' }];
+  if (/^[Ii]ts controller may search their library for a basic land card, put it onto the battlefield tapped, then shuffle$/.test(s) && ctx.it && ctx.it.t != null) return [{ o: 'searchBasic', tapped: true, whoT: ctx.it.t, may: true }];   // Erode
+  if (/^[Yy]ou may return (?:~|this card) from your graveyard to the battlefield$/.test(s)) return [{ o: 'may', what: 'returnFromGrave', ops: [{ o: 'selfFromGrave' }] }];   // CR 113.6m: functions in the graveyard
+  if ((m = s.match(/^[Rr]emove (a|an|one|two) (-1\/-1|\+1\/\+1|[a-z]+) counters? from ~$/))) return [{ o: 'removeCounter', n: numOf(m[1]), kind: m[2] }];
+  if (/^[Yy]ou may discard a card$/.test(s)) return [{ o: 'may', what: 'discard', ops: [{ o: 'discard', n: 1 }] }];
+  if (/^[Ss]earch your library for a card, put it into your hand, shuffle, then discard a card at random$/.test(s)) return [{ o: 'tutor' }, { o: 'discardRandom' }];
+  if (/^[Ee]xile the top card of your library\. You may play that card until your next end step$/.test(s)) return [{ o: 'impulse', until: 'nextEndStep' }];
   if ((m = s.match(/^[Cc]ounter (target (?:noncreature )?spell(?: with mana value \d+)?)$/))) return [{ o: 'counterTarget', on: parseRef(T, ctx, m[1]) }];   // CR 701.6a
   if ((m = s.match(/^([Tt]arget creature you control) explores$/))) return [{ o: 'explore', on: parseRef(T, ctx, m[1].toLowerCase()) }];
   if (/^[Cc]reate a Map token$/.test(s)) return [{ o: 'token', id: ctx.token.map(), n: 1 }];              // CR 111.10s
@@ -279,6 +289,16 @@ function parseEffects(T, ctx, text) {
     const who = parseRef(T, ctx, m[1]);
     return [{ o: 'may', what: 'oppDrawCopy', ops: [{ o: 'draw', n: 1, who: who }] }, { o: 'if', cond: { c: 'did' }, ops: [{ o: 'copySpell' }] }];
   }
+  // Inti: "you may discard a card. When you do, ..." — a reflexive trigger (CR 603.12)
+  if ((m = t.match(/^you may discard a card\. When you do, (.+)$/i))) { const T2 = []; const ops = parseEffects(T2, Object.assign({}, ctx, { it: null }), cap(m[1])); return [{ o: 'may', what: 'discard', ops: [{ o: 'discard', n: 1 }, { o: 'reflexive', ab: Object.assign({ k: 'trig', on: 'reflexive', ops: ops }, T2.length ? { tg: T2 } : {}) }] }]; }
+  // Inti: "exile the top card of your library. You may play that card until your next end step."
+  if (/^exile the top card of your library\. You may play that card until your next end step$/i.test(t)) return [{ o: 'impulse', until: 'nextEndStep' }];
+  // Carnage: "return target creature card ... to the battlefield. It gains "..." and "...""
+  if ((m = t.match(/^return (target creature card with mana value (\d+) or less from your graveyard) to the battlefield\. It gains "~ attacks each combat if able" and "When ~ deals combat damage to a player, sacrifice it\."$/i))) {
+    T.push({ f: { card: 'grave', own: true, types: ['Creature'], mvLE: +m[2] } });
+    return [{ o: 'graveToBattlefield', on: { t: T.length - 1 }, grantAb: [{ k: 'mustAttack' }, { k: 'trig', on: 'dealsDamage', combat: true, toPlayer: true, ops: [{ o: 'sacrificeSelf' }] }] }];
+  }
+  // Erode: "Its controller may search their library for a basic land card, put it onto the battlefield tapped, then shuffle."
   // Tishana's Tidebinder: counter an ability; its permanent loses all abilities while this remains (CR 701.6a, 611.2b)
   if ((m = t.match(/^counter (up to one target activated or triggered ability)\. If an ability of an artifact, creature, or planeswalker is countered this way, that permanent loses all abilities for as long as ~ remains on the battlefield$/i))) return [{ o: 'counterAbility', on: parseRef(T, ctx, m[1].toLowerCase()), loseWhile: true }];
   // The Wondrous Wasp: "tap up to one target creature. It loses all abilities for as long as ~ remains on the battlefield."
@@ -325,7 +345,7 @@ function parseEffects(T, ctx, text) {
     const ow = sn.match(/^Otherwise, (.+)$/);                                                    // "If X, A. Otherwise, B."
     if (ow) { const last = ops[ops.length - 1]; if (!last || last.o !== 'if' || last.else) throw new Fail('"Otherwise" with no "if" before it'); last.else = parseEffect(T, ctx, cap(ow[1])); continue; }
     const out = parseEffect(T, ctx, sn);
-    const last = out[out.length - 1]; if (last && last.on && typeof last.on === 'object' && last.on.t != null) ctx.it = last.on;
+    const last = out[out.length - 1]; if (last && last.on && typeof last.on === 'object' && last.on.t != null) ctx.it = last.on; else if (last && last.on === 'self' && !ctx.it) ctx.it = 'self';
     ops.push.apply(ops, out);
   }
   return ops;
@@ -342,6 +362,7 @@ function parseCost(str) {
     else if (p === '{T}') cost.tap = true;
     else if (p === 'Sacrifice ~') cost.sacSelf = true;
     else if (p === 'Sacrifice a token') cost.sacToken = true;
+    else if (p === 'Discard a card') cost.discard = 1;
     else if (/^Pay (\d+) life$/.test(p)) cost.life = +p.match(/\d+/)[0];                             // CR 119.4
     else if (/^Remove (\w+) (\w+) counters from ~$/.test(p)) { const r = p.match(/^Remove (\w+) (\w+) counters from ~$/); cost.removeCtr = { n: numOf(r[1]), kind: r[2] }; }   // CR 118.3
     else throw new Fail('cost: ' + p);
@@ -356,6 +377,11 @@ const EVENTS = [
   [/^~ or another (creature or artifact) you control enters$/, m => [{ on: 'enters', who: { or: ['self', Object.assign(parseFilter(m[1]), { other: true, ctrl: 'you' })] } }]],
   [/^you gain life$/, () => [{ on: 'gainLife' }]],
   [/^you draw a card$/, () => [{ on: 'drawCard', you: true }]],
+  [/^you discard one or more cards$/, () => [{ on: 'discardBatch', you: true }]],
+  [/^you discard a card$/, () => [{ on: 'discarded', you: true }]],
+  [/^one or more cards leave your graveyard$/, () => [{ on: 'leftGraveBatch', you: true }]],
+  [/^one or more permanent cards are put into your graveyard from anywhere while ~ has an? (-1\/-1|\+1\/\+1) counter on it$/, m => [{ on: 'toGraveBatch', you: true, evCond: { c: 'hasCounter', kind: m[1] } }]],
+  [/^you attack$/, () => [{ on: 'attackWith' }]],
   [/^an opponent searches their library$/, () => [{ on: 'search', opp: true }]],
   [/^an opponent draws a card$/, () => [{ on: 'drawCard', opp: true }]],
   [/^an opponent draws their second card each turn$/, () => [{ on: 'drawCard', opp: true, nth: 2 }]],
@@ -373,7 +399,7 @@ const EVENTS = [
   [/^~ deals combat damage to a player$/, () => [{ on: 'dealsDamage', combat: true, toPlayer: true }]],
   [/^the beginning of your upkeep$/, () => [{ on: 'beginStep', step: 'upkeep', yours: true }]],                       // CR 503.1a
   [/^(a creature you control.*) attacks$/, m => [{ on: 'attacks', who: parseFilter(m[1].replace(/^a /, '')) }]],
-  [/^an? ((?:creature|token) you control.*) enters$/, m => [{ on: 'enters', who: parseFilter(m[1]) }]],
+  [/^an? ((?:creature|token|land) you control.*) enters$/, m => [{ on: 'enters', who: parseFilter(m[1]) }]],
   [/^the (first|second|third|fourth|fifth) ([a-z]+) counter is put on ~$/, m => [{ on: 'counterPut', who: 'self', ctrKind: m[2], nth: { first: 1, second: 2, third: 3, fourth: 4, fifth: 5 }[m[1]] }]],
   [/^you cast a noncreature spell$/, () => [{ on: 'cast', spell: { notTypes: ['Creature'] } }]],
   [/^you cast an instant or sorcery spell$/, () => [{ on: 'cast', spell: { types: ['Instant', 'Sorcery'] } }]],
@@ -413,10 +439,11 @@ function parseTrigger(line, ctx, out) {
         if (tr.on === 'cast') { c2.spellEv = true; if (tr.anyPlayer) c2.evPlayer = true; }
         if (tr.on === 'dealsDamage') { c2.evAmount = true; if (tr.toPlayer) c2.evPlayer = true; }
         if (tr.on === 'drawCard' && tr.opp) c2.evPlayer = true;
+        if (tr.on === 'discardBatch') c2.evAmount = true;
         if (tr.door) { if (ctx.door == null) throw new Fail('"unlock this door" on a card that is not a Room'); tr.door = ctx.door; }
         const ops = parseEffects(T, c2, cap(eff.replace(/^this creature\b/, '~')));
-        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind', 'you', 'opp']) if (tr[k] != null) extra[k] = tr[k];
-        out.push(Object.assign({ k: 'trig', on: tr.on, ops: ops }, tr.who ? { who: tr.who } : {}, tr.spell !== undefined ? { spell: tr.spell } : {}, tr.toOpp ? { toOpp: true } : {}, tr.lookBack ? { lookBack: true } : {}, T.length ? { tg: T } : {}, cond ? { cond: cond } : {}, oncePerTurn ? { oncePerTurn: true } : {}, extra));
+        const extra = {}; for (const k of ['anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind', 'you', 'opp', 'evCond']) if (tr[k] != null) extra[k] = tr[k];
+        out.push(Object.assign({ k: 'trig', on: tr.on, ops: ops }, tr.who ? { who: tr.who } : {}, tr.spell !== undefined ? { spell: tr.spell } : {}, tr.toOpp ? { toOpp: true } : {}, tr.lookBack ? { lookBack: true } : {}, T.length ? { tg: T } : {}, cond ? { cond: cond } : {}, oncePerTurn ? { oncePerTurn: true } : {}, JSON.stringify(ops).includes('selfFromGrave') ? { zone: 'grave' } : {}, extra));   // CR 113.6m: returns this card from the graveyard, so it functions there
       }
       return true;
     }
@@ -444,6 +471,8 @@ function parseStatic(line, ctx, out, d) {
     out.push({ k: 'static', affects: 'self', cond: { c: 'all', of: [{ c: 'yourTurn' }, { c: 'hasCounter', kind: 'loyalty' }] }, setTypes: { types: ['Creature'], subtypes: [m[3]] }, setPT: [+m[1], +m[2]], grant: kwList(m[4]) }); return true;
   }
   if ((m = line.match(/^~ can't be blocked by creatures with power (\d+) or greater\.$/))) { out.push({ k: 'evasion', blockerNot: { powGE: +m[1] } }); return true; }   // CR 509.1b
+  if ((m = line.match(/^~ has (.+) as long as (.+)\.$/))) { out.push({ k: 'static', affects: 'self', p: 0, t: 0, grant: kwList(m[1]), cond: parseCond(m[2], ctx) }); return true; }
+  if ((m = line.match(/^~ enters with (\w+) (-1\/-1|\+1\/\+1) counters on it\.$/))) { out.push({ k: 'etbCounters', n: numOf(m[1]), kind: m[2] }); return true; }   // CR 614.1c
   if (line === 'If a creature an opponent controls would die, exile it instead.') { out.push({ k: 'oppDieExile' }); return true; }   // CR 614.1a
   if ((m = line.match(/^([A-Z][a-z]+s you control) get (\S+)\.$/)) && !/^Creatures/.test(m[1])) { const pt = pumpOf(m[2]); out.push({ k: 'static', affects: Object.assign(parseFilter(m[1].replace(/ you control$/, '')), { ctrl: 'you' }), p: pt.p, t: pt.t }); return true; }   // "Ninjas you control get +1/+1"
   if ((m = line.match(/^(Other creatures you control|Creatures you control) get (\S+)\.$/))) { const pt = pumpOf(m[2]); out.push({ k: 'static', affects: parseFilter(m[1].toLowerCase()), p: pt.p, t: pt.t }); return true; }
@@ -494,6 +523,8 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(/^Warp (\{[^ ]+\})$/))) { ab.push({ k: 'warp', cost: m[1] }); return; }        // CR 702.185a
   if ((m = line.match(/^To solve — (.+)\.$/))) { ab.push({ k: 'trig', on: 'beginStep', step: 'end', yours: true, cond: { c: 'all', of: [parseCond(m[1].replace(/^You/, 'you'), ctx), { c: 'notSolved' }] }, solveTrig: true, ops: [{ o: 'solve' }] }); return; }   // CR 719.3a
   if ((m = line.match(/^Solved — (.+)$/))) { const n0 = ab.length; parseLine(m[1], ctx, d, kw, ab); for (let k = n0; k < ab.length; k++) ab[k].solved = true; return; }   // CR 719.3c
+  if ((m = line.match(/^Flashback (\{[^ ]+\})$/))) { ab.push({ k: 'flashback', cost: m[1] }); return; }   // CR 702.34a
+  if ((m = line.match(/^Mayhem (\{[^ ]+\})$/))) { ab.push({ k: 'mayhem', cost: m[1] }); return; }          // CR 702.187b
   if ((m = line.match(/^Sneak (\{[^ ]+\})$/))) { ab.push({ k: 'sneak', cost: m[1] }); return; }   // CR 702.190a
   if ((m = line.match(/^As an additional cost to cast this spell, you may blight (\d+)\.$/))) { ab.push({ k: 'addCost', what: 'blight', n: +m[1], optional: true }); return; }   // CR 701.68a
   if ((m = line.match(/^As an additional cost to cast this spell, discard a card or pay (\d+) life\.$/))) { ab.push({ k: 'addCost', what: 'discardOrLife', life: +m[1] }); return; }
@@ -513,7 +544,7 @@ function parseLine(line, ctx, d, kw, ab) {
   if ((m = line.match(/^(As long as .+?\.) (~ gets an additional .+\.)$/))) { parseLine(m[1], ctx, d, kw, ab); parseLine(m[2], ctx, d, kw, ab); return; }   // Elenda: two statics in one paragraph
   if (parseStatic(line, ctx, ab, d)) return;
   if (parseTrigger(line, ctx, ab)) return;
-  if ((m = line.match(/^([^:]+): (.+)$/)) && /\{|Sacrifice|^Remove /.test(m[1])) {                          // CR 602.1
+  if ((m = line.match(/^([^:]+): (.+)$/)) && /\{|Sacrifice|^Remove |^Discard a card$/.test(m[1])) {                          // CR 602.1
     const cost = parseCost(m[1]);
     let mm, body = m[2];
     if ((mm = body.match(/^Add \{([WUBRGC])\}(?: or \{([WUBRGC])\})?\.$/))) { ab.push({ k: 'mana', cost: cost, cols: [mm[1]].concat(mm[2] ? [mm[2]] : []) }); return; }   // CR 605.1a
