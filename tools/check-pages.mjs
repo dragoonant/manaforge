@@ -22,6 +22,9 @@ for (const f of js) {
   });
 }
 
+// js/ui.js writes attributes in single quotes (data-acts='...'): the escaper must cover both quote kinds,
+// or a card name with an apostrophe ends the attribute and its button does nothing.
+{ const m = read('js/text.js').match(/const esc = (t => .*\));\s*(?:\/\/.*)?$/m); if (!m) bad.push('js/text.js: no esc function found'); else { const esc = eval(m[1]); if (/'/.test(esc("Oracle's Gift")) || /"/.test(esc('"'))) bad.push('js/text.js: esc leaves a quote unescaped'); } }
 const engine = ['js/engine.js', 'js/ops.js'].map(read).join('\n');
 const text = read('js/text.js');
 const hasKey = k => new RegExp('\\n\\s+' + k + ':').test(text);

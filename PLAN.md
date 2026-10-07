@@ -35,8 +35,14 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
-**2026-10-06 — the championship decks (D15) under way: 16 of 20 registered; a per-card audit done.**
+**2026-10-06 — the championship decks (D15) under way: 17 of 20 registered; a per-card audit done.**
 
+- Sultai (Ardyn, the Usurper) brought preparation cards (CR 722: entering prepared, the prepare-spell
+  copy in exile, unpreparing as it is cast), evoke (702.74), "if {G}{G} was spent to cast it" (mana
+  spent by colour, 601.2h), "if you cast it", an additional life cost to target (Terror of the Peaks),
+  entering as a copy of a graveyard card with a name exception (707.9b), token copies with colour and
+  type exceptions, Bringer of the Last Gift. Fixed for every deck: HTML escaping missed the apostrophe,
+  so a button whose label held a card name like "Oracle's Gift" did nothing (now gated by check-pages).
 - Azorius Omniscience (Shaun Henry, #10) brought casting without paying the mana cost (CR 118.9),
   Phyrexian mana and compleated (107.4f, 702.150), [−X] loyalty abilities with X announced before
   targets (601.2b, 107.3k), a modal trigger on two events, exiling and returning a permanent as a new
@@ -79,7 +85,7 @@ Deck count, never quality. A deck that does not compile in full is not registere
   closed), ninjutsu (702.49), transforming double-faced cards (712), emblems (114), layer 6 in
   timestamp order with "loses all abilities", "until your next turn", choose-two modes, draw events.
 - Registered: Mono-Red Aggro (PT Final Fantasy #1), Gruul Delirium (#35), Orzhov Demons (#28), Izzet
-  Prowess (#2), Dimir Midrange, Golgari Graveyard (#34), Azorius Control (#11), Domain Overlords (#9) and Azorius Omniscience (#10); from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler), Mono-Green (Earthbender Ascension) and Selesnya (Llanowar Elves) — beside the two Starter Kits. Boros
+  Prowess (#2), Dimir Midrange, Golgari Graveyard (#34), Azorius Control (#11), Domain Overlords (#9) and Azorius Omniscience (#10); from the Hobbit era, Boros (Belladonna Took), Orzhov (Amalia Benavides Aguirre), Dimir (Bitter Triumph), Mardu (Bloodghast), Mono-Black (Desolation Prowler), Mono-Green (Earthbender Ascension), Selesnya (Llanowar Elves) and Sultai (Ardyn, the Usurper) — beside the two Starter Kits. Boros
   brought delayed triggers (CR 603.7), mobilize (702.181), creatures entering attacking (508.4),
   sneak (702.190), Treasure (111.10a), "can't cast spells" (601.3), plan counters. Orzhov (Amalia) brought ward (702.21), explore (701.44), warp (702.185), Cases
   (719), exile-until-it-leaves (610.3), returning as a non-creature, life-gained/lost conditions. Izzet brought Class levels (CR 716), bargain (702.166),

@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const MF = window.MF;
-  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');   // both quote kinds: attributes are written with either
   // Mana symbols, drawn by this project in CSS (docs/rights.md rule 1).
   const sym = t => {
     if (t === 'T') return '<span class="ms ms-T" title="tap">⟳</span>';
@@ -36,7 +36,7 @@
     bottomed: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${plural(e.n, 'card')} on the bottom of the library.`,
     turn: (e, v) => `<span class="turnline">Turn ${e.n} — ${e.who === v ? 'your turn' : 'the opponent’s turn'}</span>`,
     land: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'play', 'plays')} ${tag(e.c)}${e.from === 'exile' ? ' from exile' : ''}.`,
-    cast: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'cast', 'casts')} ${e.face ? '<b>' + esc(e.face) + '</b> (the ' + (e.alt === 'omen' ? 'Omen' : e.alt === 'door' ? 'door' : 'Adventure') + ' of ' + tag(e.c) + ')' : tag(e.c)}${e.gift ? ', promising a gift' : ''}${e.bargained ? ', bargained' : ''}${e.harmonize ? ' from the graveyard with harmonize' : ''}${e.sneak ? ' for its sneak cost' : ''}${e.warp ? ' for its warp cost' : ''}${e.via === 'flashback' ? ' with flashback' : e.via === 'mayhem' ? ' with mayhem' : ''}${e.x != null ? ' with X = ' + e.x : ''}${e.from === 'exile' ? ' from exile' : ''}${e.offspring ? ', paying offspring' : ''}${e.kicked ? ', kicked' : ''}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
+    cast: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'cast', 'casts')} ${e.face ? '<b>' + esc(e.face) + '</b> (' + (e.alt === 'omen' ? 'the Omen of ' : e.alt === 'door' ? 'the door of ' : e.alt === 'mdfc' ? 'the back face of ' : e.alt === 'prepare' ? 'the prepared copy from ' : 'the Adventure of ') + tag(e.c) + ')' : tag(e.c)}${e.gift ? ', promising a gift' : ''}${e.bargained ? ', bargained' : ''}${e.harmonize ? ' from the graveyard with harmonize' : ''}${e.sneak ? ' for its sneak cost' : ''}${e.warp ? ' for its warp cost' : ''}${e.via === 'flashback' ? ' with flashback' : e.via === 'mayhem' ? ' with mayhem' : e.via === 'free' ? ' without paying its mana cost' : e.impending ? ' for its impending cost' : e.evoked ? ' for its evoke cost' : ''}${e.x != null ? ' with X = ' + e.x : ''}${e.from === 'exile' ? ' from exile' : ''}${e.offspring ? ', paying offspring' : ''}${e.kicked ? ', kicked' : ''}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
     omenShuffle: (e, v) => `${tag(e.c)} is shuffled into ${T.whose(e.who, v)} library (Omen).`,
     adventureExile: (e, v) => `${tag(e.c)} goes on an adventure: exiled, and ${e.who === v ? 'you' : 'the opponent'} may cast the creature from exile later.`,
     animate: (e) => `${tag(e.c)} becomes a ${e.p}/${e.tou} creature with ${e.kws.map(k => MF.KWNAME[k]).join(', ')} and all creature types. It’s still a land.`,
@@ -63,6 +63,8 @@
     endTurn: (e, v) => `${tag(e.c)} ends the turn: the stack is exiled, and the game skips to the cleanup step.`,
     exiledInsteadOfGrave: (e, v) => `${tag(e.c)} is exiled instead of going to the graveyard.`,
     becomesCreature: (e, v) => `${tag(e.c)} becomes a ${e.p}/${e.tou} creature in addition to its other types.`,
+    prepared: (e, v) => `${tag(e.c)} is prepared: a copy of ${esc(e.spell)} waits in exile, castable while it stays prepared.`,
+    unprepared: (e, v) => `${tag(e.c)} is no longer prepared.`,
     lore: (e, v) => `${tag(e.c)} gets a lore counter (${e.n}).`,
     sagaDone: (e, v) => `${tag(e.c)} has read its final chapter and is sacrificed.`,
     exiledCost: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'exile', 'exiles')} ${tag(e.c)} to pay a cost.`,
@@ -205,6 +207,7 @@
     crewTap: (s, q) => ({ title: `Crew ${q.n} ${C(s, q.src)}: tap creatures (total power ${q.total} so far)`, body: `Tap other untapped creatures you control with total power ${q.n} or more (CR 702.122). Click a glowing creature.`, labels: { done: 'Done — crew it' } }),
     spreeMode: (s, q) => ({ title: `${C(s, q.src)}: choose ${q.chosen.length ? 'another mode, or finish' : 'a mode'} (spree)`, body: `Choose one or more modes; each adds its cost (CR 702.172).${q.chosen.length ? ' Chosen so far: ' + q.chosen.map(i => '(' + (i + 1) + ')').join(', ') + '.' : ''}${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, o.id === 'done' ? 'Done choosing' : '+' + o.cost.replace(/[{}]/g, '') + ' — ' + o.text])) }),
     phyrexian: (s, q) => ({ title: `${C(s, q.src)}: pay ${symbols('{' + q.col + '/P}')} with ${MF.COLOR_NAME[q.col]} mana or 2 life?`, body: `A Phyrexian symbol is paid with its colour or with 2 life, announced before paying (CR 107.4f, 601.2b); only what you can pay is offered. Your life: ${q.life}.${oracle(s, q.src)}`, labels: { mana: 'Pay ' + MF.COLOR_NAME[q.col] + ' mana', life: 'Pay 2 life' } }),
+    mayDiscard: (s, q) => ({ title: `${C(s, q.src)}: discard a card?`, body: `If you discard one, the rest happens.${oracle(s, q.src)}`, labels: { none: 'Discard nothing' } }),
     hybrid: (s, q) => ({ title: `${C(s, q.src)}: pay ${symbols('{' + q.sym[0] + '/' + q.sym[1] + '}')} with which colour?`, body: `A hybrid symbol is paid with either colour; you announce which before paying (CR 601.2b). Only the colours your mana can pay are offered.${q.n > 1 ? ' Symbol ' + q.k + ' of ' + q.n + '.' : ''}`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'Pay it with ' + MF.COLOR_NAME[o.id]])) }),
     manaColor: (s, q) => ({ title: `${C(s, q.src)}: add one mana of which color?`, body: 'The mana goes into your mana pool; it empties as the step ends.', labels: Object.fromEntries(q.opts.map(o => [o.id, 'Add ' + MF.COLOR_NAME[o.id]])) }),
     tutorUpTo: (s, q) => ({ title: `${C(s, q.src)}: choose card ${q.k} of up to ${q.n}`, body: 'Only you see your library. Click a glowing card; the ones you take are revealed and go into your hand, then your library is shuffled.', labels: { done: 'Done searching' } }),
@@ -245,7 +248,7 @@
       : q.what === 'digOnto' ? ({ title: `Put ${tag(q.c)} onto the battlefield?`, body: 'Its mana value is low enough: it may go onto the battlefield and gain haste until end of turn. Otherwise it goes into your hand.', labels: { yes: 'Onto the battlefield, with haste', no: 'Into my hand' } })
       : ({ title: `${C(s, q.src)}`, body: oracle(s, q.src), labels: { yes: 'Yes', no: 'No' } }),
     newTargets: (s, q) => ({ title: `Change ${q.slots > 1 ? 'target ' + (q.slot + 1) + ' of ' + q.slots : 'the target'} of the copy of ${C(s, q.src)}?`, body: 'You may keep the original target or choose a new one (CR 707.10c). A target with no legal new choice stays as it is.', labels: { keep: 'Keep this target', new: 'Choose a new target' } }),
-    enterAsCopy: (s, q) => ({ title: `${C(s, q.src)}: enter as a copy?`, body: `It may enter as a copy of a creature with mana value ${q.spent} or less (the mana spent to cast it), and it is also a Bird with flying. Click a glowing creature, or decline.`, labels: { no: 'Enter as itself' } }),
+    enterAsCopy: (s, q) => q.fromGrave ? ({ title: `${C(s, q.src)}: enter as a copy of a creature card in a graveyard?`, body: `Click a glowing card in either graveyard; it keeps its own name and becomes a 4/4 Spider Human Hero in addition, and the card is then exiled.${oracle(s, q.src)}`, labels: { no: 'Enter as itself' } }) : ({ title: `${C(s, q.src)}: enter as a copy?`, body: `It may enter as a copy of a creature with mana value ${q.spent} or less (the mana spent to cast it), and it is also a Bird with flying. Click a glowing creature, or decline.`, labels: { no: 'Enter as itself' } }),
   };
   const poolStr = p => p ? ['W', 'U', 'B', 'R', 'G', 'C'].map(k => sym(k).repeat(p[k] || 0)).join('') : '';
   T.poolStr = poolStr;

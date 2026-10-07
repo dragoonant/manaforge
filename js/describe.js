@@ -88,6 +88,10 @@
     notSolved: () => 'this Case is not solved',
     descended: () => 'you descended this turn',
     castFromGrave: () => 'this spell was cast from a graveyard',
+    wasCast: () => 'you cast it',
+    spent: c => '{' + c.col + '}{' + c.col + '} was spent to cast it',
+    evoked: () => 'its evoke cost was paid',
+    faceDownThisTurn: () => 'a permanent entered the battlefield face down under your control this turn or you turned a permanent face up this turn',
     targetsAttacking: () => 'it targets an attacking creature',
     anyGraveAtLeast: c => 'a graveyard has ' + c.n + ' or more cards in it',
     targetsTapped: () => 'it targets a tapped permanent',
@@ -117,6 +121,10 @@
     discard: op => 'discard ' + op.n + ' card' + (op.n === 1 ? '' : 's') + ' of your choice',
     gain: op => (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] gains ' : 'gain ') + N(op.n) + ' life',
     becomeCreatureMV: op => ref(op.on) + ' becomes a creature in addition to its other types with base power and base toughness each equal to its mana value',
+    bringer: () => 'each player sacrifices all other creatures they control; then each player returns all creature cards from their graveyard that weren’t put there this way to the battlefield',
+    mayDiscardThen: op => 'you may discard a card; if you do: ' + ops(op.ops),
+    exileCard: () => 'exile that card',
+    exileCopyToken: op => 'exile ' + ref(op.on) + '; if you exiled a card this way, create a token that’s a copy of it, except it’s a ' + op.except.pt.join('/') + ' black ' + op.except.setSubtypes.join(' '),
     exileGrave: op => 'exile ' + ref(op.who) + '’s graveyard',
     endTurn: () => 'end the turn (exile everything on the stack, including this; skip to the cleanup step)',
     lookTop: op => 'look at the top card of your library; if it is a ' + op.type.toLowerCase() + ', you may put it onto the battlefield tapped, otherwise put it into your hand',
@@ -133,7 +141,7 @@
     lookPick: op => 'look at the top ' + op.n + ' cards of your library; put ' + op.take + ' of them into your hand and the rest on the bottom in any order',
     dieExile: () => 'if a permanent dealt damage by this would die this turn, exile it instead',
     mayPay: op => 'you may pay ' + (op.mana || op.life + ' life') + '; if you do: ' + ops(op.ops),
-    tutor: () => 'search your library for a card, put it into your hand, shuffle',
+    tutor: op => 'search your library for a ' + (op && op.f ? 'creature card, reveal it' : 'card') + ', put it into your hand, shuffle',
     discardRandom: () => 'discard a card at random',
     selfFromGrave: () => 'return this card from your graveyard to the battlefield',
     removeCounter: op => 'remove ' + op.n + ' ' + op.kind + ' counter from this',
@@ -280,6 +288,9 @@
         return 'this spell costs {1} less to cast for each ' + (a.f.types.length > 2 ? 'permanent' : a.f.types.join('/').toLowerCase()) + ' card ' + (a.zones.length > 1 ? 'you own in exile and in your graveyard' : 'in your graveyard');
       case 'preventCombatToSelf': return 'prevent all combat damage that would be dealt to this';
       case 'impending': return 'impending ' + a.n + '—' + a.cost + ' (you may cast it for ' + a.cost + '; it enters with ' + a.n + ' time counters and isn’t a creature while it has any)';
+      case 'entersPrepared': return 'this enters prepared (while it’s prepared, you may cast a copy of its prepare spell; doing so unprepares it)';
+      case 'targetTax': return 'spells your opponents cast that target this cost an additional ' + a.life + ' life to cast';
+      case 'evoke': return 'evoke ' + a.cost + ' (you may cast it for its evoke cost; if you do, it’s sacrificed when it enters)';
       case 'castFree': return 'you may cast spells from your hand without paying their mana costs';
       case 'compleated': return 'compleated (a Phyrexian symbol may be paid with 2 life; if life was paid, this enters with two fewer loyalty counters)';
       case 'chosenLandType': return 'this is the chosen basic land type (and taps for its color)';
@@ -301,7 +312,8 @@
       case 'restrict': return 'this can’t ' + [a.attack ? 'attack' : '', a.block ? 'block' : ''].filter(Boolean).join(' or ') + (a.unless ? ' unless ' + cond(a.unless) : '');
       case 'offspring': return 'offspring ' + a.cost + ' (an optional additional cost)';
       case 'kicker': return 'kicker ' + a.cost + ' (an optional additional cost)';
-      case 'enterAsCopy': return 'may enter as a copy of a creature with mana value up to the mana spent, except it is also a ' + a.except.addSubtypes.join(' ') + ' and has ' + a.except.kw.map(k => KWNAME[k]).join(', ');
+      case 'enterAsCopy': if (a.from === 'grave') return 'you may have this enter as a copy of any creature card in a graveyard, except its name is ' + a.except.name + ' and it’s a ' + a.except.pt.join('/') + ' ' + a.except.addSubtypes.join(' ') + ' in addition to its other types; when you do, exile that card';
+        return 'may enter as a copy of a creature with mana value up to the mana spent, except it is also a ' + a.except.addSubtypes.join(' ') + ' and has ' + a.except.kw.map(k => KWNAME[k]).join(', ');
       default: return a.k;
     }
   };
@@ -309,6 +321,7 @@
     const kws = Object.keys(d.kw).map(k => KWNAME[k] + (d.kw[k] > 1 ? ' ×' + d.kw[k] : ''));
     if (d.doors) return d.ab.map(a => d.doors[a.door].name + ' (door, while unlocked): ' + MF.describeAbility(a));   // CR 709.5
     if (d.back) { const bk = Object.keys(d.back.kw).map(k => KWNAME[k]); return (kws.length ? [kws.join(', ')] : []).concat(d.ab.map(MF.describeAbility)).concat(['Transformed (' + d.back.name + '): ' + bk.concat(d.back.ab.map(MF.describeAbility)).join('; ')]); }   // CR 712
+    if (d.prep) return (kws.length ? [kws.join(', ')] : []).concat(d.ab.map(MF.describeAbility)).concat(['Prepare spell (' + d.prep.name + ', ' + d.prep.mana + '): ' + d.prep.ab.map(MF.describeAbility).join('; ')]);   // CR 722
     return (kws.length ? [kws.join(', ')] : []).concat(d.ab.map(MF.describeAbility));
   };
 })();

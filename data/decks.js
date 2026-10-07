@@ -919,7 +919,7 @@ window.MF.decks = {
   "player": "Platinum–Mythic rank player (august-31-2026)",
   "rank": null,
   "players": 8,
-  "registered": false,
+  "registered": true,
   "format": "Standard — MTG Arena Traditional Standard (Bo3), Platinum–Mythic, weekly published lists",
   "min": 60,
   "main": [
@@ -1042,20 +1042,10 @@ window.MF.decks = {
     "name": "Seedship Broodtender"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "superior-spider-man: ability: Mind Swap — You may have ~ enter as a copy of any creature card in a graveyard, except his name is ~ and he's a 4/4 Spider Human Hero in addition to his other types. When you do, exile that card.",
-   "bringer-of-the-last-gift: intervening if: if you cast it, each player sacrifices all other creatures they control. Then each player returns all creature cards from their graveyard that weren't put there this way to the battlefield.",
-   "formidable-speaker: effect: Search your library for a creature card, reveal it, put it into your hand, then shuffle",
-   "oblivious-bookworm: effect: You may draw a card",
-   "jadzi-steward-of-fate-oracles-gift: layout prepare is not compiled",
-   "kiora-the-rising-tide: effect: Draw two cards, then discard two cards",
-   "terror-of-the-peaks: ability: Spells your opponents cast that target ~ cost an additional 3 life to cast.",
-   "wistfulness: intervening if: if {G}{G} was spent to cast it, exile target artifact or enchantment an opponent controls.",
-   "ardyn-the-usurper: ability: Demons you control have menace, lifelink, and haste.",
-   "deceit: intervening if: if {U}{U} was spent to cast it, return up to one other target nonland permanent to its owner's hand."
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-scion-of-the-deep"
+  ]
  },
  "boros-d-ins-company-hob": {
   "id": "boros-d-ins-company-hob",

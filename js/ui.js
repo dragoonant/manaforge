@@ -18,7 +18,8 @@
   function face(v, id, o) {
     o = o || {};
     const up = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone === 'bf' && v.cards[o.iid].transformed && MF.cards[id].back;   // CR 712.8e: the back face's characteristics
-    const d = up ? Object.assign({}, MF.cards[id], MF.cards[id].back, { mana: '' }) : MF.cards[id];
+    const pc = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].prepCopy && MF.cards[id].prep;   // CR 722.3c: the copy in exile is its prepare spell
+    const d = up ? Object.assign({}, MF.cards[id], MF.cards[id].back, { mana: '' }) : pc ? Object.assign({}, MF.cards[id], MF.cards[id].prep) : MF.cards[id];
     let p = d.power, t = d.toughness, badges = '', cls = ['card', 'sz-' + (o.size || 'md')];
     if (o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone !== 'bf' && d.ab.some(a => a.k === 'cda')) { const ch0 = MF.chars(v, o.iid); if (ch0.p != null) { p = ch0.p; t = ch0.t; } }   // CR 604.3: a CDA works in every zone
     if (o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone === 'bf') {
@@ -31,7 +32,8 @@
       if (c.ctr.loyalty != null) badges += `<div class="badge b-loy" title="Loyalty (CR 306.5c)">${c.ctr.loyalty}</div>`;
       if (c.transformed) badges += `<div class="badge b-copy" title="Transformed: its back face is up (CR 712); front: ${esc(MF.cards[c.id].name)}">transformed</div>`;
       for (const k of Object.keys(c.ctr)) if (c.ctr[k] > 0 && !['+1/+1', '-1/-1', 'loyalty', 'stun'].includes(k)) badges += `<div class="badge b-ctr" title="${esc(k)} counters">${c.ctr[k]} ${esc(k)}</div>`;
-      if (c.chosen) badges += `<div class="badge b-kw" title="Chosen as it entered (CR 614.12a)">chosen: ${esc(c.chosen)}</div>`;
+      if (c.prepared) badges += `<div class="badge b-kw" title="Prepared (CR 722.3): a copy of its prepare spell waits in exile; casting it unprepares this">prepared</div>`;
+      if (c.chosen) badges +=`<div class="badge b-kw" title="Chosen as it entered (CR 614.12a)">chosen: ${esc(c.chosen)}</div>`;
       if (c.dmg) badges +=`<div class="badge b-dmg">${c.dmg} dmg</div>`;
       if (ch.types.includes('Creature') && c.ctrl === v.ap && !ch.kw.haste && !(c.ctlTurn < v.turn)) badges += `<div class="badge b-sick" title="Summoning sick: it came under your control this turn (CR 302.6)">zzz</div>`;
       if (ch.noUntap) badges += `<div class="badge b-lock" title="Doesn’t untap during its controller’s untap step">locked</div>`;
@@ -101,6 +103,8 @@
           const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); delete cost.xs;
           if (s.cards[a.iid].zone !== 'hand' && !tray.includes(a.iid)) tray.push(a.iid);                // castable from a graveyard or exile: shown in the tray
           if (a.via === 'flashback' || a.via === 'mayhem') { add(a.iid, a, 'Cast ' + d.name + ' with ' + a.via + ' — ' + MF.manaStr(cost)); continue; }
+          if (a.via === 'evoke') { add(a.iid, a, 'Evoke ' + d.name + ' — ' + MF.manaStr(cost) + ' (sacrificed when it enters)'); continue; }
+          if (s.cards[a.iid].prepCopy) { add(a.iid, a, 'Cast the prepared copy of ' + d.prep.name + ' — ' + MF.manaStr(cost) + ' (unprepares ' + d.name + ')'); continue; }
           if (a.via === 'free') { add(a.iid, a, 'Cast ' + d.name + ' without paying its mana cost (Omniscience)'); continue; }
           if (a.via === 'impending') { const im = d.ab.find(x => x.k === 'impending'); add(a.iid, a, 'Cast ' + d.name + ' for its impending cost — ' + MF.manaStr(cost) + ' (enters with ' + im.n + ' time counters; not a creature until the last is removed)'); continue; }
           if (a.via === 'warp') { add(a.iid, a, 'Cast ' + d.name + ' for its warp cost — ' + MF.manaStr(cost) + ' (exiled at end step; recast later)'); continue; }

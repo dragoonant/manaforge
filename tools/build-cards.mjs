@@ -153,6 +153,8 @@ export function parseCond(str, ctx) {
   if ((m = c.match(/^an opponent has (\d+) or less life$/))) return { c: 'oppLifeLE', n: +m[1] };
   if (c === 'you descended this turn') return { c: 'descended' };
   if (c === 'this spell was cast from a graveyard') return { c: 'castFromGrave' };
+  if (c === 'you cast it') return { c: 'wasCast' };                                                                       // CR 603.4
+  if ((m = c.match(/^\{([WUBRG])\}\{\1\} was spent to cast it$/))) return { c: 'spent', col: m[1], n: 2 };              // CR 601.2h
   if ((m = c.match(/^it has (\w+) or more (\w+) counters on it$/))) return { c: 'counterAtLeast', kind: m[2], n: numOf(m[1]) };                                    // CR 700.11                   // CR 601.2b
   if ((m = c.match(/^its power is exactly (\d+)$/))) return { c: 'selfPowerIs', n: +m[1] };
   if ((m = c.match(/^there are (\w+) or more card types among cards in your graveyard$/))) return { c: 'graveTypes', n: numOf(m[1]) };   // delirium (CR 207.2c ability word)
@@ -197,6 +199,11 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may put a (permanent|creature|land) card from among the milled cards into your hand$/))) return [{ o: 'pickMilled', type: m[1] }];   // CR 701.17c
   if ((m = s.match(/^[Uu]ntap (target .+)$/))) return [{ o: 'untap', on: parseRef(T, ctx, m[1]) }];
   if (/^[Uu]ntap ~$/.test(s)) return [{ o: 'untap', on: 'self' }];
+  if (/^[Uu]ntap another target permanent$/.test(s)) { T.push({ f: { other: true } }); return [{ o: 'untap', on: { t: T.length - 1 } }]; }
+  if (/^[Rr]eturn up to one other target nonland permanent to its owner's hand$/.test(s)) { T.push({ f: { notTypes: ['Land'], other: true }, n: 1, upTo: true }); return [{ o: 'bounce', on: { t: T.length - 1 } }]; }
+  if (/^[Dd]raw two cards, then discard two cards$/.test(s)) return [{ o: 'draw', n: 2 }, { o: 'discard', n: 2 }];
+  if ((m = s.match(/^~ deals damage equal to that creature's power to (any target)$/))) return [{ o: 'damage', from: 'self', to: parseRef(T, ctx, m[1]), n: { v: 'power', of: 'ev' } }];
+  if (/^[Yy]ou may create Scion of the Deep, a legendary 8\/8 blue Octopus creature token$/.test(s)) return [{ o: 'may', what: 'token', ops: [{ o: 'token', id: ctx.token.named({ name: 'Scion of the Deep', supers: ['Legendary'], subtypes: ['Octopus'], colors: ['U'], p: 8, t: 8 }), n: 1 }] }];
   if (/^[Rr]eturn ~ to its owner's hand$/.test(s)) return [{ o: 'bounce', on: 'self' }];
   if ((m = s.match(/^[Rr]eturn (target creature) to its owner's hand$/))) return [{ o: 'bounce', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Uu]ntil your next turn, (up to one target creature) gets ([+-]\d+)\/([+-]\d+)$/))) return [{ o: 'pump', on: parseRef(T, ctx, m[1]), p: +m[2], t: +m[3], until: 'yourNext' }];
@@ -227,7 +234,7 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Yy]ou may search your library for up to (one|two|three) (artifact, creature, and\/or enchantment) cards with mana value (\d+) or less, reveal them, put them into your hand, then shuffle$/))) return [{ o: 'may', what: 'searchCards', ops: [{ o: 'tutorUpTo', n: numOf(m[1]), f: { types: ['Artifact', 'Creature', 'Enchantment'], mvLE: +m[3] }, reveal: true }] }];
   if (/^After this phase, there is an additional combat phase$/.test(s)) return [{ o: 'extraCombat' }];   // CR 500.8
   if ((m = s.match(/^(.+?) fights (.+)$/))) return [{ o: 'fight', a: parseRef(T, ctx, m[1]), b: parseRef(T, ctx, m[2]) }];   // CR 701.14
-  if ((m = s.match(/^[Ee]xile (target creature or (?:planeswalker|Vehicle))$/))) return [{ o: 'exile', on: parseRef(T, ctx, m[1]) }];
+  if ((m = s.match(/^[Ee]xile (target creature or (?:planeswalker|Vehicle)|target artifact or enchantment an opponent controls)$/))) return [{ o: 'exile', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Ee]xile (target creature with mana value less than or equal to the number of \w+ you control)$/))) return [{ o: 'exile', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Ee]xile target card from a graveyard$/))) { T.push({ f: { card: 'grave' } }); return [{ o: 'exile', on: { t: T.length - 1 }, link: true }]; }   // CR 607.2a: linked to "exiled with"
   if ((m = s.match(/^[Ss]earch your library for a basic land card, reveal it, put it into your hand, then shuffle$/))) return [{ o: 'searchBasic', toHand: true }];
@@ -386,6 +393,16 @@ function parseEffects(T, ctx, text) {
   if (/^mill three cards\. You may put a noncreature, nonland card from among the cards milled this way into your hand\. If you don't, put a \+1\/\+1 counter on ~$/i.test(t)) return [{ o: 'mill', n: 3 }, { o: 'pickMilled', type: 'noncreatureNonland', elseOps: [{ o: 'counter', on: 'self', n: 1, kind: '+1/+1' }] }];
   // Jace: "Then if a graveyard has twenty or more cards in it, you draw three cards. Otherwise, you draw a card."
   if ((m = t.match(/^(target player mills three cards)\. Then if a graveyard has twenty or more cards in it, you draw three cards\. Otherwise, you draw a card$/i))) return parseEffect(T, ctx, cap(m[1])).concat([{ o: 'if', cond: { c: 'anyGraveAtLeast', n: 20 }, ops: [{ o: 'draw', n: 3 }], else: [{ o: 'draw', n: 1 }] }]);
+  // Bringer of the Last Gift
+  if (/^each player sacrifices all other creatures they control\. Then each player returns all creature cards from their graveyard that weren't put there this way to the battlefield$/i.test(t)) return [{ o: 'bringer' }];
+  // Formidable Speaker
+  if (/^you may discard a card\. If you do, search your library for a creature card, reveal it, put it into your hand, then shuffle$/i.test(t)) return [{ o: 'mayDiscardThen', ops: [{ o: 'tutor', f: { types: ['Creature'] }, reveal: true }] }];
+  // Oblivious Bookworm: nothing in this engine turns a permanent face down or face up, so the "unless" never holds.
+  if (/^you may draw a card\. If you do, discard a card unless a permanent entered the battlefield face down under your control this turn or you turned a permanent face up this turn$/i.test(t)) return [{ o: 'may', what: 'draw', ops: [{ o: 'draw', n: 1 }, { o: 'if', cond: { c: 'faceDownThisTurn' }, ops: [], else: [{ o: 'discard', n: 1 }] }] }];
+  // Ardyn (Starscourge)
+  if (/^exile up to one target creature card from a graveyard\. If you exiled a card this way, create a token that's a copy of that card, except it's a 5\/5 black Demon$/i.test(t)) { T.push({ f: { card: 'grave', types: ['Creature'] }, n: 1, upTo: true }); return [{ o: 'exileCopyToken', on: { t: T.length - 1 }, except: { pt: [5, 5], colors: ['B'], setSubtypes: ['Demon'] } }]; }
+  // Oracle's Gift: "Create X 0/0 green and blue Fractal creature tokens, then put X +1/+1 counters on each Fractal you control."
+  if ((m = t.match(/^(create X 0\/0 green and blue Fractal creature tokens), then put X \+1\/\+1 counters on each Fractal you control$/i))) return parseEffect(T, ctx, cap(m[1])).concat([{ o: 'counter', on: { each: { subtypes: ['Fractal'], ctrl: 'you' } }, n: { v: 'x' }, kind: '+1/+1' }]);
   // Gix's Command: "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn." — chosen on resolution (its ruling)
   if ((m = t.match(/^put (\w+) \+1\/\+1 counters on up to one creature\. It gains (\w+) until end of turn$/i))) return [{ o: 'choose', f: { types: ['Creature'] }, upTo: true }, { o: 'counter', on: 'it', n: numOf(m[1]), kind: '+1/+1' }, { o: 'pump', on: 'it', grant: kwList(m[2]) }];
   // Azure Beastbinder: loses all abilities and becomes 2/2 until your next turn (layers 6 and 7b)
@@ -590,6 +607,11 @@ function parseStatic(line, ctx, out, d) {
   if (line === 'You may cast spells from your hand without paying their mana costs.') { out.push({ k: 'castFree' }); return true; }   // CR 118.9: an alternative cost
   if (line === 'Compleated') { out.push({ k: 'compleated' }); return true; }                                                          // CR 702.150a
   if ((m = line.match(/^This spell costs \{(\d+)\} less to cast if it targets an attacking creature\.$/))) { out.push({ k: 'costLess', n: +m[1], cond: { c: 'targetsAttacking' } }); return true; }
+  if ((m = line.match(/^You may have ~ enter as a copy of any creature card in a graveyard, except his name is ~ and he's a (\d+)\/(\d+) ((?:[A-Z][a-z]+ ?)+) in addition to his other types\. When you do, exile that card\.$/))) { out.push({ k: 'enterAsCopy', from: 'grave', exileCopied: true, except: { name: ctx.name, pt: [+m[1], +m[2]], addSubtypes: m[3].trim().split(' ') } }); return true; }   // CR 614.1c, 707.9b
+  if (line === '~ enters prepared.') { out.push({ k: 'entersPrepared' }); return true; }   // CR 722.3a
+  if ((m = line.match(/^Spells your opponents cast that target ~ cost an additional (\d+) life to cast\.$/))) { out.push({ k: 'targetTax', life: +m[1] }); return true; }   // CR 601.2f
+  if ((m = line.match(/^(Demons) you control have (.+)\.$/))) { out.push({ k: 'static', affects: { subtypes: ['Demon'], ctrl: 'you' }, grant: kwList(m[2]) }); return true; }
+  if ((m = line.match(/^Evoke (\{[^ ]+\})$/))) { out.push({ k: 'evoke', cost: m[1] }, { k: 'trig', on: 'enters', who: 'self', cond: { c: 'evoked' }, ops: [{ o: 'sacrificeSelf' }], fromKeyword: 'evoke' }); return true; }   // CR 702.74a
   if (line === 'You may play an additional land on each of your turns.') { out.push({ k: 'extraLand', n: 1 }); return true; }   // CR 305.2
   if (line === 'You may play lands from your graveyard.') { out.push({ k: 'landsFromGrave' }); return true; }
   if (line === "This spell can't be countered.") { out.push({ k: 'uncounterable' }); return true; }        // CR 113.6g
@@ -619,7 +641,7 @@ function parseStatic(line, ctx, out, d) {
 function parseLine(line, ctx, d, kw, ab) {
   let m;
   if ((m = line.match(AW_RE))) line = m[2];                                                         // CR 207.2c
-  if ((m = line.match(/^(Immune) — (.+)$/))) line = m[2];                                           // CR 207.2d: a flavor word
+  if ((m = line.match(/^(Immune|Mind Swap) — (.+)$/))) line = m[2];                                // CR 207.2d: a flavor word
   if ((m = line.match(/^[A-Z][\w']+(?: [A-Za-z']+)* — ((?:When|Whenever|At) .+)$/))) line = m[1];      // a flavour word (CR 207.2d): no rules meaning
   if ((m = line.match(/^\[[−-]X\]: (.+)$/))) {                                                     // CR 606.4, 107.3k: [−X] — X is chosen as it is activated
     const T = [], ops = parseEffects(T, Object.assign({}, ctx, { it: null }), m[1]);
@@ -773,6 +795,14 @@ export function compileCard(c, tokens, alt, room) {
     if (dd.un) { dd.ab = []; dd.kw = {}; dd.back.ab = []; }
     return dd;
   }
+  if (c.layout === 'prepare' && alt) {                                                             // CR 722.2-722.4
+    const front = compileCard(Object.assign({}, c, { name: faceName, layout: 'normal' }), tokens), sp = compileCard(Object.assign({}, alt, { name: alt.faceName, layout: 'normal' }), tokens);
+    const dd = Object.assign(front, { id: slug(c.name), layout: 'prepare' });
+    dd.prep = { kind: 'prepare', name: sp.name, mana: sp.mana, colors: sp.colors, types: sp.types, subtypes: sp.subtypes, supers: sp.supers, power: null, toughness: null, typeLine: sp.typeLine, text: sp.text, kw: sp.kw, ab: sp.ab };
+    if (sp.un && !dd.un) dd.un = alt.faceName + ': ' + sp.un;
+    if (dd.un) { dd.ab = []; dd.kw = {}; dd.prep.ab = []; }
+    return dd;
+  }
   if (c.layout === 'modal_dfc' && alt) {                                                           // CR 712.3, 712.8f
     const front = compileCard(Object.assign({}, c, { name: faceName, layout: 'normal' }), tokens), back = compileCard(Object.assign({}, alt, { name: alt.faceName, layout: 'normal' }), tokens);
     const dd = Object.assign(front, { id: slug(c.name), layout: 'modal_dfc' });
@@ -876,6 +906,11 @@ function tokenMaker(pack) {
   mk.everywhere = function () {
     const id = 'token-everywhere', TYPES = ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'];
     if (!pack[id]) pack[id] = { id: id, name: 'Everywhere', token: true, mana: '', colors: [], types: ['Land'], subtypes: TYPES, supers: [], power: null, toughness: null, typeLine: 'Token Land — Plains Island Swamp Mountain Forest', text: '', kw: {}, ab: TYPES.map(st => ({ k: 'mana', cost: { tap: true }, cols: [BASIC_MANA[st]] })), layout: 'token' };
+    return id;
+  };
+  mk.named = function (o) {                                                                        // "create <Name>, a legendary 8/8 blue Octopus creature token"
+    const id = 'token-' + o.name.toLowerCase().replace(/[^a-z]+/g, '-');
+    if (!pack[id]) pack[id] = { id: id, name: o.name, token: true, mana: '', colors: o.colors, types: ['Creature'], subtypes: o.subtypes, supers: o.supers, power: o.p, toughness: o.t, typeLine: 'Token ' + o.supers.join(' ') + ' Creature — ' + o.subtypes.join(' '), text: '', kw: {}, ab: [], layout: 'token' };
     return id;
   };
   mk.treasure = function () {                                                                     // CR 111.10a

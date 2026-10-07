@@ -91,6 +91,10 @@
     targetsTapped: x => !!(x.targets && x.targets.some(sl => (sl || []).some(r => r && r.c != null && I(x.s, r.c) && I(x.s, r.c).zone === 'bf' && I(x.s, r.c).tapped))),   // Ride's End
     targetsAttacking: x => !!(x.targets && x.s.combat && x.targets.some(sl => (sl || []).some(r => r && r.c != null && x.s.combat.attackers.includes(r.c)))),   // Ephara's Dispersal
     anyGraveAtLeast: (x, c) => x.s.players.some(p => p.grave.length >= c.n),
+    wasCast: x => { const c = I(x.s, x.src); return !!c && !!c.wasCast; },
+    spent: (x, c) => { const o = I(x.s, x.src); return !!o && !!o.spentCols && (o.spentCols[c.col] || 0) >= c.n; },
+    evoked: x => { const c = I(x.s, x.src); return !!c && !!c.evoked; },
+    faceDownThisTurn: () => false,                                                               // nothing in this engine turns a permanent face down or face up
     impendingTime: x => { const c = I(x.s, x.src); return !!c && !!c.impended && (c.ctr.time || 0) > 0; },   // CR 702.176a's intervening "if"
     castFromGrave: x => !!(x.L && x.L.from === 'grave'),                                           // "if this spell was cast from a graveyard"
     counterAtLeast: (x, c) => { const o = I(x.s, x.src); return !!o && (o.ctr[c.kind] || 0) >= c.n; },
@@ -809,17 +813,45 @@
         log(s, 'putOnto', { who: I(s, n).owner, c: id, tapped: false, from: 'exile' });
       }
     },
+    // Formidable Speaker: "you may discard a card. If you do, ..."
+    mayDiscardThen(x, op) {
+      const s = x.s, p = P(s, x.ctrl); if (!p.hand.length) return;
+      const a = MF.ask(x.x, { who: x.ctrl, kind: 'mayDiscard', src: x.src, opts: p.hand.map(i => ({ id: i, iid: i })).concat([{ id: 'none' }]) });
+      if (a === 'none') return;
+      MF.discard(s, a); MF.runOps(x, op.ops);
+    },
+    exileCard(x, op) { const s = x.s, c = I(s, op.iid); if (!c || c.zone !== 'grave') return; log(s, 'exiled', { who: c.owner, c: c.id, by: x.L ? (x.L.srcId || x.L.id) : null }); MF.move(s, op.iid, 'exile'); },   // "exile that card"
+    // Bringer of the Last Gift: each player sacrifices all other creatures, then returns all creature cards from their graveyard that weren't put there this way.
+    bringer(x) {
+      const s = x.s, sacd = new Set();
+      for (const i of s.bf.slice()) { if (i === x.src || I(s, i).zone !== 'bf' || !MF.chars(s, i).types.includes('Creature')) continue; MF.sacrifice(s, i); const to = I(s, i).to; if (to != null) sacd.add(to); }
+      for (const p of s.players) {
+        const back = p.grave.filter(i => !sacd.has(i) && MF.def(s, i).types.includes('Creature'));
+        for (const i of back) { const n = MF.move(s, i, 'bf', { ctrl: p.seat, x: x.x }); log(s, 'putOnto', { who: p.seat, c: I(s, n).id, tapped: false, from: 'graveyard' }); }
+      }
+    },
+    // Ardyn: exile up to one creature card from a graveyard; if you did, a token copy of it with exceptions (CR 707.9b).
+    exileCopyToken(x, op) {
+      const s = x.s, r = (x.t[op.on.t] || [])[0]; if (!r || r.c == null) return;
+      const c = I(s, r.c); if (!c || c.zone !== 'grave') return;
+      const id = c.id; MF.move(s, r.c, 'exile'); log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null });
+      const k = s.nid++;
+      s.cards[k] = { iid: k, id: id, owner: x.ctrl, ctrl: x.ctrl, zone: 'bf', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: s.turn, tok: true, copy: { id: id, except: JSON.parse(JSON.stringify(op.except)) } };
+      s.bf.push(k); noteEntered(s, k);
+      log(s, 'tokenCopy', { who: x.ctrl, c: id });
+      MF.emit(s, { t: 'enters', iid: k, ctrl: x.ctrl });
+    },
     // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
     selfFromGrave(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'grave') return; const n = MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); log(s, 'putOnto', { who: c.owner, c: I(s, n).id, tapped: false, from: 'graveyard' }); },
     removeCounter(x, op) { const c = I(x.s, x.src); if (!c || c.zone !== 'bf' || !(c.ctr[op.kind] > 0)) return; c.ctr[op.kind] = Math.max(0, c.ctr[op.kind] - op.n); log(x.s, 'removeCounters', { who: c.ctrl, c: c.id, n: op.n, ctr: op.kind }); },
     // Cool but Rude: "search your library for a card, put it into your hand, shuffle, then discard a card at random."
-    tutor(x) {
+    tutor(x, op) {
       const s = x.s, p = P(s, x.ctrl);
       MF.emit(s, { t: 'search', who: x.ctrl });
-      const seen = new Set(), opts = p.lib.filter(i => { const id = I(s, i).id; if (seen.has(id)) return false; seen.add(id); return true; }).map(i => ({ id: i, iid: i }));
+      const seen = new Set(), opts = p.lib.filter(i => (!op || !op.f || MF.matchChars(s, i, MF.chars(s, i), op.f, x.ctrl, x.src)) && (id => { if (seen.has(id)) return false; seen.add(id); return true; })(I(s, i).id)).map(i => ({ id: i, iid: i }));
       opts.push({ id: 'none' });
-      const a = MF.ask(x.x, { who: x.ctrl, kind: 'search', src: x.src, what: 'card', opts: opts });
-      if (a !== 'none') { MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: I(s, a).id, revealed: false, from: 'library' }); } else log(s, 'searchNothing', { who: x.ctrl });
+      const a = MF.ask(x.x, { who: x.ctrl, kind: 'search', src: x.src, what: op && op.f ? 'creature card' : 'card', opts: opts });
+      if (a !== 'none') { const id = I(s, a).id; if (op && op.reveal) log(s, 'reveal', { who: x.ctrl, cs: [id] }); MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: !!(op && op.reveal), from: 'library' }); } else log(s, 'searchNothing', { who: x.ctrl });
       MF.shuffle(s, p.lib);
     },
     discardRandom(x) { const s = x.s, p = P(s, x.ctrl); if (!p.hand.length) return; MF.discard(s, p.hand[MF.randInt(s, p.hand.length)]); },   // random: inside apply (CLAUDE.md rule 9)
@@ -1046,6 +1078,15 @@
   // it's a Bird in addition to its other types and it has flying." (CR 707.2, 707.9a-b)
   MF.askEnterAsCopy = function (x, a, L) {
     const s = x.s;
+    if (a.from === 'grave') {                                                                  // Superior Spider-Man: any creature card in a graveyard
+      const opts = s.players.flatMap(p => p.grave).filter(i => MF.def(s, i).types.includes('Creature')).map(i => ({ id: i, iid: i }));
+      if (!opts.length) return null;
+      opts.push({ id: 'no' });
+      const ans = MF.ask(x.x, { who: L.ctrl, kind: 'enterAsCopy', src: L.iid, fromGrave: true, opts: opts });
+      if (ans === 'no') return null;
+      log(s, 'enterAsCopy', { who: L.ctrl, c: L.id, of: I(s, ans).id });
+      return { id: I(s, ans).id, except: JSON.parse(JSON.stringify(a.except)), exileFrom: a.exileCopied ? ans : null };
+    }
     const opts = s.bf.filter(i => MF.isType(s, i, 'Creature') && MF.chars(s, i).mv <= (L.spent || 0)).map(i => ({ id: i, iid: i }));
     if (!opts.length) return null;                                                             // nothing it could copy: not a choice
     opts.push({ id: 'no' });
@@ -1089,7 +1130,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

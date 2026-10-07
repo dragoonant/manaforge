@@ -139,6 +139,9 @@
       if (o.door != null) nc.unlocked = [o.door === 0, o.door === 1];
       if (o.xPaid) nc.xPaid = o.xPaid;
       if (o.transformed) nc.transformed = true;
+      if (o.evoked) nc.evoked = true;
+      if (o.cast) nc.wasCast = true;
+      if (o.spentCols) nc.spentCols = o.spentCols;
       if (o.impending) { nc.impended = true; nc.ctr.time = (nc.ctr.time || 0) + o.impending; }      // CR 702.176a: enters with N time counters                                               // "put onto the battlefield transformed" (CR 712)
       if (o.warp) (s.delayed = s.delayed || []).push({ src: n, ctrl: nc.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', ops: [{ o: 'warpExile', iid: n }] } });   // CR 702.185a                         // CR 709.5d: the half that was cast enters unlocked
       enterReplacements(s, n, o);
@@ -152,6 +155,7 @@
       if (lki.types.includes('Creature')) P(s, lki.ctrl).h.creLeft = (P(s, lki.ctrl).h.creLeft || 0) + 1;
       if (zone === 'exile' && lki.types.includes('Creature')) { s.exiledCre = s.exiledCre || {}; s.exiledCre[lki.ctrl] = (s.exiledCre[lki.ctrl] || 0) + 1; }   // "creatures that were exiled under your opponents' control this turn"
       s.effects = s.effects.filter(e => e.whileSrc !== iid);                                   // CR 611.2b: "for as long as ~ remains on the battlefield"
+      for (const k in s.cards) { const pc = s.cards[k]; if (pc.prepCopy && pc.ofPrep === iid && pc.zone === 'exile') { zoneArr(s, pc).splice(zoneArr(s, pc).indexOf(+k), 1); pc.zone = 'moved'; pc.to = null; } }   // CR 722.3c
       emit(s, { t: 'leaves', iid: iid, to: zone, lki: lki });
       for (const e of s.effects.filter(e => e.k === 'exileUntil' && e.src === iid)) {           // CR 610.3: the exiled card returns, to its owner's hand
         s.effects.splice(s.effects.indexOf(e), 1);
@@ -179,6 +183,7 @@
     const bc = baseChars(s, n);
     if (bc.types.includes('Creature') && s.bf.some(i => i !== n && I(s, i).ctrl !== c.ctrl && chars(s, i).ab.some(a => a.k === 'oppCreaturesEnterTapped'))) c.tapped = true;   // "Creatures your opponents control enter tapped"
     if (bc.subtypes.includes('Saga') && bc.ab.some(a => a.chapter) && c.ctr.lore == null) c.ctr.lore = 1;   // CR 714.3a
+    if (bc.ab.some(a => a.k === 'entersPrepared')) MF.becomePrepared(s, n);                   // CR 722.3a
     for (const a of baseChars(s, n).ab) {
       if (a.k === 'etbCounters') c.ctr[a.kind] = (c.ctr[a.kind] || 0) + a.n;
       if (a.k === 'enterChoice') {
@@ -279,10 +284,21 @@
     if (!f) throw new Error('no such face: ' + c.id);
     return { iid: iid, name: f.name, types: f.types.slice(), subtypes: f.subtypes.slice(), supers: f.supers.slice(), colors: f.colors.slice(), p: null, t: null, ab: f.ab, kw: Object.assign({}, f.kw), mana: f.mana, mv: MF.manaValue(MF.parseMana(f.mana)), ctrl: c.ctrl, owner: c.owner, tok: !!c.tok, alt: f.kind || null };
   };
-  const faceDef = MF.faceDef = (s, iid, alt, door) => door != null ? def(s, iid).doors[door] : alt ? def(s, iid).alt : def(s, iid);
+  const faceDef = MF.faceDef = (s, iid, alt, door) => door != null ? def(s, iid).doors[door] : alt ? def(s, iid).alt : I(s, iid).prepCopy ? def(s, iid).prep : def(s, iid);
+  MF.becomePrepared = function (s, n) {                                                       // CR 722.3a, c
+    const c = I(s, n), d = def(s, n);
+    if (!d.prep || c.prepared) return;
+    c.prepared = true;
+    const k = s.nid++;
+    s.cards[k] = { iid: k, id: c.id, owner: c.ctrl, ctrl: c.ctrl, zone: 'exile', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: 0, tok: false, prepCopy: true, ofPrep: n };
+    P(s, c.ctrl).exile.push(k);
+    s.effects.push({ k: 'mayPlay', iid: k, who: c.ctrl, castOnly: true, prepOf: n });
+    log(s, 'prepared', { who: c.ctrl, c: c.id, spell: d.prep.name });
+  };
   const LOCKED = { k: 'locked' };                                                             // a locked door's ability: it does not exist (CR 709.5); its place is kept so ability indices stay put
   function baseChars(s, iid) {
     const c = I(s, iid);
+    if (c.prepCopy) { const f = def(s, iid).prep; return { iid: iid, name: f.name, types: f.types.slice(), subtypes: f.subtypes.slice(), supers: f.supers.slice(), colors: f.colors.slice(), p: null, t: null, ab: f.ab, kw: Object.assign({}, f.kw), mana: f.mana, mv: MF.manaValue(MF.parseMana(f.mana)), ctrl: c.ctrl, owner: c.owner, tok: false }; }   // CR 722.3c
     if (c.asAlt && c.zone === 'stack') return faceChars(s, iid, true);
     if (c.asDoor != null && c.zone === 'stack') return faceChars(s, iid, false, c.asDoor);
     let d = def(s, iid);
@@ -307,6 +323,9 @@
       if (ex.addSubtypes) for (const st of ex.addSubtypes) if (!subtypes.includes(st)) subtypes.push(st);
       if (ex.kw) for (const k of ex.kw) kw[k] = (kw[k] || 0) + 1;
       if (ex.pt) { p = ex.pt[0]; t = ex.pt[1]; }
+      if (ex.name) name = ex.name;                                                            // Superior Spider-Man: "except his name is ~"
+      if (ex.colors) colors = ex.colors.slice();                                              // Ardyn: "except it's a 5/5 black Demon"
+      if (ex.setSubtypes) subtypes = ex.setSubtypes.slice();
     }
     if (c.zone !== 'bf') for (const a of ab) if (a.k === 'cda') {                             // CR 604.3: a characteristic-defining ability works in every zone (on the battlefield, layer 7a does it)
       const v = MF.vals[a.v.v]({ s: s, ctrl: c.ctrl, src: iid }, a.v, null);
@@ -641,6 +660,7 @@
         for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) {
           const spent = need[k] + (plan[k] || 0);
           p.pool[k] -= spent;
+          if (ctx && spent) { ctx.spentCols = ctx.spentCols || {}; ctx.spentCols[k] = (ctx.spentCols[k] || 0) + spent; }
           if (ctx && ctx.creature && p.poolCre) p.poolCre[k] -= Math.min(p.poolCre[k], spent);   // creature-only mana is spent first on a creature spell
           if (ctx && ctx.creature && p.poolCav) for (let j = 0; j < spent; j++) { const m = p.poolCav.findIndex(e => e.col === k && (ctx.subtypes || []).includes(e.type)); if (m < 0) break; if (p.poolCav[m].unc) ctx.usedCavern = true; p.poolCav.splice(m, 1); }   // restricted mana first; "that spell can't be countered"
         }
@@ -677,7 +697,7 @@
   MF.costMods = [];          // (s, who, iid, d, cost) => void: js/ops.js registers "costs {1} less"
   const spellCost = MF.spellCost = function (s, who, iid, o) {
     const ch = faceChars(s, iid, o && o.alt, o && o.door);
-    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem' || o.via === 'impending') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
+    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem' || o.via === 'impending' || o.via === 'evoke') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
     const plotted = (o && o.free) || (o && o.via === 'free') || MF.isPlotted(s, iid);         // CR 702.170d, 118.9: without paying its mana cost
     const c = MF.parseMana(plotted ? '' : hz ? hz.cost : ch.mana);                            // CR 702.180a: an alternative cost
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
@@ -1153,6 +1173,7 @@
     if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
     if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;
     if (via === 'impending' && !d0.ab.some(a => a.k === 'impending')) return false;
+    if (via === 'evoke' && !(I(s, iid).zone === 'hand' && d0.ab.some(a => a.k === 'evoke'))) return false;
     if (via === 'free' && !(I(s, iid).zone === 'hand' && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'castFree')))) return false;
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrSac' && P(s, who).hand.filter(i => i !== iid).length === 0 && !s.bf.some(i => I(s, i).ctrl === who)) return false;   // a mandatory additional cost that can't be paid
     if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.plotted != null) && !sorceryTiming(s, who)) return false;   // CR 702.170d: main phase, empty stack
@@ -1225,6 +1246,7 @@
       if (canPlayLand(s, who, iid)) out.push({ type: 'land', iid: iid });
       else if (d.doors) { for (let k = 0; k < d.doors.length; k++) if (canCast(s, who, iid, false, k)) out.push({ type: 'cast', iid: iid, door: k }); }   // CR 709.3
       else if (I(s, iid).zone === 'grave') { for (const v of ['flashback', 'mayhem']) if (canCast(s, who, iid, false, null, v)) out.push({ type: 'cast', iid: iid, via: v }); if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
+      else if (d.ab.some(a => a.k === 'evoke') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'evoke')) out.push({ type: 'cast', iid: iid, via: 'evoke' }); }
       else if (d.ab.some(a => a.k === 'impending') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'impending')) out.push({ type: 'cast', iid: iid, via: 'impending' }); }
       else if (d.ab.some(a => a.k === 'warp') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'warp')) out.push({ type: 'cast', iid: iid, via: 'warp' }); }
       else if (d.ab.some(a => a.k === 'sneak') && canCast(s, who, iid, false, null, 'sneak')) { out.push({ type: 'cast', iid: iid, via: 'sneak' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }
@@ -1384,14 +1406,18 @@
     const s = x.s, who = x.inv.who, iid0 = x.inv.iid, c0 = I(s, iid0), from = c0.zone, alt = !!x.inv.alt, door = x.inv.door, via = x.inv.via || null;
     const card = def(s, iid0), d = faceDef(s, iid0, alt, door);                               // CR 715.3b, 720.3b, 709.3b: as an Adventure, Omen or door it has only that face
     const anyMana = anyManaFor(s, iid0), plotted = MF.isPlotted(s, iid0) || via === 'free';   // CR 702.170d, 118.9: decided before it moves
+    const prepOf = c0.prepCopy ? c0.ofPrep : null;
+    if (prepOf != null && I(s, prepOf)) { I(s, prepOf).prepared = false; log(s, 'unprepared', { who: who, c: I(s, prepOf).id }); }   // CR 722.3c, 601.2i
     const iid = move(s, iid0, 'stack', { ctrl: who });                                        // CR 601.2a
     const L = { lid: s.lid++, kind: 'spell', ctrl: who, iid: iid, id: card.id, t: [], x: 0, from: from, alt: alt ? d.kind : null };
+    if (prepOf != null) { L.copy = true; I(s, iid).prepCopy = true; }                        // a copy of the card: it ceases to exist off the stack (CR 704.5e)
     if (door != null) L.door = door;
     if (via === 'harmonize' || via === 'flashback') L.harmonize = true;                      // both exile it whenever it would leave the stack (702.34a, 702.180a)
     if (via) L.via = via;
     if (via === 'sneak') L.sneak = true;
     if (via === 'warp') L.warp = true;
     if (via === 'impending') L.impending = d.ab.find(a => a.k === 'impending').n;
+    if (via === 'evoke') L.evoked = true;
     s.stack.push(L);
     const c = I(s, iid);
     if (alt) c.asAlt = true;
@@ -1507,12 +1533,15 @@
     const cost = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana, via: via, reduce: reduce, free: plotted, targets: L.t });   // CR 601.2f
     if (hzTap != null) { I(s, hzTap).tapped = true; log(s, 'tapped', { who: who, c: I(s, hzTap).id }); }   // CR 702.180b
     if (L.bargainSac != null) MF.sacrifice(s, L.bargainSac);
+    const tax = L.t.flat().reduce((n, r) => n + (r && r.c != null && I(s, r.c).zone === 'bf' && I(s, r.c).ctrl !== who ? chars(s, r.c).ab.filter(a => a.k === 'targetTax').reduce((m, a) => m + a.life, 0) : 0), 0);
+    if (tax) { if (P(s, who).life < tax) throw new Illegal('cannot pay ' + tax + ' life'); addPay.push(() => MF.loseLife(s, who, tax, 'pay', card.id)); }
     for (const f of addPay) f();
     if (sneakBack != null) { log(s, 'sneakReturn', { who: who, c: I(s, sneakBack).id }); move(s, sneakBack, 'hand'); }                                  // CR 702.166a: paid with the total cost (601.2h)
     payMana(x, who, cost, iid, true, ctx);                                                    // CR 601.2g-h
     L.spent = MF.manaValue(cost);                                                             // "the amount of mana spent to cast" (CR 601.2h)
     if (ctx.usedCavern) L.uncounterable = true;                                               // Cavern of Souls
     if (ctx.phLife) L.phLife = ctx.phLife;                                                    // compleated (CR 702.150a)
+    L.spentCols = ctx.spentCols || {};
     const ch = chars(s, iid);
     const p = P(s, who);
     p.h.cast++;
@@ -1521,7 +1550,7 @@
     if (ch.subtypes.includes('Otter')) p.h.castOtter++;
     (p.h.castList = p.h.castList || []).push({ lid: L.lid, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice() });   // turn history: "the first instant spell ... you've cast this turn"
     L.nth = { cast: p.h.cast, instant: ch.types.includes('Instant') ? p.h.castInstant : 0, sorcery: ch.types.includes('Sorcery') ? p.h.castSorcery : 0, otter: ch.subtypes.includes('Otter') ? p.h.castOtter : 0 };
-    log(s, 'cast', { who: who, c: card.id, face: alt || door != null ? d.name : null, alt: alt ? d.kind : door != null ? 'door' : null, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring, kicked: !!L.kicked, gift: L.gift != null, bargained: !!L.bargained, harmonize: !!L.harmonize, sneak: !!L.sneak, warp: !!L.warp });
+    log(s, 'cast', { who: who, c: card.id, face: alt || door != null || prepOf != null ? d.name : null, alt: alt ? d.kind : door != null ? 'door' : prepOf != null ? 'prepare' : null, via: via, impending: !!L.impending, evoked: !!L.evoked, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring, kicked: !!L.kicked, gift: L.gift != null, bargained: !!L.bargained, harmonize: !!L.harmonize, sneak: !!L.sneak, warp: !!L.warp });
     // The spell as cast travels with the event: a copy made after it has left the stack is made from it as it last existed (Alania's rulings, CR 707.10).
     const spell = { id: card.id, t: JSON.parse(JSON.stringify(L.t)), x: L.x, mode: L.mode, alt: L.alt, door: L.door, kicked: !!L.kicked, offspring: !!L.offspring, gift: L.gift, bargained: !!L.bargained };
     emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid, spell: spell, nth: p.h.cast, mv: ch.mv + (L.x || 0) * costRaw.x });   // CR 601.2i
@@ -1645,7 +1674,7 @@
         afterResolve(s); return;
       }
       X.t = lt.t;
-      log(s, 'resolve', { who: L.ctrl, c: L.id, face: L.alt ? d.name : null });
+      log(s, 'resolve', { who: L.ctrl, c: L.id, face: L.alt || I(s, L.iid).prepCopy ? d.name : null });
       if (ch.types.includes('Instant') || ch.types.includes('Sorcery')) {
         const gift = d.ab.find(a => a.k === 'gift');
         if (gift && L.gift != null) MF.giveGift(X, gift, L.gift);                              // CR 702.174b, j: before any of its other effects
@@ -1666,12 +1695,16 @@
         if (L.door != null) o.door = L.door;                                                   // CR 709.5d
         if (L.warp) o.warp = true;
         if (L.impending) o.impending = L.impending;
+        if (L.evoked) o.evoked = true;
+        o.cast = !L.copy; o.spentCols = L.spentCols || null;                                    // "if you cast it", "if {G}{G} was spent to cast it" (CR 601.2h)
         if (L.phLife && d.ab.some(a => a.k === 'compleated')) o.loyaltyMinus = 2 * L.phLife;      // CR 702.150a: two fewer loyalty counters
         if (L.alt === 'mdfc') o.transformed = true;
         if (L.x) o.xPaid = L.x;
         if (aura) o.att = lt.t[0][0].c;                                                        // CR 608.3c
-        for (const a of d.ab) if (a.k === 'enterAsCopy') { const cp = MF.askEnterAsCopy(X, a, L); if (cp) o.copy = cp; }   // CR 614.1c, 707: a replacement with a choice, asked as it would enter
-        move(s, L.iid, 'bf', o);
+        let exileCopied = null;
+        for (const a of d.ab) if (a.k === 'enterAsCopy') { const cp = MF.askEnterAsCopy(X, a, L); if (cp) { exileCopied = cp.exileFrom != null ? cp.exileFrom : null; delete cp.exileFrom; o.copy = cp; } }   // CR 614.1c, 707: a replacement with a choice, asked as it would enter
+        const nPerm = move(s, L.iid, 'bf', o);
+        if (exileCopied != null) s.trigs.push({ src: nPerm, ab: -1, inl: { k: 'trig', on: 'reflexive', ops: [{ o: 'exileCard', iid: exileCopied }] }, ctrl: L.ctrl, ev: { t: 'reflexive' }, lki: null });
       }
     } else {
       s.stack.pop();
