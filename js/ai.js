@@ -16,7 +16,7 @@
   // The evaluator. Board presence persists in Magic (handoff 11.8.5): power, toughness and
   // evasion on the battlefield, cards in hand, lands, and life with a low-life cliff.
   // ---------------------------------------------------------------------------------------------
-  const W = { landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2 };
+  const W = { landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
   MF.aiWeights = W;
   const lifeScore = l => l * W.life - (l < W.lowLife ? (W.lowLife - l) * W.lowLifeExtra : 0);
   function permValue(s, iid) {
@@ -142,6 +142,24 @@
     const any = q.opts.find(o => o.id !== 'undo');
     return any ? any.id : 'undo';                                                              // a lone blocker on a menace attacker: take it back
   }
+  // The attacker's heuristic, for the roll-out: a requirement first (CR 508.1d), then every creature no
+  // untapped creature of the defender could block and kill. Without it a roll-out never attacks, and
+  // a pre-combat pump (prowess, a trick) is worth nothing at the horizon.
+  function attackPolicy(s, q) {
+    const m = q.opts.find(o => o.iid != null && MF.chars(s, o.iid).ab.some(a => a.k === 'mustAttack'));
+    if (m) return m.id;
+    if (!q.opts.some(o => o.id === 'done')) return q.opts[0].id;
+    if (!W.rollAttack) return 'done';
+    const foes = s.bf.filter(i => I(s, i).ctrl !== q.who && MF.isType(s, i, 'Creature'));
+    const safe = o => {
+      if (o.iid == null) return false;
+      const a = MF.chars(s, o.iid);
+      if (a.p <= 0) return false;
+      return foes.every(b => { if (!MF.canBlock(s, b, o.iid)) return true; const bc = MF.chars(s, b); return bc.p < a.t && !(bc.kw.deathtouch && bc.p > 0); });
+    };
+    const o = q.opts.find(safe);
+    return o ? o.id : 'done';
+  }
   function policyAnswer(s0, q) {
     const me = q.who, s = MF.view(s0);
     switch (q.kind) {
@@ -222,7 +240,7 @@
       case 'assign': return q.trample ? q.opts[q.opts.length - 1].id : q.opts[0].id;      // trample: lethal to the blocker, the rest to the player
       case 'target': return targetPolicy(s, q);
       case 'block': return blockPolicy(s, q);
-      case 'attack': { if (q.opts.some(o => o.id === 'done')) return 'done'; const m = q.opts.find(o => o.iid != null && MF.chars(s, o.iid).ab.some(a => a.k === 'mustAttack')); return m ? m.id : q.opts[0].id; }   // CR 508.1d: a requirement first
+      case 'attack': return attackPolicy(s, q);
       default: return undefined;
     }
   }
@@ -252,6 +270,7 @@
   // Kinds where every answer is worth a roll-out when the AI itself is asked.
   const SEARCH_KINDS = { addCostYes: 1, attackWhom: 1, wardPay: 1, bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
+  const OPP_WINDOWS = { boc: 1, attackers: 1, blockers: 1, end: 1 };
   function candidates(s, legal) {
     const seen = new Set(), out = [];
     for (const a of legal) {
@@ -277,6 +296,10 @@
         const q = s.pending.q, v = MF.view(s);
         legal = legal.filter(a => { const o = q.opts.find(o2 => o2.id === a.id); if (!o || o.iid == null || !MF.chars(v, o.att).kw.menace || Object.values(q.assign).includes(o.att)) return true; return q.opts.some(o2 => o2.att === o.att && o2.iid !== o.iid); });
       }
+      // The opponent's turn with nothing on the stack: a roll-out scores pass as never acting again this
+      // turn, so the first window always looks best — a pump spent in their upkeep, a Role on a creature
+      // that won't attack until my turn. Act where timing matters: their beginning of combat, combat, end step.
+      if (W.waitWindows && !s.pending && s.ap !== me && !s.stack.length && !OPP_WINDOWS[s.step]) { const p = legal.find(a => a.type === 'pass'); if (p) return p; }
       if (legal.length === 1) return legal[0];
       // Every candidate and pass, rolled to the same horizon from the same determinized copy.
       const root = determinize(s, s.log.length);
