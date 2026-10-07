@@ -33,6 +33,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "agathas-soul-cauldron",
+    "styleId": "O",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a black iron cauldron bubbling with glowing green spirits rising from it as ghostly faces, in a dark witch hut. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a black iron cauldron bubbling with glowing green spirits rising from it as ghostly faces",
+    "setting": "in a dark witch hut",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "alania-divergent-storm",
     "styleId": "E",
     "land": false,
@@ -341,6 +352,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "cache-grab",
+    "styleId": "M",
+    "land": false,
+    "prompt": "super deformed hooded raider, stocky three heads tall, crude weapons, a scruffy squirrel rogue warrior in a leather hood dragging a sack of stolen treasures from a hollow tree, in an autumn forest. matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace.",
+    "subject": "a scruffy squirrel rogue warrior in a leather hood dragging a sack of stolen treasures from a hollow tree",
+    "setting": "in an autumn forest",
+    "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
+    "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "carnage-crimson-chaos",
     "styleId": "C",
     "land": false,
@@ -437,6 +459,17 @@
     "setting": "on a wind-lashed cliff edge above a dark valley at dusk",
     "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
     "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "coati-scavenger",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a lean scarred coati scavenger warrior digging through bones and old armour with clawed hands, in a jungle ruin. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a lean scarred coati scavenger warrior digging through bones and old armour with clawed hands",
+    "setting": "in a jungle ruin",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
   },
   {
@@ -649,6 +682,17 @@
     "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
+    "key": "disruptive-stormbrood-petty-revenge",
+    "styleId": "E",
+    "land": false,
+    "prompt": "chunky super deformed fantasy soldier, four heads tall, detailed gear, a sleek storm dragon wreathed in crackling lightning diving through dark clouds, over a stormy sea. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "a sleek storm dragon wreathed in crackling lightning diving through dark clouds",
+    "setting": "over a stormy sea",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "chunky super deformed fantasy soldier, four heads tall, detailed gear, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "dissection-practice",
     "styleId": "L",
     "land": false,
@@ -657,6 +701,17 @@
     "setting": "in a grim candlelit laboratory",
     "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
     "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "dragon-sniper",
+    "styleId": "C",
+    "land": false,
+    "prompt": "super deformed battle anime warrior, three heads tall, fierce glare, a grim ranger aiming a massive crossbow at a dragon wheeling overhead, from a cliff edge at dusk. intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous.",
+    "subject": "a grim ranger aiming a massive crossbow at a dragon wheeling overhead",
+    "setting": "from a cliff edge at dusk",
+    "style": "intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous",
+    "short": "super deformed battle anime warrior, three heads tall, fierce glare, ",
     "negativeExtra": ""
   },
   {
@@ -690,6 +745,17 @@
     "setting": "in soft dreamlike light",
     "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
     "short": "master grade super deformed brawler, three heads tall, heavy armour, snarling, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "dredgers-insight",
+    "styleId": "N",
+    "land": false,
+    "prompt": "master grade super deformed infernal warrior, three heads tall, horned black armour, a hunched gravedigger druid unearthing glowing relics with a rusted shovel, in a misty graveyard. infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale.",
+    "subject": "a hunched gravedigger druid unearthing glowing relics with a rusted shovel",
+    "setting": "in a misty graveyard",
+    "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
+    "short": "master grade super deformed infernal warrior, three heads tall, horned black armour, ",
     "negativeExtra": ""
   },
   {
@@ -1078,6 +1144,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "great-arashin-city",
+    "styleId": "D",
+    "land": true,
+    "prompt": "landscape painting, scenery, a vast ruined city of dark stone towers overgrown with black vines and pale fungus, under a sickly green twilight. grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland.",
+    "subject": "a vast ruined city of dark stone towers overgrown with black vines and pale fungus",
+    "setting": "under a sickly green twilight",
+    "style": "grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland",
+    "short": "landscape painting, scenery, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "haliya-guided-by-light",
     "styleId": "J",
     "land": false,
@@ -1109,6 +1186,17 @@
     "style": "infernal fantasy painting, roaring firelight from below, black smoke and embers, demonic red and gold, terrifying scale",
     "short": "master grade super deformed infernal warrior, three heads tall, horned black armour, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "haywire-mite",
+    "styleId": "E",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a small malfunctioning clockwork beetle sparking and twitching, gears spilling from its shell, on a workshop floor. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "a small malfunctioning clockwork beetle sparking and twitching, gears spilling from its shell",
+    "setting": "on a workshop floor",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "heartfire-hero",
@@ -1252,6 +1340,17 @@
     "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
     "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
     "negativeExtra": ""
+  },
+  {
+    "key": "insidious-roots",
+    "styleId": "E",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, black twisting roots bursting from cracked graveyard soil, pale sprouts growing from them, at night under a full moon. classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous.",
+    "subject": "black twisting roots bursting from cracked graveyard soil, pale sprouts growing from them",
+    "setting": "at night under a full moon",
+    "style": "classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
   },
   {
     "key": "inspiring-vantage",
@@ -1606,6 +1705,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "molt-tender",
+    "styleId": "D",
+    "land": false,
+    "prompt": "super deformed grim warrior, stocky three heads tall, scarred and armoured, a pale insect druid shedding a husk of its old shell, glowing sap dripping, in a dark fungal grove. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a pale insect druid shedding a husk of its old shell, glowing sap dripping",
+    "setting": "in a dark fungal grove",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "super deformed grim warrior, stocky three heads tall, scarred and armoured, ",
+    "negativeExtra": ""
+  },
+  {
     "key": "monstrous-rage",
     "styleId": "G",
     "land": false,
@@ -1735,6 +1845,17 @@
     "setting": "in a ruined temple",
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "osteomancer-adept",
+    "styleId": "G",
+    "land": false,
+    "prompt": "master grade super deformed brawler, three heads tall, heavy armour, snarling, a grim squirrel warlock in a bone mask raising a skeletal hand from the earth with green necromantic light, in a graveyard under a dead tree. gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action.",
+    "subject": "a grim squirrel warlock in a bone mask raising a skeletal hand from the earth with green necromantic light",
+    "setting": "in a graveyard under a dead tree",
+    "style": "gritty comic book art, heavy black inks, halftone shading, vivid flat colour, dynamic foreshortening, explosive action",
+    "short": "master grade super deformed brawler, three heads tall, heavy armour, snarling, ",
     "negativeExtra": ""
   },
   {
@@ -2142,6 +2263,17 @@
     "setting": "across rolling green plains",
     "style": "cold moonlit fantasy painting, frost and steel, hard specular highlights, pale blue and silver palette, bleak winter war",
     "short": "master grade super deformed knight, three heads tall, frost-rimed steel armour, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "scavenging-ooze",
+    "styleId": "O",
+    "land": false,
+    "prompt": "master grade super deformed battle mage, three heads tall, armoured robes, a hulking green ooze absorbing bones and debris, growing larger, in a ruined crypt. arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel.",
+    "subject": "a hulking green ooze absorbing bones and debris, growing larger",
+    "setting": "in a ruined crypt",
+    "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
+    "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
     "negativeExtra": ""
   },
   {
@@ -2717,6 +2849,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "token-food",
+    "styleId": "D",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a rustic wooden plate with bread, cheese and a roasted leg of meat, on a rough wooden table by candlelight. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a rustic wooden plate with bread, cheese and a roasted leg of meat",
+    "setting": "on a rough wooden table by candlelight",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "token-goblin-1-1-r",
     "styleId": "O",
     "land": false,
@@ -2805,6 +2948,17 @@
     "negativeExtra": ""
   },
   {
+    "key": "token-plant-0-1-g",
+    "styleId": "D",
+    "land": false,
+    "prompt": "fantasy still life painting of a single object, a small thorny green plant sprouting from black soil with a single glowing bud, in a dark forest. grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro.",
+    "subject": "a small thorny green plant sprouting from black soil with a single glowing bud",
+    "setting": "in a dark forest",
+    "style": "grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro",
+    "short": "fantasy still life painting of a single object, ",
+    "negativeExtra": "person, people, character, creature, animal, figure, rider, warrior, face, house, cottage, building, village"
+  },
+  {
     "key": "token-rabbit-1-1-w",
     "styleId": "I",
     "land": false,
@@ -2868,6 +3022,17 @@
     "setting": "in a misty ruined temple",
     "style": "arcane fantasy painting, glowing spell light, violet and cyan magic energy, crackling arcs of power, deadly sorcery duel",
     "short": "master grade super deformed battle mage, three heads tall, armoured robes, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "token-spirit-1-1-w",
+    "styleId": "B",
+    "land": false,
+    "prompt": "master grade SD figure, compact heroic proportions, highly detailed armour plating, a pale ghostly spirit warrior with a translucent spear, drifting through mist, in a ruined city at dusk. premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce.",
+    "subject": "a pale ghostly spirit warrior with a translucent spear, drifting through mist",
+    "setting": "in a ruined city at dusk",
+    "style": "premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce",
+    "short": "master grade SD figure, compact heroic proportions, highly detailed armour plating, ",
     "negativeExtra": ""
   },
   {
@@ -2956,6 +3121,17 @@
     "setting": "over a burning battlefield under storm clouds",
     "style": "matte gouache painting, strong graphic silhouettes, ominous dusk palette, savage folk-tale menace",
     "short": "super deformed hooded raider, stocky three heads tall, crude weapons, ",
+    "negativeExtra": ""
+  },
+  {
+    "key": "tyvar-jubilant-brawler",
+    "styleId": "J",
+    "land": false,
+    "prompt": "master grade super deformed soldier, stocky three heads tall, layered armour, a laughing elf brawler with green and black tattoos and spiked gauntlets, fists raised for a fight, in a torchlit underground arena. modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment.",
+    "subject": "a laughing elf brawler with green and black tattoos and spiked gauntlets, fists raised for a fight",
+    "setting": "in a torchlit underground arena",
+    "style": "modern digital concept art, cinematic volumetric lighting, atmospheric depth, highly detailed, teal and orange palette, tense battle moment",
+    "short": "master grade super deformed soldier, stocky three heads tall, layered armour, ",
     "negativeExtra": ""
   },
   {

@@ -103,6 +103,7 @@
           const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); delete cost.xs;
           if (s.cards[a.iid].zone !== 'hand' && !tray.includes(a.iid)) tray.push(a.iid);                // castable from a graveyard or exile: shown in the tray
           if (a.via === 'flashback' || a.via === 'mayhem') { add(a.iid, a, 'Cast ' + d.name + ' with ' + a.via + ' — ' + MF.manaStr(cost)); continue; }
+          if (a.via === 'forage') { add(a.iid, a, 'Cast ' + d.name + ' from your graveyard by foraging — ' + MF.manaStr(cost) + ' (enters with a finality counter)'); if (!tray.includes(a.iid)) tray.push(a.iid); continue; }
           if (a.via === 'evoke') { add(a.iid, a, 'Evoke ' + d.name + ' — ' + MF.manaStr(cost) + ' (sacrificed when it enters)'); continue; }
           if (s.cards[a.iid].prepCopy) { add(a.iid, a, 'Cast the prepared copy of ' + d.prep.name + ' — ' + MF.manaStr(cost) + ' (unprepares ' + d.name + ')'); continue; }
           if (a.via === 'free') { add(a.iid, a, 'Cast ' + d.name + ' without paying its mana cost (Omniscience)'); continue; }

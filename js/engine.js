@@ -104,7 +104,12 @@
   const move = MF.move = function (s, iid, zone, o) {
     o = o || {};
     const c = I(s, iid), from = c.zone;
-    if (from === 'grave' && zone !== 'grave') MF.batchNote(s, 'leftGraveBatch', c.owner);   // "Whenever one or more cards leave your graveyard"
+    if (from === 'grave' && zone !== 'grave') {                                               // "Whenever one or more [creature] cards leave your graveyard"
+      MF.batchNote(s, 'leftGraveBatch', c.owner);
+      const ty = def(s, iid).types;
+      if (ty.includes('Creature')) MF.batchNote(s, 'leftGraveCreBatch', c.owner);
+      if (ty.includes('Creature') || ty.includes('Artifact')) MF.batchNote(s, 'leftGraveArtCreBatch', c.owner);
+    }
     if (zone === 'grave' && !c.tok && def(s, iid).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))) { MF.batchNote(s, 'toGraveBatch', c.owner); P(s, c.owner).h.descended = true; }   // "permanent cards put into your graveyard from anywhere"
     if (from === 'bf' && zone === 'grave' && (c.ctr.finality || 0) > 0) { log(s, 'exiledInstead', { who: c.owner, c: c.id, finality: true }); zone = 'exile'; }   // CR 122.1h
     if (from === 'bf' && zone === 'grave' && chars(s, iid).types.includes('Creature') && s.bf.some(v => v !== iid && chars(s, v).ctrl !== c.ctrl && chars(s, v).ab.some(a => a.k === 'oppDieExile'))) {
@@ -372,9 +377,15 @@
     for (const e of s.effects) if (e.k === 'animate' && e.colors && out[e.iid]) out[e.iid].colors = e.colors.slice();
     // Layer 6: ability-adding and -removing effects, in timestamp order (CR 613.7).
     const l6 = [];
+    for (const iid of s.bf) for (const a of out[iid].ab) if (a.k === 'cauldronGrant' && !statics.some(st => st.src === iid && st.a === a)) statics.push({ src: iid, a: a, ts: I(s, iid).ts });
     for (const st of statics) if (st.a.k === 'static' && st.a.grant) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) for (const k of st.a.grant) out[i].kw[k] = (out[i].kw[k] || 0) + 1; } });
     for (const e of s.effects) if ((e.k === 'grant' || e.k === 'animate') && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { for (const k of e.kws) out[e.iid].kw[k] = (out[e.iid].kw[k] || 0) + 1; } });
     for (const st of statics) if (st.a.k === 'static' && st.a.grantAb) l6.push({ ts: st.ts, run: () => { for (const i of affected(st)) out[i].ab = out[i].ab.concat(st.a.grantAb); } });
+    for (const st of statics) if (st.a.k === 'cauldronGrant') l6.push({ ts: st.ts, run: () => {
+      const src = I(s, st.src), abs = (src.exiled || []).filter(e => I(s, e) && I(s, e).zone === 'exile' && def(s, e).types.includes('Creature')).flatMap(e => def(s, e).ab.filter(a => (a.k === 'act' || a.k === 'mana') && !a.zone && a.loyalty == null));
+      if (!abs.length) return;
+      for (const i of s.bf) if (out[i] && out[i].ctrl === out[st.src].ctrl && out[i].types.includes('Creature') && (I(s, i).ctr['+1/+1'] || 0) > 0) out[i].ab = out[i].ab.concat(abs);
+    } });
     for (const e of s.effects) if (e.k === 'grantAb' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].ab = out[e.iid].ab.concat(e.abs); } });
     for (const e of s.effects) if (e.k === 'loseAll' && out[e.iid]) l6.push({ ts: e.ts || 0, run: () => { out[e.iid].kw = {}; out[e.iid].ab = out[e.iid].ab.map(() => LOCKED); lost.add(e.iid); } });   // Azure Beastbinder: "loses all abilities"
     const KWC = { flying: 'flying', 'first strike': 'firstStrike', 'double strike': 'doubleStrike', deathtouch: 'deathtouch', haste: 'haste', hexproof: 'hexproof', indestructible: 'indestructible', lifelink: 'lifelink', menace: 'menace', reach: 'reach', trample: 'trample', vigilance: 'vigilance' };
@@ -500,6 +511,7 @@
   // {T} ability needs it to have been controlled since the turn began, unless it has haste.
   // ctx: { creature } — what the mana is for. Mana that may be spent only on creature spells
   // (Rockface Village, CR 106.6) is offered only when paying for one.
+  const abilityHaste = MF.abilityHaste = (s, who) => s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'abilitiesHaste'));
   const manaSources = MF.manaSources = function (s, who, ctx) {
     const out = [];
     for (const iid of s.bf) {
@@ -513,7 +525,8 @@
         if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid, flags: {} }, a.cond)) return;        // the Verges: "Activate only if you control ..."
         if (a.cost.life && P(s, who).life < a.cost.life) return;                                 // CR 119.4
         if (a.oncePerTurn && c.actTurn && c.actTurn['m' + i] === s.turn) return;                 // CR 602.5b
-        if (a.cost.tap && ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn)) return;   // CR 302.6: only a {T} ability
+        if (a.cost.tap && ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn) && !abilityHaste(s, who)) return;   // CR 302.6: only a {T} ability
+        if (a.cost.exileGrave && !P(s, who).grave.some(g => !a.cost.exileGrave.types || a.cost.exileGrave.types.some(ty => def(s, g).types.includes(ty)))) return;   // Molt Tender
         const amount = a.amount ? Math.max(0, MF.num({ s: s, ctrl: who, src: iid }, a.amount)) : 1;   // "X mana ... where X is its power", read now
         if (!amount) return;
         out.push({ iid: iid, ab: i, cols: a.cols, name: ch.name, id: c.id, amount: amount, combo: !!a.combo });
@@ -582,8 +595,15 @@
   // How much mana a player could make right now: pool plus untapped sources (for the X question).
   MF.manaAvailable = (s, who, ctx) => { const per = new Map(); for (const m of manaSources(s, who, ctx)) per.set(m.iid, Math.max(per.get(m.iid) || 0, m.amount || 1)); let n = 0; for (const v of per.values()) n += v; return poolTotal(usablePool(P(s, who), ctx)) + n; };   // one activation per permanent
 
-  function activateMana(s, who, iid, abIdx, col) {
+  function activateMana(s, who, iid, abIdx, col, x) {
     const c = I(s, iid), a = chars(s, iid).ab[abIdx];
+    if (a.cost.exileGrave) {                                                                   // Molt Tender: "{T}, Exile a card from your graveyard"
+      const opts = P(s, who).grave.filter(g => !a.cost.exileGrave.types || a.cost.exileGrave.types.some(ty => def(s, g).types.includes(ty))).map(g => ({ id: g, iid: g }));
+      if (!opts.length) throw new Illegal('no card to exile');
+      if (!x) throw new Error('a mana ability with a choice in its cost was activated without the invocation to ask');
+      const g = ask(x, { who: who, kind: 'exileFromGrave', src: iid, opts: opts });
+      log(s, 'exiledCost', { who: who, c: I(s, g).id, from: 'graveyard' }); move(s, g, 'exile');
+    }
     if (a.combo) {                                                                            // Vivi Ornitier: X mana in any combination of its colours
       const cols = col.split(''), x = Math.max(0, MF.num({ s: s, ctrl: who, src: iid }, a.amount));
       if (a.k !== 'mana' || cols.length !== x || cols.some(k => !a.cols.includes(k))) throw new Error('not a combination this ability makes: ' + col);
@@ -681,13 +701,13 @@
       const a = ask(x, { who: who, kind: 'pay', src: srcIid, need: need, pool: Object.assign({}, p.pool), opts: opts, cancel: cancel });
       if (a === 'auto') {
         const combos = new Map();
-        for (const t of plan.taps) { const src = srcs.find(m => m.iid === t.iid && m.ab === t.ab); if (src && src.combo) { if (!combos.has(t.iid)) combos.set(t.iid, { src: src, cols: '' }); combos.get(t.iid).cols += t.col; } else activateMana(s, who, t.iid, t.ab, t.col); }
+        for (const t of plan.taps) { const src = srcs.find(m => m.iid === t.iid && m.ab === t.ab); if (src && src.combo) { if (!combos.has(t.iid)) combos.set(t.iid, { src: src, cols: '' }); combos.get(t.iid).cols += t.col; } else activateMana(s, who, t.iid, t.ab, t.col, x); }
         for (const { src, cols } of combos.values()) activateMana(s, who, src.iid, src.ab, (cols + src.cols[0].repeat(src.amount)).slice(0, src.amount));   // the proposal makes the rest in its first colour; tapping it yourself chooses
       } else if (a.startsWith('combo:')) {
         const [, iid, ab] = a.split(':'), src = srcs.find(m => m.iid === +iid && m.ab === +ab), opts2 = [];
         for (let k = src.amount; k >= 0; k--) opts2.push({ id: src.cols[0].repeat(k) + src.cols[1].repeat(src.amount - k) });   // CR 106.1a: every combination is a choice
         activateMana(s, who, +iid, +ab, ask(x, { who: who, kind: 'manaCombo', src: +iid, amount: src.amount, cols: src.cols, opts: opts2, cancel: cancel }));
-      } else { const [, iid, ab, col] = a.split(':'); activateMana(s, who, +iid, +ab, col); }
+      } else { const [, iid, ab, col] = a.split(':'); activateMana(s, who, +iid, +ab, col, x); }
     }
     throw new Error('payMana did not settle');
   };
@@ -1144,6 +1164,7 @@
     const out = P(s, who).hand.slice();
     const graveLands = s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'landsFromGrave'));   // Icetill Explorer
     for (const iid of P(s, who).grave) if (def(s, iid).ab.some(a => a.k === 'harmonize' || a.k === 'flashback' || a.k === 'mayhem') || (graveLands && def(s, iid).types.includes('Land'))) out.push(iid);   // CR 702.180a, 702.34a, 702.187b
+    if (s.effects.some(e => e.k === 'forageCast' && e.who === who)) for (const iid of P(s, who).grave) if (def(s, iid).types.includes('Creature') && !out.includes(iid)) out.push(iid);
     for (const e of s.effects) if (e.k === 'mayPlay' && e.who === who && I(s, e.iid) && (I(s, e.iid).zone === 'exile' || I(s, e.iid).zone === 'grave') && !(e.afterTurn != null && s.turn <= e.afterTurn) && !out.includes(e.iid)) out.push(e.iid);
     return out;
   }
@@ -1170,7 +1191,8 @@
   const sneakWindow = (s, who) => s.ap === who && s.step === 'blockers' && s.priority === who && unblockedAttackers(s, who).length > 0;
   const canCast = MF.canCast = function (s, who, iid, alt, door, via) {                      // CR 601.2e
     const d0 = def(s, iid);
-    if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
+    if (via === 'forage' && !(I(s, iid).zone === 'grave' && d0.types.includes('Creature') && s.effects.some(e => e.k === 'forageCast' && e.who === who) && (P(s, who).grave.filter(g => g !== iid).length >= 3 || s.bf.some(i => I(s, i).ctrl === who && chars(s, i).subtypes.includes('Food'))))) return false;
+    if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && via !== 'forage' && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
     if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;
     if (via === 'impending' && !d0.ab.some(a => a.k === 'impending')) return false;
     if (via === 'evoke' && !(I(s, iid).zone === 'hand' && d0.ab.some(a => a.k === 'evoke'))) return false;
@@ -1203,13 +1225,19 @@
   // Harmonize: the most generic mana a tapped creature could take off (CR 702.180a).
   const harmonizeTappable = (s, who) => s.bf.filter(i => I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature'));
   const harmonizeBest = (s, who) => Math.max(0, ...harmonizeTappable(s, who).map(i => chars(s, i).p));
+  // CR 609.4b: "spend mana as though it were mana of any color to activate abilities of creatures you control" — any mana pays a coloured symbol
+  function anyColorForAb(s, who, iid, need) {
+    if (!(I(s, iid).zone === 'bf' && chars(s, iid).types.includes('Creature') && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'anyColorCreatureAbilities')))) return need;
+    const c = Object.assign({}, need); for (const k of ['W', 'U', 'B', 'R', 'G', 'C']) { c.g += c[k]; c[k] = 0; } return c;
+  }
   const canActivate = MF.canActivate = function (s, who, iid, i) {                            // CR 602.5
     const c = I(s, iid), ch = chars(s, iid), a = ch.ab[i];
     if (c.ctrl !== who || a.k !== 'act' || s.priority !== who) return false;
     if ((a.zone || 'bf') !== c.zone) return false;                                            // CR 702.29a: cycling functions only in its owner's hand
     if ((a.zone === 'hand' || a.zone === 'grave') && c.owner !== who) return false;
     if (a.sorcery && !sorceryTiming(s, who)) return false;
-    if (a.cost.tap && (c.tapped || (ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn)))) return false;   // CR 302.6
+    if (a.cost.tap && (c.tapped || (ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn) && !abilityHaste(s, who)))) return false;   // CR 302.6
+    if (a.cost.exileGrave && !P(s, who).grave.some(g => g !== iid && (!a.cost.exileGrave.types || a.cost.exileGrave.types.some(ty => def(s, g).types.includes(ty))))) return false;
     if (a.tg && !slotsLegalNow(s, who, iid, a.tg)) return false;
     if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid }, a.cond)) return false;
     if (a.once && c.usedOnce) return false;
@@ -1222,7 +1250,7 @@
     if (a.cost.crew && s.bf.filter(i => i !== iid && I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature')).reduce((t, i) => t + Math.max(0, chars(s, i).p), 0) < a.cost.crew) return false;
     if (a.cost.sacToken && !s.bf.some(i => I(s, i).ctrl === who && I(s, i).tok)) return false;
     if (a.oncePerTurn && c.actTurn && c.actTurn[i] === s.turn) return false;                  // CR 602.5b: "Activate only once each turn"
-    const need = MF.parseMana(a.cost.mana || '');
+    const need = anyColorForAb(s, who, iid, MF.parseMana(a.cost.mana || ''));
     if (a.cost.tap && MF.manaValue(need)) {                                                   // the source taps for its own cost: it cannot also pay mana
       const pool = usablePool(P(s, who), null), srcs = manaSources(s, who).filter(m => m.iid !== iid);
       return !!solve(pool, srcs, need);
@@ -1245,7 +1273,7 @@
       const d = def(s, iid);
       if (canPlayLand(s, who, iid)) out.push({ type: 'land', iid: iid });
       else if (d.doors) { for (let k = 0; k < d.doors.length; k++) if (canCast(s, who, iid, false, k)) out.push({ type: 'cast', iid: iid, door: k }); }   // CR 709.3
-      else if (I(s, iid).zone === 'grave') { for (const v of ['flashback', 'mayhem']) if (canCast(s, who, iid, false, null, v)) out.push({ type: 'cast', iid: iid, via: v }); if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
+      else if (I(s, iid).zone === 'grave') { if (canCast(s, who, iid, false, null, 'forage')) out.push({ type: 'cast', iid: iid, via: 'forage' }); for (const v of ['flashback', 'mayhem']) if (canCast(s, who, iid, false, null, v)) out.push({ type: 'cast', iid: iid, via: v }); if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
       else if (d.ab.some(a => a.k === 'evoke') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'evoke')) out.push({ type: 'cast', iid: iid, via: 'evoke' }); }
       else if (d.ab.some(a => a.k === 'impending') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'impending')) out.push({ type: 'cast', iid: iid, via: 'impending' }); }
       else if (d.ab.some(a => a.k === 'warp') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'warp')) out.push({ type: 'cast', iid: iid, via: 'warp' }); }
@@ -1418,6 +1446,14 @@
     if (via === 'warp') L.warp = true;
     if (via === 'impending') L.impending = d.ab.find(a => a.k === 'impending').n;
     if (via === 'evoke') L.evoked = true;
+    const forageCost = [];
+    if (via === 'forage') {                                                                    // CR 701.61a: exile three cards from your graveyard or sacrifice a Food
+      const foods = s.bf.filter(i => I(s, i).ctrl === who && chars(s, i).subtypes.includes('Food')), three = P(s, who).grave.length >= 3;
+      const way = ask(x, { who: who, kind: 'forage', src: iid, opts: [three ? { id: 'exile' } : null, foods.length ? { id: 'food' } : null].filter(Boolean), cancel: true });
+      if (way === 'exile') { const got = []; for (let k = 0; k < 3; k++) got.push(ask(x, { who: who, kind: 'exileFromGrave', src: iid, k: k + 1, n: 3, opts: P(s, who).grave.filter(g => !got.includes(g)).map(g => ({ id: g, iid: g })), cancel: true })); forageCost.push(() => { log(s, 'forage', { who: who, cs: got.map(g => I(s, g).id) }); for (const g of got) move(s, g, 'exile'); }); }
+      else { const f = foods[0]; forageCost.push(() => { log(s, 'forage', { who: who, food: true }); MF.sacrifice(s, f); }); }   // Food tokens are indistinguishable: not a choice
+      L.foraged = true;
+    }
     s.stack.push(L);
     const c = I(s, iid);
     if (alt) c.asAlt = true;
@@ -1447,7 +1483,7 @@
       if (opts.length) { opts.push({ id: 'none' }); const a2 = ask(x, { who: who, kind: 'bargain', src: iid, opts: opts, cancel: true }); if (a2 !== 'none') { L.bargained = true; L.bargainSac = a2; } }
     }
     // Additional costs announced (CR 601.2b) and paid with the rest (601.2h).
-    const addPay = [];
+    const addPay = forageCost.slice();                                                        // forage is paid with the other additional costs
     for (const a of d.ab) if (a.k === 'addCost') {
       if (a.what === 'blight') {                                                              // CR 701.68a: blight N — N -1/-1 counters on a creature you control
         const cre = s.bf.filter(i => I(s, i).ctrl === who && chars(s, i).types.includes('Creature'));
@@ -1601,7 +1637,13 @@
     if (a.cost.exileSelf) { const ec = I(s, iid); L.lki = snapshot(s, iid); log(s, 'exiledCost', { who: who, c: ec.id }); move(s, iid, 'exile'); }
     if (a.cost.discard) { const card = ask(x, { who: who, kind: 'discard', src: iid, left: 1, opts: P(s, who).hand.filter(i => i !== iid).map(i => ({ id: i, iid: i })), cancel: true }); MF.discard(s, card); }
     if (a.cost.sacToken) { const opts = s.bf.filter(i => I(s, i).ctrl === who && I(s, i).tok).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('no token to sacrifice'); MF.sacrifice(s, ask(x, { who: who, kind: 'sacToken', src: iid, opts: opts, cancel: true })); }
-    payMana(x, who, MF.parseMana(a.cost.mana || ''), iid, true);
+    if (a.cost.exileGrave) {                                                                   // "Exile a [creature] card from your graveyard": which one is a choice (CR 601.2h)
+      const opts = P(s, who).grave.filter(g => !a.cost.exileGrave.types || a.cost.exileGrave.types.some(ty => def(s, g).types.includes(ty))).map(g => ({ id: g, iid: g }));
+      if (!opts.length) throw new Illegal('no card to exile');
+      const g = ask(x, { who: who, kind: 'exileFromGrave', src: iid, opts: opts, cancel: true });
+      log(s, 'exiledCost', { who: who, c: I(s, g).id, from: 'graveyard' }); move(s, g, 'exile');
+    }
+    payMana(x, who, anyColorForAb(s, who, iid, MF.parseMana(a.cost.mana || '')), iid, true);
     if (a.once) c.usedOnce = true;
     if (a.oncePerTurn) { c.actTurn = c.actTurn || {}; c.actTurn[x.inv.ab] = s.turn; }
     L.lki = snapshot(s, iid);
@@ -1639,7 +1681,7 @@
     return n;
   };
   EXEC_DEF('manaAb', function (x) {                                                          // CR 605.3a: at priority, resolves at once
-    activateMana(x.s, x.inv.who, x.inv.iid, x.inv.ab, x.inv.col);
+    activateMana(x.s, x.inv.who, x.inv.iid, x.inv.ab, x.inv.col, x);
   });
 
   // The context an effect runs in: who controls it, its source, its targets, the event.
@@ -1696,6 +1738,7 @@
         if (L.warp) o.warp = true;
         if (L.impending) o.impending = L.impending;
         if (L.evoked) o.evoked = true;
+        if (L.foraged) o.ctr = Object.assign({}, o.ctr, { finality: 1 });                       // Osteomancer Adept: "enters with a finality counter"
         o.cast = !L.copy; o.spentCols = L.spentCols || null;                                    // "if you cast it", "if {G}{G} was spent to cast it" (CR 601.2h)
         if (L.phLife && d.ab.some(a => a.k === 'compleated')) o.loyaltyMinus = 2 * L.phLife;      // CR 702.150a: two fewer loyalty counters
         if (L.alt === 'mdfc') o.transformed = true;

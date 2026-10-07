@@ -95,6 +95,8 @@
     spent: (x, c) => { const o = I(x.s, x.src); return !!o && !!o.spentCols && (o.spentCols[c.col] || 0) >= c.n; },
     evoked: x => { const c = I(x.s, x.src); return !!c && !!c.evoked; },
     faceDownThisTurn: () => false,                                                               // nothing in this engine turns a permanent face down or face up
+    exiledCreature: x => !!x.flags.exiledCreature,
+    gravePermCount: (x, c) => P(x.s, x.ctrl).grave.filter(i => MF.def(x.s, i).types.some(ty => ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'].includes(ty))).length >= c.n,   // descend (CR 700.11)
     impendingTime: x => { const c = I(x.s, x.src); return !!c && !!c.impended && (c.ctr.time || 0) > 0; },   // CR 702.176a's intervening "if"
     castFromGrave: x => !!(x.L && x.L.from === 'grave'),                                           // "if this spell was cast from a graveyard"
     counterAtLeast: (x, c) => { const o = I(x.s, x.src); return !!o && (o.ctr[c.kind] || 0) >= c.n; },
@@ -181,7 +183,7 @@
       case 'levelUp': return ev.iid === iid && ev.level === a.level;
       case 'lore': return ev.iid === iid && ev.before < a.chapter && ev.after >= a.chapter;      // CR 714.2b
       case 'leaves': return a.iid != null ? ev.iid === a.iid && (ev.to === 'grave' || ev.to === 'exile') : ev.iid === iid;   // earthbend's return; LTB triggers
-      case 'discardBatch': case 'leftGraveBatch': case 'toGraveBatch': case 'discarded': return !a.you || ev.who === src.ctrl;
+      case 'discardBatch': case 'leftGraveBatch': case 'leftGraveCreBatch': case 'leftGraveArtCreBatch': case 'toGraveBatch': case 'discarded': return !a.you || ev.who === src.ctrl;
       case 'crime': return ev.who === src.ctrl;                                                 // "Whenever you commit a crime"
       case 'search': return a.opp ? ev.who !== src.ctrl : ev.who === src.ctrl;
       case 'drawCard': return (!a.you || ev.who === src.ctrl) && (!a.opp || ev.who !== src.ctrl) && (!a.nth || ev.nth === a.nth);
@@ -405,15 +407,18 @@
     // "You may put a permanent card from among the milled cards into your hand" (CR 701.17c: found in the graveyard).
     pickMilled(x, op) {
       const s = x.s, PERM = ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'];
-      const ok = t => op.type === 'permanent' ? PERM.some(ty => t.includes(ty)) : op.type === 'noncreatureNonland' ? !t.includes('Creature') && !t.includes('Land') : t.includes(op.type[0].toUpperCase() + op.type.slice(1));
+      const ok = t => op.type === 'permanent' ? PERM.some(ty => t.includes(ty)) : op.type === 'artCreLand' ? ['Artifact', 'Creature', 'Land'].some(ty => t.includes(ty)) : op.type === 'noncreatureNonland' ? !t.includes('Creature') && !t.includes('Land') : t.includes(op.type[0].toUpperCase() + op.type.slice(1));
       const opts = (x.milled || []).filter(i => I(s, i).zone === 'grave' && ok(MF.def(s, i).types)).map(i => ({ id: i, iid: i }));
       if (!opts.length && op.elseOps) { MF.runOps(x, op.elseOps); return; }
+      const squirrel = () => { if (op.squirrelFood && s.bf.some(i => I(s, i).ctrl === x.ctrl && MF.chars(s, i).subtypes.includes('Squirrel'))) OPS.token(x, { id: op.squirrelFood, n: 1 }); };   // Cache Grab
+      if (!opts.length && op.squirrelFood) { squirrel(); return; }
       if (!opts.length && op.ifSub) return;
       if (!opts.length) return;
       opts.push({ id: 'none' });
       const a = MF.ask(x.x, { who: x.ctrl, kind: 'pickMilled', src: x.src, type: op.type, opts: opts });
       if (a !== 'none') {
         const id = I(s, a).id; MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'graveyard' });
+        if (op.squirrelFood && (MF.def(s, a).subtypes.includes('Squirrel') || s.bf.some(i => I(s, i).ctrl === x.ctrl && MF.chars(s, i).subtypes.includes('Squirrel')))) OPS.token(x, { id: op.squirrelFood, n: 1 });
         if (op.ifSub && MF.def(s, a).subtypes.includes(op.ifSub.sub)) MF.gainLife(s, x.ctrl, op.ifSub.gain, x.L ? x.L.srcId : null);   // Town Greeter: "If you put a Town card into your hand this way"
       }
     },
@@ -434,7 +439,8 @@
       const ids = op.on && op.on.t != null ? (x.t[op.on.t] || []).filter(q => q && q.c != null).map(q => q.c) : MF.resolveRefs(x, op.on);
       for (const i of ids) {
         const c = I(s, i); if (!c || c.zone === 'moved' || c.zone === 'exile') continue;
-        const id = c.id, from0 = c.zone, n = MF.move(s, i, 'exile');
+        const id = c.id, from0 = c.zone, wasCre = MF.def(s, i).types.includes('Creature'), n = MF.move(s, i, 'exile');
+        if (from0 === 'grave' && wasCre) x.flags.exiledCreature = true;                          // "If it was a creature card", "When a creature card is exiled this way"
         log(s, 'exiled', { who: c.owner, c: id, by: x.L ? (x.L.srcId || x.L.id) : null, from: from0 });
         if (op.link) { const src = I(s, x.src); if (src && src.zone === 'bf') (src.exiled = src.exiled || []).push(n); }
       }
@@ -638,7 +644,7 @@
         const a = MF.ask(x.x, { who: x.ctrl, kind: 'chooseFromGrave', src: x.src, n: op.n, k: k + 1, opts: opts });
         if (a === 'done') break; took.push(a);
       }
-      for (const i of took) { log(s, 'toHand', { who: x.ctrl, c: I(s, i).id, revealed: true, from: 'graveyard' }); MF.move(s, i, 'hand'); }
+      for (const i of took) { if (op.to === 'bf') { const n = MF.move(s, i, 'bf', { ctrl: x.ctrl, x: x.x }); log(s, 'putOnto', { who: x.ctrl, c: I(s, n).id, tapped: false, from: 'graveyard' }); } else { log(s, 'toHand', { who: x.ctrl, c: I(s, i).id, revealed: true, from: 'graveyard' }); MF.move(s, i, 'hand'); } }
     },
     // "Each opponent sacrifices a creature with the greatest power among creatures they control." — they choose among ties.
     sacGreatestPower(x) {
@@ -841,6 +847,7 @@
       log(s, 'tokenCopy', { who: x.ctrl, c: id });
       MF.emit(s, { t: 'enters', iid: k, ctrl: x.ctrl });
     },
+    forageCast(x) { x.s.effects.push({ k: 'forageCast', who: x.ctrl, until: 'eot' }); log(x.s, 'forageCast', { who: x.ctrl, c: x.L ? x.L.srcId : null }); },   // Osteomancer Adept
     // Bloodghast: "you may return this card from your graveyard to the battlefield" — only if it is still there (CR 400.7).
     selfFromGrave(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'grave') return; const n = MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); log(s, 'putOnto', { who: c.owner, c: I(s, n).id, tapped: false, from: 'graveyard' }); },
     removeCounter(x, op) { const c = I(x.s, x.src); if (!c || c.zone !== 'bf' || !(c.ctr[op.kind] > 0)) return; c.ctr[op.kind] = Math.max(0, c.ctr[op.kind] - op.n); log(x.s, 'removeCounters', { who: c.ctrl, c: c.id, n: op.n, ctr: op.kind }); },
@@ -866,7 +873,8 @@
     // CR 603.12: a reflexive triggered ability — triggers at once; its targets are chosen as it goes on the stack.
     reflexive(x, op) {
       if (op.ab.cond && !MF.cond(x, op.ab.cond)) return;                                          // "When you do, if ..." — checked as it triggers (CR 603.4)
-      x.s.trigs.push({ src: x.src, ab: -1, inl: op.ab, ctrl: x.ctrl, ev: x.ev || { t: 'reflexive' }, lki: x.lki || null }); },
+      const inl = Object.assign({}, op.ab); delete inl.cond;                                            // its condition was checked as it triggered; the flag it read is gone by resolution
+      x.s.trigs.push({ src: x.src, ab: -1, inl: inl, ctrl: x.ctrl, ev: x.ev || { t: 'reflexive' }, lki: x.lki || null }); },
     // CR 603.7: "Whenever you attack this turn, ..." — a delayed triggered ability with a duration.
     delayed(x, op) {
       (x.s.delayed = x.s.delayed || []).push({ src: x.src, ctrl: x.ctrl, until: op.duration === 'turn' ? 'eot' : null, once: op.duration !== 'turn', ab: { k: 'trig', on: op.on, ops: op.ops } });
@@ -1130,7 +1138,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

@@ -173,6 +173,8 @@
       case 'spreeMode': return q.chosen.length ? 'done' : q.opts[0].id;
       case 'phyrexian': return q.opts.some(o => o.id === 'mana') ? 'mana' : 'life';
       case 'mayDiscard': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0]; return c && keepValue(s, c.iid) < 3 ? c.id : 'none'; }
+      case 'exileFromGrave': return q.opts.slice().sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0].id;
+      case 'forage': return q.opts.some(o => o.id === 'exile') ? 'exile' : 'food';
       case 'hybrid': return q.opts[q.opts.length - 1].id;
       case 'manaColor': { const need = { W: 0, U: 0, B: 0, R: 0, G: 0 }; for (const i of P(s, me).hand) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\\{' + k + '\\}', 'g')) || []).length; return Object.keys(need).sort((a, b) => need[b] - need[a])[0]; }   // the color its hand asks for most
       case 'tutorUpTo': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }
@@ -256,7 +258,11 @@
         if (q.kind === 'block' && !q.opts.some(o => o.id === 'done')) return { type: 'answer', id: blockPolicy(s, q) };   // an illegal declaration: repair it by policy (a search here can add and undo forever)
         if (!SEARCH_KINDS[q.kind] || q.opts.length === 1) { const a = policyAnswer(s, q); if (a !== undefined) return { type: 'answer', id: a }; if (q.opts.length === 1) return { type: 'answer', id: q.opts[0].id }; }
       }
-      const legal = candidates(s, MF.legalActions(s));
+      let legal = candidates(s, MF.legalActions(s));
+      if (s.pending && s.pending.q.kind === 'block') {                                           // a first blocker on a menace attacker only if a second one could join (else the search adds and undoes forever)
+        const q = s.pending.q, v = MF.view(s);
+        legal = legal.filter(a => { const o = q.opts.find(o2 => o2.id === a.id); if (!o || o.iid == null || !MF.chars(v, o.att).kw.menace || Object.values(q.assign).includes(o.att)) return true; return q.opts.some(o2 => o2.att === o.att && o2.iid !== o.iid); });
+      }
       if (legal.length === 1) return legal[0];
       // Every candidate and pass, rolled to the same horizon from the same determinized copy.
       const root = determinize(s, s.log.length);

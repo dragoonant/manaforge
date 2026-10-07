@@ -3143,7 +3143,7 @@ window.MF.decks = {
   "player": "Eli Kassis",
   "rank": 19,
   "players": 5,
-  "registered": false,
+  "registered": true,
   "format": "Standard — Pro Tour Magic: The Gathering—FINAL FANTASY",
   "min": 60,
   "main": [
@@ -3278,21 +3278,12 @@ window.MF.decks = {
     "name": "Gastal Raider"
    }
   ],
-  "compiles": false,
-  "refused": [
-   "agathas-soul-cauldron: ability: You may spend mana as though it were mana of any color to activate abilities of creatures you control.",
-   "molt-tender: cost: Exile a card from your graveyard",
-   "coati-scavenger: intervening if: if there are four or more permanent cards in your graveyard, return target permanent card from your graveyard to your hand.",
-   "scavenging-ooze: condition: it was a creature card",
-   "insidious-roots: cost: Creature tokens you control have \"{T}",
-   "osteomancer-adept: effect: Until end of turn, you may cast creature spells from your graveyard by foraging in addition to paying their other costs",
-   "tyvar-jubilant-brawler: ability: You may activate abilities of creatures you control as though those creatures had haste.",
-   "great-arashin-city: cost: Exile a creature card from your graveyard",
-   "cache-grab: effect: You may put a permanent card from among the cards milled this way into your hand",
-   "haywire-mite: effect: Exile target noncreature artifact or noncreature enchantment",
-   "dredgers-insight: trigger event: one or more artifact and/or creature cards leave your graveyard, you gain 1 life."
-  ],
-  "tokens": []
+  "compiles": true,
+  "tokens": [
+   "token-plant-0-1-g",
+   "token-spirit-1-1-w",
+   "token-food"
+  ]
  },
  "orzhov-demons-fin": {
   "id": "orzhov-demons-fin",
