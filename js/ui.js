@@ -175,7 +175,7 @@
   }
   function stepsHTML(s) {
     const mineTurn = s.ap === ui.human, key = mineTurn ? 'me' : 'opp';
-    return `<div class="steps"><span class="whose ${mineTurn ? 'mine' : ''}">${mineTurn ? 'Your turn' : 'Opponent’s turn'} ${s.turn}</span>${Object.keys(STEP_SHORT).map(st =>
+    return `<div class="steps"><span class="whose ${mineTurn ? 'mine' : ''}">${s.step === 'pregame' ? 'Before the game' : (mineTurn ? 'Your turn' : 'Opponent’s turn') + ' ' + s.turn}</span>${Object.keys(STEP_SHORT).map(st =>
       `<span class="st ${s.step === st ? 'now' : ''} ${ui.stops[key][st] ? 'stop' : ''}" data-stop="${key}:${st}" title="${ui.stops[key][st] ? 'The game stops here for you when you can act. Click to stop stopping.' : 'Click to make the game stop here when you can act.'}">${STEP_SHORT[st]}</span>`).join('')}</div>`;
   }
   function promptHTML(s, am) {
