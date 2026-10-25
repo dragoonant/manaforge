@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   const MF = window.MF, T = MF.text, esc = T.esc;
-  const ui = MF.ui = { s: null, human: 0, setup: null, actions: [], menu: null, modal: null, timer: null, passUntil: null, recent: [], spot: null, stops: null, peek: false };
+  const ui = MF.ui = { s: null, human: 0, setup: null, actions: [], menu: null, modal: null, timer: null, passUntil: null, recent: [], spot: null, stops: null, peek: false, drawer: false, resultClosed: false, bannerTurn: null };
   // PLAN D4: where the game stops for you when you could do something. me = your turn, opp = theirs.
   const DEFAULT_STOPS = { me: { upkeep: 0, draw: 0, main1: 1, boc: 0, attackers: 1, blockers: 1, fsdamage: 0, damage: 0, eoc: 0, main2: 1, end: 0 }, opp: { upkeep: 0, draw: 0, main1: 0, boc: 0, attackers: 1, blockers: 1, fsdamage: 0, damage: 0, eoc: 0, main2: 0, end: 1 } };
   const STEP_SHORT = { upkeep: 'Upkeep', draw: 'Draw', main1: 'Main 1', boc: 'Combat', attackers: 'Attack', blockers: 'Block', fsdamage: 'First strike', damage: 'Damage', eoc: 'End combat', main2: 'Main 2', end: 'End' };
@@ -127,52 +127,57 @@
   }
 
   // ---------------------------------------------------------------------------------------------
-  // The board
+  // The table (PLAN D19): the opponent's hand peeking in at the top, the drawn mat (js/boardart.js
+  // places every zone), and the dock — what just happened | your hand | what the game waits for.
+  // The skeleton is built once per game; each render refills the zones.
   // ---------------------------------------------------------------------------------------------
   function permHTML(v, iid, am) {
     const att = v.bf.filter(i => v.cards[i].att === iid);
     const c = v.cards[iid];
-    const why = null;
-    return `<div class="perm ${c.tapped ? 'is-tapped' : ''}">${face(v, c.id, { iid: iid, acts: am.m[iid], why: why })}${att.map(i => `<div class="attached">${face(v, v.cards[i].id, { iid: i, acts: am.m[i], size: 'sm' })}</div>`).join('')}</div>`;
+    return `<div class="perm ${c.tapped ? 'is-tapped' : ''} ${att.length ? 'has-att' : ''}">${face(v, c.id, { iid: iid, acts: am.m[iid] })}${att.map(i => `<div class="attached">${face(v, v.cards[i].id, { iid: i, acts: am.m[i], size: 'sm' })}</div>`).join('')}</div>`;
   }
-  function sideHTML(s, v, seat, am) {
-    const p = v.players[seat], mine = seat === ui.human;
+  // A player's plate: life, mana pool, and what else is theirs but not a card (speed, emblems).
+  function plateHTML(s, v, seat, am) {
+    const p = v.players[seat], mine = seat === ui.human, pk = 'p' + seat;
+    const pool = T.poolStr(p.pool), chips = [];
+    if (!mine) chips.push(`<span class="chip" title="Cards in the opponent’s hand">Hand ${p.hand.length}</span>`);
+    if (p.speed != null) chips.push(`<span class="chip" title="Speed (CR 702.179): rises once on your turn when an opponent loses life; 4 is max speed">Speed ${p.speed}${p.speed >= 4 ? ' (max)' : ''}</span>`);
+    if (p.enduring) chips.push('<span class="chip" title="Enduring story (CR 702.195)">Enduring story</span>');
+    for (const em of (v.emblems || []).filter(em => em.ctrl === seat)) chips.push(`<span class="chip emblem" title="Emblem (CR 114)">Emblem: ${esc(em.text)}</span>`);
+    return `<div class="ppanel ${mine ? 'mine' : 'theirs'} ${s.ap === seat ? 'active' : ''} ${am.m[pk] ? 'legal' : ''}" data-seat="${seat}" ${am.m[pk] ? `data-acts='${esc(JSON.stringify(am.m[pk]))}'` : ''}>
+        <div class="plife" title="Life">${p.life}</div>
+        <div class="pname">${mine ? 'You' : 'Opponent'}</div>
+        <div class="pdeck" title="${esc(MF.decks[p.deckId].name)}">${esc(MF.decks[p.deckId].name)}</div>
+        <div class="ppool" title="Mana pool — empties at the end of each step">${pool || '<span class="pool-empty">no mana floating</span>'}</div>
+        ${chips.length ? `<div class="pchips">${chips.join('')}</div>` : ''}
+      </div>`;
+  }
+  // The piles. A library is backs and a count; a graveyard or exile shows its newest card face up
+  // and opens its viewer on a click (CR 404.2, 406.3: both are public).
+  function libraryHTML(v, seat) {
+    const n = v.players[seat].lib.length;
+    return `<div class="pile lib" title="Library: ${T.plural(n, 'card')}">${n ? Array.from({ length: Math.min(3, n) }, (_, k) => `<div class="cardback" style="--d:${k}"></div>`).join('') : '<div class="pile-empty"></div>'}<span class="pcount">${n}</span></div>`;
+  }
+  function openPileHTML(v, seat, zone) {
+    const ids = v.players[seat][zone], top = ids[ids.length - 1];
+    const label = (seat === ui.human ? 'Your ' : 'The opponent’s ') + (zone === 'grave' ? 'graveyard' : 'exile');
+    return `<div class="pile open ${zone}" data-view="${zone}:${seat}" title="${label}: ${T.plural(ids.length, 'card')} — click to look through">${top != null ? face(v, v.cards[top].id, { iid: top }) : '<div class="pile-empty"></div>'}<span class="pcount">${ids.length}</span></div>`;
+  }
+  function fieldOf(v, seat) {
     const perms = v.bf.filter(i => v.cards[i].ctrl === seat && !(v.cards[i].att != null && v.cards[i].att >= 0 && v.cards[v.cards[i].att] && v.cards[v.cards[i].att].zone === 'bf'));
     const lands = perms.filter(i => MF.isType(v, i, 'Land')), others = perms.filter(i => !MF.isType(v, i, 'Land'));
-    const creatures = others.filter(i => MF.isType(v, i, 'Creature')), rest = others.filter(i => !MF.isType(v, i, 'Creature'));
-    const pk = 'p' + seat;
-    const pool = T.poolStr(p.pool);
-    const panel = `<div class="ppanel ${s.ap === seat ? 'active' : ''} ${am.m[pk] ? 'legal' : ''}" data-seat="${seat}" ${am.m[pk] ? `data-acts='${esc(JSON.stringify(am.m[pk]))}'` : ''}>
-        <div class="pname">${mine ? 'You' : 'Opponent'}<span class="pdeck">${esc(MF.decks[p.deckId].name)}</span></div>
-        <div class="plife" title="Life">${p.life}</div>
-        ${pool ? `<div class="ppool" title="Mana pool — empties at the end of each step">${pool}</div>` : ''}
-        <div class="pzones">
-          <span class="pz" title="Library">Library ${p.lib.length}</span>
-          ${p.speed != null ? `<span class="pz" title="Speed (CR 702.179): rises once on your turn when an opponent loses life; 4 is max speed">Speed ${p.speed}${p.speed >= 4 ? ' (max)' : ''}</span>` : ''}${p.enduring ? '<span class="pz" title="Enduring story (CR 702.195)">Enduring story</span>' : ''}
-          ${mine ? '' : `<span class="pz" title="Cards in hand">Hand ${p.hand.length}</span>`}
-          <span class="pz click" data-view="grave:${seat}">Graveyard ${p.grave.length}</span>
-          ${(v.emblems || []).filter(em => em.ctrl === seat).map(em => `<span class="pz" title="Emblem (CR 114)">Emblem: ${esc(em.text)}</span>`).join('')}
-          <span class="pz click" data-view="exile:${seat}">Exile ${p.exile.length}</span>
-        </div>
-      </div>`;
-    const row = (ids, cls, label) => `<div class="bfrow ${cls}">${ids.length ? ids.map(i => permHTML(v, i, am)).join('') : `<div class="bfempty">${label}</div>`}</div>`;
-    const field = mine
-      ? row(creatures.concat(rest), 'front', 'no creatures') + row(lands, 'lands', 'no lands')
-      : row(lands, 'lands', 'no lands') + row(creatures.concat(rest), 'front', 'no creatures');
-    return `<div class="side ${mine ? 'me' : 'opp'}">${panel}<div class="field">${field}</div></div>`;
+    return { lands: lands, front: others.filter(i => MF.isType(v, i, 'Creature')).concat(others.filter(i => !MF.isType(v, i, 'Creature'))) };
   }
   function stackHTML(s, v, am) {
-    if (!v.stack.length) return `<div class="stack empty"><div class="zl">Stack</div><div class="stackempty">empty</div></div>`;
-    const items = v.stack.slice().reverse().map((L, k) => {
+    return v.stack.slice().reverse().map((L, k) => {
       const id = L.kind === 'spell' ? L.id : L.srcId;
       const tgs = (L.t || []).flat().filter(Boolean);
       const tl = tgs.map(r => r.p != null ? (r.p === ui.human ? 'you' : 'the opponent') : (v.cards[r.c] ? MF.cards[v.cards[r.c].id].name : '(gone)')).join(', ');
       const hl = tgs.filter(r => r.c != null).map(r => r.c).concat(tgs.filter(r => r.p != null).map(r => 'p' + r.p));
       const what = L.kind === 'spell' ? (L.copy ? 'copy of a spell' : 'spell') : L.kind === 'trig' ? (L.inl === 'prowess' ? 'prowess' : 'triggered ability') : 'activated ability';
-      return `<div class="layer ${k === 0 ? 'top' : ''}" data-hl='${esc(JSON.stringify(hl))}'>${face(v, id, { iid: L.kind === 'spell' ? L.iid : null, size: 'sm', acts: L.kind === 'spell' ? am.m[L.iid] : null })}
-        <div class="linfo"><b>${esc(MF.cards[id].name)}</b><br>${what} · ${L.ctrl === ui.human ? 'yours' : 'opponent’s'}${tl ? '<br>→ ' + esc(tl) : ''}${L.x ? '<br>X = ' + L.x : ''}</div></div>`;
-    }).join('');
-    return `<div class="stack"><div class="zl">Stack — top first (${v.stack.length})</div>${items}</div>`;
+      return `<div class="layer ${k === 0 ? 'top' : ''} ${L.ctrl === ui.human ? 'mine' : 'theirs'}" data-hl='${esc(JSON.stringify(hl))}'>${face(v, id, { iid: L.kind === 'spell' ? L.iid : null, size: 'sm', acts: L.kind === 'spell' ? am.m[L.iid] : null })}
+        <div class="linfo"><b>${esc(MF.cards[id].name)}</b><span>${what} · ${L.ctrl === ui.human ? 'yours' : 'opponent’s'}</span>${tl ? `<span class="ltgt">→ ${esc(tl)}</span>` : ''}${L.x ? `<span>X = ${L.x}</span>` : ''}</div></div>`;
+    }).join('') + (v.stack.length ? `<div class="stack-note">${v.stack.length > 1 ? 'top first · ' : ''}resolves when both players pass</div>` : '');
   }
   function stepsHTML(s) {
     const mineTurn = s.ap === ui.human, key = mineTurn ? 'me' : 'opp';
@@ -182,10 +187,10 @@
   function promptHTML(s, am) {
     if (s.winner != null) {
       const title = s.winner === 'draw' ? 'The game is a draw' : s.winner === ui.human ? 'You win' : 'You lose';
-      return `<div class="prompt over"><div class="ptitle">${title}</div><div class="pbtns"><button class="btn primary" data-ui="again">Play again</button> <button class="btn" data-ui="menu">Menu</button> <button class="btn ghost" data-ui="bug">Copy bug report</button></div></div>`;
+      return `<div class="prompt over"><div class="ptext"><div class="ptitle">${title}</div></div><div class="pbtns"><button class="btn primary" data-ui="again">Play again</button> <button class="btn" data-ui="menu">New game</button> <button class="btn ghost" data-ui="bug">Copy bug report</button></div></div>`;
     }
     const who = MF.whoActs(s);
-    if (who !== ui.human) return `<div class="prompt wait"><div class="ptitle">The opponent is thinking…</div><div class="pbody">${MF.stepName(s)}</div></div>`;
+    if (who !== ui.human) return `<div class="prompt wait"><div class="ptext"><div class="ptitle">The opponent is thinking…</div><div class="pbody">${MF.stepName(s)}</div></div></div>`;
     let title, body;
     if (am.prompt) { title = am.prompt.title; body = am.prompt.body; }
     else {
@@ -196,19 +201,35 @@
     const v = MF.view(s);
     const tray = am.tray.length ? `<div class="tray">${am.tray.map(i => face(v, v.cards[i].id, { iid: i, acts: am.m[i] })).join('')}</div>` : '';
     const btns = am.btns.map(b => b.ui ? `<button class="btn ${b.cls}" data-ui="${b.ui}">${esc(b.label)}</button>` : `<button class="btn ${b.cls}" data-acts='${esc(JSON.stringify([{ a: b.a, label: b.label }]))}'>${T.symbols(b.label)}</button>`).join('');
-    return `<div class="prompt mine ${ui.peek ? 'peek' : ''}"><div class="ptext"><div class="ptitle">${title}</div><div class="pbody">${body}</div></div>${tray}<div class="pbtns">${btns}</div><button class="btn tiny peekbtn" data-ui="peek" title="Escape">${ui.peek ? 'Show prompt' : 'Hide'}</button></div>`;
+    return `<div class="prompt mine ${ui.peek ? 'peek' : ''}"><button class="btn tiny peekbtn" data-ui="peek" title="Escape">${ui.peek ? 'Show prompt' : 'Hide'}</button><div class="ptext"><div class="ptitle">${title}</div><div class="pbody">${body}</div></div>${tray}<div class="pbtns">${btns}</div></div>`;
   }
   function handHTML(s, v, am) {
     const p = v.players[ui.human];
     const canAsk = s.priority === ui.human && !s.pending;
-    return `<div class="hand">${p.hand.map(i => face(v, v.cards[i].id, { iid: i, acts: am.m[i], size: 'hand', why: !am.m[i] && canAsk ? MF.whyNot(s, ui.human, i) : null })).join('') || '<div class="bfempty">no cards in hand</div>'}</div>`;
+    return p.hand.map(i => face(v, v.cards[i].id, { iid: i, acts: am.m[i], size: 'hand', why: !am.m[i] && canAsk ? MF.whyNot(s, ui.human, i) : null })).join('') || '<div class="hand-empty">no cards in hand</div>';
+  }
+  function enemyHandHTML(v) {
+    const n = v.players[1 - ui.human].hand.length;
+    return `<div id="enemy-hand">${Array.from({ length: Math.min(n, 12) }, () => '<div class="cardback"></div>').join('')}<span class="ehand-count">${T.plural(n, 'card')} in hand</span></div>`;
+  }
+  function feedHTML(v) {
+    return v.log.slice(-4).map((e, k, a) => `<div class="feed-line ${e.who === ui.human ? 'you' : e.who === 1 - ui.human ? 'them' : ''} ${k === a.length - 1 ? 'latest' : ''}">${T.logLine(e, ui.human)}</div>`).join('');
   }
   function logHTML(v) {
-    const from = Math.max(0, v.log.length - 60);
+    const from = Math.max(0, v.log.length - 80);
     let h = '';
     for (let i = v.log.length - 1; i >= from; i--) { const e = v.log[i]; h += `<div class="ll t-${e.t} ${e.who === ui.human ? 'lme' : e.who === 1 - ui.human ? 'lopp' : ''}">${T.logLine(e, ui.human)}</div>`; }   // newest first (CARD-LOG-AND-TARGETING-SPEC §5)
     const recent = ui.recent.slice(-10).reverse().map(r => `<div class="rc ${r.who === ui.human ? 'mine' : ''}">${face(null, r.id, { size: 'xs' })}</div>`).join('');
-    return `<div class="log"><div class="loghead">Recently played</div><div class="recent">${recent || '<span class="dim">nothing yet</span>'}</div><div class="loghead">Log <span>newest first</span></div><div class="loglines">${h}</div></div>`;
+    return `<div class="loghead">Recently played</div><div class="recent">${recent || '<span class="dim">nothing yet</span>'}</div><div class="loghead">Log <span>newest first</span></div><div class="loglines">${h}</div>`;
+  }
+  function drawerHTML(v) {
+    return `<div class="drawer-head"><span class="brand">MANAFORGE</span><button class="btn tiny" data-ui="drawer" title="Close (L or Escape)">✕ Close</button></div>
+      <div class="drawer-controls">
+        <button class="btn" data-ui="motion" title="Cards slide, die and fly to their zones; damage floats">Motion: ${MF.anim.on ? 'on' : 'off'}</button>
+        <button class="btn" data-ui="howto">How to play</button>
+        <button class="btn" data-ui="menu" title="Leave this game and choose new decks">New game</button>
+        <button class="btn ghost" data-ui="bug" title="Copy this game’s seed and actions: it replays exactly">Copy bug report</button>
+      </div>${logHTML(v)}`;
   }
   function modalHTML(v, am) {
     if (!ui.modal) return '';
@@ -217,40 +238,126 @@
     return `<div class="modal" data-ui="closemodal"><div class="mbox"><div class="mtitle">${seat === ui.human ? 'Your' : 'The opponent’s'} ${zone === 'grave' ? 'graveyard (top first)' : 'exile'} — ${T.plural(ids.length, 'card')}</div>
       <div class="mcards">${ids.map(i => face(v, v.cards[i].id, { iid: i, acts: am.m[i] })).join('') || '<div class="empty">nothing here</div>'}</div><button class="btn" data-ui="closemodal">Close</button></div></div>`;
   }
+  function resultHTML(s) {
+    if (s.winner == null || ui.resultClosed) return '';
+    const won = s.winner === ui.human, draw = s.winner === 'draw';
+    const cls = draw ? 'is-draw' : won ? 'is-win' : 'is-loss';
+    return `<div class="modal result-wrap"><div class="mbox result ${cls}">
+      <div class="result-kicker">${draw ? 'A draw' : won ? 'You win' : 'You lose'}</div>
+      <div class="result-title">${draw ? 'Stalemate' : won ? 'Victory' : 'Defeat'}</div>
+      <div class="result-flavour">${draw ? 'Both fires go out together.' : won ? 'The forge is yours. Your opponent’s spark is spent.' : 'Your spark gutters out… for now.'}</div>
+      <div class="result-sub">Turn ${s.turn}. Seed ${ui.setup.seed} — the same seed and the same choices replay the same game.</div>
+      <div class="pbtns"><button class="btn primary" data-ui="again">Play again</button><button class="btn" data-ui="menu">New game</button><button class="btn ghost" data-ui="closeresult">Look at the table</button><button class="btn ghost" data-ui="bug">Copy bug report</button></div>
+    </div></div>`;
+  }
+
+  const ZONES = [['theirs', 'opp'], ['mine', 'me']];
+  function skeleton() {
+    const BA = MF.boardArt, z = (side, k, cls, inner) => `<div class="mat-zone ${k}-zone ${cls || ''}" style="${BA.place(side, k)}">${inner || ''}</div>`;
+    let mat = BA.svg();
+    for (const [side, who] of ZONES) {
+      mat += z(side, 'plate', '', `<div id="${who}-plate"></div>`);
+      mat += z(side, 'front', '', `<div id="${who}-front" class="field row" data-side="${who}"></div>`);
+      mat += z(side, 'lands', '', `<div id="${who}-lands" class="field row lands" data-side="${who}"></div>`);
+      mat += z(side, 'library', 'pile-zone ' + side, `<div id="${who}-library"></div>`);
+      mat += z(side, 'grave', 'pile-zone ' + side, `<div id="${who}-grave"></div>`);
+      mat += z(side, 'exile', 'pile-zone ' + side, `<div id="${who}-exile"></div>`);
+    }
+    mat += z('shared', 'stack', '', '<div id="stack" class="stack"></div>');
+    mat += z('shared', 'steps', '', '<div id="steps"></div>');
+    return `<div class="game">
+      <div id="table">
+        <div id="enemy-hand-bar"></div>
+        <div id="mat">${mat}</div>
+        <div id="dock">
+          <div id="dock-left"><div id="turnbadge"></div><div id="feed"></div></div>
+          <div id="hand-wrap"><div id="hand" class="hand" data-side="me"></div></div>
+          <div id="dock-right"></div>
+        </div>
+      </div>
+      <button id="log-handle" class="btn" data-ui="drawer" title="Log and settings (L)">Log</button>
+      <div id="drawer"></div>
+      <div id="overlays"></div>
+      <div id="turn-banner" aria-live="polite"></div>
+      <svg id="arrows" class="arrows"></svg>
+      <div id="zoom" class="zoom"></div>
+    </div>`;
+  }
+  const set = (id, html) => { document.getElementById(id).innerHTML = html; };
+
+  // A row wider than its zone shrinks its cards (to 55%), then scrolls; the hand overlaps instead.
+  function fit(row, overlap) {
+    if (overlap) {
+      row.style.setProperty('--ov', '0px');
+      const cards = row.children.length, over = row.scrollWidth - row.clientWidth;
+      if (over > 0 && cards > 1) row.style.setProperty('--ov', -Math.ceil(over / (cards - 1) + 2) + 'px');
+      return;
+    }
+    row.style.setProperty('--k', '1');
+    const need = row.scrollWidth, room = row.clientWidth;
+    if (need > room + 1) row.style.setProperty('--k', Math.max(0.55, room / need * 0.98).toFixed(3));
+  }
+
   function render() {
     const s = ui.s, v = MF.view(s), am = actionMap(s);
     const app = document.getElementById('app');
     const before = ui.animReady ? MF.anim.capture() : null;                                  // the presentation director (js/anim.js) plays the difference
-    app.innerHTML = `<div class="game">
-      <div class="board">
-        ${sideHTML(s, v, 1 - ui.human, am)}
-        <div class="mid">${stepsHTML(v)}${stackHTML(s, v, am)}</div>
-        ${sideHTML(s, v, ui.human, am)}
-        ${promptHTML(s, am)}
-        ${handHTML(s, v, am)}
-      </div>
-      <div class="sidebar">
-        <div class="topbar"><span class="brand">MANAFORGE</span><button class="btn tiny" data-ui="motion" title="Cards slide, die and fly to their zones; damage floats">Motion: ${MF.anim.on ? 'on' : 'off'}</button><button class="btn tiny" data-ui="howto">How to play</button><button class="btn tiny" data-ui="menu">Menu</button></div>
-        ${logHTML(v)}
-      </div>
-      ${ui.spot ? `<div class="spot">${face(null, ui.spot.id, { size: 'lg' })}<div class="spotlbl">${esc(ui.spot.label)}</div></div>` : ''}
-      ${modalHTML(v, am)}
-      ${ui.menu ? `<div class="cmenu" style="left:${ui.menu.x}px;top:${ui.menu.y}px">${ui.menu.items.map((it, i) => `<button class="btn" data-menu="${i}" ${it.hl != null ? `data-hl='${esc(JSON.stringify([it.hl]))}'` : ''}>${T.symbols(it.label)}</button>`).join('')}<button class="btn ghost" data-menu="-1">Never mind</button></div>` : ''}
-      <svg id="arrows" class="arrows"></svg>
-      <div id="zoom" class="zoom"></div>
-    </div>`;
+    if (!document.getElementById('table')) app.innerHTML = skeleton();
+    const table = document.getElementById('table');
+    table.classList.toggle('my-turn', s.ap === ui.human); table.classList.toggle('their-turn', s.ap !== ui.human);
+    set('enemy-hand-bar', enemyHandHTML(v));
+    for (const [, who] of ZONES) {
+      const seat = who === 'me' ? ui.human : 1 - ui.human, f = fieldOf(v, seat);
+      set(who + '-plate', plateHTML(s, v, seat, am));
+      set(who + '-front', f.front.map(i => permHTML(v, i, am)).join(''));
+      set(who + '-lands', f.lands.map(i => permHTML(v, i, am)).join(''));
+      set(who + '-library', libraryHTML(v, seat));
+      set(who + '-grave', openPileHTML(v, seat, 'grave'));
+      set(who + '-exile', openPileHTML(v, seat, 'exile'));
+    }
+    set('stack', stackHTML(s, v, am));
+    document.getElementById('stack').classList.toggle('has-items', v.stack.length > 0);
+    set('steps', stepsHTML(v));
+    set('turnbadge', s.step === 'pregame' ? 'Before the game' : `${s.ap === ui.human ? 'Your turn' : 'Opponent’s turn'} ${s.turn} · ${STEP_SHORT[s.step] || MF.stepName(s)}`);
+    set('feed', feedHTML(v));
+    set('hand', handHTML(s, v, am));
+    set('dock-right', promptHTML(s, am));
+    const drawer = document.getElementById('drawer');
+    drawer.classList.toggle('open', !!ui.drawer);
+    document.getElementById('log-handle').classList.toggle('on', !!ui.drawer);
+    drawer.innerHTML = drawerHTML(v);
+    set('overlays', (ui.spot ? `<div class="spot">${face(null, ui.spot.id, { size: 'lg' })}<div class="spotlbl">${esc(ui.spot.label)}</div></div>` : '') + modalHTML(v, am) + resultHTML(s) +
+      (ui.menu ? `<div class="cmenu" style="left:${ui.menu.x}px;top:${ui.menu.y}px">${ui.menu.items.map((it, i) => `<button class="btn" data-menu="${i}" ${it.hl != null ? `data-hl='${esc(JSON.stringify([it.hl]))}'` : ''}>${T.symbols(it.label)}</button>`).join('')}<button class="btn ghost" data-menu="-1">Never mind</button></div>` : ''));
+    document.getElementById('zoom').classList.remove('on');
+    for (const id of ['opp-front', 'opp-lands', 'me-front', 'me-lands']) fit(document.getElementById(id));
+    fit(document.getElementById('hand'), true);
     drawArrows(v, s.pending && s.pending.q);
+    turnBanner(s);
     MF.anim.play(before, v, ui.human); ui.animReady = true;
   }
   ui.render = render;
 
+  // A ribbon across the table when a turn begins (view only: the step bar and the log say it too).
+  function turnBanner(s) {
+    if (s.step === 'pregame' || ui.bannerTurn === s.turn) return;
+    ui.bannerTurn = s.turn;
+    if (!MF.anim.on) return;
+    const b = document.getElementById('turn-banner');
+    b.innerHTML = `<div class="tb-ribbon ${s.ap === ui.human ? 'mine' : 'theirs'}"><span class="tb-kicker">Turn ${s.turn}</span><span class="tb-title">${s.ap === ui.human ? 'Your turn' : 'Opponent’s turn'}</span></div>`;
+    b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+    clearTimeout(ui.bannerTimer); ui.bannerTimer = setTimeout(() => b.classList.remove('show'), 1500);
+    MF.anim.busyUntil = Math.max(MF.anim.busyUntil, Date.now() + 900);                          // the opponent waits for the ribbon
+  }
+
   // Combat arrows: attacker → defending player, blocker → attacker (CARD-LOG-AND-TARGETING-SPEC §14).
   function drawArrows(v, q) {
-    const svg = document.getElementById('arrows'); if (!svg || !v.combat) return;
+    const svg = document.getElementById('arrows'); if (!svg) return;
+    svg.innerHTML = '';
+    if (!v.combat) return;
     // A declaration in progress is drawn as a proposal (amber); a declared one in red and blue.
     if (q && q.kind === 'attack') for (const i of q.chosen) { const el = document.querySelector('.field [data-iid="' + i + '"]'); if (el) el.classList.add('aiming'); }
     const at = iid => { const el = document.querySelector(`.field [data-iid="${iid}"]`); return el ? el.getBoundingClientRect() : null; };
-    const pr = seat => { const el = document.querySelector(`.ppanel[data-seat="${seat}"]`); return el ? el.getBoundingClientRect() : null; };
+    const pr = seat => { const el = document.querySelector(`.ppanel[data-seat="${seat}"] .plife`); return el ? el.getBoundingClientRect() : null; };
     let h = '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>';
     const line = (a, b, cls) => { if (!a || !b) return; const x1 = a.left + a.width / 2, y1 = a.top + a.height / 2, x2 = b.left + b.width / 2, y2 = b.top + b.height / 2; h += `<line class="${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#ah)"/>`; };
     for (const a of v.combat.attackers) { if (!(v.combat.blockedBy[a] || []).length) line(at(a), pr(1 - v.ap), 'atk'); }
@@ -259,7 +366,6 @@
     if (q && q.kind === 'attack') for (const a of q.chosen) line(at(a), pr(1 - v.ap), 'aim');
     svg.innerHTML = h;
   }
-
   // ---------------------------------------------------------------------------------------------
   // The preview: ONE delegated listener (handoff 9). Any element carrying data-cid can be read.
   // ---------------------------------------------------------------------------------------------
@@ -347,6 +453,8 @@
       if (k === 'again') return MF.main.start(ui.setup, true);
       if (k === 'menu') return MF.main.menu();
       if (k === 'motion') { MF.anim.toggle(); render(); return; }
+      if (k === 'drawer') { ui.drawer = !ui.drawer; render(); return; }
+      if (k === 'closeresult') { ui.resultClosed = true; render(); return; }
       if (k === 'howto') return MF.main.howto();
       if (k === 'bug') return MF.main.bugReport();
       if (k === 'peek') { ui.peek = !ui.peek; render(); return; }
@@ -364,7 +472,8 @@
   });
   document.addEventListener('keydown', e => {
     if (!ui.s || e.target.tagName === 'INPUT') return;
-    if (e.key === 'Escape') { if (ui.modal || ui.menu) { ui.modal = null; ui.menu = null; } else ui.peek = !ui.peek; render(); }   // Escape toggles peek (CARD-LOG-AND-TARGETING-SPEC §13)
+    if (e.key === 'Escape') { if (ui.modal || ui.menu) { ui.modal = null; ui.menu = null; } else if (ui.drawer) ui.drawer = false; else ui.peek = !ui.peek; render(); }   // Escape toggles peek (CARD-LOG-AND-TARGETING-SPEC §13)
+    if (e.key === 'l' || e.key === 'L') { ui.drawer = !ui.drawer; render(); }
     if (e.key === ' ') {
       e.preventDefault();
       const b = actionMap(ui.s).btns.find(b => b.cls === 'primary' && b.a);
@@ -423,11 +532,14 @@
   }
   ui.begin = function (setup, state) {
     clearTimeout(ui.timer);
-    ui.setup = setup; ui.human = setup.human; ui.actions = []; ui.spot = null; ui.modal = null; ui.menu = null; ui.recent = []; ui.passUntil = null; ui.peek = false;
+    ui.setup = setup; ui.human = setup.human; ui.actions = []; ui.spot = null; ui.modal = null; ui.menu = null; ui.recent = []; ui.passUntil = null; ui.peek = false; ui.resultClosed = false; ui.bannerTurn = null;
+    document.getElementById('app').innerHTML = '';                                            // a fresh table: render() builds the skeleton
     ui.stops = loadStops();
     ui.s = state; ui.animReady = false; MF.anim.reset(state);
     step(false);
   };
-  ui.dispatch = dispatch;                                                                    // for the page tests (tools and the browser console)
+  ui.dispatch = dispatch;
+  let resizeT = null;
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (ui.s) render(); }, 120); });   // arrows and row fitting are measured in pixels                                                                    // for the page tests (tools and the browser console)
   ui.stop = function () { clearTimeout(ui.timer); ui.s = null; };
 })();

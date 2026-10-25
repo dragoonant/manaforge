@@ -29,12 +29,21 @@ This file owns decisions. No other file states one.
 | D16 | 2026-10-05 | **Final Fantasy and Hobbit characters are painted** in the Grim Dark style, owner's choice, after the concern was stated once: both sets are licensed crossovers with a second rights holder (Square Enix; the Tolkien rights holders), and the site is public (D12). | owner |
 | D17 | 2026-10-05 | **The card art is a mix of fifteen styles**, as Magic's art comes from many artists: the five audition directions (A–E) plus ten more (F–O), all in tools/art-styles.mjs. Each card takes one by a stable hash of its key. Every style keeps the D14 brief (master grade super deformed fighters and mages, never cute; lands are landscape only). Supersedes D14's single style; Grim Dark is style D. | owner |
 | D18 | 2026-10-07 | **The animation layer (handoff 10) is a diff director, js/anim.js.** Each render records where every card was; after it, the difference plays: moved cards slide (FLIP), taps turn, a permanent that left the battlefield leaves a ghost that flashes for how it left (destroyed or sacrificed: red; exiled: white; bounced: blue) and flies to that zone, new permanents arrive from the hand or stack, damage and life float as numbers. It reads the log, decides nothing. The opponent and auto-pass wait for the motion (Mallet-42k §4); elements are removed by timer, not onfinish (a hidden tab never finishes). "Motion: on/off" in the sidebar; off by default under prefers-reduced-motion. Built under the owner's standing "keep going" on TODO; the owner can turn it off. | session |
+| D19 | 2026-10-25 | **The interface is a drawn forge table, after the sister projects' layout.** Owner: "great job doing the interfaces for grand line and lorecannae, do manaforge next." Carried over is the structure: a title splash, a parchment picker with two deck slots and dice, a deck chooser (era groups, D15's provenance kept beside each list), a mat whose zones are placed from one geometry table that also draws them (`js/boardart.js`), a dock (what just happened · your hand · the prompt), a log-and-settings drawer on the right edge, a ribbon as each turn begins. The dress is a basalt slab in a riveted bronze rim with a molten seam between the halves, ember gold for you and arcane violet for the opponent, an anvil for an emblem. The opponent's half mirrors yours top to bottom rather than rotating, so the shared stack column and both life totals line up. Every backdrop is drawn in SVG; nothing is generated. The card back (`art/ui/cardback.svg`) and every frame are this project's own; no Wizards card back, frame or symbol is imitated (docs/rights.md). Card faces are unchanged. D18's "Motion" toggle moved from the sidebar to the drawer and the picker. | owner |
 
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.
 
 ## Status
+
+**2026-10-25 — the interface re-dressed as a forge table (D19).**
+
+- Title over a drawn forge at night; a picker and a deck chooser; the table drawn from one geometry
+  table with every zone a player owns — plate (life, pool, speed, emblems), battlefield as a creature
+  row and a land row, library, graveyard and exile as piles (the open ones click through to their
+  viewers) — plus the stack and the step bar between the halves; the hand in a dock with the feed and
+  the prompt; the log and settings in a drawer (L). Engine untouched; `tools/test.mjs` 293/293.
 
 **2026-10-07 — the animation layer (D18); floating mana (V1 fixed); AI timing.**
 

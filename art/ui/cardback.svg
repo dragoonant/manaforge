@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 350">
+  <!-- MANAFORGE's own card back (PLAN D19): an anvil under a spark in a ring of engraved
+       strokes, bronze on slate. Drawn for this project; no official back is imitated. -->
+  <defs>
+    <radialGradient id="g" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#3b2a3a"/><stop offset=".55" stop-color="#1b1620"/><stop offset="1" stop-color="#0b090d"/></radialGradient>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe7b0"/><stop offset=".4" stop-color="#c8924a"/><stop offset=".75" stop-color="#7a5022"/><stop offset="1" stop-color="#f0c97e"/></linearGradient>
+    <radialGradient id="h" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffcf7a" stop-opacity=".85"/><stop offset=".4" stop-color="#ff8a2a" stop-opacity=".35"/><stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="250" height="350" rx="16" fill="#120d10"/>
+  <rect x="8" y="8" width="234" height="334" rx="11" fill="url(#g)" stroke="url(#b)" stroke-width="5"/>
+  <rect x="18" y="18" width="214" height="314" rx="7" fill="none" stroke="#c8924a" stroke-opacity=".45" stroke-width="1.5"/>
+  <g fill="none" stroke="#c8924a" stroke-opacity=".55" stroke-width="1.6" transform="translate(125 175)">
+    <circle r="86"/><circle r="78" stroke-opacity=".3"/>
+    <g stroke-width="2.2">
+      <path d="M0,-86 v12 M0,86 v-12 M-86,0 h12 M86,0 h-12"/>
+      <path d="M61,-61 l-8,8 M-61,61 l8,-8 M61,61 l-8,-8 M-61,-61 l8,8" stroke-opacity=".4"/>
+    </g>
+  </g>
+  <circle cx="125" cy="160" r="70" fill="url(#h)"/>
+  <path d="M125,96 C136,116 146,124 140,142 C137,152 131,156 125,158 C119,156 113,152 110,142 C104,124 114,116 125,96 Z" fill="#ffb347" opacity=".9"/>
+  <path d="M125,118 C131,130 135,136 132,146 C130,151 127,153 125,154 C123,153 120,151 118,146 C115,136 119,130 125,118 Z" fill="#fff1c4"/>
+  <g transform="translate(125 205) scale(.9)">
+    <path d="M-62,-30 H40 Q70,-30 86,-44 Q84,-18 52,-12 H34 Q22,-12 22,0 V8 Q22,18 40,24 H50 V34 H-42 V24 H-32 Q-14,18 -14,8 V0 Q-14,-12 -26,-12 H-50 Q-62,-12 -62,-24 Z" fill="#0d0a0c" stroke="url(#b)" stroke-width="3"/>
+    <path d="M-58,-30 H40 Q66,-30 80,-41" fill="none" stroke="#ffb347" stroke-width="3"/>
+  </g>
+  <g fill="#c8924a">
+    <path d="M125,26 l6,6 l-6,6 l-6,-6 Z"/><path d="M125,312 l6,6 l-6,6 l-6,-6 Z"/>
+  </g>
+</svg>

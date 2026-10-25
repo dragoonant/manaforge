@@ -17,3 +17,8 @@
 - Oblivious Bookworm reads "unless a permanent entered face down ... or you turned one face up": nothing in
   this engine turns a permanent face down, so the discard always happens. When a face-down mechanic
   arrives (morph, disguise, cloak), give that condition a real history.
+- The forge table (D19) is laid out for a landscape window. On a phone held upright the mat is under
+  half the screen's height: a portrait layout (the halves stacked closer, the stack as a strip) would
+  help. Phone landscape works, small.
+- A battlefield row holds about six cards at full size; past that its cards shrink (to 55% at most),
+  and past about ten the row scrolls. A second front row would be kinder to token decks.

@@ -21,7 +21,7 @@
     for (const el of document.querySelectorAll(SEL)) {
       const iid = +el.getAttribute('data-iid'); if (els[iid]) continue;
       const box = el.closest('.attached') || el.closest('.perm') || el;
-      els[iid] = { r: box.getBoundingClientRect(), html: box.outerHTML, cid: el.getAttribute('data-cid'), where: el.closest('.field') ? 'bf' : el.closest('.hand') ? 'hand' : 'stack', tapped: el.classList.contains('tapped'), seat: el.closest('.side') ? (el.closest('.side').classList.contains('me') ? 'me' : 'opp') : null };
+      els[iid] = { r: box.getBoundingClientRect(), html: box.outerHTML, cid: el.getAttribute('data-cid'), where: el.closest('.field') ? 'bf' : el.closest('.hand') ? 'hand' : 'stack', tapped: el.classList.contains('tapped'), cw: el.offsetWidth, seat: el.closest('[data-side]') ? el.closest('[data-side]').getAttribute('data-side') : null };
     }
     return { els: els };
   };
@@ -47,7 +47,8 @@
     let busy = 0;
     const seatOf = side => side === 'me' ? human : 1 - human;
     const panel = seat => document.querySelector(`.ppanel[data-seat="${seat}"]`);
-    const zoneLink = (seat, z) => { const p = panel(seat); return p && p.querySelector(`[data-view="${z}:${seat}"]`); };
+    const zoneLink = (seat, z) => document.querySelector(`[data-view="${z}:${seat}"]`);                 // the graveyard and exile piles on the mat
+    const library = seat => document.getElementById((seat === human ? 'me' : 'opp') + '-library');
     const boxOf = iid => { const el = document.querySelector(SEL.split(', ').map(q => q.replace('[data-iid]', `[data-iid="${iid}"]`)).join(', ')); return el && (el.closest('.attached') || el.closest('.perm') || el); };
 
     // 1. Cards on screen before and after: slide from the old place; a tap or untap turns.
@@ -81,8 +82,8 @@
     for (const g of gone) {
       const w = was[g]; if (w.where !== 'bf' || used.has(g)) continue;
       const c = v.cards[g], owner = c ? c.owner : seatOf(w.seat), t = how(w.cid);
-      const dest = t === 'exiled' || t === 'exiledInstead' ? zoneLink(owner, 'exile') : t === 'bounce' ? (owner === human ? document.querySelector('.hand') : panel(owner)) : t === 'tokenGone' ? null : t === 'toLibrary' ? panel(owner) : zoneLink(owner, 'grave');
-      const ghost = document.createElement('div'); ghost.className = 'fxghost'; ghost.innerHTML = w.html;
+      const dest = t === 'exiled' || t === 'exiledInstead' ? zoneLink(owner, 'exile') : t === 'bounce' ? (owner === human ? document.querySelector('.hand') : document.getElementById('enemy-hand')) : t === 'tokenGone' ? null : t === 'toLibrary' ? library(owner) : zoneLink(owner, 'grave');
+      const ghost = document.createElement('div'); ghost.className = 'fxghost'; ghost.innerHTML = w.html; ghost.style.setProperty('--cwk', w.cw + 'px');   // its size on the mat, which the fx layer does not inherit
       Object.assign(ghost.style, { left: w.r.left + 'px', top: w.r.top + 'px', width: w.r.width + 'px', height: w.r.height + 'px' });
       layer().appendChild(ghost);
       const tint = t === 'exiled' || t === 'exiledInstead' ? 'brightness(2.4) saturate(0)' : t === 'bounce' ? 'brightness(1.4) hue-rotate(160deg)' : 'brightness(.9) sepia(1) saturate(5) hue-rotate(-30deg)';
