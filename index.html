@@ -5,10 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MANAFORGE</title>
 <link rel="icon" href="art/ui/cardback.svg">
+<!-- Add to Home Screen opens it full-screen and sideways (PLAN.md D20). -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b090d">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div id="app"></div>
+<!-- Touch (js/touch.js, PLAN.md D20): the held card, the drag arrow, and the gate a phone
+     held upright sees. They live outside #app, which every screen rewrites. -->
+<div id="peek" aria-hidden="true"></div>
+<svg id="drag-arrow" aria-hidden="true"></svg>
+<div id="rotate-gate" role="alert"><div class="rotate-box"><div class="rotate-phone"></div><div class="rotate-text">Turn your phone sideways to play.</div></div></div>
 <script src="js/ns.js"></script>
 <script src="data/cards.js"></script>
 <script src="data/decks.js"></script>
@@ -23,6 +34,7 @@
 <script src="js/art.js"></script>
 <script src="js/boardart.js"></script>
 <script src="js/anim.js"></script>
+<script src="js/touch.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

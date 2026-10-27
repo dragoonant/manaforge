@@ -6,7 +6,7 @@
   combat damage, a spell resolving off the stack with an effect, a speed setting beyond on/off.
 - **More decks by compile rate** (`node tools/build-cards.mjs --report`): modal spells, linked
   exile ("until this leaves the battlefield"), "can't attack or block", landfall.
-- Drag to play (CARD-PRESENTATION-SPEC: tap inspects, drag commits); today a click plays.
+- Drag to play is done on touch (D20). A mouse still clicks to play; dragging with a mouse would be the same code if wanted.
 - On the opponent's turn the AI acts only in response to something on the stack, at their beginning of
   combat, in combat, or at their end step, and values instant mana left open as its own turn ends
   (2026-10-07). It casts in 3.8% of the opponent's-turn windows where it could (`node tools/arena.mjs
@@ -22,3 +22,6 @@
   help. Phone landscape works, small.
 - A battlefield row holds about six cards at full size; past that its cards shrink (to 55% at most),
   and past about ten the row scrolls. A second front row would be kinder to token decks.
+- On a phone, paying mana land by land means tapping each land and confirming it in its sheet; the
+  one-button suggested payment is the quick path. A tap-to-toggle mode for lands during payment
+  would be faster.

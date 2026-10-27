@@ -1,0 +1,12 @@
+{
+  "name": "MANAFORGE",
+  "short_name": "Manaforge",
+  "description": "An unofficial fan implementation of a trading card game's rules, played against the computer.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b090d",
+  "theme_color": "#0b090d",
+  "icons": [{ "src": "art/ui/cardback.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

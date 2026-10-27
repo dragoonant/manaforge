@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   const MF = window.MF, T = MF.text, esc = T.esc;
-  const ui = MF.ui = { s: null, human: 0, setup: null, actions: [], menu: null, modal: null, timer: null, passUntil: null, recent: [], spot: null, stops: null, peek: false, drawer: false, resultClosed: false, bannerTurn: null };
+  const ui = MF.ui = { s: null, human: 0, setup: null, actions: [], menu: null, modal: null, timer: null, passUntil: null, recent: [], spot: null, stops: null, peek: false, drawer: false, resultClosed: false, bannerTurn: null, sheet: null, am: null };
   // PLAN D4: where the game stops for you when you could do something. me = your turn, opp = theirs.
   const DEFAULT_STOPS = { me: { upkeep: 0, draw: 0, main1: 1, boc: 0, attackers: 1, blockers: 1, fsdamage: 0, damage: 0, eoc: 0, main2: 1, end: 0 }, opp: { upkeep: 0, draw: 0, main1: 0, boc: 0, attackers: 1, blockers: 1, fsdamage: 0, damage: 0, eoc: 0, main2: 0, end: 1 } };
   const STEP_SHORT = { upkeep: 'Upkeep', draw: 'Draw', main1: 'Main 1', boc: 'Combat', attackers: 'Attack', blockers: 'Block', fsdamage: 'First strike', damage: 'Damage', eoc: 'End combat', main2: 'Main 2', end: 'End' };
@@ -192,11 +192,11 @@
     const who = MF.whoActs(s);
     if (who !== ui.human) return `<div class="prompt wait"><div class="ptext"><div class="ptitle">The opponent is thinking…</div><div class="pbody">${MF.stepName(s)}</div></div></div>`;
     let title, body;
-    if (am.prompt) { title = am.prompt.title; body = am.prompt.body; }
+    if (am.prompt) { title = am.prompt.title; body = MF.touch.active() ? am.prompt.body.replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap') : am.prompt.body; }
     else {
       title = `${MF.stepName(s)} — your priority`;
       const any = Object.keys(am.m).length;
-      body = s.stack.length ? (any ? 'You may respond with a glowing card, or pass to let the top of the stack resolve.' : 'Nothing to respond with.') : (any ? 'Glowing cards can be played. Hover any card to read it.' : 'Nothing can be played right now.');
+      body = s.stack.length ? (any ? 'You may respond with a glowing card, or pass to let the top of the stack resolve.' : 'Nothing to respond with.') : (any ? 'Glowing cards can be played. ' + (MF.touch.active() ? 'Tap' : 'Hover') + ' any card to read it.' : 'Nothing can be played right now.');
     }
     const v = MF.view(s);
     const tray = am.tray.length ? `<div class="tray">${am.tray.map(i => face(v, v.cards[i].id, { iid: i, acts: am.m[i] })).join('')}</div>` : '';
@@ -251,6 +251,48 @@
     </div></div>`;
   }
 
+  // The card sheet (PLAN D20): on touch a tap opens it — the card read in full beside its legal
+  // actions as buttons. Nothing is played until a button says what it does and is pressed.
+  function sheetHTML() {
+    const sh = ui.sheet;
+    if (!sh) return '';
+    const btns = sh.items.map((it, i) => `<button class="btn ${i === 0 ? 'primary' : ''}" data-sheetact="${i}" ${it.hl != null ? `data-hl='${esc(JSON.stringify([it.hl]))}'` : ''}>${T.symbols(it.label)}</button>`).join('');
+    const note = sh.items.length ? (sh.drag ? `<div class="sheet-note">${sh.drag}</div>` : '') : `<div class="sheet-note">${sh.why ? 'Can’t play it now: ' + T.symbols(sh.why) : 'Nothing to do with this card right now.'}</div>`;
+    return `<div class="modal sheet-wrap" data-ui="closesheet"><div class="mbox sheet"><div class="sheet-read">${readHTML(sh.cid, sh.iid, null)}</div>
+      <div class="sheet-actions">${btns}${note}<button class="btn ghost" data-ui="closesheet">Close</button></div></div></div>`;
+  }
+  function openSheet(el, items) {
+    const inHand = !!el.closest('#hand'), field = !!el.closest('.field');
+    ui.sheet = { cid: el.getAttribute('data-cid'), iid: el.getAttribute('data-iid'), why: el.getAttribute('data-why'), items: items,
+      drag: items.length && inHand ? 'Or drag it onto your side of the table.' : items.length && field && ui.s.pending && ['attack', 'block'].includes(ui.s.pending.q.kind) ? 'Or drag it onto ' + (ui.s.pending.q.kind === 'attack' ? 'the opponent.' : 'the attacker it blocks.') : null };
+    render();
+  }
+
+  // What a card can be dragged onto, from the actions this render offered (js/touch.js asks).
+  ui.dragSpec = function (el) {
+    const s = ui.s;
+    if (!s || s.winner != null || MF.whoActs(s) !== ui.human || !ui.am) return null;
+    const items = ui.am.m[+el.getAttribute('data-iid')];
+    if (!items || !items.length) return null;
+    const zoneOf = id => () => { const n = document.getElementById(id); return n && n.closest('.mat-zone'); };
+    const q = s.pending && s.pending.q;
+    if (el.closest('#hand')) {
+      const plays = items.filter(x => x.a.type === 'land' || x.a.type === 'cast');
+      if (!plays.length) return null;
+      // One way to play it: the drop plays it. Several (a back face, an alternative cost): the sheet asks.
+      return { kind: 'hand', targets: ['me-front', 'me-lands', 'me-plate'].map(z => ({ el: zoneOf(z) })), onDrop: () => { if (plays.length === 1) dispatch(plays[0].a); else openSheet(el, items); } };
+    }
+    if (!el.closest('.field') || !q) return null;
+    if (q.kind === 'attack') return { kind: 'field', targets: ['opp-plate', 'opp-front'].map(z => ({ el: zoneOf(z) })), onDrop: () => dispatch(items[0].a) };
+    if (q.kind === 'block') {
+      const blocks = items.filter(x => x.hl != null);
+      return blocks.length ? { kind: 'field', targets: blocks.map(x => ({ el: () => document.querySelector(`.field [data-iid="${x.hl}"]`), act: x.a })), onDrop: t => dispatch(t.act) } : null;
+    }
+    return null;
+  };
+  ui.readHTML = (id, iid, why) => readHTML(id, iid, why);
+  ui.refit = () => { const h = document.getElementById('hand'); if (h) fit(h, true); };   // the raised hand has room for bigger cards
+
   const ZONES = [['theirs', 'opp'], ['mine', 'me']];
   function skeleton() {
     const BA = MF.boardArt, z = (side, k, cls, inner) => `<div class="mat-zone ${k}-zone ${cls || ''}" style="${BA.place(side, k)}">${inner || ''}</div>`;
@@ -280,6 +322,8 @@
       <div id="overlays"></div>
       <div id="turn-banner" aria-live="polite"></div>
       <svg id="arrows" class="arrows"></svg>
+      <div id="history"></div>
+      <div id="hand-scrim"></div>
       <div id="zoom" class="zoom"></div>
     </div>`;
   }
@@ -289,7 +333,9 @@
   function fit(row, overlap) {
     if (overlap) {
       row.style.setProperty('--ov', '0px');
-      const cards = row.children.length, over = row.scrollWidth - row.clientWidth;
+      // Measured from the cards, not scrollWidth: a centred row overflows to the left too.
+      const kids = [...row.children], cards = kids.length, gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+      const over = kids.reduce((w, c) => w + c.getBoundingClientRect().width, 0) + gap * Math.max(0, cards - 1) - row.clientWidth;
       if (over > 0 && cards > 1) row.style.setProperty('--ov', -Math.ceil(over / (cards - 1) + 2) + 'px');
       return;
     }
@@ -321,12 +367,14 @@
     set('turnbadge', s.step === 'pregame' ? 'Before the game' : `${s.ap === ui.human ? 'Your turn' : 'Opponent’s turn'} ${s.turn} · ${STEP_SHORT[s.step] || MF.stepName(s)}`);
     set('feed', feedHTML(v));
     set('hand', handHTML(s, v, am));
+    set('history', MF.touch.historyHTML(v, ui.human));
+    ui.am = am;
     set('dock-right', promptHTML(s, am));
     const drawer = document.getElementById('drawer');
     drawer.classList.toggle('open', !!ui.drawer);
     document.getElementById('log-handle').classList.toggle('on', !!ui.drawer);
     drawer.innerHTML = drawerHTML(v);
-    set('overlays', (ui.spot ? `<div class="spot">${face(null, ui.spot.id, { size: 'lg' })}<div class="spotlbl">${esc(ui.spot.label)}</div></div>` : '') + modalHTML(v, am) + resultHTML(s) +
+    set('overlays', (ui.spot ? `<div class="spot">${face(null, ui.spot.id, { size: 'lg' })}<div class="spotlbl">${esc(ui.spot.label)}</div></div>` : '') + modalHTML(v, am) + sheetHTML() + resultHTML(s) +
       (ui.menu ? `<div class="cmenu" style="left:${ui.menu.x}px;top:${ui.menu.y}px">${ui.menu.items.map((it, i) => `<button class="btn" data-menu="${i}" ${it.hl != null ? `data-hl='${esc(JSON.stringify([it.hl]))}'` : ''}>${T.symbols(it.label)}</button>`).join('')}<button class="btn ghost" data-menu="-1">Never mind</button></div>` : ''));
     document.getElementById('zoom').classList.remove('on');
     for (const id of ['opp-front', 'opp-lands', 'me-front', 'me-lands']) fit(document.getElementById(id));
@@ -380,9 +428,10 @@
     indestructible: 'Indestructible — isn’t destroyed by lethal damage or “destroy” effects.',
   };
   const TEXT_GLOSS = { 'Scry': 'Scry N — look at the top N cards of your library, then put any of them on the bottom and the rest on top in any order.', 'Offspring': 'Offspring — an optional additional cost; if paid, a 1/1 token copy of the creature is created when it enters.', 'Equip': 'Equip — attach this to target creature you control. Equip only as a sorcery.', 'Enchant': 'Enchant — what this Aura can be attached to.', 'Food': 'Food — an artifact you can sacrifice for life.' };
-  function zoomHTML(el) {
-    const id = el.getAttribute('data-cid'), d = MF.cards[id], s = ui.s;
-    const iid = el.getAttribute('data-iid'), why = el.getAttribute('data-why');
+  // The reader: a card, its Oracle text, its numbers now and why it can't be played. Shared by
+  // the hover zoom, the touch hold (js/touch.js) and the card sheet.
+  function readHTML(id, iid, why) {
+    const d = MF.cards[id], s = ui.s;
     const v = s ? MF.view(s) : null;
     let live = '';
     if (iid != null && v && v.cards[iid] && v.cards[iid].zone === 'bf') {
@@ -429,7 +478,7 @@
     if (!z) return;
     const el = e.target.closest && e.target.closest('[data-cid]');
     if (!el || el.closest('#zoom') || el.closest('.cmenu')) { z.classList.remove('on'); return; }
-    z.innerHTML = zoomHTML(el);
+    z.innerHTML = readHTML(el.getAttribute('data-cid'), el.getAttribute('data-iid'), el.getAttribute('data-why'));
     const r = el.getBoundingClientRect();
     z.classList.toggle('left', r.left > window.innerWidth * 0.45);
     z.classList.add('on');
@@ -441,6 +490,11 @@
   document.addEventListener('click', e => {
     if (!ui.s) return;
     const t = e.target;
+    const sa = t.closest('[data-sheetact]');
+    if (sa) { const it = ui.sheet.items[+sa.getAttribute('data-sheetact')]; ui.sheet = null; dispatch(it.a); return; }
+    if (t.id === 'hand-scrim') { if (!MF.touch.raisedRecently()) { MF.touch.lowerHand(); } return; }
+    const hs = t.closest('[data-sheet]');
+    if (hs) { ui.sheet = { cid: hs.getAttribute('data-sheet'), iid: null, why: null, items: [] }; render(); return; }
     const mi = t.closest('[data-menu]');
     if (mi) { const i = +mi.getAttribute('data-menu'); const it = ui.menu.items[i]; ui.menu = null; if (it) dispatch(it.a); else render(); return; }
     if (ui.menu) { ui.menu = null; render(); return; }
@@ -449,6 +503,7 @@
     const u = t.closest('[data-ui]');
     if (u) {
       const k = u.getAttribute('data-ui');
+      if (k === 'closesheet') { if (t === u || t.tagName === 'BUTTON') { ui.sheet = null; render(); } return; }
       if (k === 'closemodal') { if (t === u || t.tagName === 'BUTTON') { ui.modal = null; render(); return; } if (!t.closest('[data-acts]')) return; ui.modal = null; }
       if (k === 'again') return MF.main.start(ui.setup, true);
       if (k === 'menu') return MF.main.menu();
@@ -460,10 +515,15 @@
       if (k === 'peek') { ui.peek = !ui.peek; render(); return; }
       if (k === 'passTurn') { ui.passUntil = ui.s.turn; const p = MF.legalActions(ui.s).find(a => a.type === 'pass'); if (p) dispatch(p); return; }
     }
+    // PLAN D20: on touch a tap reads. A card opens its sheet; anything else that commits (a
+    // player as a target) opens the menu, so even a single option is confirmed. Buttons act.
+    const touchCard = MF.touch.active() && t.closest('[data-cid]') && !t.closest('button, .mbox, [data-view]') ? t.closest('[data-cid]') : null;
+    if (touchCard && touchCard.closest('#hand') && MF.touch.phone() && !MF.touch.handRaised()) { MF.touch.raiseHand(); return; }
     const a = t.closest('[data-acts]');
+    if (touchCard && (!a || a === touchCard)) { MF.touch.lowerHand(); openSheet(touchCard, a ? JSON.parse(a.getAttribute('data-acts')) : []); return; }
     if (a) {
       const items = JSON.parse(a.getAttribute('data-acts'));
-      if (items.length === 1) return dispatch(items[0].a);
+      if (items.length === 1 && !(MF.touch.active() && a.tagName !== 'BUTTON')) return dispatch(items[0].a);
       ui.menu = { items: items, x: Math.min(e.clientX, window.innerWidth - 300), y: Math.max(10, Math.min(e.clientY, window.innerHeight - 44 * (items.length + 1) - 20)) };
       render(); return;
     }
@@ -472,7 +532,7 @@
   });
   document.addEventListener('keydown', e => {
     if (!ui.s || e.target.tagName === 'INPUT') return;
-    if (e.key === 'Escape') { if (ui.modal || ui.menu) { ui.modal = null; ui.menu = null; } else if (ui.drawer) ui.drawer = false; else ui.peek = !ui.peek; render(); }   // Escape toggles peek (CARD-LOG-AND-TARGETING-SPEC §13)
+    if (e.key === 'Escape') { if (ui.modal || ui.menu || ui.sheet) { ui.modal = null; ui.menu = null; ui.sheet = null; } else if (ui.drawer) ui.drawer = false; else ui.peek = !ui.peek; render(); }   // Escape toggles peek (CARD-LOG-AND-TARGETING-SPEC §13)
     if (e.key === 'l' || e.key === 'L') { ui.drawer = !ui.drawer; render(); }
     if (e.key === ' ') {
       e.preventDefault();
@@ -497,6 +557,7 @@
   }
   function dispatch(a) {
     clearTimeout(ui.timer);
+    MF.touch.lowerHand(); ui.sheet = null;
     const before = ui.s.log.length, actor = MF.whoActs(ui.s);
     ui.actions.push(a);
     try { ui.s = MF.apply(ui.s, a); }

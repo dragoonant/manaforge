@@ -89,8 +89,8 @@
     }
     app().innerHTML = `<div class="screen picker-screen">${MF.boardArt.scene()}
       <div class="panel picker"><div class="panel-kicker">An unofficial Magic: The Gathering fan project</div><h1>MANAFORGE</h1>
-        <div class="field-lbl">Your deck</div>${slot('me')}
-        <div class="field-lbl">Opponent’s deck</div>${slot('opp')}
+        <div class="deck-field"><div class="field-lbl">Your deck</div>${slot('me')}</div>
+        <div class="deck-field"><div class="field-lbl">Opponent’s deck</div>${slot('opp')}</div>
         <p class="picker-note">A 1v1 game at 20 life with the London mulligan; the opponent is the computer. Same seed, same decks and the same choices replay the same game.</p>
         <label class="seed-row"><span>Seed</span><input id="seed" size="10" placeholder="random" value="${esc(seedText)}"></label>
         <button class="btn primary big" data-go="1">Start the duel</button>
