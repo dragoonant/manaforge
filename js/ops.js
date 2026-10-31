@@ -50,6 +50,8 @@
     if (f.colors && !f.colors.some(k => ch.colors.includes(k))) return false;                     // "blue creatures"
     return true;
   };
+  // A card in a hidden or public zone by its own characteristics (a search, a reveal).
+  MF.matchCard = (s, iid, f, who) => MF.matchChars(s, iid, MF.chars(s, iid), f, who == null ? I(s, iid).owner : who, null);
   MF.matchPlayer = function (s, seat, f, who) {
     if (f.any) return true;
     if (!f.player) return false;
@@ -124,6 +126,12 @@
     giftPromised: x => !!(x.L && x.L.gift != null),                                            // CR 702.174k
     bargained: x => !!(x.L && x.L.bargained),                                                  // CR 702.166b
     yourTurn: x => x.s.ap === x.ctrl,
+    // PLAN D22
+    notYourTurn: x => x.s.ap !== x.ctrl,
+    controlCommander: x => x.s.bf.some(i => I(x.s, i).ctrl === x.ctrl && I(x.s, i).cmdr),                     // CR 903.3: a commander on the battlefield, yours or not by ownership
+    oppCastAtLeast: (x, c) => P(x.s, 1 - x.ctrl).h.cast >= c.n,
+    evNoMana: x => !!x.ev && x.ev.spent === 0,                                                                 // Vexing Bauble (CR 601.2h)
+    oppCastColor: (x, c) => (P(x.s, 1 - x.ctrl).h.castList || []).some(e => (e.colors || []).some(k => c.colors.includes(k))),
     noCounters: x => { const l = x.lki; return !!l && !Object.values(l.ctr || {}).some(n => n > 0); },   // "if it had no counters on it" — as it last existed (CR 603.10a)
     selfTapped: x => { const c = I(x.s, x.src); return !!c && c.zone === 'bf' && c.tapped; },   // Eater of the Dead: read as it resolves
     selfOnBf: x => { const c = I(x.s, x.src); return !!c && c.zone === 'bf'; },                   // Animate Dead: "if it's on the battlefield"
@@ -155,7 +163,8 @@
     // "its power": the object's current power, or its last known power if it has left (CR 608.2h).
     power: (x, v) => { const r = MF.resolveRefs(x, v.of)[0]; if (r != null) return MF.chars(x.s, r).p; if (v.of === 'self' && x.lki) return x.lki.p; return 0; },
     castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
-    evAmount: x => x.ev.n,                                                                      // "that much damage"
+    evAmount: x => x.ev.n,
+    evMv: x => x.ev.mv,                                                                         // "that spell's mana value"                                                                      // "that much damage"
     kicked: (x, v) => x.L && x.L.kicked ? v.yes : v.no,
     countYou: (x, v, table) => x.s.bf.filter(i => I(x.s, i).ctrl === x.ctrl && MF.matchChars(x.s, i, table ? table[i] : MF.chars(x.s, i), v.f, x.ctrl, x.src)).length,   // "the number of Plains you control"
     creLeftYou: x => P(x.s, x.ctrl).h.creLeft || 0,                                              // "each creature that left the battlefield under your control this turn"
@@ -220,9 +229,10 @@
       case 'search': return a.opp ? ev.who !== src.ctrl : ev.who === src.ctrl;
       case 'drawCard': return (!a.you || ev.who === src.ctrl) && (!a.opp || ev.who !== src.ctrl) && (!a.nth || ev.nth === a.nth);
       case 'counterPut': return ev.iid === iid && (!a.ctrKind || ev.kind === a.ctrKind) && (!a.nth || (ev.before < a.nth && ev.after >= a.nth));   // "When the fourth plan counter is put on this"                               // "When this Class becomes level N" (CR 716.2a)
-      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.oppOnly || ev.ctrl !== src.ctrl) && (!a.chosenParity || (s.cards[iid].chosen && ((ev.mv % 2 === 0) === (s.cards[iid].chosen === 'even')))) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t))) && (a.spell.mvGE == null || ev.mv >= a.spell.mvGE)));
+      case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.oppOnly || ev.ctrl !== src.ctrl) && (!a.chosenParity || (s.cards[iid].chosen && ((ev.mv % 2 === 0) === (s.cards[iid].chosen === 'even')))) && (!a.nth || ev.nth === a.nth) && (!a.nthNoncre || ev.nthNoncre === a.nthNoncre) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t))) && (a.spell.mvGE == null || ev.mv >= a.spell.mvGE)));
       case 'dealsDamage': return (a.who && a.who !== 'self' ? (ev.srcCtrl === src.ctrl && (!a.who.types || a.who.types.some(ty => (ev.srcTypes || []).includes(ty))) && (!a.who.subtypes || a.who.subtypes.some(st => (ev.srcSubtypes || []).includes(st)))) : ev.src === iid) && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);   // "Whenever a Horror you control deals combat damage to a player"
       case 'sacrificed': return ev.iid === iid;
+      case 'activated': return !a.oppOnly || ev.ctrl !== src.ctrl;
       case 'dies':
         if (a.who === 'equipped') return !!(ev.lki && (ev.lki.attachedBy || []).includes(iid));   // Skullclamp: what it was attached to as it left (CR 603.10a)
         if (a.who && a.who !== 'self') return ev.iid !== iid && !!ev.lki && ev.lki.types.includes('Creature');   // "another creature dies"
@@ -1013,7 +1023,7 @@
       x.s.trigs.push({ src: x.src, ab: -1, inl: inl, ctrl: x.ctrl, ev: x.ev || { t: 'reflexive' }, lki: x.lki || null }); },
     // CR 603.7: "Whenever you attack this turn, ..." — a delayed triggered ability with a duration.
     delayed(x, op) {
-      (x.s.delayed = x.s.delayed || []).push({ src: x.src, ctrl: x.ctrl, until: op.duration === 'turn' ? 'eot' : null, once: op.duration !== 'turn', ab: Object.assign({ k: 'trig', on: op.on, ops: op.ops }, op.opp ? { opp: true } : {}) });
+      (x.s.delayed = x.s.delayed || []).push({ src: x.src, ctrl: x.ctrl, until: op.duration === 'turn' ? 'eot' : null, once: op.duration !== 'turn', ab: Object.assign({ k: 'trig', on: op.on, ops: op.ops }, op.opp ? { opp: true } : {}, op.step ? { step: op.step } : {}, op.yours ? { yours: true } : {}) });
       log(x.s, 'delayedMade', { who: x.ctrl, c: x.L ? (x.L.srcId || x.L.id) : null, on: op.on });
     },
     sacThese(x, op) { for (const i of op.iids) { const c = I(x.s, i); if (c && c.zone === 'bf' && c.ctrl === x.ctrl) MF.sacrifice(x.s, i); } },   // CR 603.7c: only if still there
@@ -1094,7 +1104,108 @@
       }
       MF.counterSpell(s, L, x.L ? (x.L.srcId || x.L.id) : null, op.exile);
     },
-    counterTarget(x, op) { const iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return; MF.counterSpell(x.s, x.s.stack.find(l => l.kind === 'spell' && l.iid === iid), x.L ? (x.L.srcId || x.L.id) : null); },   // CR 701.6a
+    counterTarget(x, op) { const iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return; MF.counterSpell(x.s, x.s.stack.find(l => l.kind === 'spell' && l.iid === iid), x.L ? (x.L.srcId || x.L.id) : null, op.exile, x); },   // CR 701.6a; Force of Negation: "exile it instead"
+    // ---- PLAN D22: the championship Commander decks — the stack ----
+    // CR 701.23: search a library for a card. With a stated quality the searcher may find nothing
+    // (701.23b); for just "a card" they must find one if the library has any (701.23d).
+    // dest: 'hand' | 'bf' | 'top' ("then shuffle and put that card on top") | 'grave'.
+    searchLib(x, op) {
+      const s = x.s, owner = op.of ? players(x, op.of)[0] : x.ctrl, p = P(s, owner), mvMax = op.mvLE != null ? num(x, op.mvLE) : null;
+      MF.emit(s, { t: 'search', who: x.ctrl });
+      const fit = i => (!op.f || MF.matchCard(s, i, op.f)) && (mvMax == null || MF.chars(s, i).mv <= mvMax);
+      const seen = new Set(), opts = p.lib.filter(i => fit(i) && (id => { if (seen.has(id)) return false; seen.add(id); return true; })(I(s, i).id)).map(i => ({ id: i, iid: i }));
+      if (op.f || mvMax != null || !opts.length) opts.push({ id: 'none' });
+      const a = MF.ask(x.x, { who: x.ctrl, kind: 'search', src: x.src, what: op.what || 'card', of: owner, opts: opts });
+      if (a === 'none') { log(s, 'searchNothing', { who: x.ctrl }); MF.shuffle(s, p.lib); x.found = null; return; }
+      const id = I(s, a).id;
+      if (op.reveal) log(s, 'reveal', { who: x.ctrl, cs: [id] });
+      x.found = a; x.flags.did = true;
+      if (op.dest === 'top') { p.lib.splice(p.lib.indexOf(a), 1); MF.shuffle(s, p.lib); p.lib.unshift(a); log(s, 'tutorTop', { who: x.ctrl, c: op.reveal ? id : null }); return; }   // one action (its ruling)
+      if (op.dest === 'bf') { const n = MF.move(s, a, 'bf', { ctrl: x.ctrl, x: x.x, tapped: !!op.tapped }); x.found = n; log(s, 'putOnto', { who: x.ctrl, c: id, tapped: !!op.tapped, from: 'library' }); }
+      else if (op.dest === 'grave') { x.found = MF.move(s, a, 'grave'); log(s, 'searchToGrave', { who: x.ctrl, c: id }); }
+      else if (op.dest === 'exileFaceDown') { const n = MF.move(s, a, 'exile'); I(s, n).faceDown = true; I(s, n).seenBy = [x.ctrl]; x.found = n; log(s, 'exileFaceDown', { who: x.ctrl, owner: owner }); }
+      else { x.found = MF.move(s, a, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: !!op.reveal, from: 'library' }); }
+      if (op.then) MF.runOps(x, op.then);                                                       // Gamble: "discard a card at random, then shuffle"
+      MF.shuffle(s, p.lib);
+    },
+    // Vial Smasher: "choose an opponent at random" (one opponent: no draw needed) — damage equal to
+    // the spell's mana value to that player or a planeswalker that player controls (its controller's choice).
+    damageOppOrPw(x, op) {
+      const s = x.s, opp = 1 - x.ctrl, n = num(x, op.n), c = I(s, x.src);
+      const sc = c && c.zone === 'bf' ? Object.assign({ id: c.id }, MF.chars(s, x.src)) : x.lki ? Object.assign({ iid: x.src }, x.lki) : null; if (!sc || n <= 0) return;
+      const pws = s.bf.filter(i => I(s, i).ctrl === opp && MF.chars(s, i).types.includes('Planeswalker'));
+      let to = { p: opp };
+      if (pws.length) { const a = MF.ask(x.x, { who: x.ctrl, kind: 'playerOrPw', src: x.src, n: n, opts: [{ id: 'p' + opp, seat: opp }].concat(pws.map(i => ({ id: 'c' + i, iid: i }))) }); to = a[0] === 'p' ? { p: opp } : { c: +a.slice(1) }; }
+      MF.dealDamage(s, { srcChars: sc, to: to, n: n });
+    },
+    // The Pacts: "pay {3}{U}{U}. If you don't, you lose the game." Paying is a choice even when it is possible (CR 117.3).
+    payOrLose(x, op) {
+      const s = x.s, who = x.ctrl, need = MF.parseMana(op.cost);
+      if (MF.canPayMana(s, who, need) && MF.ask(x.x, { who: who, kind: 'pactPay', src: x.src, mana: op.cost, opts: [{ id: 'pay' }, { id: 'decline' }] }) === 'pay') { MF.payMana(x.x, who, need, x.src, false); log(s, 'pactPaid', { who: who, c: x.L.srcId, mana: op.cost }); return; }
+      log(s, 'lose', { who: who, why: 'pact', c: x.L.srcId }); s.winner = 1 - who; log(s, 'win', { who: s.winner });   // CR 104.3e
+    },
+    // Pyroblast: "Counter target spell if it's blue" / "Destroy target permanent if it's blue" — checked as it resolves.
+    ifTargetColor(x, op) { const q = (x.t[op.on.t] || [])[0]; if (!q || q.c == null || !I(x.s, q.c)) return; if (!MF.chars(x.s, q.c).colors.includes(op.color)) { log(x.s, 'notColor', { c: MF.pubId(x.s, q.c), color: op.color }); return; } MF.runOps(x, op.ops); },
+    // Mindbreak Trap: "Exile any number of target spells" (CR 701.13; "can't be countered" doesn't stop it).
+    exileSpells(x, op) {
+      const s = x.s;
+      for (const q of x.t[op.on.t] || []) {
+        if (!q || q.c == null) continue;
+        const L = s.stack.find(l => l.kind === 'spell' && l.iid === q.c); if (!L) continue;
+        s.stack.splice(s.stack.indexOf(L), 1);
+        const c = I(s, q.c); log(s, 'exileSpell', { who: L.ctrl, c: L.id });
+        if (L.copy || c.copySpell || c.copyCard) { c.zone = 'moved'; c.to = null; continue; }   // a copy ceases to exist (CR 707.10a)
+        MF.move(s, q.c, 'exile');
+      }
+    },
+    // Silence, Orim's Chant, Permission Denied, Revel in Silence, Ranger-Captain of Eos: "can't cast (noncreature) spells this turn" (CR 101.2).
+    cantCast(x, op) {
+      for (const seat of players(x, op.who)) { x.s.effects.push({ k: 'noCast', who: seat, noncreature: !!op.noncreature, noLoyalty: !!op.noLoyalty, src: x.L ? x.L.srcId || x.L.id : I(x.s, x.src).id, until: 'eot' }); log(x.s, 'cantCast', { who: seat, noncreature: !!op.noncreature, noLoyalty: !!op.noLoyalty, src: x.L ? x.L.srcId || x.L.id : I(x.s, x.src).id }); }
+    },
+    noAttacks(x) { x.s.effects.push({ k: 'noAttacks', until: 'eot' }); log(x.s, 'noAttacks', { src: x.L ? x.L.srcId || x.L.id : null }); },   // Orim's Chant, kicked: "creatures can't attack this turn"
+    flashAll(x) { x.s.effects.push({ k: 'flashAll', who: x.ctrl, until: 'eot' }); log(x.s, 'flashAll', { who: x.ctrl, src: x.L ? x.L.srcId || x.L.id : I(x.s, x.src).id }); },   // CR 601.3e
+    // Trickbind: "Counter target activated or triggered ability. If a permanent's ability is countered this way, activated abilities of that permanent can't be activated this turn."
+    trickbind(x, op) {
+      const s = x.s, q = (x.t[op.on.t] || [])[0]; if (!q || q.a == null) return;
+      const L = s.stack.find(l => l.lid === q.a); if (!L) return;
+      s.stack.splice(s.stack.indexOf(L), 1);
+      log(s, 'countered', { who: L.ctrl, c: L.srcId, by: x.L ? (x.L.srcId || x.L.id) : null, ab: true });
+      const src = L.src != null ? I(s, L.src) : null;
+      if (src && src.zone === 'bf') { s.effects.push({ k: 'noActivate', iid: L.src, until: 'eot' }); log(s, 'noActivate', { who: src.ctrl, c: src.id }); }
+    },
+    // Misdirection, Redirect Lightning: "Change the target of target spell (or ability) with a single target" — to another legal target, if there is one (CR 115.7a).
+    // Deflecting Swat: "You may choose new targets for target spell or ability" (CR 115.7d). Commandeer: "You may choose new targets for it."
+    changeTargets(x, op) {
+      const s = x.s, q = (x.t[op.on.t] || [])[0]; if (!q) return;
+      const L = q.a != null ? s.stack.find(l => l.lid === q.a) : s.stack.find(l => l.kind === 'spell' && l.iid === q.c); if (!L) return;
+      MF.retarget(x, L, op.must ? 'change' : 'may');
+    },
+    // Commandeer: "Gain control of target noncreature spell. You may choose new targets for it." (CR 701.12)
+    gainControlSpell(x, op) {
+      const s = x.s, iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return;
+      const L = s.stack.find(l => l.kind === 'spell' && l.iid === iid); if (!L) return;
+      L.ctrl = x.ctrl; I(s, iid).ctrl = x.ctrl;
+      log(s, 'gainControlSpell', { who: x.ctrl, c: L.id });
+      if (op.newTargets) MF.retarget(x, L, 'may');
+    },
+    // Flare of Duplication: "Copy target instant or sorcery spell. You may choose new targets for the copy."
+    copyTargetSpell(x, op) {
+      const s = x.s, iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return;
+      const L = s.stack.find(l => l.kind === 'spell' && l.iid === iid); if (!L) return;
+      OPS.copySpell(Object.assign({}, x, { ev: { lid: L.lid } }), {});
+    },
+    // Vexing Bauble: "counter that spell" — the spell whose casting triggered it, if it's still there.
+    counterEvSpell(x) { const s = x.s, L = s.stack.find(l => l.kind === 'spell' && l.lid === x.ev.lid); if (!L) return; MF.counterSpell(s, L, I(s, x.src) ? I(s, x.src).id : null, false, x); },
+    // Dash (CR 702.109a): "it's returned from the battlefield to its owner's hand" — if it's still there.
+    returnThese(x, op) { for (const i of op.iids) { const c = I(x.s, i); if (c && c.zone === 'bf') { log(x.s, 'bounce', { who: c.owner, c: c.id, why: op.why || null }); MF.move(x.s, i, 'hand'); } } },
+    // Veil of Summer: "Spells you control can't be countered this turn. You and permanents you control gain hexproof from blue and from black until end of turn."
+    // Autumn's Veil: "Spells you control can't be countered by blue or black spells this turn, and creatures you control can't be the targets of blue or black spells this turn."
+    veil(x, op) {
+      const s = x.s, src = x.L ? x.L.srcId || x.L.id : null;
+      s.effects.push({ k: 'uncounterableYou', who: x.ctrl, byColors: op.byColors || null, until: 'eot' });
+      s.effects.push({ k: 'shieldColors', who: x.ctrl, colors: ['U', 'B'], spellsOnly: !!op.spellsOnly, creaturesOnly: !!op.creaturesOnly, player: !op.creaturesOnly, until: 'eot' });
+      log(s, 'veil', { who: x.ctrl, src: src, autumn: !!op.byColors });
+    },
     // Tishana's Tidebinder: counter an ability; an artifact's, creature's or planeswalker's loses all abilities while this remains (CR 611.2b).
     counterAbility(x, op) {
       const s = x.s, q = (x.t[op.on.t] || [])[0]; if (!q || q.a == null) return;
@@ -1333,6 +1444,7 @@
       if (MF.ask(x.x, { who: x.ctrl, kind: 'may', src: x.src, what: 'draw', opts: [{ id: 'yes' }, { id: 'no' }] }) === 'yes') MF.draw(s, x.ctrl, 1);
     },
     bounceSpell(x, op) {                                                                       // Hullbreaker Horror: a spell returned to its owner's hand leaves the stack without resolving
+      if (op.orPerm) { const q = (x.t[op.on.t] || [])[0]; if (q && q.c != null && I(x.s, q.c) && I(x.s, q.c).zone === 'bf') return OPS.bounce(x, { on: op.on }); }   // Sink into Stupor: a permanent
       const s = x.s, i = MF.resolveTargetSpell(x, op.on); if (i == null) return;
       const L = s.stack.find(q => q.kind === 'spell' && q.iid === i); if (!L) return;
       s.stack.splice(s.stack.indexOf(L), 1);
@@ -1424,8 +1536,11 @@
   MF.resolveTargetSpell = (x, r) => { const q = (x.t[r.t] || [])[0]; return q && q.c != null && I(x.s, q.c) && I(x.s, q.c).zone === 'stack' ? q.c : null; };
   // CR 701.6a: a countered spell leaves the stack without resolving; it goes to its owner's graveyard
   // (a copy ceases to exist; harmonize exiles it).
-  MF.counterSpell = function (s, L, by, exile) {
+  // `x`: the invocation doing the countering, when one is (its source's colours matter to Autumn's Veil).
+  MF.counterSpell = function (s, L, by, exile, x) {
     if (L.uncounterable || MF.chars(s, L.iid).ab.some(a => a.k === 'uncounterable')) { log(s, 'cantCounter', { who: L.ctrl, c: L.id }); return; }   // "This spell can't be countered" (CR 113.6g)
+    const byCols = x && x.L && x.L.kind === 'spell' && I(s, x.L.iid) ? MF.chars(s, x.L.iid).colors : [];
+    if (s.effects.some(e => e.k === 'uncounterableYou' && e.who === L.ctrl && (!e.byColors || e.byColors.some(k => byCols.includes(k)))) || s.bf.some(i => I(s, i).ctrl === L.ctrl && MF.chars(s, i).ab.some(a => a.k === 'uncounterableYours'))) { log(s, 'cantCounter', { who: L.ctrl, c: L.id }); return; }   // Veil of Summer, Autumn's Veil, Hexing Squelcher
     s.stack.splice(s.stack.indexOf(L), 1);
     log(s, 'countered', { who: L.ctrl, c: L.id, by: by });
     if (L.copy) { const c = I(s, L.iid); c.zone = 'moved'; c.to = null; return; }
@@ -1515,7 +1630,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste', 'storied', 'freeEquipOnce', 'leyline', 'equipDiscountTarget', 'hexproofFrom', 'engines', 'torpor', 'nameLock', 'nameGrantC', 'chooseBackground', 'morph', 'storm', 'millDouble', 'millPlus', 'paint', 'raulCast', 'cantBeBlocked', 'mindskinner', 'zombieDamageMill', 'skipDraw', 'urborg', 'firstDrawReplace'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste', 'storied', 'freeEquipOnce', 'leyline', 'equipDiscountTarget', 'hexproofFrom', 'engines', 'torpor', 'nameLock', 'nameGrantC', 'chooseBackground', 'morph', 'storm', 'millDouble', 'millPlus', 'paint', 'raulCast', 'cantBeBlocked', 'mindskinner', 'zombieDamageMill', 'skipDraw', 'urborg', 'firstDrawReplace', 'altCost', 'dash', 'splitSecond', 'oppNoActivate', 'onlyOwnTurn', 'flashNoncreature', 'flashIfOwnTarget', 'uncounterableYours', 'breach'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };

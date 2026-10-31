@@ -112,7 +112,7 @@
       if (q.cancel) btns.push({ a: { type: 'cancel' }, label: 'Cancel', cls: 'ghost' });
     } else {
       for (const a of MF.legalActions(s)) {
-        if (a.type === 'land') add(a.iid, a, 'Play ' + MF.cards[s.cards[a.iid].id].name);
+        if (a.type === 'land') add(a.iid, a, 'Play ' + (a.alt ? MF.cards[s.cards[a.iid].id].alt.name + ' (back face)' : MF.cards[s.cards[a.iid].id].name));
         else if (a.type === 'cast') {
           const d = MF.cards[s.cards[a.iid].id], cost = MF.spellCost(s, ui.human, a.iid, { x: 0, alt: a.alt, door: a.door, anyMana: MF.anyManaFor(s, a.iid), via: a.via }); cost.x = cost.xs; delete cost.xs;   // show {X} in the label (it is announced as the spell is cast)
           if (s.cards[a.iid].zone !== 'hand' && !tray.includes(a.iid)) tray.push(a.iid);                // castable from a graveyard or exile: shown in the tray
@@ -122,6 +122,9 @@
           if (s.cards[a.iid].prepCopy) { add(a.iid, a, 'Cast the prepared copy of ' + d.prep.name + ' — ' + MF.manaStr(cost) + ' (unprepares ' + d.name + ')'); continue; }
           if (a.via === 'free') { add(a.iid, a, 'Cast ' + d.name + ' without paying its mana cost (Omniscience)'); continue; }
           if (a.via === 'morph') { add(a.iid, a, 'Cast ' + d.name + ' face down — {3} (morph: a nameless 2/2; turn it face up later for its morph cost)'); continue; }
+          if (a.via === 'altCost') { const ac = d.ab.find(x => x.k === 'altCost'); add(a.iid, a, 'Cast ' + d.name + ' for its alternative cost — ' + ([ac.life ? 'pay ' + ac.life + ' life' : '', ac.exileBlue ? 'exile ' + (ac.exileBlue > 1 ? ac.exileBlue + ' blue cards' : 'a blue card') + ' from your hand' : '', ac.sacNontokenRed ? 'sacrifice a nontoken red creature' : ''].filter(Boolean).join(' and ') || 'no mana') + (MF.manaValue(cost) ? ' + ' + MF.manaStr(cost) : '')); continue; }   // CR 118.9
+          if (a.via === 'escape') { add(a.iid, a, 'Cast ' + d.name + ' with escape — ' + MF.manaStr(cost) + ' and exile three other cards from your graveyard'); if (!tray.includes(a.iid)) tray.push(a.iid); continue; }
+          if (a.via === 'dash') { add(a.iid, a, 'Dash ' + d.name + ' — ' + MF.manaStr(cost) + ' (haste; returns to your hand at the end step)'); continue; }
           if (a.via === 'raul') { add(a.iid, a, 'Cast ' + d.name + ' from your graveyard (Raul, once this turn) — ' + MF.manaStr(cost)); continue; }
           if (s.cards[a.iid].zone === 'command') { const tax = 2 * ((s.players[ui.human].cmdCasts || {})[d.id] || 0); add(a.iid, a, 'Cast ' + d.name + ' from the command zone — ' + MF.manaStr(cost) + (tax ? ' (includes commander tax {' + tax + '})' : '')); continue; }
           if (a.via === 'impending') { const im = d.ab.find(x => x.k === 'impending'); add(a.iid, a, 'Cast ' + d.name + ' for its impending cost — ' + MF.manaStr(cost) + ' (enters with ' + im.n + ' time counters; not a creature until the last is removed)'); continue; }

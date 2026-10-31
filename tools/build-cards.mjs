@@ -34,6 +34,7 @@ export function parseFilter(str) {
   let s = str.trim(); const f = {};
   let m;
   if ((m = s.match(/^(another|other) (.*)$/))) { f.other = true; s = m[2]; }
+  if ((m = s.match(/^(white|blue|black|red|green) (.*)$/))) { f.colors = [COLOR[m[1]]]; s = m[2]; }   // "target blue permanent"
   if ((m = s.match(/^basic (.*)$/))) { f.supers = ['Basic']; s = m[1]; }
   if ((m = s.match(/^nonbasic (.*)$/))) { f.notSupers = ['Basic']; s = m[1]; }
   if ((m = s.match(/^non-Aura (.*)$/))) { f.notSubtypes = ['Aura']; s = m[1]; }
@@ -89,6 +90,14 @@ function targetSlot(T, phrase) {
   if ((m = phrase.match(/^target (instant or sorcery|creature|land|permanent) card from your graveyard$/))) { T.push({ f: { card: 'grave', own: true, types: m[1] === 'instant or sorcery' ? ['Instant', 'Sorcery'] : m[1] === 'permanent' ? ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'] : [cap(m[1])] } }); return { t: T.length - 1 }; }
   if (phrase === "target spell you don't control") { T.push({ f: { spell: true, notYours: true } }); return { t: T.length - 1 }; }   // Hullbreaker Horror
   if ((m = phrase.match(/^target (noncreature )?spell(?: with mana value (\d+))?$/))) { T.push({ f: Object.assign({ spell: true }, m[1] ? { notTypes: ['Creature'] } : {}, m[2] ? { mvIs: +m[2] } : {}) }); return { t: T.length - 1 }; }
+  // PLAN D22: spells by type or colour, spells and abilities, "with a single target" (CR 115.10)
+  if ((m = phrase.match(/^target (instant or sorcery|instant|enchantment, instant, or sorcery|blue) spell$/))) { const k = m[1]; T.push({ f: Object.assign({ spell: true }, k === 'blue' ? { colors: ['U'] } : { types: k === 'instant' ? ['Instant'] : k === 'instant or sorcery' ? ['Instant', 'Sorcery'] : ['Enchantment', 'Instant', 'Sorcery'] }) }); return { t: T.length - 1 }; }
+  if (phrase === 'target spell with a single target') { T.push({ f: { spell: true, single: true } }); return { t: T.length - 1 }; }
+  if (phrase === 'target spell or ability with a single target') { T.push({ f: { spell: true, ability: true, single: true } }); return { t: T.length - 1 }; }
+  if (phrase === 'target spell or ability') { T.push({ f: { spell: true, ability: true } }); return { t: T.length - 1 }; }
+  if (phrase === 'target activated or triggered ability') { T.push({ f: { ability: true } }); return { t: T.length - 1 }; }
+  if (phrase === 'any number of target spells') { T.push({ f: { spell: true }, n: 99, upTo: true, anyNumber: true }); return { t: T.length - 1 }; }
+  if (phrase === 'target spell or nonland permanent an opponent controls') { T.push({ f: { spell: true, notYours: true, orPerm: { notTypes: ['Land'], ctrl: 'opp' } } }); return { t: T.length - 1 }; }
   if (phrase === 'up to one target activated or triggered ability') { T.push({ f: { ability: true }, n: 1, upTo: true }); return { t: T.length - 1 }; }   // CR 115.1b: abilities on the stack   // a spell on the stack (CR 115.1)
   if ((m = phrase.match(/^up to one target artifact, creature, or planeswalker an opponent controls$/))) { T.push({ f: { types: ['Artifact', 'Creature', 'Planeswalker'], ctrl: 'opp' }, n: 1, upTo: true }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^target (opponent|player)$/))) { T.push({ f: { player: m[1] === 'opponent' ? 'opp' : 'any' } }); return { t: T.length - 1 }; }
@@ -130,6 +139,7 @@ function parseValueWhere(w) {
   throw new Fail('value: ' + w);
 }
 export function parseCond(str, ctx) {
+  { const c = CEDH_CONDS[str]; if (c) return JSON.parse(JSON.stringify(c)); }                         // PLAN D22
   const c = str.trim(); let m;
   if (c === '~ is tapped') return { c: 'selfTapped' };
   if ((m = c.match(/^~ has (\w+) or more (\w+) counters on it$/))) return { c: 'counterAtLeast', kind: m[2], n: numOf(m[1]) };
@@ -176,7 +186,103 @@ export function parseCond(str, ctx) {
   throw new Fail('condition: ' + c);
 }
 // One effect sentence (no trailing period) → ops.
+
+// ---------------------------------------------------------------------------------------------
+// PLAN D22: the five championship Commander decks. Card-specific sentences, each anchored to the
+// whole sentence or paragraph; the general grammar above is tried after these.
+// ---------------------------------------------------------------------------------------------
+const CEDH_CONDS = {
+  "it's not your turn": { c: 'notYourTurn' },
+  'you control a commander': { c: 'controlCommander' },                                            // CR 903.3
+  'an opponent cast three or more spells this turn': { c: 'oppCastAtLeast', n: 3 },
+  'no mana was spent to cast it': { c: 'evNoMana' },                                                // CR 601.2h
+  'an opponent has cast a blue or black spell this turn': { c: 'oppCastColor', colors: ['U', 'B'] },
+};
+function cedhLine(line, ctx, d, kw, ab) {
+  let m;
+  // CR 118.9: alternative costs
+  if ((m = line.match(/^You may pay (\d+) life and exile a blue card from your hand rather than pay this spell's mana cost\.$/))) { ab.push({ k: 'altCost', life: +m[1], exileBlue: 1 }); return true; }   // Force of Will
+  if ((m = line.match(/^You may exile (a|two) blue cards? from your hand rather than pay this spell's mana cost\.$/))) { ab.push({ k: 'altCost', exileBlue: numOf(m[1]) }); return true; }   // Misdirection, Snapback, Commandeer
+  if (line === "If it's not your turn, you may exile a blue card from your hand rather than pay this spell's mana cost.") { ab.push({ k: 'altCost', exileBlue: 1, cond: { c: 'notYourTurn' } }); return true; }   // Force of Negation
+  if (line === 'If you control a commander, you may cast this spell without paying its mana cost.') { ab.push({ k: 'altCost', cond: { c: 'controlCommander' } }); return true; }   // Fierce Guardianship, Deflecting Swat
+  if (line === "If an opponent cast three or more spells this turn, you may pay {0} rather than pay this spell's mana cost.") { ab.push({ k: 'altCost', cond: { c: 'oppCastAtLeast', n: 3 } }); return true; }   // Mindbreak Trap
+  if (line === "You may sacrifice a nontoken red creature rather than pay this spell's mana cost.") { ab.push({ k: 'altCost', sacNontokenRed: true }); return true; }   // Flare of Duplication
+  if ((m = line.match(/^At the beginning of your next upkeep, pay (\{[^ ]+\})\. If you don't, you lose the game\.$/)) && d.types.includes('Instant')) { const sp = ab.find(a => a.k === 'spell'); if (!sp) throw new Fail('a Pact rider before its spell'); sp.ops.push({ o: 'delayed', on: 'beginStep', step: 'upkeep', yours: true, ops: [{ o: 'payOrLose', cost: m[1] }] }); return true; }   // CR 603.7
+  if ((m = line.match(/^Dash (\{[^ ]+\})$/))) { ab.push({ k: 'dash', cost: m[1] }); return true; }   // CR 702.109a
+  if (line === 'As an additional cost to cast this spell, pay 5 life or pay {2}.') { ab.push({ k: 'addCost', what: 'lifeOrMana', life: 5, mana: '{2}' }); return true; }   // Redirect Lightning
+  // Casting: permissions and prohibitions
+  if (line === 'Split second') { ab.push({ k: 'splitSecond' }); return true; }                     // CR 702.61a
+  if (line === "During your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments.") { ab.push({ k: 'oppNoCast' }, { k: 'oppNoActivate' }); return true; }   // Grand Abolisher
+  if (line === 'Players can cast spells only during their own turns.') { ab.push({ k: 'onlyOwnTurn' }); return true; }   // Dosan
+  if (line === 'You may cast noncreature spells as though they had flash.') { ab.push({ k: 'flashNoncreature' }); return true; }   // CR 601.3e
+  if (line === 'You may cast this spell as though it had flash if it targets a permanent you control.') { ab.push({ k: 'flashIfOwnTarget' }); return true; }   // Flash Photography
+  if (line === "Spells you control can't be countered.") { ab.push({ k: 'uncounterableYours' }); return true; }
+  if (line === 'Other creatures you control have "Ward—Pay 2 life."') { ab.push({ k: 'static', affects: { other: true, types: ['Creature'], ctrl: 'you' }, grantAb: [{ k: 'trig', on: 'targeted', who: 'self', byOpp: true, ward: true, ops: [{ o: 'wardCounter', life: 2, mana: null }] }] }); return true; }   // CR 702.21a
+  if (line === "Each nonland card in your graveyard has escape. The escape cost is equal to the card's mana cost plus exile three other cards from your graveyard.") { ab.push({ k: 'breach' }); return true; }   // CR 702.138
+  return false;
+}
+function cedhEffects(T, ctx, t) {
+  let m;
+  if ((m = t.match(/^counter (target noncreature spell)\. If that spell is countered this way, exile it instead of putting it into its owner's graveyard$/i))) return [{ o: 'counterTarget', on: parseRef(T, ctx, m[1]), exile: true }];   // Force of Negation
+  if (/^counter target activated or triggered ability\. If a permanent's ability is countered this way, activated abilities of that permanent can't be activated this turn$/i.test(t)) { T.push({ f: { ability: true } }); return [{ o: 'trickbind', on: { t: T.length - 1 } }]; }
+  if ((m = t.match(/^(target player) can't cast spells this turn\. If this spell was kicked, creatures can't attack this turn$/i))) return [{ o: 'cantCast', who: parseRef(T, ctx, m[1].toLowerCase()) }, { o: 'if', cond: { c: 'kicked' }, ops: [{ o: 'noAttacks' }] }];   // Orim's Chant
+  if (/^draw a card if an opponent has cast a blue or black spell this turn\. Spells you control can't be countered this turn\. You and permanents you control gain hexproof from blue and from black until end of turn$/i.test(t)) return [{ o: 'if', cond: { c: 'oppCastColor', colors: ['U', 'B'] }, ops: [{ o: 'draw', n: 1 }] }, { o: 'veil' }];   // Veil of Summer
+  if (/^spells you control can't be countered by blue or black spells this turn, and creatures you control can't be the targets of blue or black spells this turn$/i.test(t)) return [{ o: 'veil', byColors: ['U', 'B'], spellsOnly: true, creaturesOnly: true }];   // Autumn's Veil
+  if ((m = t.match(/^gain control of (target noncreature spell)\. You may choose new targets for it$/i))) return [{ o: 'gainControlSpell', on: parseRef(T, ctx, m[1]), newTargets: true }];   // Commandeer (CR 701.12)
+  if ((m = t.match(/^copy (target instant or sorcery spell)\. You may choose new targets for the copy$/i))) return [{ o: 'copyTargetSpell', on: parseRef(T, ctx, m[1]) }];   // CR 707.10
+  if ((m = t.match(/^at the beginning of your next upkeep, pay (\{[^ ]+\})\. If you don't, you lose the game$/i))) return [{ o: 'delayed', on: 'beginStep', step: 'upkeep', yours: true, ops: [{ o: 'payOrLose', cost: m[1] }] }];   // the Pacts (CR 603.7)
+  if (/^choose an opponent at random\. ~ Smasher deals damage equal to that spell's mana value to that player or a planeswalker that player controls$/i.test(t) && ctx.spellEv) return [{ o: 'damageOppOrPw', n: { v: 'evMv' } }];   // Vial Smasher (its name's first word read as its short name)
+  if (/^birds, frogs, otters, and rats you control get \+1\/\+1 until end of turn\. Untap them$/i.test(t)) { const each = { each: { subtypes: ['Bird', 'Frog', 'Otter', 'Rat'], ctrl: 'you' } }; return [{ o: 'pump', on: each, p: 1, t: 1 }, { o: 'untap', on: each }]; }   // Valley Floodcaller
+  return null;
+}
+// "a(n) <quality> card" in a search: card types, basic land types, a colour (CR 701.23).
+const PERMANENT_TYPES = ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'];
+function searchFilter(q) {
+  let m;
+  if (q === '') return null;
+  if ((m = q.match(/^(green|blue|black|red|white) (creature)$/))) return { types: ['Creature'], colors: [COLOR[m[1]]] };
+  if ((m = q.match(/^(Plains|Island|Swamp|Mountain|Forest) or (Plains|Island|Swamp|Mountain|Forest)$/))) return { subtypes: [m[1], m[2]] };   // fetchlands: any card with that land type
+  if ((m = q.match(/^(\w+) or (\w+)$/)) && TYPES.includes(cap(m[1])) && TYPES.includes(cap(m[2]))) return { types: [cap(m[1]), cap(m[2])] };
+  if (q === 'Dragon permanent') return { subtypes: ['Dragon'], types: PERMANENT_TYPES };
+  if (TYPES.includes(cap(q))) return { types: [cap(q)] };
+  if (q === 'land card with a basic land type') return { types: ['Land'], subtypes: ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'] };
+  return undefined;                                                                                 // not a quality this grammar reads: the general grammar is tried next
+}
+// Tried after the general grammar: the searches it already reads keep their compiled form.
+function cedhSearch(T, ctx, s) {
+  let m;
+  // Searches (CR 701.23): "Search your library for <a quality> card[ with mana value N or less], [reveal it, ]put it into your hand|onto the battlefield, then shuffle"
+  if ((m = s.match(/^([Yy]ou may )?[Ss]earch your library for (?:a|an) (.*?) ?card( with mana value (\d+) or less)?, (reveal it, )?(put (?:that card|it) into your hand|put (?:that card|it) onto the battlefield( tapped)?|then shuffle and put that card on top)(, discard a card at random)?(?:, then shuffle)?$/))) {
+    const sf = searchFilter(m[2]); if (sf === undefined) return null;
+    const op = { o: 'searchLib', f: sf, dest: /hand/.test(m[6]) ? 'hand' : /battlefield/.test(m[6]) ? 'bf' : 'top', what: (m[2] ? m[2] + ' ' : '') + 'card' + (m[3] || '') };
+    if (!op.f) delete op.f;
+    if (m[4]) op.mvLE = +m[4];
+    if (m[5]) op.reveal = true;
+    if (m[7]) op.tapped = true;
+    if (m[8]) op.then = [{ o: 'discardRandom' }];                                                   // Gamble
+    return m[1] ? [{ o: 'may', what: 'search', ops: [op] }] : [op];
+  }
+  return null;
+}
+function cedhEffect(T, ctx, s) {
+  let m;
+  if ((m = s.match(/^[Ii]ts controller creates (two) Treasure tokens$/)) && T.length) return [{ o: 'token', id: ctx.token.treasure(), n: numOf(m[1]), forCtrlOf: { t: T.length - 1 } }];   // An Offer You Can't Refuse
+  if (/^[Ii]ts controller creates a 2\/2 blue Bird creature token with flying$/.test(s) && T.length) return [{ o: 'token', id: ctx.token({ p: 2, t: 2, color: 'blue', sub: 'Bird', kw: ['flying'] }), n: 1, forCtrlOf: { t: T.length - 1 } }];   // Swan Song
+  if (/^[Yy]ou may cast spells this turn as though they had flash$/.test(s)) return [{ o: 'flashAll' }];   // CR 601.3e
+  if (/^[Cc]ounter that spell$/.test(s) && ctx.spellEv) return [{ o: 'counterEvSpell' }];               // Vexing Bauble
+  if (/^[Yy]our opponents can't cast spells this turn$/.test(s)) return [{ o: 'cantCast', who: 'eachOpp' }];
+  if (/^[Yy]our opponents can't cast noncreature spells this turn$/.test(s)) return [{ o: 'cantCast', who: 'eachOpp', noncreature: true }];
+  if (/^[Yy]our opponents can't cast spells or activate planeswalkers' loyalty abilities this turn$/.test(s)) return [{ o: 'cantCast', who: 'eachOpp', noLoyalty: true }];
+  if ((m = s.match(/^[Ee]xile (any number of target spells)$/))) return [{ o: 'exileSpells', on: parseRef(T, ctx, m[1]) }];   // Mindbreak Trap
+  if ((m = s.match(/^[Cc]hange the target of (target spell(?: or ability)? with a single target)$/))) return [{ o: 'changeTargets', on: parseRef(T, ctx, m[1]), must: true }];   // CR 115.7a
+  if ((m = s.match(/^[Yy]ou may choose new targets for (target spell or ability)$/))) return [{ o: 'changeTargets', on: parseRef(T, ctx, m[1]) }];   // CR 115.7d
+  if ((m = s.match(/^[Cc]ounter (target spell) if it's blue$/))) { const r = parseRef(T, ctx, m[1]); return [{ o: 'ifTargetColor', on: r, color: 'U', ops: [{ o: 'counterTarget', on: r }] }]; }   // Pyroblast: any spell can be targeted
+  if ((m = s.match(/^[Dd]estroy (target permanent) if it's blue$/))) { const r = parseRef(T, ctx, m[1]); return [{ o: 'ifTargetColor', on: r, color: 'U', ops: [{ o: 'destroy', on: r }] }]; }
+  if ((m = s.match(/^[Rr]eturn (target spell or nonland permanent an opponent controls) to its owner's hand$/))) { const r = parseRef(T, ctx, m[1]); return [{ o: 'bounceSpell', on: r, orPerm: true }]; }   // Sink into Stupor
+  return null;
+}
 function parseEffect(T, ctx, sentence) {
+  { const r = cedhEffect(T, ctx, sentence.trim().replace(/\.$/, '')); if (r) return r; }           // PLAN D22
   let s = sentence.trim(), m;
   // Kujo's Commander deck (PLAN D21): mill (CR 701.17), tutors, rituals.
   const MILLN = w => w === 'a card' ? 1 : numOf(w.split(' ')[0]);
@@ -229,7 +335,7 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Rr]eturn (target spell you don't control) to its owner's hand$/))) return [{ o: 'bounceSpell', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Rr]eturn (target .+?) to its owner's hand$/))) return [{ o: 'bounce', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^[Rr]eturn (target .+ card from your graveyard) to your hand$/))) return [{ o: 'graveToHand', on: parseRef(T, ctx, m[1]) }];
-  if ((m = s.match(/^[Cc]ounter (target (?:noncreature )?spell) unless its controller pays (\{[^ ]+\})$/))) return [{ o: 'counterUnless', on: parseRef(T, ctx, m[1]), pay: m[2] }];   // CR 701.6, 118.12a
+  if ((m = s.match(/^[Cc]ounter (target (?:noncreature |instant or sorcery )?spell) unless its controller pays (\{[^ ]+\})$/))) return [{ o: 'counterUnless', on: parseRef(T, ctx, m[1]), pay: m[2] }];   // CR 701.6, 118.12a
   if (/^[Yy]ou may attach ~ to it$/.test(s) && ctx.madeToken) return [{ o: 'may', what: 'attachToToken', ops: [{ o: 'attach', on: 'it' }] }];
   if ((m = s.match(/^[Pp]ut (a|an|one|two|three|\d+) \+1\/\+1 counters? on (.+)$/))) { const on = parseRef(T, ctx, m[2]); return [{ o: 'counter', on: on, n: numOf(m[1]), kind: '+1/+1' }]; }
   if ((m = s.match(/^[Dd]ouble the number of \+1\/\+1 counters on (.+)$/))) return [{ o: 'doubleCounters', on: parseRef(T, ctx, m[1]), kind: '+1/+1' }];
@@ -336,7 +442,7 @@ function parseEffect(T, ctx, sentence) {
   if (/^[Yy]ou may discard a card$/.test(s)) return [{ o: 'may', what: 'discard', ops: [{ o: 'discard', n: 1 }] }];
   if (/^[Ss]earch your library for a card, put it into your hand, shuffle, then discard a card at random$/.test(s)) return [{ o: 'tutor' }, { o: 'discardRandom' }];
   if (/^[Ee]xile the top card of your library\. You may play that card until your next end step$/.test(s)) return [{ o: 'impulse', until: 'nextEndStep' }];
-  if ((m = s.match(/^[Cc]ounter (target (?:noncreature )?spell(?: with mana value \d+)?)$/))) return [{ o: 'counterTarget', on: parseRef(T, ctx, m[1]) }];   // CR 701.6a
+  if ((m = s.match(/^[Cc]ounter (target (?:noncreature |instant |blue |enchantment, instant, or sorcery )?spell(?: with mana value \d+)?)$/))) return [{ o: 'counterTarget', on: parseRef(T, ctx, m[1]) }];   // CR 701.6a
   if ((m = s.match(/^([Tt]arget creature you control) explores$/))) return [{ o: 'explore', on: parseRef(T, ctx, m[1].toLowerCase()) }];
   if (/^[Cc]reate a Map token$/.test(s)) return [{ o: 'token', id: ctx.token.map(), n: 1 }];              // CR 111.10s
   if ((m = s.match(/^[Pp]ut X \+1\/\+1 counters on (.+)$/))) return [{ o: 'counter', on: parseRef(T, ctx, m[1]), n: { v: 'x' }, kind: '+1/+1' }];
@@ -389,6 +495,7 @@ function parseEffect(T, ctx, sentence) {
   if ((m = s.match(/^[Rr]eturn it to the battlefield( tapped)? under its owner's control(?: with (\w+) stun counters on it)?$/)) && ctx.it === 'self') return [Object.assign({ o: 'returnFromGrave', tapped: !!m[1] }, m[2] ? { ctr: { stun: numOf(m[2]) } } : {})];   // CR 122.1d
   if ((m = s.match(/^(.+?) can't be blocked this turn$/))) return [{ o: 'unblockable', on: parseRef(T, ctx, m[1]) }];
   if ((m = s.match(/^(.+), (.+), and (.+)$/))) return [m[1], m[2], m[3]].flatMap(p => parseEffect(T, ctx, cap(p)));
+  { const r = cedhSearch(T, ctx, s); if (r) return r; }                                               // PLAN D22
   throw new Fail('effect: ' + s);
 }
 const cap = s => s[0].toUpperCase() + s.slice(1);
@@ -400,6 +507,7 @@ function kwList(str) {
 // sentence by sentence.
 function parseEffects(T, ctx, text) {
   let t = text.trim().replace(/\.$/, ''), m;
+  { const r = cedhEffects(T, ctx, t); if (r) return r; }                                            // PLAN D22
   // Kujo's Commander deck (PLAN D21)
   if (/^you may sacrifice an artifact, creature, enchantment, land, or planeswalker\. If you do, each opponent may sacrifice a permanent of their choice that shares a card type with it\. For each opponent who doesn't, that player loses 2 life and you draw a card$/i.test(t)) return [{ o: 'braids' }];
   if (/^each opponent reveals cards from the top of their library until they reveal a land card, then puts those cards into their graveyard$/i.test(t)) return [{ o: 'revealToGrave', who: 'eachOpp', lands: 1 }];
@@ -607,6 +715,13 @@ function parseCost(str) {
 }
 // Trigger events: "<event>, <effect>" — the event is matched by an anchored pattern on a prefix.
 const EVENTS = [
+  // PLAN D22
+  [/^an opponent casts their first noncreature spell each turn$/, () => [{ on: 'cast', spell: { notTypes: ['Creature'] }, anyPlayer: true, oppOnly: true, nthNoncre: 1 }]],   // Esper Sentinel
+  [/^an opponent casts their second spell each turn$/, () => [{ on: 'cast', spell: null, anyPlayer: true, oppOnly: true, nth: 2 }]],   // Kraum
+  [/^a player casts their second spell each turn$/, () => [{ on: 'cast', spell: null, anyPlayer: true, nth: 2 }]],   // Lotho
+  [/^you cast your first spell each turn$/, () => [{ on: 'cast', spell: null, nth: 1 }]],   // Vial Smasher
+  [/^a player casts a spell$/, () => [{ on: 'cast', spell: null, anyPlayer: true }]],   // Vexing Bauble
+  [/^an opponent activates an ability that isn't a mana ability$/, () => [{ on: 'activated', oppOnly: true, nonMana: true }]],   // Flamescroll Celebrant
   // Kujo's Commander deck (PLAN D21)
   [/^a player mills one or more creature cards$/, () => [{ on: 'milled', creOnly: true }]],                              // CR 603.2c: once per instruction
   [/^~ attacks and isn't blocked$/, () => [{ on: 'unblocked', who: 'self' }]],
@@ -714,13 +829,14 @@ function parseTrigger(line, ctx, out) {
         if (tr.on === 'cast') { c2.spellEv = true; if (tr.anyPlayer) c2.evPlayer = true; }
         if (tr.on === 'dealsDamage') { c2.evAmount = true; if (tr.toPlayer) c2.evPlayer = true; }
         if (tr.on === 'drawCard' && tr.opp) c2.evPlayer = true;
+        if (tr.on === 'activated') c2.evPlayer = true;                                            // Flamescroll Celebrant: "that player"
         if (tr.on === 'discardBatch') c2.evAmount = true;
         if (tr.on === 'dealtDamage') c2.evAmount = true;
         if (tr.on === 'lostLife') { c2.evPlayer = true; c2.evAmount = true; }                     // "that player mills that many cards"
         if (tr.on === 'untapped' || tr.on === 'toGrave' || (tr.on === 'beginStep' && tr.opps)) c2.evPlayer = true;   // "that permanent's controller", "that player"
         if (tr.door) { if (ctx.door == null) throw new Fail('"unlock this door" on a card that is not a Room'); tr.door = ctx.door; }
         const ops = parseEffects(T, c2, cap(eff.replace(/^this creature\b/, '~')));
-        const extra = {}; for (const k of ['creOnly', 'opps', 'cre', 'notFromBf', 'lookBackAlso', 'zone', 'anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind', 'you', 'opp', 'evCond', 'oppOnly', 'chosenParity', 'ownCreature', 'byOpp', 'permOnly']) if (tr[k] != null) extra[k] = tr[k];
+        const extra = {}; for (const k of ['creOnly', 'opps', 'cre', 'notFromBf', 'lookBackAlso', 'zone', 'anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind', 'you', 'opp', 'evCond', 'oppOnly', 'chosenParity', 'ownCreature', 'byOpp', 'permOnly', 'nthNoncre', 'nonMana', 'tapForMana', 'notYourTurnEv']) if (tr[k] != null) extra[k] = tr[k];
         out.push(Object.assign({ k: 'trig', on: tr.on, ops: ops }, tr.who ? { who: tr.who } : {}, tr.spell !== undefined ? { spell: tr.spell } : {}, tr.toOpp ? { toOpp: true } : {}, tr.lookBack ? { lookBack: true } : {}, T.length ? { tg: T } : {}, cond ? { cond: cond } : {}, oncePerTurn ? { oncePerTurn: true } : {}, JSON.stringify(ops).includes('selfFromGrave') ? { zone: 'grave' } : {}, extra));   // CR 113.6m: returns this card from the graveyard, so it functions there
       }
       return true;
@@ -848,6 +964,7 @@ function parseStatic(line, ctx, out, d) {
 }
 function parseLine(line, ctx, d, kw, ab) {
   let m;
+  if (cedhLine(line, ctx, d, kw, ab)) return;                                                       // PLAN D22
   if ((m = line.match(AW_RE))) line = m[2];                                                         // CR 207.2c
   if ((m = line.match(/^(Immune|Mind Swap|Hive Mind) — (.+)$/))) line = m[2];                      // CR 207.2d: a flavor word
   if ((m = line.match(/^[A-Z][\w']+(?: [A-Za-z']+)* — ((?:When|Whenever|At) .+)$/))) line = m[1];      // a flavour word (CR 207.2d): no rules meaning

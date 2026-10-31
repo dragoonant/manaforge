@@ -6,7 +6,7 @@
   const MF = window.MF;
   const KWNAME = { flying: 'flying', reach: 'reach', firstStrike: 'first strike', doubleStrike: 'double strike', deathtouch: 'deathtouch', lifelink: 'lifelink', trample: 'trample', vigilance: 'vigilance', haste: 'haste', menace: 'menace', defender: 'defender', flash: 'flash', hexproof: 'hexproof', indestructible: 'indestructible', prowess: 'prowess', shroud: 'shroud', fear: 'fear' };
   MF.KWNAME = KWNAME;
-  const VN = { handSize: 'the number of cards in your hand', sacPower: 'the sacrificed creature’s power', oppGraveSize: 'the number of cards in their graveyard', oppGraveCount: 'the number of cards in your opponents’ graveyards', evTypes: 'the number of card types among those cards', halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control' };
+  const VN = { handSize: 'the number of cards in your hand', sacPower: 'the sacrificed creature’s power', oppGraveSize: 'the number of cards in their graveyard', oppGraveCount: 'the number of cards in your opponents’ graveyards', evTypes: 'the number of card types among those cards', halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control', evMv: 'that spell’s mana value' };
   const N = n => typeof n === 'number' ? String(n) : n.v === 'toughness' ? 'this creature’s toughness' : n.v === 'gravesWith' ? 'the number of graveyards with ' + ['', '', '', '', '', '', '', 'seven'][n.n] + ' or more cards in them' : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'lands' ? 'the number of lands you control' : n.v === 'graveCount' ? 'the number of permanent cards in your graveyard' : n.v === 'creLeftYou' ? 'the number of creatures that left the battlefield under your control this turn' : n.v === 'countYou' ? 'the number of ' + filt(n.f) + 's you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
   function filt(f) {
     if (!f) return 'anything';
@@ -14,6 +14,8 @@
     if (f.card) return (f.notSubtypes ? 'non-' + f.notSubtypes.join('/') + ' ' : '') + (f.types ? f.types.join(' or ').toLowerCase() + ' ' : '') + (f.mvGE != null ? '[mana value ' + f.mvGE + ' or greater] ' : '') + 'card' + (f.mvLEv ? ' with mana value X or less (X = the life you gained this turn)' : f.mvLE != null ? ' with mana value ' + f.mvLE + ' or less' : '') + (f.opp ? ' in an opponent’s graveyard' : ' from ' + (f.own ? 'your graveyard' : 'a graveyard')) + (f.fromLibTurn ? ' that was put there from their library this turn' : '');
     if (f.ability) return 'activated or triggered ability';
     if (f.spell && f.mvIs != null) return 'spell with mana value ' + f.mvIs;
+    if (f.spell && f.orPerm) return 'spell or ' + filt(f.orPerm);                              // Sink into Stupor
+    if (f.spell && (f.types || f.colors || f.ability || f.single)) return (f.colors ? f.colors.map(k => MF.COLOR_NAME[k]).join('/') + ' ' : '') + (f.types ? f.types.join(', ').toLowerCase().replace(/, (\w+)$/, ', or $1').replace(/^(\w+), or (\w+)$/, '$1 or $2') + ' ' : '') + 'spell' + (f.ability ? ' or ability' : '') + (f.single ? ' with a single target' : '');
     if (f.spell) return (f.notTypes ? f.notTypes.map(x => 'non' + x.toLowerCase()).join(' ') + ' ' : '') + 'spell' + (f.notYours ? ' you don’t control' : '');
     if (f.player) return f.player === 'opp' ? 'opponent' : f.player === 'you' ? 'you' : 'player';
     const w = [];
@@ -119,10 +121,31 @@
     hasCounter: c => 'it has one or more ' + c.kind + ' counters',
     lifeAtMostHalfStart: () => 'your life total is less than or equal to half your starting life total',
     yourTurn: () => 'it is your turn',
+    notYourTurn: () => 'it’s not your turn',
+    controlCommander: () => 'you control a commander',
+    oppCastAtLeast: c => 'an opponent cast ' + c.n + ' or more spells this turn',
+    evNoMana: () => 'no mana was spent to cast it',
+    oppCastColor: c => 'an opponent has cast a ' + c.colors.map(k => MF.COLOR_NAME[k]).join(' or ') + ' spell this turn',
   };
   const cond = c => (C[c.c] ? C[c.c](c) : c.c);
   MF.describeCond = cond;
   const D = MF.describeOp = {
+    // PLAN D22
+    ifTargetColor: op => ops(op.ops) + ' if it’s ' + MF.COLOR_NAME[op.color],
+    exileSpells: op => 'exile any number of target spells',
+    cantCast: op => (op.who === 'eachOpp' ? 'your opponents' : ref(op.who)) + ' can’t cast ' + (op.noncreature ? 'noncreature ' : '') + 'spells' + (op.noLoyalty ? ' or activate planeswalkers’ loyalty abilities' : '') + ' this turn',
+    noAttacks: () => 'creatures can’t attack this turn',
+    flashAll: () => 'you may cast spells this turn as though they had flash',
+    trickbind: op => 'counter ' + ref(op.on) + '; if a permanent’s ability is countered this way, activated abilities of that permanent can’t be activated this turn',
+    changeTargets: op => op.must ? 'change the target of ' + ref(op.on) : 'you may choose new targets for ' + ref(op.on),
+    gainControlSpell: op => 'gain control of ' + ref(op.on) + (op.newTargets ? '; you may choose new targets for it' : ''),
+    copyTargetSpell: op => 'copy ' + ref(op.on) + '; you may choose new targets for the copy',
+    counterEvSpell: () => 'counter that spell',
+    returnThese: op => 'return it to its owner’s hand',
+    veil: op => op.byColors ? 'spells you control can’t be countered by blue or black spells this turn, and creatures you control can’t be the targets of blue or black spells this turn' : 'spells you control can’t be countered this turn; you and permanents you control gain hexproof from blue and from black until end of turn',
+    payOrLose: op => 'pay ' + op.cost + '; if you don’t, you lose the game',
+    searchLib: op => 'search ' + (op.of ? 'target opponent’s' : 'your') + ' library for ' + art(op.what) + (op.mvLE != null && typeof op.mvLE !== 'number' ? ' with mana value X or less, where X is ' + N(op.mvLE) : '') + (op.reveal ? ', reveal it' : '') + ', ' + ({ hand: 'put it into your hand', bf: 'put it onto the battlefield' + (op.tapped ? ' tapped' : ''), top: 'then shuffle and put that card on top', grave: 'put it into your graveyard', exileFaceDown: 'exile it face down' })[op.dest] + (op.then ? ', ' + ops(op.then) : '') + (op.dest === 'top' ? '' : ', then shuffle'),
+    damageOppOrPw: op => 'choose an opponent at random; this deals damage equal to ' + N(op.n) + ' to that player or a planeswalker that player controls',
     counter: op => 'put ' + (op.n && op.n.v === 'evAmount' ? 'that many' : N(op.n)) + ' ' + op.kind + ' counter' + (op.n === 1 ? '' : 's') + ' on ' + ref(op.on),
     doubleCounters: op => 'double the ' + op.kind + ' counters on ' + ref(op.on),
     tap: op => 'tap ' + ref(op.on),
@@ -294,10 +317,20 @@
         return 'flashback ' + a.cost + ' (you may cast this from your graveyard for ' + a.cost + '; then exile it)';
       case 'mayhem': return 'mayhem ' + a.cost + ' (if you discarded this card this turn, you may cast it from your graveyard for ' + a.cost + ')';
       case 'mustAttack': return 'this attacks each combat if able';
-      case 'addCost': return a.what === 'sacCreature' ? 'as an additional cost to cast this spell, sacrifice a creature' : a.what === 'blight' ? 'as an additional cost, you may blight ' + a.n + ' (put ' + a.n + ' -1/-1 counter on a creature you control)' : a.what === 'teamwork' ? 'teamwork ' + a.n + ' (as an additional cost, you may tap creatures you control with total power ' + a.n + ' or more)' : a.what === 'sacArtCre' ? 'as an additional cost, sacrifice an artifact or creature' : a.what === 'discardOrSac' ? 'as an additional cost, discard a card or sacrifice a permanent' : 'as an additional cost, discard a card or pay ' + a.life + ' life';
+      case 'addCost': return a.what === 'sacCreature' ? 'as an additional cost to cast this spell, sacrifice a creature' : a.what === 'blight' ? 'as an additional cost, you may blight ' + a.n + ' (put ' + a.n + ' -1/-1 counter on a creature you control)' : a.what === 'teamwork' ? 'teamwork ' + a.n + ' (as an additional cost, you may tap creatures you control with total power ' + a.n + ' or more)' : a.what === 'sacArtCre' ? 'as an additional cost, sacrifice an artifact or creature' : a.what === 'discardOrSac' ? 'as an additional cost, discard a card or sacrifice a permanent' : a.what === 'lifeOrMana' ? 'as an additional cost to cast this spell, pay ' + a.life + ' life or pay ' + a.mana : 'as an additional cost, discard a card or pay ' + a.life + ' life';
       case 'warp': return 'warp ' + a.cost + ' (you may cast this from your hand for ' + a.cost + '; exile it at the beginning of the next end step, and you may cast it from exile on a later turn)';
       case 'sneak': return 'sneak ' + a.cost + ' (you may cast this for ' + a.cost + ' during your declare blockers step by returning an unblocked attacker you control to its owner’s hand)';
       case 'oppNoCast': return 'your opponents can’t cast spells during your turn';
+      // PLAN D22
+      case 'altCost': return (a.cond ? 'if ' + cond(a.cond) + ', ' : '') + 'you may ' + ([a.life ? 'pay ' + a.life + ' life' : '', a.exileBlue ? 'exile ' + (a.exileBlue === 1 ? 'a blue card' : 'two blue cards') + ' from your hand' : '', a.sacNontokenRed ? 'sacrifice a nontoken red creature' : ''].filter(Boolean).join(' and ') || (a.cond && a.cond.c === 'oppCastAtLeast' ? 'pay {0}' : 'cast this spell without paying its mana cost')) + (a.cond && a.cond.c === 'controlCommander' ? '' : ' rather than pay this spell’s mana cost');
+      case 'dash': return 'dash ' + a.cost + ' (you may cast this for its dash cost; it gains haste and returns to its owner’s hand at the beginning of the next end step)';
+      case 'splitSecond': return 'split second (as long as this spell is on the stack, players can’t cast spells or activate abilities that aren’t mana abilities)';
+      case 'oppNoActivate': return 'during your turn, your opponents can’t activate abilities of artifacts, creatures, or enchantments';
+      case 'onlyOwnTurn': return 'players can cast spells only during their own turns';
+      case 'flashNoncreature': return 'you may cast noncreature spells as though they had flash';
+      case 'flashIfOwnTarget': return 'you may cast this spell as though it had flash if it targets a permanent you control';
+      case 'uncounterableYours': return 'spells you control can’t be countered';
+      case 'breach': return 'each nonland card in your graveyard has escape; the escape cost is equal to the card’s mana cost plus exile three other cards from your graveyard';
       case 'bargain': return 'bargain (you may sacrifice an artifact, enchantment or token as you cast this)';
       case 'harmonize': return 'harmonize ' + a.cost + ' (you may cast this from your graveyard for ' + a.cost + ', tapping up to one creature you control to reduce the generic cost by its power; then exile it)';
       case 'hexproofFrom': return a.mono ? 'hexproof from monocolored' : 'hexproof from ' + a.types.map(x => x.toLowerCase() + 's').join(' and ');

@@ -618,6 +618,7 @@
       ch.ab.forEach((a, i) => {
         if (a.k !== 'mana') return;
         if (a.cost.tap && c.tapped) return;
+        if (activateForbidden(s, who, iid, a)) return;                                          // Grand Abolisher stops mana abilities too
         if (a.only === 'creature' && !(ctx && (ctx.creature || ctx.any))) return;
         if (a.only === 'chosenType' && !(ctx && (ctx.any || (ctx.creature && (ctx.subtypes || []).includes(c.chosen))))) return;
         if (a.only === 'artifact' && !(ctx && (ctx.artifact || ctx.any))) return;
@@ -952,11 +953,13 @@
   // The whole cost (CR 601.2f): mana cost or X, plus additional costs, plus increases, minus
   // reductions (generic only, never below zero).
   MF.costMods = [];          // (s, who, iid, d, cost) => void: js/ops.js registers "costs {1} less"
+  // Flashback (the card): "Target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost."
+  const grantedFlashback = MF.grantedFlashback = (s, iid) => s.effects.some(e => e.k === 'grantFlashback' && e.iid === iid) ? { k: 'flashback', cost: def(s, iid).mana } : null;
   const spellCost = MF.spellCost = function (s, who, iid, o) {
     if (o && o.via === 'morph') { const c = MF.parseMana('{3}'); c.xs = 0; return c; }        // CR 702.37c: a face-down spell with no mana cost, cast for {3} (its colourless characteristics: no colour-based reductions apply)
     const ch = faceChars(s, iid, o && o.alt, o && o.door);
-    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem' || o.via === 'impending' || o.via === 'evoke') ? def(s, iid).ab.find(a => a.k === o.via) : null;   // an alternative cost (CR 118.9)
-    const plotted = (o && o.free) || (o && o.via === 'free') || MF.isPlotted(s, iid);         // CR 702.170d, 118.9: without paying its mana cost
+    const hz = o && (o.via === 'harmonize' || o.via === 'sneak' || o.via === 'warp' || o.via === 'flashback' || o.via === 'mayhem' || o.via === 'impending' || o.via === 'evoke' || o.via === 'dash') ? def(s, iid).ab.find(a => a.k === o.via) || (o.via === 'flashback' ? grantedFlashback(s, iid) : null) : null;   // an alternative cost (CR 118.9)
+    const plotted = (o && o.free) || (o && o.via === 'free') || (o && o.via === 'altCost') || MF.isPlotted(s, iid);   // CR 118.9: Force of Will's alternative cost has no mana in it         // CR 702.170d, 118.9: without paying its mana cost
     const c = MF.parseMana(plotted ? '' : hz ? hz.cost : ch.mana);                            // CR 702.180a: an alternative cost
     c.g += (o && o.x ? o.x * c.x : 0); const xs = c.x; c.x = 0;
     if (o && o.extra) { const e = o.extra; for (const k in e) c[k] += e[k]; }
@@ -974,20 +977,34 @@
   // Targets (CR 115, 601.2c, 608.2b)
   // -------------------------------------------------------------------------------------------
   // A target reference is { p: seat } or { c: iid }.
+  // Veil of Summer: "You and permanents you control gain hexproof from blue and from black" (CR 702.11d, e);
+  // Autumn's Veil: "creatures you control can't be the targets of blue or black spells this turn".
+  function shielded(s, seat, isCreature, who, srcIid) {
+    if (!s.effects.length || srcIid == null || !s.cards[srcIid]) return false;
+    const es = s.effects.filter(e => e.k === 'shieldColors' && e.who === seat); if (!es.length) return false;
+    const sc = s.cards[srcIid], sch = sc.zone === 'moved' ? sc.lki : chars(s, srcIid), isSpell = sc.zone === 'stack' && s.stack.some(L => L.kind === 'spell' && L.iid === srcIid);
+    if (!sch) return false;
+    return es.some(e => (e.creaturesOnly ? isCreature : (isCreature === null ? e.player : true)) && (!e.spellsOnly || isSpell) && (e.spellsOnly || who !== seat) && e.colors.some(k => sch.colors.includes(k)));
+  }
   const targetable = MF.targetable = function (s, ref, slot, who, srcIid) {
-    if (ref.p != null) return MF.matchPlayer(s, ref.p, slot.f, who);
-    if (ref.a != null) return !!(slot.f && slot.f.ability) && s.stack.some(L => L.lid === ref.a && L.kind !== 'spell');   // an activated or triggered ability on the stack
+    if (ref.p != null) return MF.matchPlayer(s, ref.p, slot.f, who) && !shielded(s, ref.p, null, who, srcIid);
+    if (ref.a != null) { const L = s.stack.find(L2 => L2.lid === ref.a && L2.kind !== 'spell'); return !!(slot.f && slot.f.ability) && !!L && (!slot.f.single || singleTarget(L)); }   // an activated or triggered ability on the stack; "with a single target" (CR 115.10)
     const c = s.cards[ref.c];
     if (slot.f && slot.f.card) return !!c && c.zone === slot.f.card && (!slot.f.own || c.owner === who) && (!slot.f.opp || c.owner !== who) && (!slot.f.fromLibTurn || c.fromLibTurn === s.turn) && (!slot.f.types || slot.f.types.some(ty => def(s, ref.c).types.includes(ty))) && (slot.f.mvLE == null || chars(s, ref.c).mv <= slot.f.mvLE) && (slot.f.mvGE == null || chars(s, ref.c).mv >= slot.f.mvGE) && (!slot.f.notSubtypes || !slot.f.notSubtypes.some(st => def(s, ref.c).subtypes.includes(st))) && (!slot.f.mvLEv || chars(s, ref.c).mv <= MF.num({ s: s, ctrl: who, src: srcIid }, slot.f.mvLEv));   // a card in a graveyard: its own characteristics
-    if (slot.f && slot.f.spell) {                                                             // a spell on the stack (CR 115.1); not itself (115.5)
+    if (slot.f && slot.f.spell && !(slot.f.orPerm && c && c.zone === 'bf')) {                 // a spell on the stack (CR 115.1); not itself (115.5)
       if (!c || c.zone !== 'stack' || ref.c === srcIid || !s.stack.some(L => L.kind === 'spell' && L.iid === ref.c)) return false;
-      const ch = chars(s, ref.c);
-      if (slot.f.notYours && s.stack.some(L => L.kind === 'spell' && L.iid === ref.c && L.ctrl === who)) return false;   // "target spell you don't control"
+      const ch = chars(s, ref.c), L = s.stack.find(L2 => L2.kind === 'spell' && L2.iid === ref.c);
+      if (slot.f.notYours && L.ctrl === who) return false;                                     // "target spell you don't control"; "a spell ... an opponent controls"
+      if (slot.f.types && !slot.f.types.some(ty => ch.types.includes(ty))) return false;        // "target instant or sorcery spell"
+      if (slot.f.colors && !slot.f.colors.some(k => ch.colors.includes(k))) return false;       // "target blue spell"
+      if (slot.f.single && !singleTarget(L)) return false;                                     // "target spell with a single target" (CR 115.10)
       return !(slot.f.notTypes || []).some(ty => ch.types.includes(ty)) && (slot.f.mvIs == null || ch.mv === slot.f.mvIs);
     }
+    if (slot.f && slot.f.orPerm) slot = { f: slot.f.orPerm };                                    // Sink into Stupor: "target spell or nonland permanent an opponent controls"
     if (!c || c.zone !== 'bf') return false;
     const ch = chars(s, ref.c);
     if (ch.kw.shroud) return false;                                                          // CR 702.18a
+    if (shielded(s, ch.ctrl, ch.types.includes('Creature'), who, srcIid)) return false;
     if (ch.kw.hexproof && ch.ctrl !== who) return false;                                     // CR 702.11b
     if (ch.ctrl !== who && srcIid != null && s.cards[srcIid]) {                               // CR 702.11d: "hexproof from [quality]" — spells, and abilities from sources, of that quality
       const sc = s.cards[srcIid], sch = sc.zone === 'moved' ? sc.lki : chars(s, srcIid);   // a source that has left: its last known information (CR 608.2h)
@@ -1000,11 +1017,18 @@
     const out = [];
     if (MF.slotTakesPlayers(slot.f)) for (const seat of [who, 1 - who]) if (targetable(s, { p: seat }, slot, who, srcIid)) out.push({ p: seat });
     if (slot.f && slot.f.card) { for (const p of s.players) for (const iid of p[slot.f.card]) if (targetable(s, { c: iid }, slot, who, srcIid)) out.push({ c: iid }); }
-    else if (slot.f && slot.f.spell) { for (const L of s.stack) if (L.kind === 'spell' && targetable(s, { c: L.iid }, slot, who, srcIid)) out.push({ c: L.iid }); }
-    else if (slot.f && slot.f.ability) { for (const L of s.stack) if (L.kind !== 'spell') out.push({ a: L.lid }); }
+    else if (slot.f && (slot.f.spell || slot.f.ability)) {
+      for (const L of s.stack) {
+        if (L.kind === 'spell' && slot.f.spell && targetable(s, { c: L.iid }, slot, who, srcIid)) out.push({ c: L.iid });
+        if (L.kind !== 'spell' && slot.f.ability && targetable(s, { a: L.lid }, slot, who, srcIid)) out.push({ a: L.lid });
+      }
+      if (slot.f.orPerm) for (const iid of s.bf) if (targetable(s, { c: iid }, slot, who, srcIid)) out.push({ c: iid });
+    }
     else if (MF.slotTakesObjects(slot.f)) for (const iid of s.bf) if (targetable(s, { c: iid }, slot, who, srcIid)) out.push({ c: iid });
     return out.filter(r => !(chosen || []).some(q => q.p === r.p && q.c === r.c));
   };
+  // CR 115.10: "a spell with a single target" — one target, chosen once, in all its instances of the word "target".
+  const singleTarget = MF.singleTarget = L => { const ids = new Set(); for (const sl of L.t || []) for (const r of sl) if (r) ids.add(refId(r)); return ids.size === 1; };
   const refId = r => r.p != null ? 'p' + r.p : r.a != null ? 'a' + r.a : 'c' + r.c;
   MF.refId = refId;
   // Choose targets for each slot. A slot with "up to N" may take fewer. Different instances of
@@ -1119,7 +1143,7 @@
     if (ch.kw.defender) return false;                                                        // CR 702.3b
     if (restricted(s, iid, 'attack', tbl)) return false;
     if (!ch.kw.haste && !(c.ctlTurn < s.turn)) return false;                                 // CR 302.6
-    if (s.effects.some(e => e.k === 'cantAttack' && e.iid === iid)) return false;
+    if (s.effects.some(e => (e.k === 'cantAttack' && e.iid === iid) || e.k === 'noAttacks')) return false;   // Orim's Chant, kicked: "creatures can't attack this turn"
     return true;
   };
   // Can this creature block that attacker, given what else has been declared?
@@ -1422,8 +1446,9 @@
   function playableZones(s, who) {
     const out = P(s, who).hand.concat(P(s, who).command || []);                                 // CR 903.8: a commander may be cast from the command zone
     const graveLands = s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'landsFromGrave'));   // Icetill Explorer
-    for (const iid of P(s, who).grave) if (def(s, iid).ab.some(a => a.k === 'harmonize' || a.k === 'flashback' || a.k === 'mayhem') || (graveLands && def(s, iid).types.includes('Land'))) out.push(iid);   // CR 702.180a, 702.34a, 702.187b
-    if (s.effects.some(e => e.k === 'yawgPlay' && e.who === who)) for (const iid of P(s, who).grave) if (!out.includes(iid)) out.push(iid);   // Yawgmoth's Will: play lands and cast spells from your graveyard this turn
+    for (const iid of P(s, who).grave) if (def(s, iid).ab.some(a => a.k === 'harmonize' || a.k === 'flashback' || a.k === 'mayhem') || grantedFlashback(s, iid) || (graveLands && def(s, iid).types.includes('Land'))) out.push(iid);   // CR 702.180a, 702.34a, 702.187b
+    if (s.effects.some(e => e.k === 'yawgPlay' && e.who === who) || breachOn(s, who)) for (const iid of P(s, who).grave) if (!out.includes(iid)) out.push(iid);   // Underworld Breach: escape
+    for (const z of ['grave', 'exile']) for (const iid of P(s, who)[z]) if (!out.includes(iid) && graveCastable(s, who, iid)) out.push(iid);   // Squee   // Yawgmoth's Will: play lands and cast spells from your graveyard this turn
     if (raulReady(s, who) != null) for (const iid of P(s, who).grave) if (I(s, iid).milledTurn === s.turn && !out.includes(iid)) out.push(iid);   // Raul: a card milled this turn
     if (s.effects.some(e => e.k === 'forageCast' && e.who === who)) for (const iid of P(s, who).grave) if (def(s, iid).types.includes('Creature') && !out.includes(iid)) out.push(iid);
     for (const e of s.effects) if (e.k === 'mayPlay' && e.who === who && I(s, e.iid) && (I(s, e.iid).zone === 'exile' || I(s, e.iid).zone === 'grave') && !(e.afterTurn != null && s.turn <= e.afterTurn) && !out.includes(e.iid)) out.push(e.iid);
@@ -1433,8 +1458,8 @@
   const raulReady = MF.raulReady = (s, who) => s.ap !== who ? null : s.bf.find(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'raulCast') && I(s, i).raulTurn !== s.turn) ?? null;
   const yawg = (s, who) => s.effects.some(e => e.k === 'yawgPlay' && e.who === who);
   const landDrops = MF.landDrops = (s, who) => 1 + s.bf.filter(i => I(s, i).ctrl === who).reduce((n, i) => n + chars(s, i).ab.filter(a => a.k === 'extraLand').reduce((m, a) => m + a.n, 0), 0);   // CR 305.2a
-  const canPlayLand = MF.canPlayLand = function (s, who, iid) {                              // CR 305.1-2, 116.2a
-    const d = def(s, iid);
+  const canPlayLand = MF.canPlayLand = function (s, who, iid, back) {                        // CR 305.1-2, 116.2a; back: an MDFC's back face (CR 712.11b)
+    const d = back ? def(s, iid).alt : def(s, iid);
     if (I(s, iid).zone === 'grave' && !s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'landsFromGrave')) && !yawg(s, who)) return false;
     if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.castOnly)) return false;
     return d.types.includes('Land') && sorceryTiming(s, who) && P(s, who).landsPlayed < landDrops(s, who) && s.priority === who;
@@ -1453,10 +1478,48 @@
   // CR 702.190a: "any time you could cast an instant during your declare blockers step", with an unblocked attacker to return.
   const unblockedAttackers = (s, who) => s.combat ? s.combat.attackers.filter(a => I(s, a).zone === 'bf' && I(s, a).ctrl === who && s.combat.blocked[a] === false) : [];
   const sneakWindow = (s, who) => s.ap === who && s.step === 'blockers' && s.priority === who && unblockedAttackers(s, who).length > 0;
+  // PLAN D22 (the championship Commander decks): permissions and prohibitions on casting.
+  // "You may cast spells this turn as though they had flash" (Borne Upon a Wind, Emergence Zone);
+  // "You may cast noncreature spells as though they had flash" (Valley Floodcaller). CR 601.3e.
+  const asThoughFlash = MF.asThoughFlash = (s, who, ch) => s.effects.some(e => e.k === 'flashAll' && e.who === who) || (!ch.types.includes('Creature') && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'flashNoncreature')));
+  // Flash Photography: "as though it had flash if it targets a permanent you control" — such a target exists.
+  const flashOwnTargets = (s, who, iid, d) => { const sp = d.ab.find(a => a.k === 'spell'); return !!sp && !!sp.tg && MF.targetOptions(s, sp.tg[0], who, iid, []).some(r => r.c != null && I(s, r.c).zone === 'bf' && I(s, r.c).ctrl === who); };
+  // What forbids a player to cast this spell now (CR 101.2): Silence, Orim's Chant, Permission Denied,
+  // Revel in Silence (effects for the turn); Dosan (only during their own turns); split second (CR 702.61a).
+  const castForbidden = MF.castForbidden = function (s, who, iid) {
+    const ch = chars(s, iid), d0 = def(s, iid);
+    const cre = (d0.types.includes('Creature') && !d0.alt) || ch.types.includes('Creature');
+    const e = s.effects.find(e2 => e2.k === 'noCast' && e2.who === who && (!e2.noncreature || !cre));
+    if (e) return { why: e };
+    if (s.ap !== who) { const dz = s.bf.find(i => chars(s, i).ab.some(a => a.k === 'onlyOwnTurn')); if (dz != null) return { dosan: dz }; }
+    const ss = s.stack.find(L => L.kind === 'spell' && chars(s, L.iid).ab.some(a => a.k === 'splitSecond'));
+    if (ss) return { split: ss };
+    return null;
+  };
+  // CR 702.61a: while a spell with split second is on the stack, no spells and no abilities but mana abilities.
+  const splitSecondOn = MF.splitSecondOn = s => s.stack.some(L => L.kind === 'spell' && chars(s, L.iid).ab.some(a => a.k === 'splitSecond'));
+  // CR 118.9: an alternative cost — its condition holds and its non-mana parts can be paid.
+  const altCostOk = MF.altCostOk = function (s, who, iid, d0) {
+    const a = d0.ab.find(b => b.k === 'altCost'); if (!a) return false;
+    if (a.cond && !MF.cond({ s: s, ctrl: who, src: iid, flags: {}, targets: [] }, a.cond)) return false;
+    if (a.exileBlue && P(s, who).hand.filter(i => i !== iid && chars(s, i).colors.includes('U')).length < a.exileBlue) return false;
+    if (a.life && P(s, who).life < a.life) return false;                                       // CR 119.4
+    if (a.sacNontokenRed && !s.bf.some(i => I(s, i).ctrl === who && !I(s, i).tok && chars(s, i).types.includes('Creature') && chars(s, i).colors.includes('R'))) return false;
+    return true;
+  };
+  // Underworld Breach: each nonland card in your graveyard has escape — its mana cost plus exiling three other cards (CR 702.138a).
+  const breachOn = (s, who) => s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'breach'));
+  const canEscape = MF.canEscape = (s, who, iid) => I(s, iid).zone === 'grave' && I(s, iid).owner === who && !def(s, iid).types.includes('Land') && breachOn(s, who) && P(s, who).grave.filter(g => g !== iid).length >= 3;
+  // Squee, the Immortal: "You may cast this card from your graveyard or from exile."
+  const graveCastable = (s, who, iid) => I(s, iid).owner === who && def(s, iid).ab.some(a => a.k === 'castFromGraveExile');
   const canCast = MF.canCast = function (s, who, iid, alt, door, via) {                      // CR 601.2e
     const d0 = def(s, iid);
     if (via === 'forage' && !(I(s, iid).zone === 'grave' && d0.types.includes('Creature') && s.effects.some(e => e.k === 'forageCast' && e.who === who) && (P(s, who).grave.filter(g => g !== iid).length >= 3 || s.bf.some(i => I(s, i).ctrl === who && chars(s, i).subtypes.includes('Food'))))) return false;
-    if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && via !== 'forage' && via !== 'raul' && !yawg(s, who) && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who)) return false;
+    if (I(s, iid).zone === 'grave' && via !== 'harmonize' && via !== 'flashback' && via !== 'mayhem' && via !== 'forage' && via !== 'raul' && via !== 'escape' && !yawg(s, who) && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.who === who) && !graveCastable(s, who, iid)) return false;
+    if (via === 'escape' && !canEscape(s, who, iid)) return false;                              // CR 702.138a
+    if (via === 'altCost' && !altCostOk(s, who, iid, d0)) return false;                         // CR 118.9
+    if (via === 'dash' && !(I(s, iid).zone === 'hand' && d0.ab.some(a => a.k === 'dash'))) return false;   // CR 702.109a
+    if (castForbidden(s, who, iid)) return false;                                              // CR 101.2: "can't" beats "can"
     if (via === 'raul' && !(I(s, iid).zone === 'grave' && I(s, iid).milledTurn === s.turn && raulReady(s, who) != null)) return false;
     if (via === 'morph' && !(I(s, iid).zone === 'hand' && d0.ab.some(a => a.k === 'morph'))) return false;   // CR 702.37c
     if (I(s, iid).zone === 'command' && !I(s, iid).cmdr) return false;
@@ -1470,7 +1533,7 @@
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrSac' && P(s, who).hand.filter(i => i !== iid).length === 0 && !s.bf.some(i => I(s, i).ctrl === who)) return false;   // a mandatory additional cost that can't be paid
     if (I(s, iid).zone === 'exile' && s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.plotted != null) && !sorceryTiming(s, who)) return false;   // CR 702.170d: main phase, empty stack
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'discardOrLife' && P(s, who).hand.filter(i => i !== iid).length === 0 && P(s, who).life < a.life) return false;   // a mandatory additional cost that can't be paid   // CR 702.185a: from your hand
-    if ((via === 'flashback' || via === 'mayhem') && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === via) || (via === 'mayhem' && I(s, iid).discardedTurn !== s.turn))) return false;
+    if ((via === 'flashback' || via === 'mayhem') && (I(s, iid).zone !== 'grave' || !(d0.ab.some(a => a.k === via) || (via === 'flashback' && grantedFlashback(s, iid))) || (via === 'mayhem' && I(s, iid).discardedTurn !== s.turn))) return false;
     if (via === 'harmonize' && (I(s, iid).zone !== 'grave' || !d0.ab.some(a => a.k === 'harmonize'))) return false;
     if (via === 'sneak' && !(d0.ab.some(a => a.k === 'sneak') && sneakWindow(s, who))) return false;
     if (s.bf.some(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); })) return false;   // "Your opponents can't cast spells during your turn" (CR 601.3)
@@ -1479,8 +1542,8 @@
     const ch = via === 'morph' ? { types: ['Creature'], subtypes: [], kw: {}, colors: [] } : faceChars(s, iid, alt, door), d = faceDef(s, iid, alt, door);   // CR 702.37c: cast with the face-down characteristics
     if (ch.types.includes('Land')) return false;
     if (s.priority !== who) return false;
-    const instant = ch.types.includes('Instant') || ch.kw.flash;                             // CR 117.1a, 702.8a
-    if (!instant && !sorceryTiming(s, who)) return false;
+    const instant = ch.types.includes('Instant') || ch.kw.flash || asThoughFlash(s, who, ch);   // CR 117.1a, 702.8a, 601.3e
+    if (!instant && !sorceryTiming(s, who) && !(d0.ab.some(a => a.k === 'flashIfOwnTarget') && flashOwnTargets(s, who, iid, d))) return false;
     const sp = d.ab.find(a => a.k === 'spell');
     const aura = d.ab.find(a => a.k === 'enchant');
     if (sp && sp.modes && !sp.modes.some(m => !m.tg || slotsLegalNow(s, who, iid, m.tg))) return false;   // CR 700.2a: a mode whose targets cannot be chosen cannot be chosen
@@ -1490,6 +1553,7 @@
     const tappedTg = tcl ? MF.targetOptions(s, sp.tg[0], who, iid, []).find(r => MF.cond({ s: s, ctrl: who, src: iid, flags: {}, targets: [[r]] }, tcl.cond)) : null;   // Ride's End, Ephara's Dispersal: priced with a target that qualifies, if one can be chosen
     let spreeExtra = null;
     if (sp && sp.spree) { const ms = sp.modes.filter(m => !m.tg || slotsLegalNow(s, who, iid, m.tg)).map(m => MF.parseMana(m.cost)).sort((a, b) => MF.manaValue(a) - MF.manaValue(b)); if (!ms.length) return false; spreeExtra = ms[0]; }
+    { const lm = d0.ab.find(a => a.k === 'addCost' && a.what === 'lifeOrMana'); if (lm && P(s, who).life < lm.life) spreeExtra = MF.parseMana(lm.mana); }   // Redirect Lightning: without the life, the {2}
     if (via === 'morph') return canPayMana(s, who, MF.parseMana('{3}'), { creature: true });   // CR 702.37a: {3} rather than its mana cost
     return canPayMana(s, who, spellCost(s, who, iid, { x: sp && sp.xMin || 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: spreeExtra, targets: tappedTg ? [[tappedTg]] : null }), { creature: ch.types.includes('Creature'), artifact: ch.types.includes('Artifact'), subtypes: ch.subtypes });
   };
@@ -1514,10 +1578,20 @@
   };
   // Kíli: with an enduring story, the first equip ability each turn may cost {0} instead (CR 118.9)
   const freeEquip = MF.freeEquip = (s, who, a) => !!a.equip && !!P(s, who).enduring && !(P(s, who).h.equips > 0) && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(b => b.k === 'freeEquipOnce'));
+  // What forbids activating this ability now: Trickbind ("activated abilities of that permanent can't
+  // be activated this turn"); Grand Abolisher ("During your turn, your opponents can't ... activate
+  // abilities of artifacts, creatures, or enchantments" — mana abilities too); Revel in Silence (loyalty abilities).
+  const activateForbidden = MF.activateForbidden = function (s, who, iid, a) {
+    if (s.effects.some(e => e.k === 'noActivate' && e.iid === iid)) return true;
+    if (a && a.loyalty != null && s.effects.some(e => e.k === 'noCast' && e.who === who && e.noLoyalty)) return true;
+    if (s.ap !== who && I(s, iid).zone === 'bf' && chars(s, iid).types.some(ty => ty === 'Artifact' || ty === 'Creature' || ty === 'Enchantment') && s.bf.some(i => I(s, i).ctrl === s.ap && chars(s, i).ab.some(b => b.k === 'oppNoActivate'))) return true;
+    return false;
+  };
   const canActivate = MF.canActivate = function (s, who, iid, i) {                            // CR 602.5
     const c = I(s, iid), ch = chars(s, iid), a = ch.ab[i];
     if (c.ctrl !== who || a.k !== 'act' || s.priority !== who) return false;
-    if ((a.zone || 'bf') !== c.zone) return false;                                            // CR 702.29a: cycling functions only in its owner's hand
+    if ((a.zone || 'bf') !== c.zone) return false;
+    if (splitSecondOn(s) || activateForbidden(s, who, iid, a)) return false;                    // CR 702.61a; Grand Abolisher, Trickbind, Revel in Silence                                            // CR 702.29a: cycling functions only in its owner's hand
     if ((a.zone === 'hand' || a.zone === 'grave') && c.owner !== who) return false;
     if (a.sorcery && !sorceryTiming(s, who)) return false;
     if (a.cost.tap && (c.tapped || (ch.types.includes('Creature') && !ch.kw.haste && !(c.ctlTurn < s.turn) && !abilityHaste(s, who)))) return false;   // CR 302.6
@@ -1564,14 +1638,17 @@
     for (const iid of playableZones(s, who)) {
       const d = def(s, iid);
       if (canPlayLand(s, who, iid)) out.push({ type: 'land', iid: iid });
+      else if (d.alt && d.alt.kind === 'mdfc' && d.alt.types.includes('Land') && canPlayLand(s, who, iid, true)) out.push({ type: 'land', iid: iid, alt: true });   // CR 712.11b: a modal double-faced card played as its back face
       else if (d.doors) { for (let k = 0; k < d.doors.length; k++) if (canCast(s, who, iid, false, k)) out.push({ type: 'cast', iid: iid, door: k }); }   // CR 709.3
-      else if (I(s, iid).zone === 'grave') { if (canCast(s, who, iid, false, null, 'raul') && !canCast(s, who, iid)) out.push({ type: 'cast', iid: iid, via: 'raul' }); if (canCast(s, who, iid, false, null, 'forage')) out.push({ type: 'cast', iid: iid, via: 'forage' }); for (const v of ['flashback', 'mayhem']) if (canCast(s, who, iid, false, null, v)) out.push({ type: 'cast', iid: iid, via: v }); if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
+      else if (I(s, iid).zone === 'grave') { if (canCast(s, who, iid, false, null, 'raul') && !canCast(s, who, iid)) out.push({ type: 'cast', iid: iid, via: 'raul' }); if (canCast(s, who, iid, false, null, 'forage')) out.push({ type: 'cast', iid: iid, via: 'forage' }); for (const v of ['flashback', 'mayhem', 'escape']) if (canCast(s, who, iid, false, null, v)) out.push({ type: 'cast', iid: iid, via: v }); if (canCast(s, who, iid, false, null, 'harmonize')) out.push({ type: 'cast', iid: iid, via: 'harmonize' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }   // harmonize, or an effect's permission
       else if (d.ab.some(a => a.k === 'evoke') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'evoke')) out.push({ type: 'cast', iid: iid, via: 'evoke' }); }
       else if (d.ab.some(a => a.k === 'impending') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'impending')) out.push({ type: 'cast', iid: iid, via: 'impending' }); }
       else if (d.ab.some(a => a.k === 'warp') && I(s, iid).zone === 'hand') { if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); if (canCast(s, who, iid, false, null, 'warp')) out.push({ type: 'cast', iid: iid, via: 'warp' }); }
       else if (d.ab.some(a => a.k === 'sneak') && canCast(s, who, iid, false, null, 'sneak')) { out.push({ type: 'cast', iid: iid, via: 'sneak' }); if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid }); }
       else if (canCast(s, who, iid)) out.push({ type: 'cast', iid: iid });
       if (d.ab.some(a => a.k === 'morph') && canCast(s, who, iid, false, null, 'morph')) out.push({ type: 'cast', iid: iid, via: 'morph' });   // CR 702.37c: face down
+      if (d.ab.some(a => a.k === 'altCost') && canCast(s, who, iid, false, null, 'altCost')) out.push({ type: 'cast', iid: iid, via: 'altCost' });   // CR 118.9: Force of Will, Fierce Guardianship
+      if (d.ab.some(a => a.k === 'dash') && I(s, iid).zone === 'hand' && canCast(s, who, iid, false, null, 'dash')) out.push({ type: 'cast', iid: iid, via: 'dash' });   // CR 702.109a
       // CR 715.3, 720.3: an Adventure or Omen card may be cast as that spell — not again from exile after its Adventure (715.3d)
       if (d.alt && !s.effects.some(e => e.k === 'mayPlay' && e.iid === iid && e.noAlt) && canCast(s, who, iid, true)) out.push({ type: 'cast', iid: iid, alt: true });
       if (I(s, iid).zone === 'hand' && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'castFree')) && !d.doors && canCast(s, who, iid, false, null, 'free')) out.push({ type: 'cast', iid: iid, via: 'free' });   // Omniscience
@@ -1632,6 +1709,7 @@
     if (P(s, who).hand.includes(iid) && chars(s, iid).ab.some((a, i) => a.k === 'act' && a.zone === 'hand' && canActivate(s, who, iid, i))) return null;   // it can be cycled
     if (s.priority !== who) return 'You do not have priority.';
     { const nc = s.bf.find(i => { const ch2 = chars(s, i); return ch2.ctrl !== who && ch2.ctrl === s.ap && ch2.ab.some(a => a.k === 'oppNoCast'); }); if (nc != null) return chars(s, nc).name + ': you can’t cast spells during the opponent’s turn.'; }
+    { const f = castForbidden(s, who, iid); if (f) return f.why ? MF.cards[f.why.src].name + ': you can’t cast ' + (f.why.noncreature ? 'noncreature ' : '') + 'spells this turn.' : f.dosan != null ? chars(s, f.dosan).name + ': players can cast spells only during their own turns.' : chars(s, f.split.iid).name + ' has split second: no spells while it is on the stack.'; }
     { const hn = s.bf.find(i => chars(s, i).ab.some(a => a.k === 'oneSpellPerTurn')); if (hn != null && P(s, who).h.cast >= 1) return chars(s, hn).name + ': each player can’t cast more than one spell each turn, and you have cast one.'; }
     const instant = ch.types.includes('Instant') || ch.kw.flash;
     if (!instant) {
@@ -1741,9 +1819,9 @@
   EXEC_DEF('land', function (x) {                                                            // CR 305.1: a special action, no stack
     const s = x.s, who = x.inv.who, iid = x.inv.iid, c = I(s, iid);
     const from = c.zone;
-    log(s, 'land', { who: who, c: c.id, from: from });
+    log(s, 'land', { who: who, c: c.id, from: from, face: x.inv.alt ? def(s, iid).alt.name : null });
     P(s, who).landsPlayed++;
-    move(s, iid, 'bf', { ctrl: who, x: x });
+    move(s, iid, 'bf', Object.assign({ ctrl: who, x: x }, x.inv.alt ? { transformed: true } : {}));   // CR 712.11b: it enters with its back face up
     setPriority(s, who);                                                                      // CR 117.3c
   });
   EXEC_DEF('cast', function (x) {
@@ -1755,6 +1833,8 @@
     const prepOf = c0.prepCopy ? c0.ofPrep : null;
     if (prepOf != null && I(s, prepOf)) { I(s, prepOf).prepared = false; log(s, 'unprepared', { who: who, c: I(s, prepOf).id }); }   // CR 722.3c, 601.2i
     const copyCard = !!c0.copyCard;
+    // Flash Photography: cast at a time only flash allows, it must target a permanent you control (decided before it moves: CR 601.2a).
+    const ownOnly = card.ab.some(a => a.k === 'flashIfOwnTarget') && !sorceryTiming(s, who) && !(d.kw.flash || asThoughFlash(s, who, chars(s, iid0)));
     const iid = move(s, iid0, 'stack', { ctrl: who });                                        // CR 601.2a
     if (morph) I(s, iid).faceDown = true;                                                     // CR 702.37c, 708.4
     const L = { lid: s.lid++, kind: 'spell', ctrl: who, iid: iid, id: morph ? 'face-down' : card.id, t: [], x: 0, from: from, alt: alt ? d.kind : null };
@@ -1841,6 +1921,14 @@
         const way = ask(x, { who: who, kind: 'discardOrSac', src: iid, opts: [canDiscard ? { id: 'discard' } : null, mine.length ? { id: 'sac' } : null].filter(Boolean), cancel: true });
         if (way === 'discard') { const cd = ask(x, { who: who, kind: 'discard', src: iid, left: 1, opts: P(s, who).hand.map(i => ({ id: i, iid: i })), cancel: true }); addPay.push(() => MF.discard(s, cd)); }
         else { const sp = ask(x, { who: who, kind: 'sacrificeCost', src: iid, opts: mine.map(i => ({ id: i, iid: i })), cancel: true }); addPay.push(() => MF.sacrifice(s, sp)); }
+      } else if (a.what === 'lifeOrMana') {                                                   // Redirect Lightning: "pay 5 life or pay {2}" — mandatory, one of the two (CR 601.2f)
+        const canLife = P(s, who).life >= a.life, add = MF.parseMana(a.mana), tot = spellCost(s, who, iid, { x: L.x, anyMana: anyMana, via: via, free: plotted, fromCommand: from === 'command' });
+        for (const k of ['W', 'U', 'B', 'R', 'G', 'C', 'g']) tot[k] += add[k];
+        const canMana = canPayMana(s, who, tot, ctx);
+        if (!canLife && !canMana) throw new Illegal('cannot pay the additional cost');
+        const way = ask(x, { who: who, kind: 'lifeOrMana', src: iid, life: a.life, mana: a.mana, opts: [canLife ? { id: 'life' } : null, canMana ? { id: 'mana' } : null].filter(Boolean), cancel: true });
+        if (way === 'life') addPay.push(() => MF.loseLife(s, who, a.life, 'pay', card.id));
+        else for (const k of ['W', 'U', 'B', 'R', 'G', 'C', 'g']) extra[k] = (extra[k] || 0) + add[k];
       } else if (a.what === 'discardOrLife') {                                                // Bitter Triumph: mandatory, one of the two
         const canDiscard = P(s, who).hand.length > 0, canLife = P(s, who).life >= a.life;
         if (!canDiscard && !canLife) throw new Illegal('cannot pay the additional cost');
@@ -1904,6 +1992,29 @@
       for (let k = 0; k < fbSac.n; k++) { const opts = s.bf.filter(i => I(s, i).ctrl === who && !got.includes(i) && fbSac.types.some(ty => chars(s, i).types.includes(ty))).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('not enough creatures to sacrifice'); got.push(ask(x, { who: who, kind: 'sacrificeCost', src: iid, k: k + 1, n: fbSac.n, opts: opts, cancel: true })); }
       addPay.push(() => { for (const i of got) MF.sacrifice(s, i); });
     }
+    if (ownOnly && !L.t.flat().some(r => r && r.c != null && I(s, r.c).zone === 'bf' && I(s, r.c).ctrl === who)) throw new Illegal('cast as though it had flash, it must target a permanent you control');
+    if (via === 'altCost') {                                                                   // CR 118.9: the alternative cost's parts, chosen now and paid with the rest (601.2h)
+      const a = card.ab.find(b => b.k === 'altCost');
+      if (a.exileBlue) {
+        const got = [];
+        for (let k = 0; k < a.exileBlue; k++) { const opts = P(s, who).hand.filter(i => !got.includes(i) && chars(s, i).colors.includes('U')).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('no blue card to exile'); got.push(ask(x, { who: who, kind: 'altExileBlue', src: iid, k: k + 1, n: a.exileBlue, opts: opts, cancel: true })); }
+        addPay.push(() => { log(s, 'exileToPay', { who: who, cs: got.map(g => I(s, g).id), src: card.id }); for (const g of got) move(s, g, 'exile'); });
+      }
+      if (a.sacNontokenRed) {
+        const opts = s.bf.filter(i => I(s, i).ctrl === who && !I(s, i).tok && chars(s, i).types.includes('Creature') && chars(s, i).colors.includes('R')).map(i => ({ id: i, iid: i }));
+        if (!opts.length) throw new Illegal('no nontoken red creature to sacrifice');
+        const v = ask(x, { who: who, kind: 'sacrificeCost', src: iid, opts: opts, cancel: true }); addPay.push(() => MF.sacrifice(s, v));
+      }
+      if (a.life) addPay.push(() => MF.loseLife(s, who, a.life, 'pay', card.id));
+      L.altCost = true;
+    }
+    if (via === 'escape') {                                                                    // CR 702.138a: exile three other cards from your graveyard
+      const got = [];
+      for (let k = 0; k < 3; k++) got.push(ask(x, { who: who, kind: 'exileFromGrave', src: iid, k: k + 1, n: 3, opts: P(s, who).grave.filter(g => !got.includes(g)).map(g => ({ id: g, iid: g })), cancel: true }));
+      addPay.push(() => { log(s, 'escapeExile', { who: who, cs: got.map(g => I(s, g).id), src: card.id }); for (const g of got) move(s, g, 'exile'); });
+      L.escaped = true;
+    }
+    if (via === 'dash') L.dash = true;                                                         // CR 702.109a
     const cost = spellCost(s, who, iid, { x: L.x, extra: extra, anyMana: anyMana, via: via, reduce: reduce, free: plotted, targets: L.t, fromCommand: from === 'command' });   // CR 601.2f
     if (hzTap != null) { tapPerm(s, hzTap); log(s, 'tapped', { who: who, c: I(s, hzTap).id }); }   // CR 702.180b
     if (L.bargainSac != null) MF.sacrifice(s, L.bargainSac);
@@ -1923,13 +2034,14 @@
     if (ch.types.includes('Instant')) p.h.castInstant++;
     if (ch.types.includes('Sorcery')) p.h.castSorcery++;
     if (ch.subtypes.includes('Otter')) p.h.castOtter++;
-    (p.h.castList = p.h.castList || []).push({ lid: L.lid, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice() });   // turn history: "the first instant spell ... you've cast this turn"
+    (p.h.castList = p.h.castList || []).push({ lid: L.lid, name: ch.name, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice() });   // turn history: "the first instant spell ... you've cast this turn"
     L.nth = { cast: p.h.cast, instant: ch.types.includes('Instant') ? p.h.castInstant : 0, sorcery: ch.types.includes('Sorcery') ? p.h.castSorcery : 0, otter: ch.subtypes.includes('Otter') ? p.h.castOtter : 0 };
     if (morph) log(s, 'castFaceDown', { who: who, c: card.id });                              // only its owner may look at it (CR 708.5)
     else log(s, 'cast', { who: who, c: card.id, face: alt || door != null || prepOf != null ? d.name : null, alt: alt ? d.kind : door != null ? 'door' : prepOf != null ? 'prepare' : null, via: via, impending: !!L.impending, evoked: !!L.evoked, x: costRaw.x ? L.x : null, from: from, tg: L.t.map(sl => sl.map(r => refLabel(s, r))), offspring: !!L.offspring, kicked: !!L.kicked, gift: L.gift != null, bargained: !!L.bargained, harmonize: !!L.harmonize, sneak: !!L.sneak, warp: !!L.warp });
     // The spell as cast travels with the event: a copy made after it has left the stack is made from it as it last existed (Alania's rulings, CR 707.10).
     const spell = { id: card.id, t: JSON.parse(JSON.stringify(L.t)), x: L.x, mode: L.mode, alt: L.alt, door: L.door, kicked: !!L.kicked, offspring: !!L.offspring, gift: L.gift, bargained: !!L.bargained };
-    emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid, spell: spell, nth: p.h.cast, mv: ch.mv + (L.x || 0) * costRaw.x });   // CR 601.2i
+    const nthNoncre = ch.types.includes('Creature') ? 0 : p.h.castList.filter(e => !e.types.includes('Creature')).length;   // "their first noncreature spell each turn"
+    emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid, spell: spell, nth: p.h.cast, nthNoncre: nthNoncre, mv: ch.mv + (L.x || 0) * costRaw.x, spent: L.spent, from: from });   // CR 601.2i
     if (card.ab.some(a => a.k === 'storm') && !morph) {                                         // CR 702.40a: it triggers as it is cast — counting every spell cast before it this turn, by either player
       const before = s.players.reduce((n, q) => n + q.h.cast, 0) - 1;
       s.trigs.push({ src: iid, ab: -1, inl: { k: 'trig', on: 'cast', storm: true, ops: [{ o: 'storm' }] }, ctrl: who, ev: { t: 'cast', iid: iid, ctrl: who, lid: L.lid, spell: spell, storm: before }, lki: null });
@@ -2022,6 +2134,7 @@
     }
     s.stack.push(L);
     emitTargeted(s, L.t, who, L.lid);
+    emit(s, { t: 'activated', ctrl: who, who: who, iid: iid, lid: L.lid });                  // "Whenever an opponent activates an ability that isn't a mana ability" (CR 602.2)
     setPriority(s, who);
   });
   // CR 605.3a-b: a mana ability activated at priority. It doesn't use the stack; the mana stays in the
@@ -2086,6 +2199,31 @@
   }
   MF.ctxFor = ctxFor;
   // CR 608.2b: a target is legal on resolution only if it still exists in its zone and still fits.
+  // The target slots of an object on the stack: a spell's (its chosen mode's), or an ability's.
+  const stackSlots = MF.stackSlots = function (s, L) {
+    if (L.kind === 'spell') { const d = faceDef(s, L.iid, !!L.alt, L.door), sp = spellPart(d.ab.find(a => a.k === 'spell'), L), aura = d.ab.find(a => a.k === 'enchant'); return sp && sp.tg ? sp.tg : aura ? [{ f: aura.f }] : []; }
+    const ab = L.kind === 'trig' ? trigAbility(s, L) : (L.lki ? abFromLki(s, L.lki)[L.ab] : chars(s, L.src).ab[L.ab]);
+    return (ab.modes && L.mode != null ? ab.modes[L.mode].tg : ab.tg) || [];
+  };
+  // Changing targets (CR 115.7). `chooser` decides; legality is judged for the object's controller.
+  // 'change' (Misdirection): its single target must change to another legal one, if there is one
+  // (115.7a). 'may' (Deflecting Swat, Commandeer): each target may stay or change (115.7d).
+  MF.retarget = function (x, L, mode) {
+    const s = x.s, chooser = x.ctrl, src = L.kind === 'spell' ? L.iid : L.src, slots = stackSlots(s, L), before = JSON.stringify(L.t);
+    const optsFor = (slot, si, k) => { const alone = Object.assign({}, slot); delete alone.diff; const others = L.t[si].filter((r, j) => j !== k); return MF.targetOptions(s, alone, L.ctrl, src, others).filter(r => slot.diff == null || !(L.t[slot.diff] || []).some(q => refId(q) === refId(r))); };
+    const lbl = r => Object.assign({ id: refId(r) }, r.c != null ? { iid: r.c } : r.a != null ? { lid: r.a } : { seat: r.p });
+    const parse = a => a[0] === 'p' ? { p: +a.slice(1) } : a[0] === 'a' ? { a: +a.slice(1) } : { c: +a.slice(1) };
+    slots.forEach((slot, si) => (L.t[si] || []).forEach((cur, k) => {
+      if (!cur) return;
+      const opts = optsFor(slot, si, k).filter(r => refId(r) !== refId(cur));
+      if (!opts.length) return;                                                                 // no other legal target: it stays (CR 115.7a, d)
+      const list = opts.map(lbl);
+      if (mode === 'may') list.push({ id: 'keep' });
+      const a = ask(x.x, { who: chooser, kind: 'retarget', src: x.src, spell: L.kind === 'spell' ? L.iid : null, lid: L.lid, cur: refId(cur), must: mode === 'change', opts: list });
+      if (a !== 'keep') L.t[si][k] = parse(a);
+    }));
+    if (JSON.stringify(L.t) !== before) { log(s, 'retarget', { who: chooser, c: L.kind === 'spell' ? L.id : L.srcId, tg: L.t.map(sl => sl.map(r => r ? refLabel(s, r) : null)) }); emitTargeted(s, L.t, L.ctrl, L.lid); }
+  };
   function liveTargets(s, L, slots) {
     if (!slots || !slots.length) return { any: true, t: [] };
     let anyLegal = false;
@@ -2141,6 +2279,10 @@
         let exileCopied = null;
         for (const a of d.ab) if (a.k === 'enterAsCopy') { const cp = MF.askEnterAsCopy(X, a, L); if (cp) { exileCopied = cp.exileFrom != null ? cp.exileFrom : null; delete cp.exileFrom; o.copy = cp; } }   // CR 614.1c, 707: a replacement with a choice, asked as it would enter
         const nPerm = move(s, L.iid, 'bf', o);
+        if (L.dash && I(s, nPerm) && I(s, nPerm).zone === 'bf') {                               // CR 702.109a: haste, and back to its owner's hand at the beginning of the next end step
+          s.effects.push({ k: 'grant', iid: nPerm, kws: ['haste'], ts: s.ts++ });
+          (s.delayed = s.delayed || []).push({ src: nPerm, ctrl: L.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', ops: [{ o: 'returnThese', iids: [nPerm], why: 'dash' }] } });
+        }
         if (exileCopied != null) s.trigs.push({ src: nPerm, ab: -1, inl: { k: 'trig', on: 'reflexive', ops: [{ o: 'exileCard', iid: exileCopied }] }, ctrl: L.ctrl, ev: { t: 'reflexive' }, lki: null });
       }
     } else {
