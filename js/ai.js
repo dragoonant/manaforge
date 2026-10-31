@@ -16,7 +16,7 @@
   // The evaluator. Board presence persists in Magic (handoff 11.8.5): power, toughness and
   // evasion on the battlefield, cards in hand, lands, and life with a low-life cliff.
   // ---------------------------------------------------------------------------------------------
-  const W = { colorAccess: 0.9, pactUnpaid: 400, landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
+  const W = { emptyLibrary: 150, colorAccess: 0.9, pactUnpaid: 400, landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
   MF.aiWeights = W;
   const lifeScore = l => l * W.life - (l < W.lowLife ? (W.lowLife - l) * W.lowLifeExtra : 0);
   function permValue(s, iid) {
@@ -32,6 +32,9 @@
     return W.perm + (ch.subtypes.includes('Aura') ? 0.6 : 0);
   }
   MF.aiPermValue = permValue;
+  // A card that wins with an empty library in hand or on the battlefield (Thassa's Oracle, PLAN D24).
+  const isLibraryWin = d => /win the game/.test(d.text || '') && /librar/.test(d.text || '');
+  function winsOnEmpty(s, seat) { return P(s, seat).hand.concat(s.bf.filter(i => I(s, i).ctrl === seat)).some(i => isLibraryWin(MF.def(s, i))); }
   function evalFor(s, me) {
     if (s.winner != null) return s.winner === me ? 1000 : s.winner === 'draw' ? 0 : -1000;
     let v = 0;
@@ -62,6 +65,9 @@
         if (srcs < MF.manaValue(MF.parseMana(op.cost))) x -= W.pactUnpaid;
       }
       if (p.lib.length < 3) x -= (3 - p.lib.length) * 4;
+      // An empty library at the horizon (CR 704.5b): its owner loses at their next draw unless something
+      // wins first (Thassa's Oracle). Brain Freeze's mill-out is scored here (PLAN D24).
+      if (p.lib.length === 0 && !winsOnEmpty(s, seat)) x -= W.emptyLibrary;
       // My turn has just ended at the horizon: an instant-speed card I could still cast with my untapped
       // lands is a threat the opponent must play around (TODO: the AI rarely held mana for a trick).
       // Only then — deciding on the opponent's turn, the horizon is my untap, and holding is worth nothing.
@@ -217,7 +223,8 @@
       case 'spreeMode': return q.chosen.length ? 'done' : q.opts[0].id;
       case 'phyrexian': return q.opts.some(o => o.id === 'mana') ? 'mana' : 'life';
       case 'mayDiscard': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0]; return c && keepValue(s, c.iid) < 3 ? c.id : 'none'; }
-      case 'exileFromGrave': return q.opts.slice().sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0].id;
+      case 'exileFromGrave': return q.opts.slice().sort((a, b) => keepValue(s, a.iid) + (LINE_PIECE(MF.def(s, a.iid)) ? 100 : 0) - keepValue(s, b.iid) - (LINE_PIECE(MF.def(s, b.iid)) ? 100 : 0))[0].id;   // escape's cost: never a piece of a win line (PLAN D24)
+      case 'manaYield': { const need = { W: 0, U: 0, B: 0, R: 0, G: 0 }; for (const i of P(s, me).hand.concat(P(s, me).grave)) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\\{' + k + '\\}', 'g')) || []).length; return q.opts.slice().sort((a, b) => [...b.id].reduce((n, k) => n + (need[k] || 0), 0) - [...a.id].reduce((n, k) => n + (need[k] || 0), 0))[0].id; }   // Lion's Eye Diamond: the colour its hand and graveyard ask for
       case 'forage': return q.opts.some(o => o.id === 'exile') ? 'exile' : 'food';
       case 'leyline': return 'yes';
       case 'freeEquip': return 'free';
@@ -304,11 +311,12 @@
     return c;
   }
   // Roll forward with policies to the end of the turn the decision was made in.
-  function rollout(s, me, turn0, st) {
+  function rolloutState(s, me, turn0, st) {
     let guard = 0;
     while (s.winner == null && s.turn === turn0 && guard++ < 600) { s = MF.apply(s, defaultAct(s)); st.n++; }
-    return evalFor(s, me);
+    return s;
   }
+  function rollout(s, me, turn0, st) { return evalFor(rolloutState(s, me, turn0, st), me); }
   // Kinds where every answer is worth a roll-out when the AI itself is asked.
   const SEARCH_KINDS = { addCostYes: 1, attackWhom: 1, wardPay: 1, bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
@@ -324,11 +332,142 @@
     return out;
   }
 
+
+  // ---------------------------------------------------------------------------------------------
+  // PLAN D24: the championship Commander decks. Two things a one-turn roll-out cannot see.
+  //  1. Threats on the stack: what an opponent's spell sets up (a tutor, Ad Nauseam, Underworld
+  //     Breach, a commander) shows on the board only later. Stopping one is worth its threat value.
+  //  2. Win lines: a few cards that win together, each played out first in the engine on a
+  //     determinized copy (the opponent passing); the AI commits only to a line that wins there.
+  // ---------------------------------------------------------------------------------------------
+  const opsOf = d => JSON.stringify(d.ab.concat(d.alt ? d.alt.ab : []));
+  const hasOp = (d, o) => opsOf(d).includes('"o":"' + o + '"');
+  const isEnabler = d => hasOp(d, 'consultation') || hasOp(d, 'taintedPact');
+  const isBreach = d => d.ab.some(a => a.k === 'breach');
+  const isLED = d => d.ab.some(a => a.k === 'mana' && a.cost && a.cost.discardHand);
+  const isFreeze = d => d.ab.some(a => a.k === 'storm') && hasOp(d, 'mill');
+  const LINE_PIECE = d => isLibraryWin(d) || isEnabler(d) || isBreach(d) || isLED(d) || isFreeze(d);
+  function threatOf(s, L, me) {
+    if (L.kind !== 'spell') {                                                                    // an ability: Thassa's Oracle's trigger, a tutor's activation
+      const src = MF.cards[L.srcId] || {};
+      if (isLibraryWin(src)) return P(s, L.ctrl).lib.length <= 6 ? 400 : 20;
+      return /Search your library/.test(src.text || '') ? 15 : 2;
+    }
+    const d = MF.cards[L.id], t = d.text || '';
+    if (isLibraryWin(d)) return P(s, L.ctrl).lib.length <= 6 ? 400 : 40;
+    if (isEnabler(d)) return winsOnEmpty(s, L.ctrl) || P(s, L.ctrl).hand.length > 0 ? 120 : 40;
+    if (isBreach(d) || hasOp(d, 'adNauseam') || hasOp(d, 'extraTurn') || /Food Chain/.test(d.name)) return 60;
+    if (isFreeze(d)) return 25;
+    if ((L.t || []).flat().some(r => r && r.c != null && s.stack.some(M => M.kind === 'spell' && M.iid === r.c && M.ctrl === me))) {   // it targets my spell: a counterspell
+      const mine = s.stack.find(M => M.kind === 'spell' && (L.t || []).flat().some(r => r && r.c === M.iid));
+      return 5 + threatOf(s, mine, 1 - me);
+    }
+    if (s.cards[L.iid] && L.from === 'command') return 15;                                         // a commander
+    if (/Search your library for a card/.test(t)) return 30;
+    if (/Search your library/.test(t)) return 12;
+    if (/[Dd]raw (two|three|X|seven) cards/.test(t)) return 10;
+    return 0;
+  }
+  // Did this spell or ability resolve between log index i0 and the end of the roll-out?
+  const resolvedAfter = (r, L, i0) => r.log.slice(i0).some(e => (e.t === 'resolve' && L.kind === 'spell' && e.c === L.id && e.who === L.ctrl) || (e.t === 'resolveAb' && L.kind !== 'spell' && e.c === L.srcId && e.who === L.ctrl));
+
+  // Run a line in the engine: `next(s)` gives my action (undefined: the policy's answer; null: the line
+  // is done); the other seat passes and answers by policy. Returns the final state, or null on a refusal.
+  function runLine(s, me, next, limit) {
+    for (let k = 0; k < limit && s.winner == null; k++) {
+      const who = MF.whoActs(s); if (who == null) return s;
+      let a = who === me ? next(s) : defaultAct(s);
+      if (a === null) return s;
+      if (a === undefined) a = defaultAct(s);
+      try { s = MF.apply(s, a); } catch (e) { return null; }
+    }
+    return s;
+  }
+  // A payment inside a line: tap for the coloured part first, and pay generic mana with a source whose
+  // colours the rest of the line doesn't need (the solver's proposal may tap an Island Oracle needs).
+  function linePay(s, me, q, reserve) {
+    const taps = q.opts.filter(o => typeof o.id === 'string' && o.id.startsWith('tap:'));
+    if (!taps.length) return 'auto';
+    const need = q.need, col = ['W', 'U', 'B', 'R', 'G', 'C'].find(k => need[k] > (s.players[me].pool[k] || 0));
+    if (col) { const o = taps.find(t => t.col === col) || taps.find(t => String(t.col).includes(col)); if (o) return o.id; }   // a multi-mana source offers its multisets ("UUU")
+    const spare = taps.find(t => ![...String(t.col)].some(k => reserve.includes(k))) || taps[0];
+    return spare.id;
+  }
+  const pipsOf = (s, iids) => iids.flatMap(i => (MF.def(s, i).mana.match(/\{[WUBRG]\}/g) || []).map(x => x[1]));
+  const castOf = (s, me, pred, vias) => MF.legalActions(s).find(a => a.type === 'cast' && pred(MF.def(s, a.iid)) && (vias ? vias.includes(a.via || 'plain') : true));
+  // A line under way is read from the game, not remembered: this turn's casts include one of its pieces.
+  const castThisTurn = (s, me, pred) => (P(s, me).h.castList || []).some(e => { const d = Object.values(MF.cards).find(c => c.name === e.name); return d && pred(d); });
+  const mainEmpty = (s, me) => s.ap === me && (s.step === 'main1' || s.step === 'main2') && !s.stack.length && s.priority === me && !s.pending;
+  const LINES = [
+    { // Thassa's Oracle with Demonic Consultation or Tainted Pact: exile the library, then win as Oracle enters (CR 104.2b).
+      name: 'oracle',
+      applies: (s, me) => P(s, me).hand.some(i => isLibraryWin(MF.def(s, i))) && (P(s, me).hand.some(i => isEnabler(MF.def(s, i))) || castThisTurn(s, me, isEnabler) || P(s, me).lib.length === 0),
+      next: (s, me) => {
+        if (s.pending) {
+          const q = s.pending.q;
+          if (q.kind === 'taintedTake') return { type: 'answer', id: 'next' };
+          if (q.kind === 'pay' && q.who === me) return { type: 'answer', id: linePay(s, me, q, pipsOf(s, P(s, me).hand.filter(i => isLibraryWin(MF.def(s, i))))) };
+          return undefined;
+        }
+        if (s.priority !== me) return undefined;
+        if (s.stack.length) return { type: 'pass' };
+        if (P(s, me).lib.length > 0) { const a = castOf(s, me, isEnabler); return a || null; }
+        const o = castOf(s, me, isLibraryWin); return o || null;
+      },
+      wins: (r, me) => r.winner === me,
+      underway: (s, me) => castThisTurn(s, me, isEnabler),
+    },
+    { // Underworld Breach, Lion's Eye Diamond and Brain Freeze: escape both again and again; storm grows until a Brain Freeze mills the opponent's library away.
+      name: 'breach',
+      applies: (s, me) => { const all = P(s, me).hand.concat(P(s, me).grave, s.bf.filter(i => I(s, i).ctrl === me)); return all.some(i => isLED(MF.def(s, i))) && all.some(i => isFreeze(MF.def(s, i))) && all.some(i => isBreach(MF.def(s, i))); },
+      next: (s, me) => {
+        const opp = 1 - me, storm = s.players.reduce((n, p) => n + p.h.cast, 0), oppLib = P(s, opp).lib.length;
+        if (s.pending) {
+          const q = s.pending.q;
+          const v = MF.view(s);                                                                   // the spell being cast exists in the question's view (CLAUDE.md rule 4)
+          if (q.kind === 'target' && q.src != null && v.cards[q.src] && isFreeze(MF.def(v, q.src))) return { type: 'answer', id: 'p' + (3 * (storm + 1) >= oppLib || P(s, me).lib.length < 3 * storm + 8 ? opp : me) };   // the Brain Freeze that kills, or fuel for escape (never decking itself)
+          if (q.kind === 'newTargets') return { type: 'answer', id: 'keep' };
+          if (q.kind === 'pay' && q.who === me) return { type: 'answer', id: linePay(s, me, q, ['U']) };
+          return undefined;
+        }
+        if (s.priority !== me) return undefined;
+        if (s.stack.length) return { type: 'pass' };
+        if (oppLib === 0) return null;
+        if (!s.bf.some(i => I(s, i).ctrl === me && isBreach(MF.def(s, i)))) { const b = castOf(s, me, isBreach); return b || null; }
+        // Each turn of the loop: Lion's Eye Diamond for three mana, Brain Freeze (escaped) to refill the
+        // graveyard or to kill, Lion's Eye Diamond escaped again. Storm counts every spell this turn.
+        const freeze = castOf(s, me, isFreeze, ['plain', 'escape']);
+        if (freeze && 3 * (storm + 1) >= oppLib) return freeze;
+        const led = s.bf.find(i => I(s, i).ctrl === me && isLED(MF.def(s, i)));
+        if (led != null) { const m = MF.legalActions(s).find(a => a.type === 'mana' && a.iid === led); if (m) return m; }
+        if (freeze) return freeze;
+        const ledCast = castOf(s, me, isLED, ['plain', 'escape']); if (ledCast) return ledCast;
+        return null;
+      },
+      wins: (r, me) => r.winner === me || P(r, 1 - me).lib.length === 0,
+      underway: (s, me) => s.bf.some(i => I(s, i).ctrl === me && isBreach(MF.def(s, i))) && castThisTurn(s, me, d => isLED(d) || isFreeze(d)),
+    },
+  ];
+  // The first line that wins when played out from here, and its next action now.
+  function planLine(s, me) {
+    if (s.winner != null || me == null) return null;
+    for (const line of LINES) {
+      if (!line.applies(s, me)) continue;
+      if (s.ap === me && line.underway(s, me)) { const a = line.next(s, me); if (a) return a; continue; }   // committed: follow it (its own questions; the rest by policy)
+      if (!s.pending && !s.stack.length && !mainEmpty(s, me)) continue;                             // a line starts in my main phase (Oracle and Breach are cast as sorceries)
+      const a = line.next(s, me); if (a == null) continue;
+      const r = runLine(determinize(s, s.log.length + 17), me, x => line.next(x, me), 3000);
+      if (r && line.wins(r, me)) { MF.ai.stats.lines = (MF.ai.stats.lines || 0) + 1; return a; }
+    }
+    return null;
+  }
+  MF.aiPlanLine = planLine; MF.aiLines = LINES; MF.aiRunLine = runLine;
   MF.ai = {
     stats: { decisions: 0, rollouts: 0, applies: 0 },
     choose: function (s) {
       const me = MF.whoActs(s);
       MF.ai.stats.decisions++;
+      { const line = planLine(s, me); if (line) return line; }                                  // PLAN D24: a win line that works when played out
       if (s.pending) {
         const q = s.pending.q;
         if (q.kind === 'block' && !q.opts.some(o => o.id === 'done')) return { type: 'answer', id: blockPolicy(s, q) };   // an illegal declaration: repair it by policy (a search here can add and undo forever)
@@ -354,10 +493,12 @@
       // Every candidate and pass, rolled to the same horizon from the same determinized copy.
       const root = determinize(s, s.log.length);
       const st = { n: 0 };
+      // PLAN D24: an opponent's spell or ability on the stack, and what stopping it is worth.
+      const threats = s.pending ? [] : s.stack.filter(L => L.ctrl !== me).map(L => ({ L: L, v: threatOf(s, L, me) })).filter(t => t.v > 0);
       let best = legal[0], bs = -Infinity;
       for (const a of legal) {
         let v;
-        try { v = rollout(MF.apply(root, a), me, s.turn, st); }
+        try { const r = rolloutState(MF.apply(root, a), me, s.turn, st); v = evalFor(r, me); for (const t of threats) if (!resolvedAfter(r, t.L, s.log.length)) v += t.v; }
         catch (e) { throw e; }
         MF.ai.stats.rollouts++;
         if (a.type === 'pass' || a.id === 'done' || a.id === 'no' || a.id === 'keep') v += 0.05;   // ties go to doing nothing
