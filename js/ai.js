@@ -189,6 +189,11 @@
           const best = q.opts.map(o => o.id).filter(t => n[t]).sort((a, b) => n[b] - n[a])[0];
           return best || q.opts[0].id;
         }
+        if (q.what === 'color') {                                                               // Painter's Servant: the colour its own cards ask for most
+          const need = { W: 0, U: 0, B: 0, R: 0, G: 0 };
+          for (const i of P(s, me).hand.concat(P(s, me).lib)) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\\{' + k + '\\}', 'g')) || []).length;
+          return Object.keys(need).sort((a, b) => need[b] - need[a])[0];
+        }
         if (q.what !== 'basicType') return 'odd';
         const need = { W: 0, U: 0, B: 0, R: 0, G: 0 };                                        // the color its hand and library ask for most
         for (const i of P(s, me).hand.concat(P(s, me).lib)) for (const k in need) need[k] += (MF.def(s, i).mana.match(new RegExp('\{' + k + '\}', 'g')) || []).length;
@@ -236,6 +241,13 @@
       case 'lookTop': return 'yes';
       case 'may': return 'yes';
       case 'newTargets': return 'keep';
+      // Kujo's Commander deck (PLAN D21)
+      case 'scionPick': return q.opts.slice().sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0].id;   // the less useful card to the graveyard
+      case 'thassaTop': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'none'; }
+      case 'braidsSac': return 'no';
+      case 'braidsMatch': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0]; return c && P(s, me).life <= 10 ? c.id : 'no'; }
+      case 'millOrder': return (q.opts.find(o => o.what === 'millDouble') || q.opts[0]).id;   // doubling first always mills fewer: 2n + 4 < 2(n + 4)
+      case 'imprint': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0]; return c ? c.id : 'no'; }
       case 'enterAsCopy': return q.opts.filter(o => o.iid != null).sort((a, b) => permValue(s, b.iid) - permValue(s, a.iid))[0].id;
       case 'assign': return q.trample ? q.opts[q.opts.length - 1].id : q.opts[0].id;      // trample: lethal to the blocker, the rest to the player
       case 'target': return targetPolicy(s, q);

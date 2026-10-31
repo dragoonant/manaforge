@@ -3846,5 +3846,424 @@ window.MF.decks = {
   ],
   "compiles": true,
   "tokens": []
+ },
+ "kujo-zellix-of-halaster": {
+  "id": "kujo-zellix-of-halaster",
+  "file": "data/lists/kujo-zellix.txt",
+  "name": "Zellix, of Halaster",
+  "product": "Commander",
+  "set": "LIST",
+  "group": "kujo",
+  "player": "Kujo",
+  "released": "2026-10-31",
+  "fetched": "2026-10-31",
+  "source": "data/lists/kujo-zellix.txt",
+  "registered": true,
+  "format": "Commander",
+  "min": 100,
+  "commanders": [
+   "scion-of-halaster",
+   "zellix-sanity-flayer"
+  ],
+  "main": [
+   {
+    "id": "aphetto-alchemist",
+    "n": 1
+   },
+   {
+    "id": "braids-arisen-nightmare",
+    "n": 1
+   },
+   {
+    "id": "bruvac-the-grandiloquent",
+    "n": 1
+   },
+   {
+    "id": "captain-nghathrod",
+    "n": 1
+   },
+   {
+    "id": "consecrated-sphinx",
+    "n": 1
+   },
+   {
+    "id": "consuming-aberration",
+    "n": 1
+   },
+   {
+    "id": "duskmantle-guildmage",
+    "n": 1
+   },
+   {
+    "id": "eater-of-the-dead",
+    "n": 1
+   },
+   {
+    "id": "emry-lurker-of-the-loch",
+    "n": 1
+   },
+   {
+    "id": "guiltfeeder",
+    "n": 1
+   },
+   {
+    "id": "hedron-crab",
+    "n": 1
+   },
+   {
+    "id": "hullbreaker-horror",
+    "n": 1
+   },
+   {
+    "id": "manic-scribe",
+    "n": 1
+   },
+   {
+    "id": "narcomoeba",
+    "n": 1
+   },
+   {
+    "id": "painters-servant",
+    "n": 1
+   },
+   {
+    "id": "phenax-god-of-deception",
+    "n": 1
+   },
+   {
+    "id": "raul-trouble-shooter",
+    "n": 1
+   },
+   {
+    "id": "ruin-crab",
+    "n": 1
+   },
+   {
+    "id": "syr-konrad-the-grim",
+    "n": 1
+   },
+   {
+    "id": "thassas-oracle",
+    "n": 1
+   },
+   {
+    "id": "the-master-of-lake-town",
+    "n": 1
+   },
+   {
+    "id": "the-mindskinner",
+    "n": 1
+   },
+   {
+    "id": "unctus-grand-metatect",
+    "n": 1
+   },
+   {
+    "id": "undead-alchemist",
+    "n": 1
+   },
+   {
+    "id": "demonic-tutor",
+    "n": 1
+   },
+   {
+    "id": "diabolic-intent",
+    "n": 1
+   },
+   {
+    "id": "doomsday",
+    "n": 1
+   },
+   {
+    "id": "dread-return",
+    "n": 1
+   },
+   {
+    "id": "fabricate",
+    "n": 1
+   },
+   {
+    "id": "fractured-sanity",
+    "n": 1
+   },
+   {
+    "id": "glimpse-the-unthinkable",
+    "n": 1
+   },
+   {
+    "id": "imperial-seal",
+    "n": 1
+   },
+   {
+    "id": "maddening-cacophony",
+    "n": 1
+   },
+   {
+    "id": "mind-grind",
+    "n": 1
+   },
+   {
+    "id": "mnemonic-betrayal",
+    "n": 1
+   },
+   {
+    "id": "reanimate",
+    "n": 1
+   },
+   {
+    "id": "tashas-hideous-laughter",
+    "n": 1
+   },
+   {
+    "id": "unearth",
+    "n": 1
+   },
+   {
+    "id": "yawgmoths-will",
+    "n": 1
+   },
+   {
+    "id": "brain-freeze",
+    "n": 1
+   },
+   {
+    "id": "cabal-ritual",
+    "n": 1
+   },
+   {
+    "id": "dark-ritual",
+    "n": 1
+   },
+   {
+    "id": "dramatic-reversal",
+    "n": 1
+   },
+   {
+    "id": "mystical-tutor",
+    "n": 1
+   },
+   {
+    "id": "vampiric-tutor",
+    "n": 1
+   },
+   {
+    "id": "altar-of-dementia",
+    "n": 1
+   },
+   {
+    "id": "altar-of-the-brood",
+    "n": 1
+   },
+   {
+    "id": "arcane-signet",
+    "n": 1
+   },
+   {
+    "id": "chrome-mox",
+    "n": 1
+   },
+   {
+    "id": "codex-shredder",
+    "n": 1
+   },
+   {
+    "id": "fellwar-stone",
+    "n": 1
+   },
+   {
+    "id": "ghoulcallers-bell",
+    "n": 1
+   },
+   {
+    "id": "grindstone",
+    "n": 1
+   },
+   {
+    "id": "isochron-scepter",
+    "n": 1
+   },
+   {
+    "id": "mana-vault",
+    "n": 1
+   },
+   {
+    "id": "mesmeric-orb",
+    "n": 1
+   },
+   {
+    "id": "mindcrank",
+    "n": 1
+   },
+   {
+    "id": "mox-opal",
+    "n": 1
+   },
+   {
+    "id": "riverchurn-monument",
+    "n": 1
+   },
+   {
+    "id": "skullclamp",
+    "n": 1
+   },
+   {
+    "id": "sol-ring",
+    "n": 1
+   },
+   {
+    "id": "talisman-of-dominance",
+    "n": 1
+   },
+   {
+    "id": "the-water-crystal",
+    "n": 1
+   },
+   {
+    "id": "animate-dead",
+    "n": 1
+   },
+   {
+    "id": "bloodchief-ascension",
+    "n": 1
+   },
+   {
+    "id": "memory-erosion",
+    "n": 1
+   },
+   {
+    "id": "mystic-remora",
+    "n": 1
+   },
+   {
+    "id": "necropotence",
+    "n": 1
+   },
+   {
+    "id": "polluted-cistern-dim-oubliette",
+    "n": 1
+   },
+   {
+    "id": "rhystic-study",
+    "n": 1
+   },
+   {
+    "id": "academy-ruins",
+    "n": 1
+   },
+   {
+    "id": "ancient-tomb",
+    "n": 1
+   },
+   {
+    "id": "bloodstained-mire",
+    "n": 1
+   },
+   {
+    "id": "cabal-coffers",
+    "n": 1
+   },
+   {
+    "id": "command-tower",
+    "n": 1
+   },
+   {
+    "id": "darkslick-shores",
+    "n": 1
+   },
+   {
+    "id": "darkwater-catacombs",
+    "n": 1
+   },
+   {
+    "id": "drowned-catacomb",
+    "n": 1
+   },
+   {
+    "id": "exotic-orchard",
+    "n": 1
+   },
+   {
+    "id": "gloomlake-verge",
+    "n": 1
+   },
+   {
+    "id": "hidden-lair",
+    "n": 1
+   },
+   {
+    "id": "island",
+    "n": 1
+   },
+   {
+    "id": "morphic-pool",
+    "n": 1
+   },
+   {
+    "id": "nephalia-drownyard",
+    "n": 1
+   },
+   {
+    "id": "phyrexian-tower",
+    "n": 1
+   },
+   {
+    "id": "polluted-delta",
+    "n": 1
+   },
+   {
+    "id": "reflecting-pool",
+    "n": 1
+   },
+   {
+    "id": "shipwreck-marsh",
+    "n": 1
+   },
+   {
+    "id": "sunken-hollow",
+    "n": 1
+   },
+   {
+    "id": "sunken-ruins",
+    "n": 1
+   },
+   {
+    "id": "swamp",
+    "n": 1
+   },
+   {
+    "id": "tainted-isle",
+    "n": 1
+   },
+   {
+    "id": "undercity-sewers",
+    "n": 1
+   },
+   {
+    "id": "underground-river",
+    "n": 1
+   },
+   {
+    "id": "underground-sea",
+    "n": 1
+   },
+   {
+    "id": "urborg-tomb-of-yawgmoth",
+    "n": 1
+   },
+   {
+    "id": "urzas-saga",
+    "n": 1
+   },
+   {
+    "id": "watery-grave",
+    "n": 1
+   }
+  ],
+  "compiles": true,
+  "tokens": [
+   "token-zombie-2-2-b",
+   "token-construct",
+   "token-horror-1-1-b"
+  ]
  }
 };

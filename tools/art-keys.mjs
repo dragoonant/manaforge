@@ -10,6 +10,7 @@ export async function wantedKeys(extraDecks = []) {
   for (const d of Object.values(decks)) {
     if (!d.registered && !extraDecks.includes(d.id)) continue;
     for (const e of d.main) ids.add(e.id);
+    for (const c of d.commanders || []) ids.add(c);                                               // CR 903.6: a Commander deck's commanders
     for (const t of d.tokens || []) ids.add(t);
   }
   return [...ids].sort();

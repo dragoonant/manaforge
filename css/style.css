@@ -150,6 +150,15 @@ a { color: var(--gold); }
 .pchips { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(4 * var(--u)); }
 .chip { font-size: calc(15 * var(--u)); padding: 0 calc(8 * var(--u)); border-radius: 999px; border: 1px solid var(--bronze-dim); background: rgba(0,0,0,.35); color: #e9d6b0; white-space: nowrap; }
 .chip.emblem { white-space: normal; }
+.chip.cmd { border-color: var(--bronze); cursor: help; }
+.pchips .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.chip.cmd .cmd-short { display: none; }
+html.is-phone .chip.cmd .cmd-pre, html.is-phone .chip.cmd .cmd-full { display: none; }
+html.is-phone .chip.cmd .cmd-short { display: inline; }
+.chip.cmd.legal { border-color: var(--actable); box-shadow: 0 0 0 1px var(--actable), 0 0 10px rgba(111,240,176,.5); cursor: pointer; }
+/* CR 708.5, 406.3: a face-down card shown to a player who may not look at it */
+.card.facedown { background: #120d10 url("../art/ui/cardback.svg") center / 100% 100% no-repeat; }
+.card.facedown .fd-mark { position: absolute; top: 38%; left: 0; right: 0; text-align: center; font-size: calc(13 * var(--u)); letter-spacing: .08em; text-transform: uppercase; color: #e9d6b0; text-shadow: 0 1px 3px #000; }
 
 /* Piles: a library is backs; a graveyard or exile shows its newest card and opens its viewer. */
 .pile { position: relative; width: var(--cw); aspect-ratio: 5 / 7; flex: none; }

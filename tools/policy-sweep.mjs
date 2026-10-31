@@ -8,7 +8,7 @@ const games = +(process.argv[2] || 60);
 let r = 777; const rnd = n => { r = (r * 1103515245 + 12345) & 0x7fffffff; return r % n; };
 const kinds = {};
 for (let g = 0; g < games; g++) {
-  const a = ids[g % ids.length], b = ids[(g * 3 + 1) % ids.length];
+  const a = ids[g % ids.length], same = ids.filter(x => !!MF.decks[x].commanders === !!MF.decks[a].commanders), b = same[(g * 3 + 1) % same.length];   // CR 903: a Commander deck plays only another Commander deck
   let s = MF.newGame({ seed: 4000 + g, decks: [a, b] });
   try {
     for (let n = 0; s.winner == null && s.turn < 40 && n < 20000; n++) {

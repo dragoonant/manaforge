@@ -1,0 +1,108 @@
+# Kujo — "Zellix, of Halaster" (Commander). The owner's friend Kujo's list, as shared from Moxfield
+# on 2026-10-31 (PLAN D21). Its two-card Moxfield sideboard (Mind Funeral, Nemesis of Reason) is
+# left out: Commander games do not use sideboards (CR 903.5e).
+# player: Kujo
+# name: Zellix, of Halaster
+# received: 2026-10-31
+Commander
+1 Scion of Halaster
+1 Zellix, Sanity Flayer
+Deck
+1 Aphetto Alchemist
+1 Braids, Arisen Nightmare
+1 Bruvac the Grandiloquent
+1 Captain N'ghathrod
+1 Consecrated Sphinx
+1 Consuming Aberration
+1 Duskmantle Guildmage
+1 Eater of the Dead
+1 Emry, Lurker of the Loch
+1 Guiltfeeder
+1 Hedron Crab
+1 Hullbreaker Horror
+1 Manic Scribe
+1 Narcomoeba
+1 Painter's Servant
+1 Phenax, God of Deception
+1 Raul, Trouble Shooter
+1 Ruin Crab
+1 Syr Konrad, the Grim
+1 Thassa's Oracle
+1 The Master of Lake-town
+1 The Mindskinner
+1 Unctus, Grand Metatect
+1 Undead Alchemist
+1 Demonic Tutor
+1 Diabolic Intent
+1 Doomsday
+1 Dread Return
+1 Fabricate
+1 Fractured Sanity
+1 Glimpse the Unthinkable
+1 Imperial Seal
+1 Maddening Cacophony
+1 Mind Grind
+1 Mnemonic Betrayal
+1 Reanimate
+1 Tasha's Hideous Laughter
+1 Unearth
+1 Yawgmoth's Will
+1 Brain Freeze
+1 Cabal Ritual
+1 Dark Ritual
+1 Dramatic Reversal
+1 Mystical Tutor
+1 Vampiric Tutor
+1 Altar of Dementia
+1 Altar of the Brood
+1 Arcane Signet
+1 Chrome Mox
+1 Codex Shredder
+1 Fellwar Stone
+1 Ghoulcaller's Bell
+1 Grindstone
+1 Isochron Scepter
+1 Mana Vault
+1 Mesmeric Orb
+1 Mindcrank
+1 Mox Opal
+1 Riverchurn Monument
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Dominance
+1 The Water Crystal
+1 Animate Dead
+1 Bloodchief Ascension
+1 Memory Erosion
+1 Mystic Remora
+1 Necropotence
+1 Polluted Cistern // Dim Oubliette
+1 Rhystic Study
+1 Academy Ruins
+1 Ancient Tomb
+1 Bloodstained Mire
+1 Cabal Coffers
+1 Command Tower
+1 Darkslick Shores
+1 Darkwater Catacombs
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Gloomlake Verge
+1 Hidden Lair
+1 Island
+1 Morphic Pool
+1 Nephalia Drownyard
+1 Phyrexian Tower
+1 Polluted Delta
+1 Reflecting Pool
+1 Shipwreck Marsh
+1 Sunken Hollow
+1 Sunken Ruins
+1 Swamp
+1 Tainted Isle
+1 Undercity Sewers
+1 Underground River
+1 Underground Sea
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Saga
+1 Watery Grave

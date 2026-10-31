@@ -39,8 +39,15 @@ export function setup(o) {
       if (!MF.cards[id]) throw new Error('no such card ' + id);
       const iid = s.nid++;
       s.cards[iid] = { iid: iid, id: id, owner: seat, ctrl: seat, zone: zone, ts: s.ts++, tapped: !!e.tapped, dmg: 0, dt: false, ctr: Object.assign({}, e.ctr || {}), att: null, ctlTurn: e.sick ? s.turn : 0, tok: !!MF.cards[id].token };
+      if (e.cmdr) s.cards[iid].cmdr = true;
+      if (e.chosen) s.cards[iid].chosen = e.chosen;
       return iid;
     };
+    if (o.commander) {                                                                            // a Commander game (CR 903): command zones, 40 life unless the test says
+      s.commander = true; p.command = []; p.cmdCasts = Object.assign({}, spec.cmdCasts || {}); p.cmdDmg = {}; p.identity = spec.identity || ['U', 'B'];
+      if (!spec.life) p.life = 40; p.startLife = 40;
+      for (const e of spec.command || []) { const i = mk(e, 'command'); s.cards[i].cmdr = true; p.command.push(i); }
+    }
     for (const e of spec.hand || []) p.hand.push(mk(e, 'hand'));
     for (const e of spec.lib || Array(10).fill(seat === 0 ? 'plains' : 'island')) p.lib.push(mk(e, 'lib'));
     for (const e of spec.grave || []) p.grave.push(mk(e, 'grave'));

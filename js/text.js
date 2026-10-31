@@ -16,7 +16,7 @@
   };
   const symbols = str => esc(str).replace(/\{([^}]+)\}/g, (m, t) => sym(t));
   const cname = id => MF.cards[id] ? MF.cards[id].name : id === 'speed' ? 'Speed (start your engines!)' : id;   // the inherent speed trigger has no source (CR 702.179d)
-  const tag = (id, face) => id == null ? '' : `<b class="cn" data-cid="${esc(id)}">${esc(typeof face === 'string' ? face : cname(id))}</b>`;   // face: the name a transformed permanent shows (a string; .map(tag) passes an index)
+  const tag = (id, face) => id == null ? '' : id === 'face-down' ? '<b>a face-down creature</b>' : `<b class="cn" data-cid="${esc(id)}">${esc(typeof face === 'string' ? face : cname(id))}</b>`;   // face: the name a transformed permanent shows (a string; .map(tag) passes an index)
   const list = ids => ids.map(tag).join(', ');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   const T = MF.text = { esc: esc, symbols: symbols, sym: sym, cname: cname, tag: tag, plural: plural };
@@ -115,10 +115,10 @@
     extraCombat: (e, v) => `<span class="turnline">Additional combat phase</span>`,
     fight: (e) => `${tag(e.a)} fights ${tag(e.b)}.`,
     noFight: () => `<span class="notice">The fight does not happen: one of the two is gone or is no longer a creature.</span>`,
-    exiled: (e, v) => `${tag(e.c)} is exiled${e.fromStack ? ' from the stack' : e.from === 'bf' ? (e.until ? ' until its exiler leaves the battlefield' : '') : e.from === 'hand' ? ' from ' + T.whose(e.who, v) + ' hand' : ' from ' + T.whose(e.who, v) + ' graveyard'}${e.by && e.by !== e.c ? ' by ' + tag(e.by) : ''}.`,
+    exiled: (e, v) => `${tag(e.c)} is exiled${e.fromStack || e.from === 'stack' ? ' from the stack' : e.from === 'bf' ? (e.until ? ' until its exiler leaves the battlefield' : '') : e.from === 'hand' ? ' from ' + T.whose(e.who, v) + ' hand' : ' from ' + T.whose(e.who, v) + ' graveyard'}${e.by && e.by !== e.c ? ' by ' + tag(e.by) : ''}.`,
     noGain: (e, v) => `<span class="notice">${W(e.who, v)} can’t gain life: ${e.n} life is not gained.</span>`,
     activate: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'activate', 'activates')} ${tag(e.c)}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
-    mana: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'tap', 'taps')} ${tag(e.c)} for ${sym(e.col)}.`,
+    mana: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'tap', 'taps')} ${tag(e.c)} for ${e.col.split('').map(sym).join('')}.`,
     pay: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'pay', 'pays')} ${symbols(e.mana)}.`,
     manaEmpties: (e, v) => `${plural(e.n, 'unspent mana')} empties from ${T.whose(e.who, v)} mana pool.`,
     damage: (e, v) => `${tag(e.srcId)} deals <b>${e.n}</b> ${e.combat ? 'combat ' : ''}damage to ${e.who === v ? 'you' : 'the opponent'}${e.lost != null ? ', who ' + V(e.who, v, 'lose', 'loses') + ' <b>' + e.lost + '</b> life (doubled by Bloodletter of Aclazotz)' : ''}. Life ${e.life}.`,
@@ -129,7 +129,41 @@
     sbaGrave: (e) => `${tag(e.c)} is put into the graveyard${e.why === 'toughness' ? ' (toughness 0 or less)' : e.why === 'aura' ? ' (the Aura is attached to nothing legal)' : ''}.`,
     destroy: (e) => `${tag(e.c)} is destroyed${e.why === 'lethal' ? ' (lethal damage)' : e.why === 'deathtouch' ? ' (deathtouch)' : ''}.`,
     indestructible: (e) => `${tag(e.c)} is indestructible and survives.`,
-    lose: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'lose', 'loses')}: ${e.why === 'life' ? 'life is 0 or less' : 'drew from an empty library'}.`,
+    lose: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'lose', 'loses')}: ${e.why === 'life' ? 'life is 0 or less' : e.why === 'commander' ? '21 or more combat damage from one commander' : 'drew from an empty library'}.`,
+    // Kujo's Commander deck (PLAN D21). Hidden information stays hidden: a face-down card is named only to its owner.
+    revealFaceDown: (e, v) => `The face-down ${e.from === 'stack' ? 'spell is revealed as it leaves the stack' : 'creature is revealed as it leaves the battlefield'}: ${tag(e.c)}.`,
+    drawReplaced: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'look', 'looks')} at the top ${plural(e.looked, 'card')} instead of drawing (Scion of Halaster).`,
+    toGraveFromLib: (e, v) => `${e.cs ? list(e.cs) : tag(e.c)} ${e.cs && e.cs.length > 1 ? 'go' : 'goes'} from ${T.whose(e.who, v)} library to the graveyard.`,
+    skipStep: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'skip', 'skips')} the draw step.`,
+    noMode: (e, v) => `${tag(e.c)}: no mode chosen; the ability is removed from the stack.`,
+    castFaceDown: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'cast', 'casts')} a face-down 2/2 creature spell for {3}${e.who === v ? ' (' + tag(e.c) + ', morph)' : ''}.`,
+    morphCost: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'show', 'shows')} the morph cost ${symbols(e.cost)} of a face-down creature: ${tag(e.c)}.`,
+    turnUp: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'turn', 'turns')} ${tag(e.c)} face up.`,
+    tutorTop: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'shuffle', 'shuffles')} and ${V(e.who, v, 'put', 'puts')} ${e.c ? tag(e.c) : e.who === v ? 'the card' : 'a card'} on top of the library.`,
+    addManaStr: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'add', 'adds')} ${symbols(e.mana)}${e.c ? ' (' + tag(e.c) + ')' : ''}.`,
+    toLibTop: (e, v) => `${tag(e.c)} is put on top of ${T.whose(e.who, v)} library from the graveyard.`,
+    becomes: (e) => `${tag(e.c)} becomes ${esc(e.what)} until end of turn.`,
+    mayCastFrom: (e, v) => `${W(e.who, v)} may cast ${tag(e.c)} from the graveyard this turn.`,
+    thassaLook: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'look', 'looks')} at the top ${plural(e.n, 'card')}: ${e.top ? 'one stays on top' : 'none stays on top'}, ${plural(e.bottom, 'card')} to the bottom in a random order.`,
+    devotion: (e, v) => `${T.whose(e.who, v).replace(/^./, c => c.toUpperCase())} devotion to blue is ${e.n}; ${e.who === v ? 'your' : 'their'} library holds ${plural(e.lib, 'card')}.`,
+    winBy: (e, v) => `${tag(e.c)}: ${W(e.who, v)} ${V(e.who, v, 'win', 'wins')} the game.`,
+    exiledMany: (e, v) => `Exiled from ${T.whose(e.who, v)} ${e.from}: ${list(e.cs)}${e.total != null ? ' (total mana value ' + e.total + ')' : ''}.`,
+    doomsdayTop: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${plural(e.n, 'card')} on top of the library in a chosen order.`,
+    returnToGrave: (e, v) => `${tag(e.c)} returns from exile to ${T.whose(e.who, v)} graveyard.`,
+    yawgPlay: (e, v) => `Until end of turn, ${e.who === v ? 'you' : 'the opponent'} may play lands and cast spells from ${e.who === v ? 'your' : 'their'} graveyard; cards that would go there are exiled instead.`,
+    grindstoneRepeat: () => `Two of the milled cards share a color: Grindstone repeats.`,
+    nothingImprinted: (e) => `${tag(e.c)}: no card is exiled with it; there is nothing to copy.`,
+    copyCard: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'copy', 'copies')} ${tag(e.c)} (the copy is not a card).`,
+    exiledFaceDown: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'exile', 'exiles')} the top card of ${T.whose(e.who, v)} library face down; nobody may look at it.`,
+    gainsAbility: (e) => `${tag(e.c)} gains an ability.`,
+    upkeepPaid: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'pay', 'pays')} ${symbols(e.mana)} for the cumulative upkeep of ${tag(e.c)}.`,
+    paidToDeny: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'pay', 'pays')} ${symbols(e.mana)} for ${tag(e.c)}: no card is drawn.`,
+    bounceSpell: (e, v) => `${tag(e.c)} is returned from the stack to ${T.whose(e.who, v)} hand.`,
+    storm: (e) => `Storm: ${tag(e.c)} is copied ${plural(e.n, 'time')}.`,
+    millReplaced: (e, v) => `${tag(e.c)}: ${e.who === v ? 'you mill' : 'the opponent mills'} ${e.to} instead of ${e.from}.`,
+    preventedMill: (e, v) => `${e.n} damage to ${e.who === v ? 'you' : 'the opponent'} from ${tag(e.src)} is prevented (The Mindskinner); ${e.who === v ? 'you mill' : 'they mill'} that many instead.`,
+    damageToMill: (e, v) => `${tag(e.src)}'s ${e.n} combat damage to ${e.who === v ? 'you' : 'the opponent'} becomes a mill of ${e.n} (Undead Alchemist).`,
+    toCommand: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${V(e.who, v, 'your', 'their')} commander ${tag(e.c)} into the command zone${e.instead ? ' instead of ' + (e.instead === 'hand' ? 'into ' + V(e.who, v, 'your', 'their') + ' hand' : 'into ' + V(e.who, v, 'your', 'their') + ' library') : e.from ? ' from ' + (e.from === 'grave' ? 'the graveyard' : 'exile') : ''}.`,
     win: (e, v) => e.who === 'draw' ? `<b>The game is a draw.</b>` : `<b>${W(e.who, v)} ${V(e.who, v, 'win', 'wins')} the game.</b>`,
     tokenGone: (e) => `The ${tag(e.c)} token ceases to exist.`,
     unattach: (e) => `${tag(e.c)} becomes unattached.`,
@@ -170,7 +204,7 @@
 
   // Prompts. Each says what is being asked, about which card, with the numbers, and what
   // declining does (owner's rule 14). `labels` names the buttons.
-  const C = (s, iid) => { const c = MF.view(s).cards[iid]; return c ? tag(c.id) : 'it'; };
+  const C = (s, iid) => { const v = MF.view(s), c = v.cards[iid]; return !c ? 'it' : c.faceDown && c.zone !== 'exile' && c.ctrl === T._viewer ? tag(c.id) + ' (face down)' : tag(MF.pubId(v, iid)); };   // CR 708.5
   const oracle = (s, iid) => { const c = MF.view(s).cards[iid]; return c ? `<div class="ptext-oracle">${symbols(MF.cards[c.id].text).replace(/\n/g, '<br>')}</div>` : ''; };
   const mana = need => symbols(MF.manaStr(need));
   const PROMPTS = {
@@ -181,8 +215,9 @@
     discard: (s, q) => ({ title: `${C(s, q.src)}: discard a card`, body: 'Click a card in your hand to discard it.', labels: {} }),
     pay: (s, q) => {
       const auto = q.opts.find(o => o.id === 'auto');
-      const plan = auto.taps.map(t => tag(MF.view(s).cards[t.iid].id) + ' ' + sym(t.col)).join(', ');
-      return { title: `Pay ${mana(q.need)} for ${C(s, q.src)}`, body: `In your pool: ${poolStr(q.pool) || 'nothing'}. The suggested payment taps ${plan || 'nothing more'}. Or click your untapped lands one at a time.`, labels: { auto: 'Pay: tap ' + auto.taps.map(t => MF.cards[MF.view(s).cards[t.iid].id].name).join(', ') } };
+      const all = auto.taps.concat((auto.multis || []).map(u => ({ iid: u.iid, col: u.alt })));   // multi-mana abilities after the single ones, paying their own costs from the pool
+      const plan = all.map(t => tag(MF.view(s).cards[t.iid].id) + ' ' + t.col.split('').map(sym).join('')).join(', ');
+      return { title: `Pay ${mana(q.need)} for ${C(s, q.src)}`, body: `In your pool: ${poolStr(q.pool) || 'nothing'}. The suggested payment taps ${plan || 'nothing more'}. Or click your untapped lands one at a time.`, labels: { auto: 'Pay: tap ' + all.map(t => MF.cards[MF.view(s).cards[t.iid].id].name).join(', ') } };
     },
     spend: (s, q) => ({ title: `Which mana pays the generic part of ${mana(q.need)}?`, body: 'Your pool holds more than one kind of mana beyond the coloured symbols. Choose what to spend; the rest stays in your pool until the step ends.', labels: Object.fromEntries(q.opts.map(o => [o.id, 'Spend ' + Object.entries(o.plan).filter(([k, n]) => n).map(([k, n]) => n + '× ' + MF.COLOR_NAME[k]).join(' + ')])) }),
     target: (s, q) => {
@@ -193,10 +228,22 @@
     attack: (s, q) => ({ title: q.chosen.length ? `Attacking with ${plural(q.chosen.length, 'creature')}` : 'Declare attackers', body: 'Click your creatures to attack with them; attacking taps a creature unless it has vigilance. Then confirm. Creatures with summoning sickness (entered this turn, without haste) cannot attack.', labels: { done: q.chosen.length ? `Attack with ${plural(q.chosen.length, 'creature')}` : 'Don’t attack', undo: 'Undo the last' } }),
     block: (s, q) => { const n = Object.keys(q.assign).length; return { title: n ? `Blocking with ${plural(n, 'creature')}` : 'Declare blockers', body: 'Click one of your untapped creatures, then choose which attacker it blocks. Flying attackers can be blocked only by flying or reach; menace needs two or more blockers.', labels: { done: n ? `Confirm ${plural(n, 'block')}` : 'Don’t block', undo: 'Undo the last' } }; },
     assign: (s, q) => ({ title: `${C(s, q.src)}: assign combat damage`, body: `${q.left} damage left to assign. How much goes to ${C(s, q.to)}? Lethal for it is <b>${q.lethal}</b>.${q.trample ? ' With trample, the rest goes to the defending player once every blocker has lethal damage.' : ' The rest goes to the other blockers.'}`, labels: Object.fromEntries(q.opts.map(o => [o.id, o.n + ' to ' + MF.cards[MF.view(s).cards[q.to].id].name + (q.trample ? ', ' + (q.left - o.n) + ' on' : '')])) }),
+    scionPick: (s, q) => ({ title: 'Scion of Halaster: which card goes to your graveyard?', body: 'Instead of your first draw this turn, you look at the top two cards of your library. Click the one to put into your graveyard; the other stays on top, and then you draw a card.', labels: {} }),
+    braidsSac: (s, q) => ({ title: `${C(s, q.src)}: sacrifice a permanent?`, body: 'You may sacrifice an artifact, creature, enchantment, land or planeswalker. Then the opponent may sacrifice a permanent that shares a card type with it; if they don’t, they lose 2 life and you draw a card. Declining does nothing.', labels: { no: 'Sacrifice nothing' } }),
+    braidsMatch: (s, q) => ({ title: `${C(s, q.src)}: sacrifice a permanent that shares a card type (${q.types.join(', ').toLowerCase()})?`, body: 'Click one of your glowing permanents to sacrifice it. If you don’t, you lose 2 life and the opponent draws a card.', labels: { no: 'Sacrifice nothing (lose 2 life, they draw)' } }),
+    thassaTop: (s, q) => ({ title: `Thassa’s Oracle: which card stays on top?`, body: `You looked at the top ${plural(q.look.length, 'card')}. Up to one stays on top; the rest go to the bottom in a random order.`, labels: { none: 'Put them all on the bottom' } }),
+    doomsdayPick: (s, q) => ({ title: `Doomsday: choose card ${q.k} of 5`, body: 'Choose from your library and graveyard. The five you choose go on top of your library in an order you then choose; every other card in your library and graveyard is exiled.', labels: {} }),
+    doomsdayOrder: (s, q) => ({ title: `Doomsday: which card goes ${q.k === 1 ? 'on top' : ['', '', 'second', 'third', 'fourth', 'fifth'][q.k] + ' from the top'}?`, body: `${q.n} cards go on top of your library; choose them from the top down.`, labels: {} }),
+    imprint: (s, q) => ({ title: `${C(s, q.src)}: exile a card from your hand?`, body: `The card you exile is imprinted on it — “the exiled card”.${oracle(s, q.src)}`, labels: { no: 'Exile nothing' } }),
+    cumUpkeep: (s, q) => ({ title: `${C(s, q.src)}: pay cumulative upkeep ${symbols(q.mana)}?`, body: `It has ${plural(q.age, 'age counter')}: pay ${symbols(q.mana)}, or sacrifice it (CR 702.24a). Partial payments aren’t allowed.`, labels: { pay: 'Pay ' + q.mana, sac: 'Sacrifice it' } }),
+    payToDeny: (s, q) => ({ title: `${C(s, q.src)}: pay ${symbols(q.mana)}?`, body: `If you don’t pay ${symbols(q.mana)}, the opponent may draw a card.`, labels: { pay: 'Pay ' + q.mana, no: 'Don’t pay (they may draw)' } }),
+    millOrder: (s, q) => ({ title: `You would mill ${q.n}: which replacement applies first?`, body: 'Two effects change how many cards you mill. Each applies once; you choose the order (CR 616.1).', labels: Object.fromEntries(q.opts.map(o => [o.id, o.what === 'millDouble' ? 'Double first (' + MF.cards[o.src].name + ')' : 'Add ' + o.plus + ' first (' + MF.cards[o.src].name + ')'])) }),
+    commandZone: (s, q) => ({ title: `Return ${tag(q.c)} to the command zone?`, body: `Your commander has gone to ${q.from === 'grave' ? 'your graveyard' : 'exile'}. You may put it into the command zone, where you can cast it again for {2} more each time (CR 903.9a, 903.8). If you don’t, it stays in ${q.from === 'grave' ? 'the graveyard' : 'exile'}.`, labels: { command: 'To the command zone', stay: 'Leave it in ' + (q.from === 'grave' ? 'the graveyard' : 'exile') } }),
+    commandInstead: (s, q) => ({ title: `${tag(q.c)} would go to your ${q.to === 'hand' ? 'hand' : 'library'}`, body: `It is your commander, so you may put it into the command zone instead (CR 903.9b).`, labels: { command: 'To the command zone', [q.to]: q.to === 'hand' ? 'Into my hand' : 'Into my library' } }),
     legend: (s, q) => ({ title: 'Legend rule: keep one', body: 'You control two legendary permanents with the same name. Choose the one to keep; the other goes to the graveyard (CR 704.5j).', labels: {} }),
     trigOrder: (s, q) => ({ title: 'Order your triggered abilities', body: `Several of your abilities triggered at once. Click the one to put on the stack next — ${q.placed ? q.placed + ' placed so far; ' : ''}the first you choose resolves <b>last</b> (CR 603.3b).`, labels: Object.fromEntries(q.opts.map(o => [o.id, MF.cards[o.trig.src].name + (o.trig.inl === 'prowess' ? ' — prowess' : '')])) }),
     x: (s, q) => ({ title: `Choose X for ${C(s, q.src)}`, body: `X is announced before you pay (CR 601.2b).${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'X = ' + o.id])) }),
-    mode: (s, q) => ({ title: q.of ? `Choose mode ${q.n} of ${q.of} for ${C(s, q.src)}` : `Choose a mode for ${C(s, q.src)}`, body: `Choose one; the mode is chosen as you cast it (CR 700.2). A mode whose targets can’t be chosen isn’t offered.${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, o.text])) }),
+    mode: (s, q) => ({ title: q.of ? `Choose mode ${q.n} of ${q.of} for ${C(s, q.src)}` : `Choose a mode for ${C(s, q.src)}`, body: `Choose one; the mode is chosen as you cast it (CR 700.2). A mode whose targets can’t be chosen isn’t offered.${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, o.id === 'none' ? 'Choose no mode' : o.text])) }),
     manaCombo: (s, q) => ({ title: `${C(s, q.src)}: which ${q.amount} mana?`, body: `It adds ${q.amount} mana in any combination of ${q.cols.map(sym).join(' and ')}.`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'Add ' + o.id.split('').map(k => '{' + k + '}').join('')])) }),
     harmonizeTap: (s, q) => ({ title: `Harmonize ${C(s, q.src)}: tap a creature?`, body: 'You may tap one untapped creature you control; the generic part of the harmonize cost is reduced by its power (CR 702.180). Click a glowing creature, or tap none.', labels: { none: 'Tap no creature' } }),
     bargain: (s, q) => ({ title: `Bargain ${C(s, q.src)}?`, body: `You may sacrifice an artifact, enchantment or token as you cast it (CR 702.166). Click a glowing one, or don’t bargain.${oracle(s, q.src)}`, labels: { none: 'Don’t bargain' } }),
@@ -225,6 +272,7 @@
     chooseName: (s, q) => ({ title: `${C(s, q.src)}: choose a land card name`, body: 'Any land card name may be chosen (CR 201.4); the lands in this game are listed first. Its activated abilities that aren’t mana abilities can’t be activated, and lands with that name tap for {C}.', labels: Object.fromEntries(q.opts.map(o => [o.id, o.id])) }),
     digOnto: (s, q) => ({ title: `${C(s, q.src)}: put a card onto the battlefield (${q.k} of up to ${q.upTo})`, body: `Only you see these ${q.n} cards. Choose a noncreature, nonland permanent card with mana value 3 or less, or finish; the rest go to the bottom in a random order.`, labels: { done: 'Done' } }),
     hybrid: (s, q) => ({ title: `${C(s, q.src)}: pay ${symbols('{' + q.sym[0] + '/' + q.sym[1] + '}')} with which colour?`, body: `A hybrid symbol is paid with either colour; you announce which before paying (CR 601.2b). Only the colours your mana can pay are offered.${q.n > 1 ? ' Symbol ' + q.k + ' of ' + q.n + '.' : ''}`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'Pay it with ' + MF.COLOR_NAME[o.id]])) }),
+    manaYield: (s, q) => ({ title: `${C(s, q.src)}: which mana?`, body: 'Choose what it adds; the mana goes into your mana pool and empties as the step ends.', labels: Object.fromEntries(q.opts.map(o => [o.id, 'Add ' + o.id.split('').map(k => '{' + k + '}').join('')])) }),
     manaColor: (s, q) => ({ title: `${C(s, q.src)}: add one mana of which color?`, body: 'The mana goes into your mana pool; it empties as the step ends.', labels: Object.fromEntries(q.opts.map(o => [o.id, 'Add ' + MF.COLOR_NAME[o.id]])) }),
     tutorUpTo: (s, q) => ({ title: `${C(s, q.src)}: choose card ${q.k} of up to ${q.n}`, body: 'Only you see your library. Click a glowing card; the ones you take are revealed and go into your hand, then your library is shuffled.', labels: { done: 'Done searching' } }),
     removeCounterKind: (s, q) => ({ title: `${C(s, q.src)}: remove a counter?`, body: `If you remove one, its reflexive ability triggers.${oracle(s, q.src)}`, labels: Object.fromEntries(q.opts.map(o => [o.id, o.id === 'none' ? 'Remove nothing' : 'Remove a ' + o.id + ' counter (' + o.n + ' on it)'])) }),
@@ -261,6 +309,11 @@
       : q.what === 'onceEachTurn' ? ({ title: `${C(s, q.src)}: deal ${q.n} damage${q.tgt ? ' to ' + (q.tgt.p != null ? (q.tgt.p === q.who ? 'yourself' : 'the opponent') : tag(MF.view(s).cards[q.tgt.c].id)) : ''}?`, body: `You may do this only once each turn. If you decline, you can still do it later this turn.${oracle(s, q.src)}`, labels: { yes: `Deal ${q.n} damage`, no: 'Not now' } })
       : q.what === 'searchCards' ? ({ title: `${C(s, q.src)}: search your library?`, body: `You may search for the cards it names, reveal them and put them into your hand, then shuffle.${oracle(s, q.src)}`, labels: { yes: 'Search', no: 'Don’t search' } })
       : q.what === 'mill' ? ({ title: `${C(s, q.src)}: mill a card?`, body: `You may put the top card of your library into your graveyard.${oracle(s, q.src)}`, labels: { yes: 'Mill the top card', no: 'Don’t mill' } })
+      : q.what === 'draw' ? ({ title: `${C(s, q.src)}: draw a card?`, body: `You may draw. Declining draws nothing.${oracle(s, q.src)}`, labels: { yes: 'Draw', no: 'Don’t draw' } })
+      : q.what === 'counter' ? ({ title: `${C(s, q.src)}: put a quest counter on it?`, body: `You may.${oracle(s, q.src)}`, labels: { yes: 'Put a quest counter', no: 'Don’t' } })
+      : q.what === 'drain' ? ({ title: `${C(s, q.src)}: drain 2?`, body: 'You may have that player lose 2 life; if you do, you gain 2 life.', labels: { yes: 'They lose 2, I gain 2', no: 'Don’t' } })
+      : q.what === 'scepterCopy' ? ({ title: `${C(s, q.src)}: copy ${tag(q.c)}?`, body: 'You may copy the exiled card. If you do, you may then cast the copy without paying its mana cost.', labels: { yes: 'Copy it', no: 'Don’t copy' } })
+      : q.what === 'scepterCast' ? ({ title: `Cast the copy of ${tag(q.c)} without paying its mana cost?`, body: 'If you don’t, the copy ceases to exist.', labels: { yes: 'Cast it', no: 'Don’t cast' } })
       : q.what === 'digOnto' ? ({ title: `Put ${tag(q.c)} onto the battlefield?`, body: 'Its mana value is low enough: it may go onto the battlefield and gain haste until end of turn. Otherwise it goes into your hand.', labels: { yes: 'Onto the battlefield, with haste', no: 'Into my hand' } })
       : ({ title: `${C(s, q.src)}`, body: oracle(s, q.src), labels: { yes: 'Yes', no: 'No' } }),
     newTargets: (s, q) => ({ title: `Change ${q.slots > 1 ? 'target ' + (q.slot + 1) + ' of ' + q.slots : 'the target'} of the copy of ${C(s, q.src)}?`, body: 'You may keep the original target or choose a new one (CR 707.10c). A target with no legal new choice stays as it is.', labels: { keep: 'Keep this target', new: 'Choose a new target' } }),
@@ -279,8 +332,8 @@
   T.passLabel = function (s, me) {
     if (s.stack.length) {
       const L = s.stack[s.stack.length - 1];
-      const id = L.kind === 'spell' ? L.id : L.srcId;
-      return `Pass — let ${MF.cards[id].name}${L.kind === 'spell' ? '' : '’s ability'} resolve`;
+      const id = L.kind === 'spell' ? (L.faceDown ? (L.ctrl === me ? L.realId : null) : L.id) : L.srcId;
+      return `Pass — let ${id ? MF.cards[id].name : 'the face-down creature spell'}${L.kind === 'spell' ? '' : '’s ability'} resolve`;
     }
     if (s.ap !== me) return 'Pass';
     return { upkeep: 'Pass — to draw', draw: 'Pass — to main phase', main1: 'Pass — to combat', boc: 'Pass — declare attackers', attackers: 'Pass — to blockers', blockers: 'Pass — to damage', fsdamage: 'Pass — regular damage', damage: 'Pass — end combat', eoc: 'Pass — to second main', main2: 'Pass — end turn', end: 'Pass — end turn', cleanup: 'Pass' }[s.step];

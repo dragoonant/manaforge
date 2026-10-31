@@ -32,11 +32,50 @@ This file owns decisions. No other file states one.
 | D19 | 2026-10-25 | **The interface is a drawn forge table, after the sister projects' layout.** Owner: "great job doing the interfaces for grand line and lorecannae, do manaforge next." Carried over is the structure: a title splash, a parchment picker with two deck slots and dice, a deck chooser (era groups, D15's provenance kept beside each list), a mat whose zones are placed from one geometry table that also draws them (`js/boardart.js`), a dock (what just happened · your hand · the prompt), a log-and-settings drawer on the right edge, a ribbon as each turn begins. The dress is a basalt slab in a riveted bronze rim with a molten seam between the halves, ember gold for you and arcane violet for the opponent, an anvil for an emblem. The opponent's half mirrors yours top to bottom rather than rotating, so the shared stack column and both life totals line up. Every backdrop is drawn in SVG; nothing is generated. The card back (`art/ui/cardback.svg`) and every frame are this project's own; no Wizards card back, frame or symbol is imitated (docs/rights.md). Card faces are unchanged. D18's "Motion" toggle moved from the sidebar to the drawer and the picker. | owner |
 | D20 | 2026-10-27 | **Touch: a tap reads, a drag commits, a hold peeks.** Owner: "give these games the hearthstone treatment on mobile. I hate that I can't zoom in on cards and that when tapping on cards they automatically play." Agreed with the owner: drag and buttons both, landscape only, the same model in all three sister projects. On touch a tap on a card opens the card sheet — the card with its Oracle text, current numbers and why it can't be played, beside its legal actions as buttons with their costs; nothing a finger touches commits except a button. A drag commits: a hand card onto your battlefield plays it when there is exactly one way to (a land, or a spell with one cost; several — a back face, an alternative cost — open the sheet); during declare attackers an attacker dragged at the opponent is added; during declare blockers a blocker dragged onto an attacker is assigned; Confirm still ends either declaration. A hold shows the card until the finger lifts. On a phone (coarse pointer, short side ≤ 540 px) the hand rests as a fan of card tops and rises on a tap; recent plays run down the left edge; the prompt is a column on the right with its buttons stacked at the thumb; the mat shows art and numbers and a hold reads the rest; portrait shows a "turn sideways" gate; Add to Home Screen opens it full-screen and landscape (`manifest.webmanifest`). A mouse plays as before. `js/touch.js`. | owner |
 
+| D21 | 2026-10-31 | **Kujo's Commander deck, under a heading of its own.** Owner: "My friend Kujo put a decklist together … add this decklist to the game. Implement it in game with art, and add it to the deck lists under a new heading for Kujo." The list — "Zellix, of Halaster", commanders Zellix, Sanity Flayer and Scion of Halaster (choose a Background) — is kept as `data/lists/kujo-zellix.txt` and compiled like every other deck; it registers only because all 100 cards compile. Owner's choices, asked before work began: **the Commander rules in full (CR 903)** — 40 life, the command zone, commander tax, 903.9a-b, 21 commander damage, colour identity — so a Commander deck plays only another Commander deck (a mirror until there is a second); and **art prompts written here, rendered at home** with `tools/gen-art-sdxl.py` (D13), since this session's container has no GPU; until then those cards show the procedural fallback. Its two-card Moxfield sideboard is left out (CR 903.5e). Two of its cards come from licensed crossovers beyond D16's: Raul, Trouble Shooter (Fallout) and Hidden Lair (a Marvel set); Raul's prompt paints a generic undead rogue, not the licensed character, and Hidden Lair is a landscape — the owner may want to say otherwise. | owner |
+
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.
 
 ## Status
+
+**2026-10-31 — Kujo's Commander deck (D21) registered: 100 of 100 cards compile.**
+
+- The Commander variant (CR 903): commanders in a command zone (shown on each plate, cast from there,
+  {2} more per earlier cast and per commander, 702.124d), 903.9a's choice as a state-based action and
+  903.9b's as a replacement, 40 life, 21 combat damage from one commander (704.6c), the combined colour
+  identity for Command Tower and Arcane Signet, validation of 903.5 and 702.124k. The deck chooser has a
+  "Kujo" heading; choosing a Commander deck for one side moves the other side to one.
+- New in the engine: a mill door with its replacements in the order the milling player chooses (Bruvac,
+  The Water Crystal; CR 616.1); events for cards put into a graveyard from a library or from anywhere,
+  cards leaving a graveyard, life lost, permanents becoming tapped or untapped, "attacks and isn't
+  blocked"; look-back for creatures that die together (603.10a); the first-draw replacement (Scion of
+  Halaster); multi-mana abilities and mana abilities with mana costs in the solver and the proposed
+  payment (Sol Ring, Mana Vault, Ancient Tomb, Cabal Coffers, Darkwater Catacombs, Sunken Ruins,
+  Phyrexian Tower); mana read from the game (106.7: Fellwar Stone, Exotic Orchard, Reflecting Pool;
+  imprint); morph and face-down spells and permanents with their hidden information (702.37, 708);
+  storm (702.40); cumulative upkeep (702.24); fear (702.36); exhaust (702.177); devotion (700.5) and a
+  God that stops being a creature; Painter's Servant's colour in every zone; Urborg (305.6); Animate
+  Dead; copies of cards cast during resolution (Isochron Scepter, 707.12, 704.5e); Doomsday, Thassa's
+  Oracle (104.2b), Yawgmoth's Will, Mnemonic Betrayal, Necropotence (cards exiled face down, 406.3),
+  Hullbreaker Horror's "choose up to one" (603.3c), Raul, Emry, Braids, Grindstone, Urza's Saga.
+- Fixed for every deck: Captain N'ghathrod-style "Whenever a [subtype] you control deals combat
+  damage" now checks the subtype; a mana ability activated at priority whose cost can't be completed is
+  reversed (CR 733) instead of stopping the game; Oblivious Bookworm's face-down history is real.
+- Checked in the real browser (Playwright, Chromium, 1600×900): the chooser's Kujo heading and deck
+  detail, the mirror pairing and the Commander note on the picker, 40 life and both command zones at
+  the start, a commander's chip glowing and casting from it, a game played to turn 15 by the AI on both
+  seats with no page error, and an opponent's face-down creature and face-down exiled card whose names
+  appear nowhere in the page.
+- Gates: `tools/test.mjs` 361/361 (68 new in tests/26-kujo-zellix.mjs); audit 402 cards 0 FAIL / 0 WARN;
+  check-pages clean (159 log types, 83 question kinds); `tools/sim.mjs --deck kujo-zellix-of-halaster`
+  16 random mirror games over four seeds and `tools/sim.mjs --games 44` across every deck, 0
+  violations; `tools/policy-sweep.mjs` 60 games, every AI answer legal; AI-vs-AI mirror games run to
+  a finish (22 turns at about 80 ms a step) — the AI plays the deck card by card, not its combos (TODO).
+- Found by the sims and fixed: the AI's answer to "choose a color" (Painter's Servant), and a mana
+  ability at priority that could stop the game when its own cost couldn't be finished.
+- Art: 95 prompts added to `tools/art-identity.mjs`, linted; not yet rendered (D21).
 
 **2026-10-27 — the touch model (D20).** Checked under phone emulation (844×390, touch events):
 two-column picker, the hand raised and read, the card sheet with its cast button and the payment

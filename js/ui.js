@@ -17,6 +17,18 @@
   // ---------------------------------------------------------------------------------------------
   function face(v, id, o) {
     o = o || {};
+    // CR 708.5, 406.3: a face-down permanent or spell may be looked at only by its controller; a card
+    // exiled face down (Necropotence) by nobody. Hidden ones are drawn as a nameless 2/2 or a card back.
+    const fc = o.iid != null && v && v.cards[o.iid];
+    if (fc && fc.faceDown && (fc.zone === 'exile' || fc.ctrl !== ui.human)) {
+      const cls = ['card', 'sz-' + (o.size || 'md'), 'facedown'];
+      if (fc.zone === 'bf' && fc.tapped) cls.push('tapped');
+      if (v.combat && v.combat.attackers.includes(o.iid)) cls.push('attacking');
+      if (v.combat && v.combat.blocks[o.iid]) cls.push('blocking');
+      if (o.acts && o.acts.some(x => x.a.type !== 'mana')) cls.push('legal');
+      const attrs = [`data-iid="${o.iid}"`]; if (o.acts && o.acts.length) attrs.push(`data-acts='${esc(JSON.stringify(o.acts))}'`);
+      return `<div class="${cls.join(' ')}" ${attrs.join(' ')} title="${fc.zone === 'exile' ? 'Exiled face down: no player may look at it' : 'A face-down 2/2 creature: only its controller may look at it'}"><div class="fd-mark">face down</div>${fc.zone === 'exile' ? '' : `<div class="bot"><span class="tl">Creature</span><div class="pt">${MF.chars(v, o.iid).p}/${MF.chars(v, o.iid).t}</div></div>`}</div>`;
+    }
     const up = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].zone === 'bf' && v.cards[o.iid].transformed && MF.cards[id].back;   // CR 712.8e: the back face's characteristics
     const pc = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].prepCopy && MF.cards[id].prep;   // CR 722.3c: the copy in exile is its prepare spell
     const d = up ? Object.assign({}, MF.cards[id], MF.cards[id].back, { mana: '' }) : pc ? Object.assign({}, MF.cards[id], MF.cards[id].prep) : MF.cards[id];
@@ -46,6 +58,8 @@
       if (v.combat && v.combat.blocks[o.iid]) cls.push('blocking');
       if (c.copy) badges += `<div class="badge b-copy" title="A copy of ${esc(MF.cards[c.copy.id].name)}">copy</div>`;
       if (d.doors) badges += `<div class="badge b-doors">${d.doors.map((f, k) => `<span class="${(c.unlocked || [])[k] ? 'dopen' : 'dlock'}" title="${esc(f.name)}: ${(c.unlocked || [])[k] ? 'unlocked' : 'locked — unlock it for ' + esc(f.mana) + ' in your main phase'}">${(c.unlocked || [])[k] ? '◨' : '▣'} ${esc(f.name)}</span>`).join('')}</div>`;   // CR 709.5
+      if (c.faceDown) badges += `<div class="badge b-lock" title="Face down (morph, CR 708): the opponent sees a nameless 2/2 creature; turn it face up for its morph cost">face down</div>`;
+      if (c.cmdr) badges += `<div class="badge b-kw" title="A commander (CR 903.3)">commander</div>`;
       if (c.ctr.stun) badges += `<div class="badge b-stun" title="Stun counters: when it would untap, a counter is removed instead (CR 122.1d)">${c.ctr.stun} stun</div>`;
     }
     const shownId = o.iid != null && v && v.cards[o.iid] && v.cards[o.iid].copy ? v.cards[o.iid].copy.id : id;
@@ -82,8 +96,8 @@
       const q = s.pending.q; prompt = T.prompt(s, q, ui.human);
       for (const o of q.opts) {
         const a = { type: 'answer', id: o.id };
-        if (q.kind === 'block' && o.iid != null) { add(o.iid, a, 'Block ' + MF.cards[v.cards[o.att].id].name, o.att); continue; }
-        if (q.kind === 'pay' && o.iid != null) { add(o.iid, a, 'Tap for ' + MF.COLOR_NAME[o.col] + ' mana'); continue; }
+        if (q.kind === 'block' && o.iid != null) { const ai = MF.pubId(v, o.att); add(o.iid, a, 'Block ' + (ai === 'face-down' ? 'the face-down creature' : MF.cards[ai].name), o.att); continue; }
+        if (q.kind === 'pay' && o.iid != null) { add(o.iid, a, o.col.length > 1 ? 'Activate for ' + o.col.split('').map(k => '{' + k + '}').join('') : 'Tap for ' + MF.COLOR_NAME[o.col] + ' mana'); continue; }
         if (o.seat != null) { add('p' + o.seat, a, prompt.labels[o.id] || 'Choose'); btns.push({ a: a, label: prompt.labels[o.id] || 'Choose', cls: '' }); continue; }
         if (o.iid != null) {
           const label = prompt.labels[o.id] || (q.kind === 'scry' ? (o.id === 'top' ? 'Keep on top' : 'Put on the bottom') : q.kind === 'lookTop' ? (o.id === 'yes' ? 'Put it onto the battlefield tapped' : 'Put it into my hand') : q.kind === 'attack' ? 'Attack with this' : q.kind === 'target' ? 'Target this' : q.kind === 'trigOrder' ? 'Put this on the stack next' : q.kind === 'bottom' ? 'Put on the bottom' : (q.kind === 'discard' || q.kind === 'discardHand') ? 'Discard this' : 'Choose');
@@ -107,6 +121,9 @@
           if (a.via === 'evoke') { add(a.iid, a, 'Evoke ' + d.name + ' — ' + MF.manaStr(cost) + ' (sacrificed when it enters)'); continue; }
           if (s.cards[a.iid].prepCopy) { add(a.iid, a, 'Cast the prepared copy of ' + d.prep.name + ' — ' + MF.manaStr(cost) + ' (unprepares ' + d.name + ')'); continue; }
           if (a.via === 'free') { add(a.iid, a, 'Cast ' + d.name + ' without paying its mana cost (Omniscience)'); continue; }
+          if (a.via === 'morph') { add(a.iid, a, 'Cast ' + d.name + ' face down — {3} (morph: a nameless 2/2; turn it face up later for its morph cost)'); continue; }
+          if (a.via === 'raul') { add(a.iid, a, 'Cast ' + d.name + ' from your graveyard (Raul, once this turn) — ' + MF.manaStr(cost)); continue; }
+          if (s.cards[a.iid].zone === 'command') { const tax = 2 * ((s.players[ui.human].cmdCasts || {})[d.id] || 0); add(a.iid, a, 'Cast ' + d.name + ' from the command zone — ' + MF.manaStr(cost) + (tax ? ' (includes commander tax {' + tax + '})' : '')); continue; }
           if (a.via === 'impending') { const im = d.ab.find(x => x.k === 'impending'); add(a.iid, a, 'Cast ' + d.name + ' for its impending cost — ' + MF.manaStr(cost) + ' (enters with ' + im.n + ' time counters; not a creature until the last is removed)'); continue; }
           if (a.via === 'warp') { add(a.iid, a, 'Cast ' + d.name + ' for its warp cost — ' + MF.manaStr(cost) + ' (exiled at end step; recast later)'); continue; }
           if (a.via === 'sneak') { add(a.iid, a, 'Cast ' + d.name + ' for its sneak cost — ' + MF.manaStr(cost) + ' (return an unblocked attacker)'); continue; }
@@ -114,6 +131,7 @@
           add(a.iid, a, 'Cast ' + (a.door != null ? d.doors[a.door].name + ' (door)' : a.alt ? d.alt.name + ' (' + (d.alt.kind === 'omen' ? 'Omen' : d.alt.kind === 'mdfc' ? 'back face' : 'Adventure') + ')' : d.name) + ' — ' + (MF.isPlotted(s, a.iid) ? 'free (plotted)' : MF.manaStr(cost)));
         }
         else if (a.type === 'plot') { const p = MF.cards[s.cards[a.iid].id].ab.find(x => x.k === 'plot'); add(a.iid, a, 'Plot ' + MF.cards[s.cards[a.iid].id].name + ' — ' + MF.manaStr(MF.parseMana(p.cost)) + ' (cast it free on a later turn)'); }
+        else if (a.type === 'turnUp') { const m = MF.cards[s.cards[a.iid].id].ab.find(x => x.k === 'morph'); add(a.iid, a, 'Turn ' + MF.cards[s.cards[a.iid].id].name + ' face up — pay ' + m.cost + ' (morph; it doesn’t “enter” again)'); }
         else if (a.type === 'unlock') { const f = MF.cards[s.cards[a.iid].id].doors[a.door]; add(a.iid, a, 'Unlock ' + f.name + ' — ' + f.mana); }
         else if (a.type === 'act') { const ab = MF.chars(s, a.iid).ab[a.ab]; if (s.cards[a.iid].zone === 'grave' && !tray.includes(a.iid)) tray.push(a.iid);   // a graveyard ability (CR 113.6m): shown in the tray
  add(a.iid, a, (ab.equip ? 'Equip (' + ab.cost.mana + ')' : ab.cycling ? 'Cycle — pay ' + ab.cost.mana + ', discard it, draw a card' : ab.levelUp ? 'Level ' + ab.levelUp + ' — ' + ab.cost.mana : ab.loyalty != null ? MF.describeAbility(ab) : ab.ninjutsu ? 'Ninjutsu — ' + ab.cost.mana + ', return an unblocked attacker' : 'Activate: ' + MF.describeAbility(ab)).slice(0, 90)); }
@@ -144,6 +162,11 @@
     if (p.speed != null) chips.push(`<span class="chip" title="Speed (CR 702.179): rises once on your turn when an opponent loses life; 4 is max speed">Speed ${p.speed}${p.speed >= 4 ? ' (max)' : ''}</span>`);
     if (p.enduring) chips.push('<span class="chip" title="Enduring story (CR 702.195)">Enduring story</span>');
     for (const em of (v.emblems || []).filter(em => em.ctrl === seat)) chips.push(`<span class="chip emblem" title="Emblem (CR 114)">Emblem: ${esc(em.text)}</span>`);
+    for (const i of p.command || []) {                                                        // CR 903.6, 408: the command zone is public
+      const c = v.cards[i], tax = 2 * ((p.cmdCasts || {})[c.id] || 0);
+      chips.push(`<span class="chip cmd ${am.m[i] ? 'legal' : ''}" data-cid="${esc(c.id)}" data-iid="${i}" ${am.m[i] ? `data-acts='${esc(JSON.stringify(am.m[i]))}'` : ''} title="In the command zone: cast it from here${tax ? ' for {' + tax + '} more (commander tax, CR 903.8)' : ' (commander tax rises by {2} each time, CR 903.8)'}"><span class="cmd-pre">Command: </span><span class="cmd-full">${esc(MF.cards[c.id].name)}</span><span class="cmd-short">${esc(MF.cards[c.id].name.split(',')[0])}</span>${tax ? ' · tax ' + tax : ''}</span>`);
+    }
+    for (const k in p.cmdDmg || {}) if (p.cmdDmg[k]) chips.push(`<span class="chip" data-cid="${esc(k.split(':')[1])}" title="Combat damage dealt to ${mine ? 'you' : 'the opponent'} by this commander; 21 loses the game (CR 903.10a)">Commander damage: ${esc(MF.cards[k.split(':')[1]].name)} ${p.cmdDmg[k]}/21</span>`);
     return `<div class="ppanel ${mine ? 'mine' : 'theirs'} ${s.ap === seat ? 'active' : ''} ${am.m[pk] ? 'legal' : ''}" data-seat="${seat}" ${am.m[pk] ? `data-acts='${esc(JSON.stringify(am.m[pk]))}'` : ''}>
         <div class="plife" title="Life">${p.life}</div>
         <div class="pname">${mine ? 'You' : 'Opponent'}</div>
@@ -170,13 +193,13 @@
   }
   function stackHTML(s, v, am) {
     return v.stack.slice().reverse().map((L, k) => {
-      const id = L.kind === 'spell' ? L.id : L.srcId;
+      const id = L.kind === 'spell' ? (L.faceDown ? L.realId : L.id) : L.srcId;                 // a face-down spell (CR 708.4): face() hides it from the opponent
       const tgs = (L.t || []).flat().filter(Boolean);
-      const tl = tgs.map(r => r.p != null ? (r.p === ui.human ? 'you' : 'the opponent') : (v.cards[r.c] ? MF.cards[v.cards[r.c].id].name : '(gone)')).join(', ');
+      const tl = tgs.map(r => r.p != null ? (r.p === ui.human ? 'you' : 'the opponent') : (v.cards[r.c] ? (MF.pubId(v, r.c) === 'face-down' && v.cards[r.c].ctrl !== ui.human ? 'a face-down creature' : MF.cards[v.cards[r.c].id].name) : '(gone)')).join(', ');
       const hl = tgs.filter(r => r.c != null).map(r => r.c).concat(tgs.filter(r => r.p != null).map(r => 'p' + r.p));
       const what = L.kind === 'spell' ? (L.copy ? 'copy of a spell' : 'spell') : L.kind === 'trig' ? (L.inl === 'prowess' ? 'prowess' : 'triggered ability') : 'activated ability';
       return `<div class="layer ${k === 0 ? 'top' : ''} ${L.ctrl === ui.human ? 'mine' : 'theirs'}" data-hl='${esc(JSON.stringify(hl))}'>${face(v, id, { iid: L.kind === 'spell' ? L.iid : null, size: 'sm', acts: L.kind === 'spell' ? am.m[L.iid] : null })}
-        <div class="linfo"><b>${esc(MF.cards[id].name)}</b><span>${what} · ${L.ctrl === ui.human ? 'yours' : 'opponent’s'}</span>${tl ? `<span class="ltgt">→ ${esc(tl)}</span>` : ''}${L.x ? `<span>X = ${L.x}</span>` : ''}</div></div>`;
+        <div class="linfo"><b>${L.faceDown && L.ctrl !== ui.human ? 'Face-down creature spell' : esc(MF.cards[id].name)}</b><span>${what} · ${L.ctrl === ui.human ? 'yours' : 'opponent’s'}</span>${tl ? `<span class="ltgt">→ ${esc(tl)}</span>` : ''}${L.x ? `<span>X = ${L.x}</span>` : ''}</div></div>`;
     }).join('') + (v.stack.length ? `<div class="stack-note">${v.stack.length > 1 ? 'top first · ' : ''}resolves when both players pass</div>` : '');
   }
   function stepsHTML(s) {
@@ -234,8 +257,8 @@
   function modalHTML(v, am) {
     if (!ui.modal) return '';
     const [zone, seatS] = ui.modal.split(':'), seat = +seatS, p = v.players[seat];
-    const ids = zone === 'grave' ? p.grave.slice().reverse() : p.exile;
-    return `<div class="modal" data-ui="closemodal"><div class="mbox"><div class="mtitle">${seat === ui.human ? 'Your' : 'The opponent’s'} ${zone === 'grave' ? 'graveyard (top first)' : 'exile'} — ${T.plural(ids.length, 'card')}</div>
+    const ids = zone === 'grave' ? p.grave.slice().reverse() : zone === 'command' ? p.command || [] : p.exile;
+    return `<div class="modal" data-ui="closemodal"><div class="mbox"><div class="mtitle">${seat === ui.human ? 'Your' : 'The opponent’s'} ${zone === 'grave' ? 'graveyard (top first)' : zone === 'command' ? 'command zone' : 'exile'} — ${T.plural(ids.length, 'card')}</div>
       <div class="mcards">${ids.map(i => face(v, v.cards[i].id, { iid: i, acts: am.m[i] })).join('') || '<div class="empty">nothing here</div>'}</div><button class="btn" data-ui="closemodal">Close</button></div></div>`;
   }
   function resultHTML(s) {
@@ -432,6 +455,7 @@
   // the hover zoom, the touch hold (js/touch.js) and the card sheet.
   function readHTML(id, iid, why) {
     const d = MF.cards[id], s = ui.s;
+    if (!d) return '';
     const v = s ? MF.view(s) : null;
     let live = '';
     if (iid != null && v && v.cards[iid] && v.cards[iid].zone === 'bf') {
@@ -443,7 +467,7 @@
       if (c.tapped) bits.push('Tapped');
       if (c.copy) bits.push('A copy of ' + esc(MF.cards[c.copy.id].name));
       if (c.tok) bits.push('A token');
-      if (c.att != null && c.att >= 0 && v.cards[c.att]) bits.push('Attached to ' + esc(MF.cards[v.cards[c.att].id].name));
+      if (c.att != null && c.att >= 0 && v.cards[c.att]) bits.push('Attached to ' + (MF.pubId(v, c.att) === 'face-down' && v.cards[c.att].ctrl !== ui.human ? 'a face-down creature' : esc(MF.cards[v.cards[c.att].id].name)));
       bits.push(c.ctrl === ui.human ? 'You control it' : 'The opponent controls it');
       live = `<div class="zlive">${bits.join(' · ')}</div>`;
     }

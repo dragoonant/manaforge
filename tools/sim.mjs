@@ -1,10 +1,12 @@
 // Headless games with invariants after every step. A crash gate, not a balance instrument.
-//   node tools/sim.mjs [--games N] [--seed S] [--policy random|ai] [--verbose]
+//   node tools/sim.mjs [--games N] [--seed S] [--policy random|ai] [--deck ID] [--verbose]
 import { loadEngine } from './load.mjs';
 const MF = loadEngine();
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i < 0 ? d : process.argv[i + 1]; };
 const games = +arg('games', 50), seed0 = +arg('seed', 1), policy = arg('policy', 'random'), verbose = process.argv.includes('--verbose');
-const ids = Object.values(MF.decks).filter(d => d.registered).map(d => d.id);
+const only = arg('deck', null);
+const ids = Object.values(MF.decks).filter(d => d.registered && (!only || d.id === only)).map(d => d.id);
+const kind = id => !!MF.decks[id].commanders;                                                     // CR 903: a Commander deck plays only another Commander deck
 let rs = 12345; const rnd = n => { rs = (rs * 1664525 + 1013904223) >>> 0; return rs % n; };
 const STEPS = MF.STEPS;
 const drops = {};   // the most land drops each player has had available this turn (Icetill Explorer can leave after granting one)
@@ -14,7 +16,7 @@ function check(s, prev, where) {
   for (const p of s.players) {
     for (const k in p.pool) if (!(p.pool[k] >= 0)) bad('negative mana');
     if (Number.isNaN(p.life)) bad('NaN life');
-    for (const z of ['hand', 'lib', 'grave', 'exile']) for (const i of p[z]) { if (seen.has(i)) bad('an object is in two zones'); seen.add(i); if (s.cards[i].zone !== z) bad('zone mismatch ' + i + ' ' + z + '/' + s.cards[i].zone); }
+    for (const z of ['hand', 'lib', 'grave', 'exile', 'command']) for (const i of p[z] || []) { if (seen.has(i)) bad('an object is in two zones'); seen.add(i); if (s.cards[i].zone !== z) bad('zone mismatch ' + i + ' ' + z + '/' + s.cards[i].zone); }
     const dk = s.turn + ':' + p.seat; drops[dk] = Math.max(drops[dk] || 0, MF.landDrops(s, p.seat));
     if (p.landsPlayed > drops[dk]) bad('more land drops than allowed (CR 305.2)');
   }
@@ -36,7 +38,7 @@ const pick = s => {
 };
 const t0 = Date.now(); const wins = {}; let steps = 0, turns = 0, capped = 0;
 for (let g = 0; g < games; g++) {
-  const a = ids[g % ids.length], b = ids[(g + 1) % ids.length];
+  const a = ids[g % ids.length], same = ids.filter(x => kind(x) === kind(a)), b = same[(same.indexOf(a) + 1) % same.length];
   let s = MF.newGame({ seed: seed0 + g, decks: g % 2 ? [b, a] : [a, b] });
   const acts = [];
   try {
