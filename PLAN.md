@@ -74,8 +74,11 @@ Deck count, never quality. A deck that does not compile in full is not registere
   check-pages clean (193 log types, 104 question kinds); `tools/sim.mjs` 12 random mirror games for each
   of the five decks and 40 across every deck, 0 violations; two AI-vs-AI mirror games for each deck run
   to a finish (40–120 ms a step); `tools/policy-sweep.mjs 60`, every AI answer legal (74 question kinds).
-- Art: 143 prompts added to `tools/art-identity.mjs` (the five decks' cards and tokens), linted; not yet
-  rendered.
+- Art: 143 prompts added to `tools/art-identity.mjs` (the five decks' cards and tokens), linted. Rendered
+  the same day through Hugging Face (D23) with Kujo's 95 (D21): 238 images, 0 failures; three re-rolled
+  after a look at the contact sheet (Fractured Sanity in black and white, Guiltfeeder with a painted frame,
+  Manic Scribe with lettering). `tools/check-art.mjs`: 581 of 581 illustrated. Checked in the browser: the
+  Commander chooser's deck art and the cards in hand and on the battlefield load, no failed request.
 
 **2026-10-31 — Kujo's Commander deck (D21) registered: 100 of 100 cards compile.**
 
