@@ -3847,6 +3847,2426 @@ window.MF.decks = {
   "compiles": true,
   "tokens": []
  },
+ "cedh-kraum-tymna": {
+  "id": "cedh-kraum-tymna",
+  "file": "data/lists/cedh-kraum-tymna.txt",
+  "name": "Kraum & Tymna",
+  "product": "Just Jam D-Grid",
+  "set": "LIST",
+  "group": "cedh",
+  "player": "Matt Hayes",
+  "released": "2026-05-30",
+  "fetched": "2026-10-31",
+  "source": "https://edhtop16.com/tournament/d-grid-on-the-stack/decklist/z0rVgKt4HGOWE57DB3qolitDrri1",
+  "registered": false,
+  "format": "Commander",
+  "min": 100,
+  "commanders": [
+   "kraum-ludevics-opus",
+   "tymna-the-weaver"
+  ],
+  "main": [
+   {
+    "id": "ad-nauseam",
+    "n": 1
+   },
+   {
+    "id": "an-offer-you-cant-refuse",
+    "n": 1
+   },
+   {
+    "id": "ancient-tomb",
+    "n": 1
+   },
+   {
+    "id": "arcane-signet",
+    "n": 1
+   },
+   {
+    "id": "arid-mesa",
+    "n": 1
+   },
+   {
+    "id": "badlands",
+    "n": 1
+   },
+   {
+    "id": "borne-upon-a-wind",
+    "n": 1
+   },
+   {
+    "id": "brain-freeze",
+    "n": 1
+   },
+   {
+    "id": "chain-of-vapor",
+    "n": 1
+   },
+   {
+    "id": "chrome-mox",
+    "n": 1
+   },
+   {
+    "id": "city-of-brass",
+    "n": 1
+   },
+   {
+    "id": "city-of-traitors",
+    "n": 1
+   },
+   {
+    "id": "command-tower",
+    "n": 1
+   },
+   {
+    "id": "commandeer",
+    "n": 1
+   },
+   {
+    "id": "copy-enchantment",
+    "n": 1
+   },
+   {
+    "id": "dark-ritual",
+    "n": 1
+   },
+   {
+    "id": "deflecting-swat",
+    "n": 1
+   },
+   {
+    "id": "demonic-tutor",
+    "n": 1
+   },
+   {
+    "id": "diabolic-intent",
+    "n": 1
+   },
+   {
+    "id": "dispel",
+    "n": 1
+   },
+   {
+    "id": "dragons-rage-channeler",
+    "n": 1
+   },
+   {
+    "id": "emergence-zone",
+    "n": 1
+   },
+   {
+    "id": "enlightened-tutor",
+    "n": 1
+   },
+   {
+    "id": "esper-sentinel",
+    "n": 1
+   },
+   {
+    "id": "exotic-orchard",
+    "n": 1
+   },
+   {
+    "id": "faerie-mastermind",
+    "n": 1
+   },
+   {
+    "id": "fierce-guardianship",
+    "n": 1
+   },
+   {
+    "id": "final-fortune",
+    "n": 1
+   },
+   {
+    "id": "firestorm",
+    "n": 1
+   },
+   {
+    "id": "flamescroll-celebrant-revel-in-silence",
+    "n": 1
+   },
+   {
+    "id": "flare-of-duplication",
+    "n": 1
+   },
+   {
+    "id": "flash-photography",
+    "n": 1
+   },
+   {
+    "id": "flooded-strand",
+    "n": 1
+   },
+   {
+    "id": "flusterstorm",
+    "n": 1
+   },
+   {
+    "id": "force-of-negation",
+    "n": 1
+   },
+   {
+    "id": "force-of-will",
+    "n": 1
+   },
+   {
+    "id": "gamble",
+    "n": 1
+   },
+   {
+    "id": "gemstone-caverns",
+    "n": 1
+   },
+   {
+    "id": "gifts-ungiven",
+    "n": 1
+   },
+   {
+    "id": "grand-abolisher",
+    "n": 1
+   },
+   {
+    "id": "imperial-seal",
+    "n": 1
+   },
+   {
+    "id": "imposter-mech",
+    "n": 1
+   },
+   {
+    "id": "into-the-flood-maw",
+    "n": 1
+   },
+   {
+    "id": "intuition",
+    "n": 1
+   },
+   {
+    "id": "lions-eye-diamond",
+    "n": 1
+   },
+   {
+    "id": "lotho-corrupt-shirriff",
+    "n": 1
+   },
+   {
+    "id": "lotus-petal",
+    "n": 1
+   },
+   {
+    "id": "mana-confluence",
+    "n": 1
+   },
+   {
+    "id": "mana-vault",
+    "n": 1
+   },
+   {
+    "id": "marsh-flats",
+    "n": 1
+   },
+   {
+    "id": "mayhem-devil",
+    "n": 1
+   },
+   {
+    "id": "mental-misstep",
+    "n": 1
+   },
+   {
+    "id": "mindbreak-trap",
+    "n": 1
+   },
+   {
+    "id": "mirrormade",
+    "n": 1
+   },
+   {
+    "id": "misty-rainforest",
+    "n": 1
+   },
+   {
+    "id": "mnemonic-betrayal",
+    "n": 1
+   },
+   {
+    "id": "mockingbird",
+    "n": 1
+   },
+   {
+    "id": "mox-diamond",
+    "n": 1
+   },
+   {
+    "id": "mox-opal",
+    "n": 1
+   },
+   {
+    "id": "mystic-remora",
+    "n": 1
+   },
+   {
+    "id": "mystical-tutor",
+    "n": 1
+   },
+   {
+    "id": "orims-chant",
+    "n": 1
+   },
+   {
+    "id": "otawara-soaring-city",
+    "n": 1
+   },
+   {
+    "id": "pact-of-negation",
+    "n": 1
+   },
+   {
+    "id": "permission-denied",
+    "n": 1
+   },
+   {
+    "id": "plateau",
+    "n": 1
+   },
+   {
+    "id": "polluted-delta",
+    "n": 1
+   },
+   {
+    "id": "professional-face-breaker",
+    "n": 1
+   },
+   {
+    "id": "ragavan-nimble-pilferer",
+    "n": 1
+   },
+   {
+    "id": "rain-of-filth",
+    "n": 1
+   },
+   {
+    "id": "ranger-captain-of-eos",
+    "n": 1
+   },
+   {
+    "id": "red-elemental-blast",
+    "n": 1
+   },
+   {
+    "id": "redirect-lightning",
+    "n": 1
+   },
+   {
+    "id": "rhystic-study",
+    "n": 1
+   },
+   {
+    "id": "rite-of-flame",
+    "n": 1
+   },
+   {
+    "id": "scalding-tarn",
+    "n": 1
+   },
+   {
+    "id": "scheming-symmetry",
+    "n": 1
+   },
+   {
+    "id": "scrubland",
+    "n": 1
+   },
+   {
+    "id": "sevinnes-reclamation",
+    "n": 1
+   },
+   {
+    "id": "silence",
+    "n": 1
+   },
+   {
+    "id": "simian-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "sink-into-stupor-soporific-springs",
+    "n": 1
+   },
+   {
+    "id": "smothering-tithe",
+    "n": 1
+   },
+   {
+    "id": "sol-ring",
+    "n": 1
+   },
+   {
+    "id": "starting-town",
+    "n": 1
+   },
+   {
+    "id": "storm-kiln-artist",
+    "n": 1
+   },
+   {
+    "id": "swan-song",
+    "n": 1
+   },
+   {
+    "id": "tainted-pact",
+    "n": 1
+   },
+   {
+    "id": "tarnished-citadel",
+    "n": 1
+   },
+   {
+    "id": "tataru-taru",
+    "n": 1
+   },
+   {
+    "id": "trickbind",
+    "n": 1
+   },
+   {
+    "id": "tundra",
+    "n": 1
+   },
+   {
+    "id": "underground-sea",
+    "n": 1
+   },
+   {
+    "id": "underworld-breach",
+    "n": 1
+   },
+   {
+    "id": "valley-floodcaller",
+    "n": 1
+   },
+   {
+    "id": "vampiric-tutor",
+    "n": 1
+   },
+   {
+    "id": "volcanic-island",
+    "n": 1
+   },
+   {
+    "id": "watery-grave",
+    "n": 1
+   }
+  ],
+  "rank": 1,
+  "players": 200,
+  "record": "4-1-3",
+  "compiles": false,
+  "refused": [
+   "kraum-ludevics-opus: trigger event: an opponent casts their second spell each turn, draw a card.",
+   "tymna-the-weaver: trigger event: the beginning of each of your postcombat main phases, you may pay X life, where X is the number of opponents that were dealt combat damage this turn. If you do, draw X cards.",
+   "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
+   "an-offer-you-cant-refuse: effect: Its controller creates two Treasure tokens",
+   "arid-mesa: effect: Search your library for a Mountain or Plains card, put it onto the battlefield, then shuffle",
+   "borne-upon-a-wind: effect: You may cast spells this turn as though they had flash",
+   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
+   "city-of-traitors: trigger event: you play another land, sacrifice ~.",
+   "commandeer: effect: You may exile two blue cards from your hand rather than pay this spell's mana cost",
+   "copy-enchantment: ability: You may have ~ enter as a copy of any enchantment on the battlefield.",
+   "deflecting-swat: filter noun: commander",
+   "dispel: effect: Counter target instant spell",
+   "dragons-rage-channeler: static body: ~ gets +2/+2, has flying, and attacks each combat if able",
+   "emergence-zone: effect: You may cast spells this turn as though they had flash",
+   "enlightened-tutor: effect: Search your library for an artifact or enchantment card, reveal it, then shuffle and put that card on top",
+   "esper-sentinel: trigger event: an opponent casts their first noncreature spell each turn, draw a card unless that player pays {X}, where X is ~'s power.",
+   "fierce-guardianship: filter noun: commander",
+   "final-fortune: effect: Take an extra turn after this one",
+   "firestorm: effect: As an additional cost to cast this spell, discard X cards",
+   "flamescroll-celebrant-revel-in-silence: trigger event: an opponent activates an ability that isn't a mana ability, ~ deals 1 damage to that player.",
+   "flare-of-duplication: effect: You may sacrifice a nontoken red creature rather than pay this spell's mana cost",
+   "flash-photography: effect: You may cast this spell as though it had flash if it targets a permanent you control",
+   "flooded-strand: effect: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle",
+   "flusterstorm: effect: Counter target instant or sorcery spell unless its controller pays {1}",
+   "force-of-negation: condition: it's not your turn",
+   "force-of-will: effect: You may pay 1 life and exile a blue card from your hand rather than pay this spell's mana cost",
+   "gamble: effect: Search your library for a card, put that card into your hand, discard a card at random, then shuffle",
+   "gemstone-caverns: ability: If this card is in your opening hand and you're not the starting player, you may begin the game with ~ on the battlefield with a luck counter on it. If you do, exile a card from your hand.",
+   "gifts-ungiven: effect: Search your library for up to four cards with different names and reveal them",
+   "grand-abolisher: ability: During your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments.",
+   "imposter-mech: ability: You may have ~ enter as a copy of a creature an opponent controls, except it's a Vehicle artifact with crew 3 and it loses all other card types.",
+   "intuition: effect: Search your library for three cards and reveal them",
+   "lions-eye-diamond: cost: Discard your hand",
+   "lotho-corrupt-shirriff: trigger event: a player casts their second spell each turn, you lose 1 life and create a Treasure token.",
+   "marsh-flats: effect: Search your library for a Plains or Swamp card, put it onto the battlefield, then shuffle",
+   "mayhem-devil: trigger event: a player sacrifices a permanent, ~ deals 1 damage to any target.",
+   "mindbreak-trap: condition: an opponent cast three or more spells this turn",
+   "mirrormade: ability: You may have ~ enter as a copy of any artifact or enchantment on the battlefield.",
+   "misty-rainforest: effect: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle",
+   "mox-diamond: ability: If ~ would enter, you may discard a land card instead. If you do, put ~ onto the battlefield. If you don't, put it into its owner's graveyard.",
+   "orims-chant: effect: Target player can't cast spells this turn",
+   "otawara-soaring-city: filter qualifier: , creature, enchantment, or planeswalker",
+   "pact-of-negation: trigger event: the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+   "permission-denied: effect: Your opponents can't cast noncreature spells this turn",
+   "professional-face-breaker: trigger event: one or more creatures you control deal combat damage to a player, create a Treasure token.",
+   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
+   "rain-of-filth: cost: Until end of turn",
+   "ranger-captain-of-eos: effect: You may search your library for a creature card with mana value 1 or less, reveal it, put it into your hand, then shuffle",
+   "red-elemental-blast: effect: Counter target blue spell",
+   "redirect-lightning: effect: As an additional cost to cast this spell, pay 5 life or pay {2}",
+   "rite-of-flame: effect: Add {R}{R}, then add {R} for each card named ~ in each graveyard",
+   "scheming-symmetry: effect: Choose two target players",
+   "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
+   "silence: effect: Your opponents can't cast spells this turn",
+   "simian-spirit-guide: cost: Exile this card from your hand",
+   "sink-into-stupor-soporific-springs: filter noun: spell or nonland permanent an opponent controls",
+   "smothering-tithe: effect: That player may pay {2}",
+   "storm-kiln-artist: ability: ~ gets +1/+0 for each artifact you control.",
+   "swan-song: effect: Counter target enchantment, instant, or sorcery spell",
+   "tainted-pact: effect: Exile the top card of your library",
+   "tarnished-citadel: object: add one mana of any color. ~",
+   "tataru-taru: effect: You draw a card and target opponent may draw a card",
+   "trickbind: effect: Split second",
+   "underworld-breach: ability: Each nonland card in your graveyard has escape. The escape cost is equal to the card's mana cost plus exile three other cards from your graveyard.",
+   "valley-floodcaller: ability: You may cast noncreature spells as though they had flash."
+  ],
+  "tokens": [
+   "token-fish-1-1-u"
+  ]
+ },
+ "cedh-najeela": {
+  "id": "cedh-najeela",
+  "file": "data/lists/cedh-najeela.txt",
+  "name": "Najeela",
+  "product": "Commandergeddon 10",
+  "set": "LIST",
+  "group": "cedh",
+  "player": "Dan Cross",
+  "released": "2026-06-05",
+  "fetched": "2026-10-31",
+  "source": "https://edhtop16.com/tournament/commandergeddon-10-brought-to-you-by-jenes-mtg/decklist/Tn7hc9tJIjhoDu0yDp7OHtJRG3i2",
+  "registered": false,
+  "format": "Commander",
+  "min": 100,
+  "commanders": [
+   "najeela-the-blade-blossom"
+  ],
+  "main": [
+   {
+    "id": "ad-nauseam",
+    "n": 1
+   },
+   {
+    "id": "an-offer-you-cant-refuse",
+    "n": 1
+   },
+   {
+    "id": "ancient-tomb",
+    "n": 1
+   },
+   {
+    "id": "arcane-signet",
+    "n": 1
+   },
+   {
+    "id": "arid-mesa",
+    "n": 1
+   },
+   {
+    "id": "badlands",
+    "n": 1
+   },
+   {
+    "id": "bayou",
+    "n": 1
+   },
+   {
+    "id": "birds-of-paradise",
+    "n": 1
+   },
+   {
+    "id": "bloodstained-mire",
+    "n": 1
+   },
+   {
+    "id": "borne-upon-a-wind",
+    "n": 1
+   },
+   {
+    "id": "brain-freeze",
+    "n": 1
+   },
+   {
+    "id": "cabal-ritual",
+    "n": 1
+   },
+   {
+    "id": "chain-of-vapor",
+    "n": 1
+   },
+   {
+    "id": "chrome-mox",
+    "n": 1
+   },
+   {
+    "id": "city-of-brass",
+    "n": 1
+   },
+   {
+    "id": "city-of-traitors",
+    "n": 1
+   },
+   {
+    "id": "command-tower",
+    "n": 1
+   },
+   {
+    "id": "crop-rotation",
+    "n": 1
+   },
+   {
+    "id": "culling-ritual",
+    "n": 1
+   },
+   {
+    "id": "culling-the-weak",
+    "n": 1
+   },
+   {
+    "id": "dark-ritual",
+    "n": 1
+   },
+   {
+    "id": "deflecting-swat",
+    "n": 1
+   },
+   {
+    "id": "demonic-consultation",
+    "n": 1
+   },
+   {
+    "id": "demonic-tutor",
+    "n": 1
+   },
+   {
+    "id": "derevi-empyrial-tactician",
+    "n": 1
+   },
+   {
+    "id": "diabolic-intent",
+    "n": 1
+   },
+   {
+    "id": "eldritch-evolution",
+    "n": 1
+   },
+   {
+    "id": "elvish-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "emergence-zone",
+    "n": 1
+   },
+   {
+    "id": "enlightened-tutor",
+    "n": 1
+   },
+   {
+    "id": "esper-sentinel",
+    "n": 1
+   },
+   {
+    "id": "fellwar-stone",
+    "n": 1
+   },
+   {
+    "id": "fierce-guardianship",
+    "n": 1
+   },
+   {
+    "id": "final-fortune",
+    "n": 1
+   },
+   {
+    "id": "flare-of-duplication",
+    "n": 1
+   },
+   {
+    "id": "flooded-strand",
+    "n": 1
+   },
+   {
+    "id": "flusterstorm",
+    "n": 1
+   },
+   {
+    "id": "force-of-will",
+    "n": 1
+   },
+   {
+    "id": "gamble",
+    "n": 1
+   },
+   {
+    "id": "gemstone-caverns",
+    "n": 1
+   },
+   {
+    "id": "gornog-the-red-reaper",
+    "n": 1
+   },
+   {
+    "id": "hexing-squelcher",
+    "n": 1
+   },
+   {
+    "id": "ignoble-hierarch",
+    "n": 1
+   },
+   {
+    "id": "imperial-seal",
+    "n": 1
+   },
+   {
+    "id": "intuition",
+    "n": 1
+   },
+   {
+    "id": "lions-eye-diamond",
+    "n": 1
+   },
+   {
+    "id": "lotho-corrupt-shirriff",
+    "n": 1
+   },
+   {
+    "id": "lotus-petal",
+    "n": 1
+   },
+   {
+    "id": "mana-confluence",
+    "n": 1
+   },
+   {
+    "id": "mana-vault",
+    "n": 1
+   },
+   {
+    "id": "manamorphose",
+    "n": 1
+   },
+   {
+    "id": "marsh-flats",
+    "n": 1
+   },
+   {
+    "id": "mental-misstep",
+    "n": 1
+   },
+   {
+    "id": "mindbreak-trap",
+    "n": 1
+   },
+   {
+    "id": "misty-rainforest",
+    "n": 1
+   },
+   {
+    "id": "mox-amber",
+    "n": 1
+   },
+   {
+    "id": "mox-diamond",
+    "n": 1
+   },
+   {
+    "id": "mox-opal",
+    "n": 1
+   },
+   {
+    "id": "mystic-remora",
+    "n": 1
+   },
+   {
+    "id": "mystical-tutor",
+    "n": 1
+   },
+   {
+    "id": "necropotence",
+    "n": 1
+   },
+   {
+    "id": "noble-hierarch",
+    "n": 1
+   },
+   {
+    "id": "pact-of-negation",
+    "n": 1
+   },
+   {
+    "id": "polluted-delta",
+    "n": 1
+   },
+   {
+    "id": "ragavan-nimble-pilferer",
+    "n": 1
+   },
+   {
+    "id": "ranger-captain-of-eos",
+    "n": 1
+   },
+   {
+    "id": "rhystic-study",
+    "n": 1
+   },
+   {
+    "id": "rite-of-flame",
+    "n": 1
+   },
+   {
+    "id": "rograkh-son-of-rohgahh",
+    "n": 1
+   },
+   {
+    "id": "samut-vizier-of-naktamun",
+    "n": 1
+   },
+   {
+    "id": "savannah",
+    "n": 1
+   },
+   {
+    "id": "scalding-tarn",
+    "n": 1
+   },
+   {
+    "id": "scrubland",
+    "n": 1
+   },
+   {
+    "id": "sevinnes-reclamation",
+    "n": 1
+   },
+   {
+    "id": "silence",
+    "n": 1
+   },
+   {
+    "id": "simian-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "sol-ring",
+    "n": 1
+   },
+   {
+    "id": "starting-town",
+    "n": 1
+   },
+   {
+    "id": "summoners-pact",
+    "n": 1
+   },
+   {
+    "id": "swan-song",
+    "n": 1
+   },
+   {
+    "id": "swords-to-plowshares",
+    "n": 1
+   },
+   {
+    "id": "taiga",
+    "n": 1
+   },
+   {
+    "id": "tainted-pact",
+    "n": 1
+   },
+   {
+    "id": "thassas-oracle",
+    "n": 1
+   },
+   {
+    "id": "the-cabbage-merchant",
+    "n": 1
+   },
+   {
+    "id": "tinder-wall",
+    "n": 1
+   },
+   {
+    "id": "tropical-island",
+    "n": 1
+   },
+   {
+    "id": "tundra",
+    "n": 1
+   },
+   {
+    "id": "underground-sea",
+    "n": 1
+   },
+   {
+    "id": "underworld-breach",
+    "n": 1
+   },
+   {
+    "id": "valley-floodcaller",
+    "n": 1
+   },
+   {
+    "id": "vampiric-tutor",
+    "n": 1
+   },
+   {
+    "id": "veil-of-summer",
+    "n": 1
+   },
+   {
+    "id": "verdant-catacombs",
+    "n": 1
+   },
+   {
+    "id": "vexing-bauble",
+    "n": 1
+   },
+   {
+    "id": "voice-of-victory",
+    "n": 1
+   },
+   {
+    "id": "volcanic-island",
+    "n": 1
+   },
+   {
+    "id": "windswept-heath",
+    "n": 1
+   },
+   {
+    "id": "wooded-foothills",
+    "n": 1
+   }
+  ],
+  "rank": 7,
+  "players": 173,
+  "record": "3-3-1",
+  "compiles": false,
+  "refused": [
+   "najeela-the-blade-blossom: trigger event: a Warrior attacks, you may have its controller create a 1/1 white Warrior creature token that's tapped and attacking.",
+   "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
+   "an-offer-you-cant-refuse: effect: Its controller creates two Treasure tokens",
+   "arid-mesa: effect: Search your library for a Mountain or Plains card, put it onto the battlefield, then shuffle",
+   "borne-upon-a-wind: effect: You may cast spells this turn as though they had flash",
+   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
+   "city-of-traitors: trigger event: you play another land, sacrifice ~.",
+   "crop-rotation: effect: As an additional cost to cast this spell, sacrifice a land",
+   "culling-ritual: effect: Add {B} or {G} for each permanent destroyed this way",
+   "deflecting-swat: filter noun: commander",
+   "demonic-consultation: effect: Choose a card name",
+   "derevi-empyrial-tactician: trigger event: ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.",
+   "eldritch-evolution: effect: Search your library for a creature card with mana value X or less, where X is 2 plus the sacrificed creature's mana value",
+   "elvish-spirit-guide: cost: Exile this card from your hand",
+   "emergence-zone: effect: You may cast spells this turn as though they had flash",
+   "enlightened-tutor: effect: Search your library for an artifact or enchantment card, reveal it, then shuffle and put that card on top",
+   "esper-sentinel: trigger event: an opponent casts their first noncreature spell each turn, draw a card unless that player pays {X}, where X is ~'s power.",
+   "fierce-guardianship: filter noun: commander",
+   "final-fortune: effect: Take an extra turn after this one",
+   "flare-of-duplication: effect: You may sacrifice a nontoken red creature rather than pay this spell's mana cost",
+   "flooded-strand: effect: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle",
+   "flusterstorm: effect: Counter target instant or sorcery spell unless its controller pays {1}",
+   "force-of-will: effect: You may pay 1 life and exile a blue card from your hand rather than pay this spell's mana cost",
+   "gamble: effect: Search your library for a card, put that card into your hand, discard a card at random, then shuffle",
+   "gemstone-caverns: ability: If this card is in your opening hand and you're not the starting player, you may begin the game with ~ on the battlefield with a luck counter on it. If you do, exile a card from your hand.",
+   "gornog-the-red-reaper: ability: Cowards can't block Warriors.",
+   "hexing-squelcher: ability: Spells you control can't be countered.",
+   "ignoble-hierarch: ability: Exalted",
+   "intuition: effect: Search your library for three cards and reveal them",
+   "lions-eye-diamond: cost: Discard your hand",
+   "lotho-corrupt-shirriff: trigger event: a player casts their second spell each turn, you lose 1 life and create a Treasure token.",
+   "manamorphose: effect: Add two mana in any combination of colors",
+   "marsh-flats: effect: Search your library for a Plains or Swamp card, put it onto the battlefield, then shuffle",
+   "mindbreak-trap: condition: an opponent cast three or more spells this turn",
+   "misty-rainforest: effect: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle",
+   "mox-amber: effect: Add one mana of any color among legendary creatures and planeswalkers you control",
+   "mox-diamond: ability: If ~ would enter, you may discard a land card instead. If you do, put ~ onto the battlefield. If you don't, put it into its owner's graveyard.",
+   "noble-hierarch: ability: Exalted",
+   "pact-of-negation: trigger event: the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
+   "ranger-captain-of-eos: effect: You may search your library for a creature card with mana value 1 or less, reveal it, put it into your hand, then shuffle",
+   "rite-of-flame: effect: Add {R}{R}, then add {R} for each card named ~ in each graveyard",
+   "rograkh-son-of-rohgahh: ability: Partner",
+   "samut-vizier-of-naktamun: intervening if: if that creature entered this turn, draw a card.",
+   "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
+   "silence: effect: Your opponents can't cast spells this turn",
+   "simian-spirit-guide: cost: Exile this card from your hand",
+   "summoners-pact: effect: Search your library for a green creature card, reveal it, put it into your hand, then shuffle",
+   "swan-song: effect: Counter target enchantment, instant, or sorcery spell",
+   "swords-to-plowshares: effect: Exile target creature",
+   "tainted-pact: effect: Exile the top card of your library",
+   "the-cabbage-merchant: effect: Create a Food token",
+   "tinder-wall: \"it\" with nothing to refer to",
+   "underworld-breach: ability: Each nonland card in your graveyard has escape. The escape cost is equal to the card's mana cost plus exile three other cards from your graveyard.",
+   "valley-floodcaller: ability: You may cast noncreature spells as though they had flash.",
+   "veil-of-summer: effect: Draw a card if an opponent has cast a blue or black spell this turn",
+   "verdant-catacombs: effect: Search your library for a Swamp or Forest card, put it onto the battlefield, then shuffle",
+   "vexing-bauble: trigger event: a player casts a spell, if no mana was spent to cast it, counter that spell.",
+   "windswept-heath: effect: Search your library for a Forest or Plains card, put it onto the battlefield, then shuffle",
+   "wooded-foothills: effect: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle"
+  ],
+  "tokens": [
+   "token-warrior-1-1-r"
+  ]
+ },
+ "cedh-scion-of-the-ur-dragon": {
+  "id": "cedh-scion-of-the-ur-dragon",
+  "file": "data/lists/cedh-scion.txt",
+  "name": "Scion of the Ur-Dragon",
+  "product": "cEDH UK Open — Benfest III",
+  "set": "LIST",
+  "group": "cedh",
+  "player": "Janos Nado",
+  "released": "2026-09-12",
+  "fetched": "2026-10-31",
+  "source": "https://edhtop16.com/tournament/cedh-uk-open-benfest-iii/decklist/4CRipOBe3HdnR3NN4NQNImyZu8J2",
+  "registered": false,
+  "format": "Commander",
+  "min": 100,
+  "commanders": [
+   "scion-of-the-ur-dragon"
+  ],
+  "main": [
+   {
+    "id": "an-offer-you-cant-refuse",
+    "n": 1
+   },
+   {
+    "id": "ancient-copper-dragon",
+    "n": 1
+   },
+   {
+    "id": "ancient-tomb",
+    "n": 1
+   },
+   {
+    "id": "arcane-signet",
+    "n": 1
+   },
+   {
+    "id": "arid-mesa",
+    "n": 1
+   },
+   {
+    "id": "badlands",
+    "n": 1
+   },
+   {
+    "id": "bayou",
+    "n": 1
+   },
+   {
+    "id": "beseech-the-mirror",
+    "n": 1
+   },
+   {
+    "id": "birds-of-paradise",
+    "n": 1
+   },
+   {
+    "id": "bloodstained-mire",
+    "n": 1
+   },
+   {
+    "id": "borne-upon-a-wind",
+    "n": 1
+   },
+   {
+    "id": "boseiju-who-endures",
+    "n": 1
+   },
+   {
+    "id": "brain-freeze",
+    "n": 1
+   },
+   {
+    "id": "cabal-ritual",
+    "n": 1
+   },
+   {
+    "id": "carpet-of-flowers",
+    "n": 1
+   },
+   {
+    "id": "chain-of-vapor",
+    "n": 1
+   },
+   {
+    "id": "channel-the-suns",
+    "n": 1
+   },
+   {
+    "id": "chrome-mox",
+    "n": 1
+   },
+   {
+    "id": "city-of-brass",
+    "n": 1
+   },
+   {
+    "id": "command-tower",
+    "n": 1
+   },
+   {
+    "id": "commandeer",
+    "n": 1
+   },
+   {
+    "id": "copy-enchantment",
+    "n": 1
+   },
+   {
+    "id": "crop-rotation",
+    "n": 1
+   },
+   {
+    "id": "dark-ritual",
+    "n": 1
+   },
+   {
+    "id": "deathrite-shaman",
+    "n": 1
+   },
+   {
+    "id": "demonic-consultation",
+    "n": 1
+   },
+   {
+    "id": "demonic-tutor",
+    "n": 1
+   },
+   {
+    "id": "diabolic-intent",
+    "n": 1
+   },
+   {
+    "id": "dispel",
+    "n": 1
+   },
+   {
+    "id": "elves-of-deep-shadow",
+    "n": 1
+   },
+   {
+    "id": "elvish-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "emergence-zone",
+    "n": 1
+   },
+   {
+    "id": "enlightened-tutor",
+    "n": 1
+   },
+   {
+    "id": "esper-sentinel",
+    "n": 1
+   },
+   {
+    "id": "exotic-orchard",
+    "n": 1
+   },
+   {
+    "id": "faerie-mastermind",
+    "n": 1
+   },
+   {
+    "id": "final-fortune",
+    "n": 1
+   },
+   {
+    "id": "flooded-strand",
+    "n": 1
+   },
+   {
+    "id": "flusterstorm",
+    "n": 1
+   },
+   {
+    "id": "force-of-negation",
+    "n": 1
+   },
+   {
+    "id": "force-of-will",
+    "n": 1
+   },
+   {
+    "id": "gamble",
+    "n": 1
+   },
+   {
+    "id": "gemstone-caverns",
+    "n": 1
+   },
+   {
+    "id": "gleaming-splendor",
+    "n": 1
+   },
+   {
+    "id": "ignoble-hierarch",
+    "n": 1
+   },
+   {
+    "id": "imperial-seal",
+    "n": 1
+   },
+   {
+    "id": "korvold-fae-cursed-king",
+    "n": 1
+   },
+   {
+    "id": "lim-d-ls-vault",
+    "n": 1
+   },
+   {
+    "id": "lions-eye-diamond",
+    "n": 1
+   },
+   {
+    "id": "lotho-corrupt-shirriff",
+    "n": 1
+   },
+   {
+    "id": "lotus-petal",
+    "n": 1
+   },
+   {
+    "id": "mana-confluence",
+    "n": 1
+   },
+   {
+    "id": "mana-vault",
+    "n": 1
+   },
+   {
+    "id": "manamorphose",
+    "n": 1
+   },
+   {
+    "id": "marsh-flats",
+    "n": 1
+   },
+   {
+    "id": "mental-misstep",
+    "n": 1
+   },
+   {
+    "id": "mindbreak-trap",
+    "n": 1
+   },
+   {
+    "id": "misdirection",
+    "n": 1
+   },
+   {
+    "id": "misty-rainforest",
+    "n": 1
+   },
+   {
+    "id": "mox-diamond",
+    "n": 1
+   },
+   {
+    "id": "mystic-remora",
+    "n": 1
+   },
+   {
+    "id": "mystical-tutor",
+    "n": 1
+   },
+   {
+    "id": "necropotence",
+    "n": 1
+   },
+   {
+    "id": "noble-hierarch",
+    "n": 1
+   },
+   {
+    "id": "orims-chant",
+    "n": 1
+   },
+   {
+    "id": "pact-of-negation",
+    "n": 1
+   },
+   {
+    "id": "polluted-delta",
+    "n": 1
+   },
+   {
+    "id": "prismari-the-inspiration",
+    "n": 1
+   },
+   {
+    "id": "pyroblast",
+    "n": 1
+   },
+   {
+    "id": "ragavan-nimble-pilferer",
+    "n": 1
+   },
+   {
+    "id": "rhystic-study",
+    "n": 1
+   },
+   {
+    "id": "rite-of-flame",
+    "n": 1
+   },
+   {
+    "id": "savannah",
+    "n": 1
+   },
+   {
+    "id": "scalding-tarn",
+    "n": 1
+   },
+   {
+    "id": "scrubland",
+    "n": 1
+   },
+   {
+    "id": "shifting-woodland",
+    "n": 1
+   },
+   {
+    "id": "silence",
+    "n": 1
+   },
+   {
+    "id": "simian-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "smothering-tithe",
+    "n": 1
+   },
+   {
+    "id": "snapback",
+    "n": 1
+   },
+   {
+    "id": "sol-ring",
+    "n": 1
+   },
+   {
+    "id": "starting-town",
+    "n": 1
+   },
+   {
+    "id": "storm-kiln-artist",
+    "n": 1
+   },
+   {
+    "id": "swan-song",
+    "n": 1
+   },
+   {
+    "id": "tainted-pact",
+    "n": 1
+   },
+   {
+    "id": "tarnished-citadel",
+    "n": 1
+   },
+   {
+    "id": "tataru-taru",
+    "n": 1
+   },
+   {
+    "id": "thassas-oracle",
+    "n": 1
+   },
+   {
+    "id": "tinder-wall",
+    "n": 1
+   },
+   {
+    "id": "tropical-island",
+    "n": 1
+   },
+   {
+    "id": "tundra",
+    "n": 1
+   },
+   {
+    "id": "underground-sea",
+    "n": 1
+   },
+   {
+    "id": "underworld-breach",
+    "n": 1
+   },
+   {
+    "id": "valley-floodcaller",
+    "n": 1
+   },
+   {
+    "id": "vampiric-tutor",
+    "n": 1
+   },
+   {
+    "id": "veil-of-summer",
+    "n": 1
+   },
+   {
+    "id": "verdant-catacombs",
+    "n": 1
+   },
+   {
+    "id": "volcanic-island",
+    "n": 1
+   },
+   {
+    "id": "wooded-foothills",
+    "n": 1
+   }
+  ],
+  "rank": 3,
+  "players": 156,
+  "record": "4-2-3",
+  "compiles": false,
+  "refused": [
+   "scion-of-the-ur-dragon: effect: Search your library for a Dragon permanent card and put it into your graveyard",
+   "an-offer-you-cant-refuse: effect: Its controller creates two Treasure tokens",
+   "ancient-copper-dragon: effect: Roll a d20",
+   "arid-mesa: effect: Search your library for a Mountain or Plains card, put it onto the battlefield, then shuffle",
+   "beseech-the-mirror: effect: Search your library for a card, exile it face down, then shuffle",
+   "borne-upon-a-wind: effect: You may cast spells this turn as though they had flash",
+   "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
+   "carpet-of-flowers: trigger event: the beginning of each of your main phases, if you haven't added mana with this ability this turn, you may add X mana of any one color, where X is the number of Islands target opponent controls.",
+   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
+   "commandeer: effect: You may exile two blue cards from your hand rather than pay this spell's mana cost",
+   "copy-enchantment: ability: You may have ~ enter as a copy of any enchantment on the battlefield.",
+   "crop-rotation: effect: As an additional cost to cast this spell, sacrifice a land",
+   "deathrite-shaman: effect: Exile target land card from a graveyard",
+   "demonic-consultation: effect: Choose a card name",
+   "dispel: effect: Counter target instant spell",
+   "elves-of-deep-shadow: object: add {B}. ~",
+   "elvish-spirit-guide: cost: Exile this card from your hand",
+   "emergence-zone: effect: You may cast spells this turn as though they had flash",
+   "enlightened-tutor: effect: Search your library for an artifact or enchantment card, reveal it, then shuffle and put that card on top",
+   "esper-sentinel: trigger event: an opponent casts their first noncreature spell each turn, draw a card unless that player pays {X}, where X is ~'s power.",
+   "final-fortune: effect: Take an extra turn after this one",
+   "flooded-strand: effect: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle",
+   "flusterstorm: effect: Counter target instant or sorcery spell unless its controller pays {1}",
+   "force-of-negation: condition: it's not your turn",
+   "force-of-will: effect: You may pay 1 life and exile a blue card from your hand rather than pay this spell's mana cost",
+   "gamble: effect: Search your library for a card, put that card into your hand, discard a card at random, then shuffle",
+   "gemstone-caverns: ability: If this card is in your opening hand and you're not the starting player, you may begin the game with ~ on the battlefield with a luck counter on it. If you do, exile a card from your hand.",
+   "gleaming-splendor: effect: Two target players each draw a card",
+   "ignoble-hierarch: ability: Exalted",
+   "korvold-fae-cursed-king: effect: Sacrifice another permanent",
+   "lim-d-ls-vault: effect: Look at the top five cards of your library",
+   "lions-eye-diamond: cost: Discard your hand",
+   "lotho-corrupt-shirriff: trigger event: a player casts their second spell each turn, you lose 1 life and create a Treasure token.",
+   "manamorphose: effect: Add two mana in any combination of colors",
+   "marsh-flats: effect: Search your library for a Plains or Swamp card, put it onto the battlefield, then shuffle",
+   "mindbreak-trap: condition: an opponent cast three or more spells this turn",
+   "misdirection: effect: You may exile a blue card from your hand rather than pay this spell's mana cost",
+   "misty-rainforest: effect: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle",
+   "mox-diamond: ability: If ~ would enter, you may discard a land card instead. If you do, put ~ onto the battlefield. If you don't, put it into its owner's graveyard.",
+   "noble-hierarch: ability: Exalted",
+   "orims-chant: effect: Target player can't cast spells this turn",
+   "pact-of-negation: trigger event: the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+   "prismari-the-inspiration: ability: Instant and sorcery spells you cast have storm.",
+   "pyroblast: effect: Counter target spell if it's blue",
+   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
+   "rite-of-flame: effect: Add {R}{R}, then add {R} for each card named ~ in each graveyard",
+   "shifting-woodland: effect: ~ becomes a copy of target permanent card in your graveyard until end of turn",
+   "silence: effect: Your opponents can't cast spells this turn",
+   "simian-spirit-guide: cost: Exile this card from your hand",
+   "smothering-tithe: effect: That player may pay {2}",
+   "snapback: effect: You may exile a blue card from your hand rather than pay this spell's mana cost",
+   "storm-kiln-artist: ability: ~ gets +1/+0 for each artifact you control.",
+   "swan-song: effect: Counter target enchantment, instant, or sorcery spell",
+   "tainted-pact: effect: Exile the top card of your library",
+   "tarnished-citadel: object: add one mana of any color. ~",
+   "tataru-taru: effect: You draw a card and target opponent may draw a card",
+   "tinder-wall: \"it\" with nothing to refer to",
+   "underworld-breach: ability: Each nonland card in your graveyard has escape. The escape cost is equal to the card's mana cost plus exile three other cards from your graveyard.",
+   "valley-floodcaller: ability: You may cast noncreature spells as though they had flash.",
+   "veil-of-summer: effect: Draw a card if an opponent has cast a blue or black spell this turn",
+   "verdant-catacombs: effect: Search your library for a Swamp or Forest card, put it onto the battlefield, then shuffle",
+   "wooded-foothills: effect: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle"
+  ],
+  "tokens": []
+ },
+ "cedh-terra": {
+  "id": "cedh-terra",
+  "file": "data/lists/cedh-terra.txt",
+  "name": "Terra",
+  "product": "Pittsburgh 2026 — t/cEDH $10k–$25,000",
+  "set": "LIST",
+  "group": "cedh",
+  "player": "Nicholas Benson",
+  "released": "2026-07-11",
+  "fetched": "2026-10-31",
+  "source": "https://edhtop16.com/tournament/pittsburgh-2026-tcedh-10k-25000/decklist/9XwMYS3gwrTGnhaRXEF6QkpXc5K2",
+  "registered": false,
+  "format": "Commander",
+  "min": 100,
+  "commanders": [
+   "terra-magical-adept-esper-terra"
+  ],
+  "main": [
+   {
+    "id": "ad-nauseam",
+    "n": 1
+   },
+   {
+    "id": "an-offer-you-cant-refuse",
+    "n": 1
+   },
+   {
+    "id": "ancient-tomb",
+    "n": 1
+   },
+   {
+    "id": "arcane-signet",
+    "n": 1
+   },
+   {
+    "id": "badlands",
+    "n": 1
+   },
+   {
+    "id": "bayou",
+    "n": 1
+   },
+   {
+    "id": "beseech-the-mirror",
+    "n": 1
+   },
+   {
+    "id": "birds-of-paradise",
+    "n": 1
+   },
+   {
+    "id": "bloodstained-mire",
+    "n": 1
+   },
+   {
+    "id": "borne-upon-a-wind",
+    "n": 1
+   },
+   {
+    "id": "boseiju-who-endures",
+    "n": 1
+   },
+   {
+    "id": "brain-freeze",
+    "n": 1
+   },
+   {
+    "id": "cabal-ritual",
+    "n": 1
+   },
+   {
+    "id": "chain-of-vapor",
+    "n": 1
+   },
+   {
+    "id": "chrome-mox",
+    "n": 1
+   },
+   {
+    "id": "city-of-brass",
+    "n": 1
+   },
+   {
+    "id": "city-of-traitors",
+    "n": 1
+   },
+   {
+    "id": "command-tower",
+    "n": 1
+   },
+   {
+    "id": "culling-ritual",
+    "n": 1
+   },
+   {
+    "id": "culling-the-weak",
+    "n": 1
+   },
+   {
+    "id": "dark-ritual",
+    "n": 1
+   },
+   {
+    "id": "deathrite-shaman",
+    "n": 1
+   },
+   {
+    "id": "demonic-consultation",
+    "n": 1
+   },
+   {
+    "id": "demonic-tutor",
+    "n": 1
+   },
+   {
+    "id": "elvish-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "enlightened-tutor",
+    "n": 1
+   },
+   {
+    "id": "esper-sentinel",
+    "n": 1
+   },
+   {
+    "id": "exhibition-tidecaller",
+    "n": 1
+   },
+   {
+    "id": "fellwar-stone",
+    "n": 1
+   },
+   {
+    "id": "final-fortune",
+    "n": 1
+   },
+   {
+    "id": "flashback",
+    "n": 1
+   },
+   {
+    "id": "flooded-strand",
+    "n": 1
+   },
+   {
+    "id": "flusterstorm",
+    "n": 1
+   },
+   {
+    "id": "food-chain",
+    "n": 1
+   },
+   {
+    "id": "force-of-will",
+    "n": 1
+   },
+   {
+    "id": "gamble",
+    "n": 1
+   },
+   {
+    "id": "gemstone-caverns",
+    "n": 1
+   },
+   {
+    "id": "gifts-ungiven",
+    "n": 1
+   },
+   {
+    "id": "gloomshrieker",
+    "n": 1
+   },
+   {
+    "id": "grim-monolith",
+    "n": 1
+   },
+   {
+    "id": "imperial-seal",
+    "n": 1
+   },
+   {
+    "id": "intuition",
+    "n": 1
+   },
+   {
+    "id": "jennifer-walters-the-sensational-she-hulk",
+    "n": 1
+   },
+   {
+    "id": "jeweled-amulet",
+    "n": 1
+   },
+   {
+    "id": "lions-eye-diamond",
+    "n": 1
+   },
+   {
+    "id": "lotho-corrupt-shirriff",
+    "n": 1
+   },
+   {
+    "id": "lotus-petal",
+    "n": 1
+   },
+   {
+    "id": "mana-confluence",
+    "n": 1
+   },
+   {
+    "id": "mana-vault",
+    "n": 1
+   },
+   {
+    "id": "manamorphose",
+    "n": 1
+   },
+   {
+    "id": "marsh-flats",
+    "n": 1
+   },
+   {
+    "id": "mental-misstep",
+    "n": 1
+   },
+   {
+    "id": "misty-rainforest",
+    "n": 1
+   },
+   {
+    "id": "mox-diamond",
+    "n": 1
+   },
+   {
+    "id": "mox-opal",
+    "n": 1
+   },
+   {
+    "id": "mystic-remora",
+    "n": 1
+   },
+   {
+    "id": "mystical-tutor",
+    "n": 1
+   },
+   {
+    "id": "necropotence",
+    "n": 1
+   },
+   {
+    "id": "noxious-revival",
+    "n": 1
+   },
+   {
+    "id": "orims-chant",
+    "n": 1
+   },
+   {
+    "id": "pact-of-negation",
+    "n": 1
+   },
+   {
+    "id": "plateau",
+    "n": 1
+   },
+   {
+    "id": "polluted-delta",
+    "n": 1
+   },
+   {
+    "id": "ragavan-nimble-pilferer",
+    "n": 1
+   },
+   {
+    "id": "redirect-lightning",
+    "n": 1
+   },
+   {
+    "id": "rhystic-study",
+    "n": 1
+   },
+   {
+    "id": "rite-of-flame",
+    "n": 1
+   },
+   {
+    "id": "savannah",
+    "n": 1
+   },
+   {
+    "id": "scalding-tarn",
+    "n": 1
+   },
+   {
+    "id": "scrubland",
+    "n": 1
+   },
+   {
+    "id": "sevinnes-reclamation",
+    "n": 1
+   },
+   {
+    "id": "silence",
+    "n": 1
+   },
+   {
+    "id": "simian-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "smothering-tithe",
+    "n": 1
+   },
+   {
+    "id": "sol-ring",
+    "n": 1
+   },
+   {
+    "id": "squee-the-immortal",
+    "n": 1
+   },
+   {
+    "id": "starting-town",
+    "n": 1
+   },
+   {
+    "id": "summoners-pact",
+    "n": 1
+   },
+   {
+    "id": "taiga",
+    "n": 1
+   },
+   {
+    "id": "tainted-pact",
+    "n": 1
+   },
+   {
+    "id": "talisman-of-dominance",
+    "n": 1
+   },
+   {
+    "id": "talisman-of-impulse",
+    "n": 1
+   },
+   {
+    "id": "tataru-taru",
+    "n": 1
+   },
+   {
+    "id": "thassas-oracle",
+    "n": 1
+   },
+   {
+    "id": "the-cabbage-merchant",
+    "n": 1
+   },
+   {
+    "id": "tinder-wall",
+    "n": 1
+   },
+   {
+    "id": "tropical-island",
+    "n": 1
+   },
+   {
+    "id": "tundra",
+    "n": 1
+   },
+   {
+    "id": "underground-sea",
+    "n": 1
+   },
+   {
+    "id": "underworld-breach",
+    "n": 1
+   },
+   {
+    "id": "valley-floodcaller",
+    "n": 1
+   },
+   {
+    "id": "vampiric-tutor",
+    "n": 1
+   },
+   {
+    "id": "verdant-catacombs",
+    "n": 1
+   },
+   {
+    "id": "vexing-bauble",
+    "n": 1
+   },
+   {
+    "id": "voice-of-victory",
+    "n": 1
+   },
+   {
+    "id": "volcanic-island",
+    "n": 1
+   },
+   {
+    "id": "windswept-heath",
+    "n": 1
+   },
+   {
+    "id": "wishclaw-talisman",
+    "n": 1
+   },
+   {
+    "id": "wooded-foothills",
+    "n": 1
+   }
+  ],
+  "rank": 8,
+  "players": 195,
+  "record": "3-3-2",
+  "compiles": false,
+  "refused": [
+   "terra-magical-adept-esper-terra: effect: Put up to one enchantment card milled this way into your hand",
+   "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
+   "an-offer-you-cant-refuse: effect: Its controller creates two Treasure tokens",
+   "beseech-the-mirror: effect: Search your library for a card, exile it face down, then shuffle",
+   "borne-upon-a-wind: effect: You may cast spells this turn as though they had flash",
+   "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
+   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
+   "city-of-traitors: trigger event: you play another land, sacrifice ~.",
+   "culling-ritual: effect: Add {B} or {G} for each permanent destroyed this way",
+   "deathrite-shaman: effect: Exile target land card from a graveyard",
+   "demonic-consultation: effect: Choose a card name",
+   "elvish-spirit-guide: cost: Exile this card from your hand",
+   "enlightened-tutor: effect: Search your library for an artifact or enchantment card, reveal it, then shuffle and put that card on top",
+   "esper-sentinel: trigger event: an opponent casts their first noncreature spell each turn, draw a card unless that player pays {X}, where X is ~'s power.",
+   "exhibition-tidecaller: condition: five or more mana was spent to cast that spell",
+   "final-fortune: effect: Take an extra turn after this one",
+   "flashback: filter noun: instant or sorcery card in your graveyard",
+   "flooded-strand: effect: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle",
+   "flusterstorm: effect: Counter target instant or sorcery spell unless its controller pays {1}",
+   "food-chain: ability: Exile a creature you control: Add X mana of any one color, where X is 1 plus the exiled creature's mana value. Spend this mana only to cast creature spells.",
+   "force-of-will: effect: You may pay 1 life and exile a blue card from your hand rather than pay this spell's mana cost",
+   "gamble: effect: Search your library for a card, put that card into your hand, discard a card at random, then shuffle",
+   "gemstone-caverns: ability: If this card is in your opening hand and you're not the starting player, you may begin the game with ~ on the battlefield with a luck counter on it. If you do, exile a card from your hand.",
+   "gifts-ungiven: effect: Search your library for up to four cards with different names and reveal them",
+   "gloomshrieker: ability: If ~ would die, exile it instead.",
+   "intuition: effect: Search your library for three cards and reveal them",
+   "jeweled-amulet: condition: there are no charge counters on ~",
+   "lions-eye-diamond: cost: Discard your hand",
+   "lotho-corrupt-shirriff: trigger event: a player casts their second spell each turn, you lose 1 life and create a Treasure token.",
+   "manamorphose: effect: Add two mana in any combination of colors",
+   "marsh-flats: effect: Search your library for a Plains or Swamp card, put it onto the battlefield, then shuffle",
+   "misty-rainforest: effect: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle",
+   "mox-diamond: ability: If ~ would enter, you may discard a land card instead. If you do, put ~ onto the battlefield. If you don't, put it into its owner's graveyard.",
+   "noxious-revival: effect: Put target card from a graveyard on top of its owner's library",
+   "orims-chant: effect: Target player can't cast spells this turn",
+   "pact-of-negation: trigger event: the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
+   "redirect-lightning: effect: As an additional cost to cast this spell, pay 5 life or pay {2}",
+   "rite-of-flame: effect: Add {R}{R}, then add {R} for each card named ~ in each graveyard",
+   "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
+   "silence: effect: Your opponents can't cast spells this turn",
+   "simian-spirit-guide: cost: Exile this card from your hand",
+   "smothering-tithe: effect: That player may pay {2}",
+   "squee-the-immortal: ability: You may cast this card from your graveyard or from exile.",
+   "summoners-pact: effect: Search your library for a green creature card, reveal it, put it into your hand, then shuffle",
+   "tainted-pact: effect: Exile the top card of your library",
+   "tataru-taru: effect: You draw a card and target opponent may draw a card",
+   "the-cabbage-merchant: effect: Create a Food token",
+   "tinder-wall: \"it\" with nothing to refer to",
+   "underworld-breach: ability: Each nonland card in your graveyard has escape. The escape cost is equal to the card's mana cost plus exile three other cards from your graveyard.",
+   "valley-floodcaller: ability: You may cast noncreature spells as though they had flash.",
+   "verdant-catacombs: effect: Search your library for a Swamp or Forest card, put it onto the battlefield, then shuffle",
+   "vexing-bauble: trigger event: a player casts a spell, if no mana was spent to cast it, counter that spell.",
+   "windswept-heath: effect: Search your library for a Forest or Plains card, put it onto the battlefield, then shuffle",
+   "wishclaw-talisman: effect: An opponent gains control of ~",
+   "wooded-foothills: effect: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle"
+  ],
+  "tokens": [
+   "token-warrior-1-1-r"
+  ]
+ },
+ "cedh-thrasios-vial-smasher": {
+  "id": "cedh-thrasios-vial-smasher",
+  "file": "data/lists/cedh-thrasios-vial-smasher.txt",
+  "name": "Thrasios & Vial Smasher",
+  "product": "The Fish Bowl 7",
+  "set": "LIST",
+  "group": "cedh",
+  "player": "Joe Holland",
+  "released": "2026-06-27",
+  "fetched": "2026-10-31",
+  "source": "https://edhtop16.com/tournament/the-fishbowl-san-diego-copy-1767729472000/decklist/EkjAv5v9icSG7jTKu4vBewlX6RO2",
+  "registered": false,
+  "format": "Commander",
+  "min": 100,
+  "commanders": [
+   "thrasios-triton-hero",
+   "vial-smasher-the-fierce"
+  ],
+  "main": [
+   {
+    "id": "ad-nauseam",
+    "n": 1
+   },
+   {
+    "id": "an-offer-you-cant-refuse",
+    "n": 1
+   },
+   {
+    "id": "ancient-tomb",
+    "n": 1
+   },
+   {
+    "id": "arcane-signet",
+    "n": 1
+   },
+   {
+    "id": "autumns-veil",
+    "n": 1
+   },
+   {
+    "id": "badlands",
+    "n": 1
+   },
+   {
+    "id": "bayou",
+    "n": 1
+   },
+   {
+    "id": "beseech-the-mirror",
+    "n": 1
+   },
+   {
+    "id": "birds-of-paradise",
+    "n": 1
+   },
+   {
+    "id": "bloodstained-mire",
+    "n": 1
+   },
+   {
+    "id": "borne-upon-a-wind",
+    "n": 1
+   },
+   {
+    "id": "boseiju-who-endures",
+    "n": 1
+   },
+   {
+    "id": "brain-freeze",
+    "n": 1
+   },
+   {
+    "id": "cabal-ritual",
+    "n": 1
+   },
+   {
+    "id": "chain-of-vapor",
+    "n": 1
+   },
+   {
+    "id": "chrome-mox",
+    "n": 1
+   },
+   {
+    "id": "city-of-brass",
+    "n": 1
+   },
+   {
+    "id": "city-of-traitors",
+    "n": 1
+   },
+   {
+    "id": "command-tower",
+    "n": 1
+   },
+   {
+    "id": "crop-rotation",
+    "n": 1
+   },
+   {
+    "id": "culling-ritual",
+    "n": 1
+   },
+   {
+    "id": "culling-the-weak",
+    "n": 1
+   },
+   {
+    "id": "dark-ritual",
+    "n": 1
+   },
+   {
+    "id": "deathrite-shaman",
+    "n": 1
+   },
+   {
+    "id": "demonic-consultation",
+    "n": 1
+   },
+   {
+    "id": "demonic-tutor",
+    "n": 1
+   },
+   {
+    "id": "diabolic-intent",
+    "n": 1
+   },
+   {
+    "id": "dispel",
+    "n": 1
+   },
+   {
+    "id": "dosan-the-falling-leaf",
+    "n": 1
+   },
+   {
+    "id": "elvish-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "emergence-zone",
+    "n": 1
+   },
+   {
+    "id": "final-fortune",
+    "n": 1
+   },
+   {
+    "id": "flooded-strand",
+    "n": 1
+   },
+   {
+    "id": "flusterstorm",
+    "n": 1
+   },
+   {
+    "id": "forbidden-orchard",
+    "n": 1
+   },
+   {
+    "id": "force-of-negation",
+    "n": 1
+   },
+   {
+    "id": "force-of-will",
+    "n": 1
+   },
+   {
+    "id": "gamble",
+    "n": 1
+   },
+   {
+    "id": "gemstone-caverns",
+    "n": 1
+   },
+   {
+    "id": "hexing-squelcher",
+    "n": 1
+   },
+   {
+    "id": "ignoble-hierarch",
+    "n": 1
+   },
+   {
+    "id": "imperial-seal",
+    "n": 1
+   },
+   {
+    "id": "jeskas-will",
+    "n": 1
+   },
+   {
+    "id": "lions-eye-diamond",
+    "n": 1
+   },
+   {
+    "id": "lotus-petal",
+    "n": 1
+   },
+   {
+    "id": "mana-confluence",
+    "n": 1
+   },
+   {
+    "id": "mana-vault",
+    "n": 1
+   },
+   {
+    "id": "manamorphose",
+    "n": 1
+   },
+   {
+    "id": "marsh-flats",
+    "n": 1
+   },
+   {
+    "id": "mental-misstep",
+    "n": 1
+   },
+   {
+    "id": "mindbreak-trap",
+    "n": 1
+   },
+   {
+    "id": "misdirection",
+    "n": 1
+   },
+   {
+    "id": "misty-rainforest",
+    "n": 1
+   },
+   {
+    "id": "mnemonic-betrayal",
+    "n": 1
+   },
+   {
+    "id": "mockingbird",
+    "n": 1
+   },
+   {
+    "id": "mox-amber",
+    "n": 1
+   },
+   {
+    "id": "mox-diamond",
+    "n": 1
+   },
+   {
+    "id": "mox-opal",
+    "n": 1
+   },
+   {
+    "id": "mystic-remora",
+    "n": 1
+   },
+   {
+    "id": "mystical-tutor",
+    "n": 1
+   },
+   {
+    "id": "necropotence",
+    "n": 1
+   },
+   {
+    "id": "noxious-revival",
+    "n": 1
+   },
+   {
+    "id": "otawara-soaring-city",
+    "n": 1
+   },
+   {
+    "id": "pact-of-negation",
+    "n": 1
+   },
+   {
+    "id": "polluted-delta",
+    "n": 1
+   },
+   {
+    "id": "praetors-grasp",
+    "n": 1
+   },
+   {
+    "id": "pyroblast",
+    "n": 1
+   },
+   {
+    "id": "ragavan-nimble-pilferer",
+    "n": 1
+   },
+   {
+    "id": "red-elemental-blast",
+    "n": 1
+   },
+   {
+    "id": "redirect-lightning",
+    "n": 1
+   },
+   {
+    "id": "rhystic-study",
+    "n": 1
+   },
+   {
+    "id": "rite-of-flame",
+    "n": 1
+   },
+   {
+    "id": "scalding-tarn",
+    "n": 1
+   },
+   {
+    "id": "shifting-woodland",
+    "n": 1
+   },
+   {
+    "id": "simian-spirit-guide",
+    "n": 1
+   },
+   {
+    "id": "snapback",
+    "n": 1
+   },
+   {
+    "id": "sol-ring",
+    "n": 1
+   },
+   {
+    "id": "starting-town",
+    "n": 1
+   },
+   {
+    "id": "storm-kiln-artist",
+    "n": 1
+   },
+   {
+    "id": "summoners-pact",
+    "n": 1
+   },
+   {
+    "id": "swan-song",
+    "n": 1
+   },
+   {
+    "id": "taiga",
+    "n": 1
+   },
+   {
+    "id": "tainted-pact",
+    "n": 1
+   },
+   {
+    "id": "thassas-oracle",
+    "n": 1
+   },
+   {
+    "id": "the-cabbage-merchant",
+    "n": 1
+   },
+   {
+    "id": "tinder-wall",
+    "n": 1
+   },
+   {
+    "id": "tropical-island",
+    "n": 1
+   },
+   {
+    "id": "underground-sea",
+    "n": 1
+   },
+   {
+    "id": "underworld-breach",
+    "n": 1
+   },
+   {
+    "id": "valley-floodcaller",
+    "n": 1
+   },
+   {
+    "id": "vampiric-tutor",
+    "n": 1
+   },
+   {
+    "id": "veil-of-summer",
+    "n": 1
+   },
+   {
+    "id": "verdant-catacombs",
+    "n": 1
+   },
+   {
+    "id": "vexing-bauble",
+    "n": 1
+   },
+   {
+    "id": "volcanic-island",
+    "n": 1
+   },
+   {
+    "id": "wild-cantor",
+    "n": 1
+   },
+   {
+    "id": "wishclaw-talisman",
+    "n": 1
+   },
+   {
+    "id": "wooded-foothills",
+    "n": 1
+   }
+  ],
+  "rank": 1,
+  "players": 209,
+  "record": "6-2-1",
+  "compiles": false,
+  "refused": [
+   "thrasios-triton-hero: effect: Scry 1, then reveal the top card of your library",
+   "vial-smasher-the-fierce: trigger event: you cast your first spell each turn, choose an opponent at random. ~ Smasher deals damage equal to that spell's mana value to that player or a planeswalker that player controls.",
+   "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
+   "an-offer-you-cant-refuse: effect: Its controller creates two Treasure tokens",
+   "autumns-veil: effect: Spells you control can't be countered by blue or black spells this turn, and creatures you control can't be the targets of blue or black spells this turn",
+   "beseech-the-mirror: effect: Search your library for a card, exile it face down, then shuffle",
+   "borne-upon-a-wind: effect: You may cast spells this turn as though they had flash",
+   "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
+   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
+   "city-of-traitors: trigger event: you play another land, sacrifice ~.",
+   "crop-rotation: effect: As an additional cost to cast this spell, sacrifice a land",
+   "culling-ritual: effect: Add {B} or {G} for each permanent destroyed this way",
+   "deathrite-shaman: effect: Exile target land card from a graveyard",
+   "demonic-consultation: effect: Choose a card name",
+   "dispel: effect: Counter target instant spell",
+   "dosan-the-falling-leaf: ability: Players can cast spells only during their own turns.",
+   "elvish-spirit-guide: cost: Exile this card from your hand",
+   "emergence-zone: effect: You may cast spells this turn as though they had flash",
+   "final-fortune: effect: Take an extra turn after this one",
+   "flooded-strand: effect: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle",
+   "flusterstorm: effect: Counter target instant or sorcery spell unless its controller pays {1}",
+   "forbidden-orchard: trigger event: you tap ~ for mana, target opponent creates a 1/1 colorless Spirit creature token.",
+   "force-of-negation: condition: it's not your turn",
+   "force-of-will: effect: You may pay 1 life and exile a blue card from your hand rather than pay this spell's mana cost",
+   "gamble: effect: Search your library for a card, put that card into your hand, discard a card at random, then shuffle",
+   "gemstone-caverns: ability: If this card is in your opening hand and you're not the starting player, you may begin the game with ~ on the battlefield with a luck counter on it. If you do, exile a card from your hand.",
+   "hexing-squelcher: ability: Spells you control can't be countered.",
+   "ignoble-hierarch: ability: Exalted",
+   "jeskas-will: effect: Choose one",
+   "lions-eye-diamond: cost: Discard your hand",
+   "manamorphose: effect: Add two mana in any combination of colors",
+   "marsh-flats: effect: Search your library for a Plains or Swamp card, put it onto the battlefield, then shuffle",
+   "mindbreak-trap: condition: an opponent cast three or more spells this turn",
+   "misdirection: effect: You may exile a blue card from your hand rather than pay this spell's mana cost",
+   "misty-rainforest: effect: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle",
+   "mox-amber: effect: Add one mana of any color among legendary creatures and planeswalkers you control",
+   "mox-diamond: ability: If ~ would enter, you may discard a land card instead. If you do, put ~ onto the battlefield. If you don't, put it into its owner's graveyard.",
+   "noxious-revival: effect: Put target card from a graveyard on top of its owner's library",
+   "otawara-soaring-city: filter qualifier: , creature, enchantment, or planeswalker",
+   "pact-of-negation: trigger event: the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+   "praetors-grasp: effect: Search target opponent's library for a card and exile it face down",
+   "pyroblast: effect: Counter target spell if it's blue",
+   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
+   "red-elemental-blast: effect: Counter target blue spell",
+   "redirect-lightning: effect: As an additional cost to cast this spell, pay 5 life or pay {2}",
+   "rite-of-flame: effect: Add {R}{R}, then add {R} for each card named ~ in each graveyard",
+   "shifting-woodland: effect: ~ becomes a copy of target permanent card in your graveyard until end of turn",
+   "simian-spirit-guide: cost: Exile this card from your hand",
+   "snapback: effect: You may exile a blue card from your hand rather than pay this spell's mana cost",
+   "storm-kiln-artist: ability: ~ gets +1/+0 for each artifact you control.",
+   "summoners-pact: effect: Search your library for a green creature card, reveal it, put it into your hand, then shuffle",
+   "swan-song: effect: Counter target enchantment, instant, or sorcery spell",
+   "tainted-pact: effect: Exile the top card of your library",
+   "the-cabbage-merchant: effect: Create a Food token",
+   "tinder-wall: \"it\" with nothing to refer to",
+   "underworld-breach: ability: Each nonland card in your graveyard has escape. The escape cost is equal to the card's mana cost plus exile three other cards from your graveyard.",
+   "valley-floodcaller: ability: You may cast noncreature spells as though they had flash.",
+   "veil-of-summer: effect: Draw a card if an opponent has cast a blue or black spell this turn",
+   "verdant-catacombs: effect: Search your library for a Swamp or Forest card, put it onto the battlefield, then shuffle",
+   "vexing-bauble: trigger event: a player casts a spell, if no mana was spent to cast it, counter that spell.",
+   "wishclaw-talisman: effect: An opponent gains control of ~",
+   "wooded-foothills: effect: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle"
+  ],
+  "tokens": []
+ },
  "kujo-zellix-of-halaster": {
   "id": "kujo-zellix-of-halaster",
   "file": "data/lists/kujo-zellix.txt",

@@ -6,6 +6,8 @@
   const app = () => document.getElementById('app');
   const reg = () => Object.values(MF.decks).filter(d => d.registered && !d.main.some(e => MF.defects[e.id]));
   const pick = { me: null, opp: null };
+  // PLAN D22: two modes — a duel (20 life, 60-card decks) and Commander (CR 903). Each lists only its own decks.
+  let mode = 'duel';
   let overlay = null;
   const NOTICE = 'MANAFORGE is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.';
 
@@ -20,7 +22,7 @@
     <p><b>Stops.</b> The bar across the middle of the table lists the steps. Lit steps are where the game pauses for you when you could act; click a step to change it. “Pass to end of turn” passes until the turn ends, but the game still stops if the opponent casts something you can answer.</p>
     <p><b>Reading the board.</b> Hover any card — board, hand, stack, log — to read its Oracle text and current numbers. Click a graveyard or exile pile to look through it. Escape hides the prompt so you can see the board. The log and the settings are in the drawer on the right edge.</p>
     <p><b>The table.</b> Your half is the lower one: your life and mana pool on the left, your creatures and other permanents in the near row, your lands behind them, your library and graveyard on the right, exile under your life. The opponent’s half mirrors it. The stack stands between the halves on the right.</p>
-    <p><b>Commander</b> (Kujo’s deck). Both players start at 40 life with their commanders in the command zone, shown on their plate. Cast a commander from there; each time it goes back and is cast again it costs {2} more. A commander that goes to a graveyard or exile may return to the command zone (you are asked), and one that would go to your hand or library may go there instead. A player dealt 21 combat damage by one commander loses. Decks are 100 cards, one of each card but basic lands, in the commanders’ colours (CR 903).</p>
+    <p><b>Commander</b> (the Commander mode). Both players start at 40 life with their commanders in the command zone, shown on their plate. Cast a commander from there; each time it goes back and is cast again it costs {2} more. A commander that goes to a graveyard or exile may return to the command zone (you are asked), and one that would go to your hand or library may go there instead. A player dealt 21 combat damage by one commander loses. Decks are 100 cards, one of each card but basic lands, in the commanders’ colours (CR 903). Two commanders with partner share the command zone, and each has its own tax and its own damage count.</p>
     <p><b>Keys.</b> Space presses the highlighted button. Escape closes a window or hides the prompt. L opens and closes the log.</p>`;
 
   function deckCard(d, side) {
@@ -31,29 +33,33 @@
       <div class="dname">${esc(d.name)}</div><div class="dtype">${colors.map(c => T.sym(c)).join('')} ${subOf(d)}</div></div>`;
   }
   const starOf = d => (d.commanders || []).map(id => MF.cards[id]).filter(c => c.types.includes('Creature'))[0] || d.main.map(e => MF.cards[e.id]).filter(c => c.supers.includes('Legendary'))[0] || MF.cards[d.main[0].id];
-  const subOf = d => d.group ? 'Commander · ' + esc(d.player) : d.era ? (d.rank ? 'Finished #' + d.rank : d.players + ' top-ranked lists') : esc(d.product) + ' · ' + esc(d.set);
+  const subOf = d => d.group === 'cedh' ? ordinal(d.rank) + ' of ' + d.players + ' · ' + esc(d.player) : d.group ? 'Commander · ' + esc(d.player) : d.era ? (d.rank ? 'Finished #' + d.rank : d.players + ' top-ranked lists') : esc(d.product) + ' · ' + esc(d.set);
   // PLAN D15: the decks come from two Standard eras, plus the Bloomburrow starter decks; PLAN D21:
   // a heading for each friend whose deck the owner added (Kujo).
   const ERAS = [['fin', 'Final Fantasy era — Pro Tour Final Fantasy (June 2025)'], ['hob', 'Hobbit era — top-ranked Arena Standard (Aug–Oct 2026)'], [null, 'Bloomburrow Starter Kit']];
   const groupOf = d => d.era || d.group || null;
+  const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
   function deckRows(decks, side) {
-    const groups = [...new Set(decks.filter(d => d.group).map(d => d.group))].map(g => { const d0 = decks.find(d => d.group === g); return [g, esc(d0.player) + ' — ' + esc(d0.format) + ' (plays only another Commander deck)']; });
-    return ERAS.concat(groups).map(([era, label]) => { const ds = decks.filter(d => groupOf(d) === era); return ds.length ? `<div class="eralbl">${label}</div><div class="deckrow">${ds.map(d => deckCard(d, side)).join('')}</div>` : ''; }).join('');
+    const groups = [...new Set(decks.filter(d => d.group).map(d => d.group))].sort((a, b) => (b === 'cedh') - (a === 'cedh')).map(g => { const d0 = decks.find(d => d.group === g); return [g, g === 'cedh' ? 'Championship Commander — the top 16 of 2026’s largest cEDH events, five commanders' : esc(d0.player) + '’s Commander deck']; });
+    return (mode === 'duel' ? ERAS : []).concat(groups).map(([era, label]) => { const ds = decks.filter(d => groupOf(d) === era); return ds.length ? `<div class="eralbl">${label}</div><div class="deckrow">${ds.map(d => deckCard(d, side)).join('')}</div>` : ''; }).join('');
   }
-  // CR 903: a Commander deck plays only another Commander deck. Choosing one side's deck from the
-  // other kind moves the other side to that kind too (the same deck: a mirror while there is one).
+  // CR 903: a Commander deck plays only another Commander deck, so each mode offers only its own.
   const isCmd = id => !!MF.decks[id].commanders;
-  function pairUp(side) {
-    const other = side === 'me' ? 'opp' : 'me';
-    if (isCmd(pick[side]) === isCmd(pick[other])) return;
-    const same = reg().filter(d => isCmd(d.id) === isCmd(pick[side]));
-    pick[other] = isCmd(pick[side]) ? pick[side] : (same.find(d => d.id !== pick[side]) || same[0]).id;
+  const ofMode = () => reg().filter(d => isCmd(d.id) === (mode === 'commander'));
+  function setMode(m) {
+    if (m === mode) return;
+    mode = m; const ds = ofMode();
+    pick.me = ds[0].id; pick.opp = ds[1 % ds.length].id;
   }
   function deckDetail(id) {
     const d = MF.decks[id];
     const row = e => `<div class="drow" data-cid="${e.id}"><span>${e.n}×</span> ${esc(MF.cards[e.id].name)} <span class="dcost">${T.symbols(MF.cards[e.id].mana)}</span></div>`;
     const lands = d.main.filter(e => MF.cards[e.id].types.includes('Land')), spells = d.main.filter(e => !MF.cards[e.id].types.includes('Land'));
     const n = d.main.reduce((a, e) => a + e.n, 0) + (d.commanders || []).length;
+    if (d.group === 'cedh') return `<div class="ddetail"><h3>${esc(d.name)} — ${n} cards</h3>
+      <p>Played by <b>${esc(d.player)}</b>, who finished <b>${ordinal(d.rank)}</b> of ${d.players} at ${esc(d.product)} (${esc(d.released)}), ${esc(d.record)} in wins, losses and draws; the best-placed list of its commander${d.commanders.length > 1 ? 's' : ''} in that top 16. Commander${d.commanders.length > 1 ? 's' : ''}: ${d.commanders.map(id => '<b>' + esc(MF.cards[id].name) + '</b>').join(' and ')}${d.commanders.length > 1 ? ' (partners, CR 702.124)' : ''}. Played under the Commander rules (CR 903), one against one.</p>
+      <p class="prov">List from EDHTop16: <a href="${esc(d.source)}" target="_blank" rel="noopener">decklist</a> (fetched ${esc(d.fetched)}). Card text is Oracle text (MTGJSON).</p>
+      <div class="dcols"><div><h4>Commander${d.commanders.length > 1 ? 's' : ''}</h4>${d.commanders.map(id => row({ id: id, n: 1 })).join('')}<h4>Spells</h4>${spells.map(row).join('')}</div><div><h4>Lands</h4>${lands.map(row).join('')}${d.tokens.length ? `<h4>Tokens it makes</h4>${d.tokens.map(tk => row({ id: tk, n: '' })).join('')}` : ''}</div></div></div>`;
     if (d.group) return `<div class="ddetail"><h3>${esc(d.name)} — ${n} cards</h3>
       <p><b>${esc(d.player)}</b>’s Commander deck, as shared with the owner on ${esc(d.released)}. Commanders: ${d.commanders.map(id => '<b>' + esc(MF.cards[id].name) + '</b>').join(' and ')} (choose a Background). Played under the Commander rules (CR 903): 40 life, the commanders in the command zone, {2} more each time one is recast, 21 combat damage from one commander loses. It plays only another Commander deck.</p>
       <p class="prov">List: ${esc(d.source)} in this project (Moxfield export; its two-card sideboard is not used, CR 903.5e). Card text is Oracle text (MTGJSON).</p>
@@ -80,7 +86,7 @@
   const DIE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.7"/><circle cx="16" cy="8" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="8" cy="16" r="1.7"/><circle cx="16" cy="16" r="1.7"/></svg>';
   function menu(to) {
     MF.ui.stop();
-    const decks = reg();
+    const decks = ofMode();
     if (!pick.me) { pick.me = decks[0].id; pick.opp = decks[1 % decks.length].id; }
     if (to) screen = to;
     const keep = document.querySelector('.chooser-list'), top = keep ? keep.scrollTop : 0;
@@ -97,7 +103,7 @@
       const f = focus || pick[chooser];
       app().innerHTML = `<div class="screen chooser-screen">
         <div class="chooser-head"><div><h1>Choose ${chooser === 'me' ? 'your' : 'the opponent’s'} deck</h1>
-          <p>Twenty championship decks from two Standard eras, each the best-placed or most typical list of its archetype, the two Bloomburrow Starter Kits, and Kujo’s Commander deck. Hover a card name to read it.</p></div>
+          <p>${mode === 'duel' ? 'Twenty championship decks from two Standard eras, each the best-placed or most typical list of its archetype, and the two Bloomburrow Starter Kits.' : 'Commander decks: championship lists from 2026’s largest cEDH events, and Kujo’s deck.'} Hover a card name to read it.</p></div>
           <div class="chooser-btns"><button class="btn" data-dice="${chooser}">Leave it to chance</button><button class="btn primary" data-back="1">Done</button></div></div>
         <div class="chooser-body"><div class="chooser-list">${deckRows(decks, chooser)}</div><div class="chooser-detail">${deckDetail(f)}</div></div>
         ${how}<div id="zoom" class="zoom"></div></div>`;
@@ -106,11 +112,12 @@
     }
     app().innerHTML = `<div class="screen picker-screen">${MF.boardArt.scene()}
       <div class="panel picker"><div class="panel-kicker">An unofficial Magic: The Gathering fan project</div><h1>MANAFORGE</h1>
+        <div class="mode-toggle" role="radiogroup" aria-label="Game mode"><button class="mode-btn ${mode === 'duel' ? 'on' : ''}" role="radio" aria-checked="${mode === 'duel'}" data-mode="duel">Duel<small>20 life · 60 cards</small></button><button class="mode-btn ${mode === 'commander' ? 'on' : ''}" role="radio" aria-checked="${mode === 'commander'}" data-mode="commander">Commander<small>40 life · 100 cards</small></button></div>
         <div class="deck-field"><div class="field-lbl">Your deck</div>${slot('me')}</div>
         <div class="deck-field"><div class="field-lbl">Opponent’s deck</div>${slot('opp')}</div>
         <p class="picker-note">${isCmd(pick.me) ? 'A 1v1 Commander game (CR 903) at 40 life with the London mulligan: commanders start in the command zone; 21 combat damage from one commander loses.' : 'A 1v1 game at 20 life with the London mulligan.'} The opponent is the computer. Same seed, same decks and the same choices replay the same game.</p>
         <label class="seed-row"><span>Seed</span><input id="seed" size="10" placeholder="random" value="${esc(seedText)}"></label>
-        <button class="btn primary big" data-go="1">Start the duel</button>
+        <button class="btn primary big" data-go="1">Start the game</button>
         <div class="picker-row"><button class="btn" data-howto="1">How to play</button><button class="btn" data-motion="1" title="Cards slide, die and fly to their zones; damage floats">Motion: ${MF.anim.on ? 'on' : 'off'}</button></div>
       </div>${notice}${how}<div id="zoom" class="zoom"></div></div>`;
   }
@@ -127,11 +134,13 @@
     if (t.hasAttribute('data-close')) { overlay = null; menu(); return; }
     if (overlay) return;
     const p = t.closest('[data-pick]');
-    if (p) { const [side, id] = p.getAttribute('data-pick').split(':'); pick[side] = id; focus = id; pairUp(side); menu(); return; }
+    if (p) { const [side, id] = p.getAttribute('data-pick').split(':'); pick[side] = id; focus = id; menu(); return; }
+    const md = t.closest('[data-mode]');
+    if (md) { setMode(md.getAttribute('data-mode')); menu(); return; }
     const c = t.closest('[data-choose]');
     if (c) { chooser = c.getAttribute('data-choose'); focus = pick[chooser]; menu('chooser'); return; }
     const d = t.closest('[data-dice]');
-    if (d) { const side = d.getAttribute('data-dice'), other = side === 'me' ? 'opp' : 'me', ds = side === 'opp' ? reg().filter(x => isCmd(x.id) === isCmd(pick[other])) : reg(); pick[side] = ds[Math.floor(Math.random() * ds.length)].id; focus = pick[side]; pairUp(side); menu(); return; }   // the opponent's die keeps your deck's kind   // a setup choice, not a game event: the game's own randomness is seeded inside apply
+    if (d) { const side = d.getAttribute('data-dice'), ds = ofMode(); pick[side] = ds[Math.floor(Math.random() * ds.length)].id; focus = pick[side]; menu(); return; }   // a deck of this mode   // a setup choice, not a game event: the game's own randomness is seeded inside apply
     if (t.closest('[data-back]')) return menu('picker');
     if (t.closest('[data-motion]')) { MF.anim.toggle(); menu(); return; }
     if (t.closest('[data-go]')) {

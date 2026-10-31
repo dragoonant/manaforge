@@ -1243,7 +1243,7 @@ export function build() {
     let sec = null;
     for (const line of text.split(/\r?\n/)) {
       let m;
-      if ((m = line.match(/^# (player|name|received): (.+)$/))) { meta[m[1]] = m[2].trim(); continue; }
+      if ((m = line.match(/^# (player|name|received|group|event|standing|players|record|date|source): (.+)$/))) { meta[m[1]] = m[2].trim(); continue; }
       if (/^#/.test(line) || !line.trim()) continue;
       if (part[line.trim()]) { sec = line.trim(); continue; }
       if (!(m = line.match(/^(\d+) (.+)$/)) || !sec) throw new Error(f + ': not a list line: ' + line);
@@ -1259,7 +1259,9 @@ export function build() {
     const main = {}; for (const e of part.Deck) { const id = idOf(e.name); main[id] = (main[id] || 0) + e.n; }
     const commanders = part.Commander.map(e => idOf(e.name));
     const key = 'list-' + f.replace(/\.txt$/, '');
-    const deck = { id: slug(meta.player + ' ' + meta.name), file: 'data/lists/' + f, name: meta.name, product: 'Commander', set: 'LIST', group: slug(meta.player), player: meta.player, released: meta.received, fetched: meta.received, source: 'data/lists/' + f, registered: true, format: 'Commander', min: 100, commanders: commanders, main: Object.entries(main).map(([id, n]) => ({ id: id, n: n })) };
+    // PLAN D22: a championship list names its event, standing and source page; a friend's list its player.
+    const deck = { id: meta.group ? slug(meta.group + ' ' + meta.name) : slug(meta.player + ' ' + meta.name), file: 'data/lists/' + f, name: meta.name, product: meta.event || 'Commander', set: 'LIST', group: meta.group || slug(meta.player), player: meta.player, released: meta.date || meta.received, fetched: meta.received, source: meta.source || 'data/lists/' + f, registered: true, format: 'Commander', min: 100, commanders: commanders, main: Object.entries(main).map(([id, n]) => ({ id: id, n: n })) };
+    if (meta.standing) Object.assign(deck, { rank: +meta.standing, players: +meta.players, record: meta.record });
     const un = commanders.map(id => ({ id: id })).concat(deck.main).filter(e => cards[e.id].un);
     deck.compiles = !un.length;
     if (un.length) { deck.registered = false; deck.refused = un.map(e => e.id + ': ' + cards[e.id].un); }
