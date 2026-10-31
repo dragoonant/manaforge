@@ -7,18 +7,20 @@ A citation that does not exist in that text fails the generator.
 | Rule | Opening of the rule text | Cited in |
 |---|---|---|
 | 100.2a | In constructed play (a way of playing in which each player creates their own deck ahead of time), each deck has a minimum deck size of 60 cards. A … | `js/ops.js` |
-| 101.2 | When a rule or effect allows or directs something to happen, and another effect states that it can’t happen, the “can’t” effect takes precedence. | `tools/build-cards.mjs` |
+| 101.2 | When a rule or effect allows or directs something to happen, and another effect states that it can’t happen, the “can’t” effect takes precedence. | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 103.1 | At the start of a game, the players determine which one of them will choose who takes the first turn. In the first game of a match (including a sin… | `js/engine.js` |
 | 103.3 | After the starting player has been determined and any additional steps performed, each player shuffles their deck so that the cards are in a random… | `js/engine.js` |
 | 103.5 | Each player draws a number of cards equal to their starting hand size, which is normally seven. (Some effects can modify a player’s starting hand s… | `js/engine.js` `js/text.js` |
+| 103.6 | Some cards allow a player to take actions with them from their opening hand. Once the mulligan process (see rule 103.5) is complete, the starting p… | `tools/build-cards.mjs` |
 | 103.6a | If a card allows a player to begin the game with that card on the battlefield, the player taking this action puts that card onto the battlefield. | `js/engine.js` `js/text.js` `tools/build-cards.mjs` |
 | 103.8 | The starting player takes their first turn. | `js/engine.js` |
 | 103.8a | In a two-player game, the player who plays first skips the draw step (see rule 504, “Draw Step”) of their first turn. | `js/engine.js` `js/text.js` |
 | 104.2b | An effect may state that a player wins the game. | `js/ops.js` `tools/build-cards.mjs` |
 | 104.3c | If a player is required to draw more cards than are left in their library, they draw the remaining cards and then lose the game the next time a pla… | `js/engine.js` |
+| 104.3e | An effect may state that a player loses the game. | `js/ops.js` |
 | 104.4a | If all the players remaining in a game lose simultaneously, the game is a draw. | `js/engine.js` |
 | 106.1 | Mana is the primary resource in the game. Players spend mana to pay costs, usually when casting spells and activating abilities. | `js/engine.js` |
-| 106.1a | There are five colors of mana: white, blue, black, red, and green. | `js/engine.js` `tools/build-cards.mjs` |
+| 106.1a | There are five colors of mana: white, blue, black, red, and green. | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 106.3 | Mana is produced by the effects of mana abilities (see rule 605). It may also be produced by the effects of spells, as well as by the effects of ab… | `js/ops.js` |
 | 106.6 | Some spells or abilities that produce mana restrict how that mana can be spent, have an additional effect that affects the spell or ability that ma… | `js/engine.js` `tools/build-cards.mjs` |
 | 106.7 | Some abilities produce mana based on the type of mana another permanent or permanents “could produce.” The type of mana a permanent could produce a… | `js/engine.js` `tools/build-cards.mjs` |
@@ -38,12 +40,17 @@ A citation that does not exist in that text fails the generator.
 | 111.10j | A Cursed Role token is a colorless Aura Role enchantment token named Cursed with enchant creature and “Enchanted creature has base power and toughn… | `js/ops.js` `tools/build-cards.mjs` |
 | 111.10k | A Monster Role token is a colorless Aura Role enchantment token named Monster with enchant creature and “Enchanted creature gets +1/+1 and has tram… | `tools/build-cards.mjs` |
 | 111.10s | A Map token is a colorless Map artifact token with “{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only as a sorcer… | `tools/build-cards.mjs` |
+| 113.6 | Abilities of an instant or sorcery spell usually function only while that object is on the stack. Abilities of all other objects usually function o… | `js/engine.js` `tools/build-cards.mjs` |
 | 113.6g | An object’s ability that states it can’t be countered or can’t be copied functions on the stack. | `js/ops.js` `tools/build-cards.mjs` |
 | 113.6m | An ability whose cost or effect specifies that it moves the object it’s on out of a particular zone functions only in that zone, unless its trigger… | `js/engine.js` `js/ui.js` `tools/build-cards.mjs` |
 | 115.1 | Some spells and abilities require their controller to choose one or more targets for them. The targets are object(s) and/or player(s) the spell or … | `js/engine.js` `tools/build-cards.mjs` |
 | 115.1b | Aura spells are always targeted. An Aura’s target is specified by its enchant keyword ability (see rule 702.5, “Enchant”). The target is chosen as … | `tools/build-cards.mjs` |
-| 115.3 | The same target can’t be chosen multiple times for any one instance of the word “target” on a spell or ability. If the spell or ability uses the wo… | `js/engine.js` |
+| 115.3 | The same target can’t be chosen multiple times for any one instance of the word “target” on a spell or ability. If the spell or ability uses the wo… | `js/engine.js` `tools/build-cards.mjs` |
 | 115.4 | Some spells and abilities that refer to damage require “any target,” “another target,” “two targets,” or similar rather than “target [something].” … | `js/ops.js` |
+| 115.7 | Some effects allow a player to change the target(s) of a spell or ability, and other effects allow a player to choose new targets for a spell or ab… | `js/engine.js` |
+| 115.7a | If an effect allows a player to “change the target(s)” of a spell or ability, each target can be changed only to another legal target. If a target … | `js/engine.js` `js/ops.js` `js/text.js` `tools/build-cards.mjs` |
+| 115.7d | If an effect allows a player to “choose new targets” for a spell or ability, the player may leave any number of the targets unchanged, even if thos… | `js/ops.js` `js/text.js` `tools/build-cards.mjs` |
+| 115.10 | Spells and abilities can affect objects and players they don’t target. In general, those objects and players aren’t chosen until the spell or abili… | `js/engine.js` `tools/build-cards.mjs` |
 | 116.2a | Playing a land is a special action. To play a land, a player puts that land onto the battlefield from the zone it was in (usually that player’s han… | `js/engine.js` |
 | 116.2b | Turning a face-down creature face up is a special action. A player can take this action any time they have priority. See rule 708, “Face-Down Spell… | `js/engine.js` |
 | 116.2k | A player who has a card with plot in their hand may exile that card. This is a special action. A player can take this action any time they have pri… | `js/engine.js` |
@@ -52,13 +59,15 @@ A citation that does not exist in that text fails the generator.
 | 117.1 | Unless a spell or ability is instructing a player to take an action, which player can take actions at any given time is determined by a system of p… | `js/engine.js` |
 | 117.1a | A player may cast an instant spell any time they have priority. A player may cast a noninstant spell during their main phase any time they have pri… | `js/engine.js` |
 | 117.1d | A player may activate a mana ability whenever they have priority, whenever they are casting a spell or activating an ability that requires a mana p… | `js/engine.js` |
+| 117.3 | Which player has priority is determined by the following rules: | `js/ops.js` |
 | 117.3b | The active player receives priority after a spell or ability (other than a mana ability) resolves. | `js/engine.js` |
 | 117.3c | If a player has priority when they cast a spell, activate an ability, or take a special action, that player receives priority afterward. | `js/engine.js` |
 | 117.3d | If a player has priority and chooses not to take any actions, that player passes. If any mana is in that player’s mana pool, they announce what man… | `js/engine.js` |
 | 117.4 | If all players pass in succession (that is, if all players pass without taking any actions in between passing), the spell or ability on top of the … | `js/engine.js` |
 | 117.5 | Each time a player would get priority, the game first performs all applicable state-based actions as a single event (see rule 704, “State-Based Act… | `js/engine.js` |
 | 118.3 | A player can’t pay a cost without having the necessary resources to pay it fully. For example, a player with only 1 life can’t pay a cost of 2 life… | `js/engine.js` `tools/build-cards.mjs` |
-| 118.9 | Some spells have alternative costs. An alternative cost is a cost listed in a spell’s text, or applied to it from another effect, that its controll… | `js/engine.js` `tools/build-cards.mjs` |
+| 118.5 | Some costs are represented by {0}, or are reduced to {0}. The action necessary for a player to pay such a cost is the player’s acknowledgment that … | `js/ops.js` |
+| 118.9 | Some spells have alternative costs. An alternative cost is a cost listed in a spell’s text, or applied to it from another effect, that its controll… | `js/engine.js` `js/text.js` `js/ui.js` `tools/build-cards.mjs` |
 | 118.12 | Some spells, activated abilities, and triggered abilities read, “[Do something]. If [a player] [does, doesn’t, or can’t], [effect].” Or “[A player]… | `tools/build-cards.mjs` |
 | 118.12a | Some spells, activated abilities, and triggered abilities read, “[Do something] unless [a player does something else].” This means the same thing a… | `js/ops.js` `tools/build-cards.mjs` |
 | 119.1 | Each player begins the game with a starting life total of 20. Some variant games have different starting life totals. | `js/ops.js` `tools/build-cards.mjs` |
@@ -73,6 +82,7 @@ A citation that does not exist in that text fails the generator.
 | 122.1h | One or more finality counters on a permanent create a single replacement effect that stops the permanent from going to the graveyard. That effect i… | `js/engine.js` |
 | 122.1j | A hone counter on an Equipment gives +1/+0 to any creature that Equipment is attached to. | `js/engine.js` |
 | 122.6 | Some spells and abilities refer to counters being put on an object. This refers to putting counters on that object while it’s on the battlefield an… | `js/engine.js` |
+| 201.3 | Some cards with different English names are treated as though they had the same English name. Pairs of cards with this property have names that are… | `js/ops.js` `js/text.js` `tools/build-cards.mjs` |
 | 201.4 | If an effect instructs a player to choose a card name, the player must choose the name of a card in the Oracle card reference. (See rule 108.1.) A … | `js/ops.js` `js/text.js` `tools/build-cards.mjs` |
 | 202.3 | The mana value of an object is a number equal to the total amount of mana in its mana cost, regardless of color. | `tools/build-cards.mjs` |
 | 202.3f | When calculating the mana value of an object with a hybrid mana symbol in its mana cost, use the largest component of each hybrid symbol. | `js/ns.js` |
@@ -105,13 +115,16 @@ A citation that does not exist in that text fails the generator.
 | 406.3 | Exiled cards are, by default, kept face up and may be examined by any player at any time. Cards “exiled face down” can’t be examined by any player … | `js/ops.js` `js/ui.js` `tools/build-cards.mjs` |
 | 500.4 | As a step or phase begins, if there are effects that last until that step or phase, those effects expire. | `js/engine.js` |
 | 500.5 | As a step or phase ends, if there are effects that last until the end of that step or phase, those effects expire. Then any unspent mana left in a … | `js/engine.js` |
+| 500.7 | Some effects can give a player extra turns. They do this by adding the turns directly after the specified turn. If a player is given multiple extra… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 500.8 | Some effects can add phases to a turn. They do this by adding the phases directly after the specified phase. If multiple extra phases are created a… | `js/engine.js` `tools/build-cards.mjs` |
 | 502.3 | Third, the active player determines which permanents they control will untap. Then they untap them all simultaneously. This turn-based action doesn… | `js/engine.js` `tools/build-cards.mjs` |
 | 502.4 | No player receives priority during the untap step, so no spells can be cast or resolve and no abilities can be activated or resolve. Any ability th… | `js/engine.js` |
 | 503.1 | The upkeep step has no turn-based actions. Once it begins, the active player gets priority. (See rule 117, “Timing and Priority.”) | `js/engine.js` |
 | 503.1a | Any abilities that triggered during the untap step and any abilities that triggered at the beginning of the upkeep are put onto the stack before th… | `tools/build-cards.mjs` |
 | 504.1 | First, the active player draws a card. This turn-based action doesn’t use the stack. | `js/engine.js` |
+| 505.1a | Only the first main phase of the turn is a precombat main phase. All other main phases are postcombat main phases. This includes the second main ph… | `tools/build-cards.mjs` |
 | 505.6 | Fourth, the active player gets priority. (See rule 117, “Timing and Priority.”) | `js/engine.js` |
+| 506.1 | The combat phase has five steps, which proceed in order: beginning of combat, declare attackers, declare blockers, combat damage, and end of combat… | `js/ops.js` |
 | 506.2 | During the combat phase, the active player is the attacking player; creatures that player controls may attack. During the combat phase of a two-pla… | `js/ops.js` |
 | 506.4 | A permanent is removed from combat if it leaves the battlefield, if its controller or protector changes, if it phases out, if an effect specificall… | `js/engine.js` |
 | 507.1 | First, if the game being played is a multiplayer game in which the active player’s opponents don’t all automatically become defending players, the … | `tools/build-cards.mjs` |
@@ -149,9 +162,10 @@ A citation that does not exist in that text fails the generator.
 | 601.2e | The game checks to see if the proposed spell can legally be cast. If the proposed spell is illegal, the game returns to the moment before the casti… | `js/engine.js` |
 | 601.2f | The player determines the total cost of the spell. Usually this is just the mana cost. Some spells have additional or alternative costs. Some effec… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 601.2g | If the total cost includes a mana payment, the player then has a chance to activate mana abilities (see rule 605, “Mana Abilities”). Mana abilities… | `js/engine.js` |
-| 601.2h | The player pays the total cost. First, they pay all costs that don’t involve random elements or moving objects from the library to a public zone, i… | `js/engine.js` `tools/build-cards.mjs` |
+| 601.2h | The player pays the total cost. First, they pay all costs that don’t involve random elements or moving objects from the library to a public zone, i… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 601.2i | Once the steps described in 601.2a–h are completed, effects that modify the characteristics of the spell as it’s cast are applied, then the spell b… | `js/engine.js` |
 | 601.3 | A player can begin to cast a spell only if a rule or effect allows that player to cast it and no rule or effect prohibits that player from casting it. | `js/engine.js` `tools/build-cards.mjs` |
+| 601.3e | Some rules and effects state that an alternative set of characteristics or a subset of characteristics are considered to determine if a card or cop… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 602.1 | Activated abilities have a cost and an effect. They are written as “[Cost]: [Effect.] [Activation instructions (if any).]” | `tools/build-cards.mjs` |
 | 602.2 | To activate an ability is to put it onto the stack and pay its costs, so that it will eventually resolve and have its effect. Only an object’s cont… | `js/engine.js` |
 | 602.2b | The remainder of the process for activating an ability is identical to the process for casting a spell listed in rules 601.2b–i. Those rules apply … | `js/engine.js` |
@@ -164,7 +178,7 @@ A citation that does not exist in that text fails the generator.
 | 603.3c | If a triggered ability is modal, its controller announces the mode choice when putting the ability on the stack. If one of the modes would be illeg… | `js/engine.js` |
 | 603.3d | The remainder of the process for putting a triggered ability on the stack is identical to the process for casting a spell listed in rules 601.2c–d.… | `js/engine.js` |
 | 603.4 | A triggered ability may read “When/Whenever/At [trigger event], if [condition], [effect].” When the trigger event occurs, the ability checks whethe… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
-| 603.7 | An effect may create a delayed triggered ability that can do something at a later time. A delayed triggered ability will contain “when,” “whenever,… | `js/engine.js` `js/ops.js` |
+| 603.7 | An effect may create a delayed triggered ability that can do something at a later time. A delayed triggered ability will contain “when,” “whenever,… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 603.7b | A delayed triggered ability will trigger only once—the next time its trigger event occurs—unless it has a stated duration, such as “this turn.” If … | `js/engine.js` `tools/build-cards.mjs` |
 | 603.7c | A delayed triggered ability that refers to a particular object still affects it even if the object changes characteristics. However, if that object… | `js/ops.js` `tools/build-cards.mjs` |
 | 603.10a | Some zone-change triggers look back in time. These are leaves-the-battlefield abilities, abilities that trigger when a player sacrifices a permanen… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
@@ -175,6 +189,7 @@ A citation that does not exist in that text fails the generator.
 | 605.1b | A triggered ability is a mana ability if it meets all of the following criteria: it doesn’t require a target (see rule 115.6), it triggers from the… | `tools/build-cards.mjs` |
 | 605.3a | A player may activate an activated mana ability whenever they have priority, whenever they are casting a spell or activating an ability that requir… | `js/engine.js` `js/ui.js` |
 | 605.3b | An activated mana ability doesn’t go on the stack, so it can’t be targeted, countered, or otherwise responded to. Rather, it resolves immediately a… | `js/engine.js` |
+| 605.4a | A triggered mana ability doesn’t go on the stack, so it can’t be targeted, countered, or otherwise responded to. Rather, it resolves immediately af… | `js/engine.js` `tools/build-cards.mjs` |
 | 606.3 | A player may activate a loyalty ability of a permanent they control any time they have priority and the stack is empty during a main phase of their… | `js/engine.js` |
 | 606.4 | The cost to activate a loyalty ability of a permanent is to put on or remove from that permanent a certain number of loyalty counters, as shown by … | `js/engine.js` `tools/build-cards.mjs` |
 | 607.2a | If an object has an activated or triggered ability printed on it that instructs a player to exile one or more cards and an ability printed on it th… | `js/ops.js` `tools/build-cards.mjs` |
@@ -182,7 +197,7 @@ A citation that does not exist in that text fails the generator.
 | 608.2b | If the spell or ability specifies targets, it checks whether the targets are still legal. A target that’s no longer in the zone it was in when it w… | `js/engine.js` `js/ops.js` |
 | 608.2d | If an effect of a spell or ability offers any choices other than choices already made as part of casting the spell, activating the ability, or othe… | `js/ops.js` `tools/build-cards.mjs` |
 | 608.2g | If an effect gives a player the option to pay mana, they may activate mana abilities before taking that action. If an effect specifically instructs… | `js/ops.js` |
-| 608.2h | If an effect requires information from the game (such as the number of creatures on the battlefield), the answer is determined only once, when the … | `js/engine.js` `js/ops.js` |
+| 608.2h | If an effect requires information from the game (such as the number of creatures on the battlefield), the answer is determined only once, when the … | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 608.2n | As the final part of an instant or sorcery spell’s resolution, the spell is put into its owner’s graveyard. As the final part of an ability’s resol… | `js/engine.js` |
 | 608.3 | If the object that’s resolving is a permanent spell, its resolution may involve several steps. The instructions in rules 608.3a and b are always pe… | `js/engine.js` |
 | 608.3b | If the object that’s resolving has a target, it checks whether the target is still legal, as described in 608.2b. If a spell with an illegal target… | `js/engine.js` |
@@ -193,11 +208,12 @@ A citation that does not exist in that text fails the generator.
 | 610.3b | If a resolving triggered ability creates the initial one-shot effect that causes the object to change zones, and the specified event has already oc… | `js/ops.js` |
 | 611.2a | A continuous effect generated by the resolution of a spell or ability lasts as long as stated by the spell or ability creating it (such as “until e… | `js/ops.js` |
 | 611.2b | Some continuous effects generated by the resolution of a spell or ability have durations worded “for as long as . . . .” If the “for as long as” du… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
-| 611.2c | If a continuous effect generated by the resolution of a spell or ability modifies the characteristics or changes the controller of any objects, the… | `js/ops.js` |
+| 611.2c | If a continuous effect generated by the resolution of a spell or ability modifies the characteristics or changes the controller of any objects, the… | `js/ops.js` `tools/build-cards.mjs` |
+| 613.1b | Layer 2: Control-changing effects are applied. | `js/ops.js` |
 | 613.2a | Layer 1a: Copiable effects are applied. This includes copy effects (see rule 707, “Copying Objects”) and changes to an object’s characteristics det… | `js/engine.js` |
 | 613.7 | Within a layer or sublayer, determining which order effects are applied in is usually done using a timestamp system. An effect with an earlier time… | `js/engine.js` |
 | 613.7e | An Aura, Equipment, or Fortification receives a new timestamp each time it becomes attached to an object or player. | `js/ops.js` |
-| 614.1a | Effects that use the word “instead” are replacement effects. Most replacement effects use the word “instead” to indicate what events will be replac… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
+| 614.1a | Effects that use the word “instead” are replacement effects. Most replacement effects use the word “instead” to indicate what events will be replac… | `js/engine.js` `js/ops.js` `js/text.js` `tools/build-cards.mjs` |
 | 614.1b | Effects that use the word “skip” are replacement effects. These replacement effects use the word “skip” to indicate what events, steps, phases, or … | `js/engine.js` `tools/build-cards.mjs` |
 | 614.1c | Effects that read “[This permanent] enters with . . . ,” “As [this permanent] enters . . . ,” or “[This permanent] enters as . . . “ are replacemen… | `js/engine.js` `tools/build-cards.mjs` |
 | 614.1d | Continuous effects that read “[This permanent] enters . . .” or “[Objects] enter [the battlefield] . . .” are replacement effects. | `tools/build-cards.mjs` |
@@ -220,6 +236,8 @@ A citation that does not exist in that text fails the generator.
 | 701.6a | To counter a spell or ability means to cancel it, removing it from the stack. It doesn’t resolve and none of its effects occur. A countered spell i… | `js/ops.js` `tools/build-cards.mjs` |
 | 701.10b | To double a creature’s power, that creature gets +X/+0, where X is that creature’s power as the spell or ability that doubles its power resolves. S… | `tools/build-cards.mjs` |
 | 701.10e | To double the number of a kind of counters on a player or permanent, give that player or permanent as many of those counters as that player or perm… | `js/ops.js` |
+| 701.12 | Exchange | `js/ops.js` `tools/build-cards.mjs` |
+| 701.13 | Exile | `js/ops.js` |
 | 701.14 | Fight | `js/ops.js` `tools/build-cards.mjs` |
 | 701.17 | Mill | `js/ops.js` `tools/build-cards.mjs` |
 | 701.17a | For a player to mill a number of cards, that player puts that many cards from the top of their library into their graveyard. | `js/ops.js` |
@@ -227,6 +245,9 @@ A citation that does not exist in that text fails the generator.
 | 701.21 | Sacrifice | `js/engine.js` `tools/build-cards.mjs` |
 | 701.22a | To “scry N” means to look at the top N cards of your library, then put any number of them on the bottom of your library in any order and the rest o… | `js/ops.js` |
 | 701.23 | Search | `js/ops.js` `tools/build-cards.mjs` |
+| 701.23b | If a player is searching a hidden zone for cards with a stated quality, such as a card with a certain card type or color, that player isn’t require… | `js/text.js` |
+| 701.23d | If a player is searching a hidden zone simply for a quantity of cards, such as “a card” or “three cards,” that player must find that many cards (or… | `js/ops.js` `js/text.js` |
+| 701.23i | If multiple players search at once, each of those players looks at the appropriate cards at the same time, then those players decide in APNAP order… | `js/ops.js` |
 | 701.25 | Surveil | `tools/build-cards.mjs` |
 | 701.25a | To “surveil N” means to look at the top N cards of your library, then put any number of them into your graveyard and the rest on top of your librar… | `js/ops.js` |
 | 701.27 | Transform | `js/ops.js` `tools/build-cards.mjs` |
@@ -268,19 +289,27 @@ A citation that does not exist in that text fails the generator.
 | 702.37a | Morph is a static ability that functions in any zone from which you could play the card it’s on, and the morph effect works any time the card is fa… | `js/engine.js` `tools/build-cards.mjs` |
 | 702.37c | To cast a card using its morph ability, turn it face down and announce that you’re using a morph ability. It becomes a 2/2 face-down creature card … | `js/engine.js` |
 | 702.37e | Any time you have priority, you may turn a face-down permanent you control with a morph ability face up. This is a special action; it doesn’t use t… | `js/engine.js` |
+| 702.40 | Storm | `tools/build-cards.mjs` |
 | 702.40a | Storm is a triggered ability that functions on the stack. “Storm” means “When you cast this spell, copy it for each other spell that was cast befor… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 702.41a | Affinity is a static ability that functions while the spell with affinity is on the stack. “Affinity for [text]” means “This spell costs {1} less t… | `js/ops.js` `tools/build-cards.mjs` |
 | 702.49 | Ninjutsu | `js/text.js` |
 | 702.49a | Ninjutsu is an activated ability that functions only while the card with ninjutsu is in a player’s hand. “Ninjutsu [cost]” means “[Cost], Reveal th… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 702.49c | The creature put onto the battlefield with the ninjutsu ability enters attacking the same player, planeswalker, or battle as the creature that was … | `js/engine.js` |
+| 702.61a | Split second is a static ability that functions only while the spell with split second is on the stack. “Split second” means “As long as this spell… | `js/engine.js` `tools/build-cards.mjs` |
 | 702.74a | Evoke represents two abilities: a static ability that functions in any zone from which the card with evoke can be cast and a triggered ability that… | `tools/build-cards.mjs` |
+| 702.83a | Exalted is a triggered ability. “Exalted” means “Whenever a creature you control attacks alone, that creature gets +1/+1 until end of turn.” | `js/engine.js` `tools/build-cards.mjs` |
 | 702.108a | Prowess is a triggered ability. “Prowess” means “Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.” | `js/engine.js` `js/ops.js` |
+| 702.109 | Dash | `js/describe.js` |
+| 702.109a | Dash represents three abilities: two static abilities that function while the card with dash is on the stack, one of which may create a delayed tri… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 702.111b | A creature with menace can’t be blocked except by two or more creatures. (See rule 509, “Declare Blockers Step.”) | `js/ai.js` |
 | 702.122 | Crew | `js/text.js` |
 | 702.122a | Crew is an activated ability of Vehicle cards. “Crew N” means “Tap any number of other untapped creatures you control with total power N or greater… | `js/engine.js` `tools/build-cards.mjs` |
-| 702.124 | Partner | `tools/build-cards.mjs` |
+| 702.124 | Partner | `js/main.js` `tools/build-cards.mjs` |
 | 702.124c | A rule or effect that refers to your commander’s color identity refers to the combined color identities of your two commanders. See rule 903.4. | `js/engine.js` |
+| 702.124h | “Partner” means “You may designate two legendary cards as your commander rather than one if each of them has partner.” | `tools/build-cards.mjs` |
 | 702.124k | “Choose a Background” means “You may designate two cards as your commander rather than one if one of them is this card and the other is a legendary… | `tools/build-cards.mjs` |
+| 702.138 | Escape | `tools/build-cards.mjs` |
+| 702.138a | Escape represents a static ability that functions while the card with escape is in a player’s graveyard. “Escape [cost]” means “You may cast this c… | `js/engine.js` |
 | 702.150a | Compleated is a static ability found on some planeswalker cards. Compleated means “If this permanent would enter with one or more loyalty counters … | `js/engine.js` `tools/build-cards.mjs` |
 | 702.166 | Bargain | `js/text.js` |
 | 702.166a | Bargain is a static ability that functions while the spell with bargain is on the stack. “Bargain” means “As an additional cost to cast this spell,… | `js/engine.js` `tools/build-cards.mjs` |
@@ -336,10 +365,10 @@ A citation that does not exist in that text fails the generator.
 | 704.5z | If a permanent has more than one Role controlled by the same player attached to it, each of those Roles except the one with the most recent timesta… | `js/engine.js` |
 | 704.6c | In a Commander game, a player who’s been dealt 21 or more combat damage by the same commander over the course of the game loses the game. See rule … | `js/engine.js` |
 | 704.6d | In a Commander game, if a commander is in a graveyard or in exile and that object was put into that zone since the last time state-based actions we… | `js/engine.js` |
-| 707.2 | When copying an object, the copy acquires the copiable values of the original object’s characteristics and, for an object on the stack, choices mad… | `js/ops.js` `tools/build-cards.mjs` |
+| 707.2 | When copying an object, the copy acquires the copiable values of the original object’s characteristics and, for an object on the stack, choices mad… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 707.9a | Some copy effects cause the copy to gain an ability as part of the copying process. This ability becomes part of the copiable values for the copy, … | `js/engine.js` `js/ops.js` |
 | 707.9b | Some copy effects modify a characteristic as part of the copying process. The final set of values for that characteristic becomes part of the copia… | `js/ops.js` `tools/build-cards.mjs` |
-| 707.10 | To copy a spell, activated ability, or triggered ability means to put a copy of it onto the stack; a copy of a spell isn’t cast and a copy of an ac… | `js/engine.js` `js/ops.js` |
+| 707.10 | To copy a spell, activated ability, or triggered ability means to put a copy of it onto the stack; a copy of a spell isn’t cast and a copy of an ac… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 707.10a | If a copy of a spell is in a zone other than the stack, it ceases to exist. If a copy of a card is in any zone other than the stack or the battlefi… | `js/ops.js` |
 | 707.10c | Some effects copy a spell or ability and state that its controller may choose new targets for the copy. The player may leave any number of the targ… | `js/ops.js` `js/text.js` |
 | 707.12 | An effect that instructs a player to cast a copy of an object (and not just copy a spell) follows the rules for casting spells, except that the cop… | `js/ops.js` `tools/build-cards.mjs` |
@@ -359,8 +388,9 @@ A citation that does not exist in that text fails the generator.
 | 712.3 | Modal double-faced cards have a Magic card face on each side. These faces are usually independent from one another, but they may have an ability th… | `tools/build-cards.mjs` |
 | 712.8e | While a nonmodal double-faced permanent has its back face up, it has only the characteristics of its back face. However, its mana value is calculat… | `js/engine.js` `js/ui.js` |
 | 712.8f | While a modal double-faced spell is on the stack or a modal double-faced permanent is on the battlefield, it has only the characteristics of the fa… | `js/engine.js` `tools/build-cards.mjs` |
+| 712.11b | A player casting a modal double-faced card or a copy of a modal double-faced card as a spell chooses which face they are casting before putting it … | `js/engine.js` |
 | 714.2b | “{rN}—[Effect]” means “When one or more lore counters are put onto this Saga, if the number of lore counters on it was less than N and became at le… | `js/describe.js` `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
-| 714.3a | Each Saga without read ahead has the intrinsic ability “This Saga enters with a lore counter on it.” This ability creates a replacement effect (see… | `js/engine.js` |
+| 714.3a | Each Saga without read ahead has the intrinsic ability “This Saga enters with a lore counter on it.” This ability creates a replacement effect (see… | `js/engine.js` `js/ops.js` |
 | 714.3c | As a player’s precombat main phase begins, that player puts a lore counter on each Saga they control with one or more chapter abilities. This turn-… | `js/engine.js` |
 | 714.4 | If the number of lore counters on a Saga permanent with one or more chapter abilities is greater than or equal to its final chapter number, and it … | `js/engine.js` |
 | 715.2 | The text that appears in the inset frame on the left defines alternative characteristics that the object may have while it’s a spell. The card’s no… | `js/ui.js` |
@@ -385,11 +415,12 @@ A citation that does not exist in that text fails the generator.
 | 724.1a | If there are any triggered abilities that triggered before this process began but haven’t been put onto the stack yet, those abilities cease to exi… | `js/ops.js` |
 | 724.1c | Check state-based actions. No player gets priority, and no triggered abilities are put onto the stack. | `js/engine.js` |
 | 733.1 | If a player takes an illegal action or starts to take an action but can’t legally complete it, the entire action is reversed and any payments alrea… | `js/engine.js` |
-| 903.3 | Each deck has a legendary card designated as its commander. That card must be either (a) a creature card, (b) a Vehicle card, or (c) a Spacecraft c… | `js/engine.js` `js/ui.js` `tools/build-cards.mjs` |
+| 903.3 | Each deck has a legendary card designated as its commander. That card must be either (a) a creature card, (b) a Vehicle card, or (c) a Spacecraft c… | `js/engine.js` `js/ops.js` `js/ui.js` `tools/build-cards.mjs` |
 | 903.3d | If an effect refers to controlling a commander, it refers to a permanent on the battlefield that is a commander. If an effect refers to casting a c… | `js/ops.js` |
 | 903.4 | The Commander variant uses color identity to determine what cards can be in a deck with a certain commander. The color identity of a card is the co… | `js/engine.js` `tools/build-cards.mjs` |
 | 903.4f | If an ability refers to the colors or number of colors in a commander’s color identity, that quality is undefined if that player doesn’t have a com… | `js/engine.js` `tools/build-cards.mjs` |
 | 903.5 | Each Commander deck is subject to the following deck construction rules. | `js/ops.js` |
+| 903.5a | Each deck must contain exactly 100 cards, including its commander. In other words, the minimum deck size and the maximum deck size are both 100. | `tools/fetch-cedh.mjs` |
 | 903.5e | Commander games do not use sideboards. | `js/main.js` |
 | 903.6 | At the start of the game, each player puts their commander from their deck face up into the command zone. Then each player shuffles the remaining c… | `js/engine.js` `js/ui.js` `tools/art-keys.mjs` |
 | 903.7 | Once the starting player has been determined, each player sets their life total to 40 and draws a hand of seven cards. | `js/engine.js` |

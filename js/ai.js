@@ -217,6 +217,24 @@
       case 'tutorUpTo': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'done'; }
       case 'removeCounterKind': { const o = q.opts.find(o2 => o2.id !== 'none' && o2.id !== '+1/+1') || q.opts.find(o2 => o2.id !== 'none'); return o ? o.id : 'none'; }
       case 'mayPay': return 'yes';
+      // PLAN D22
+      case 'pactPay': return 'pay';                                                             // declining loses the game
+      case 'repeat': return P(s, me).life > 12 ? 'yes' : 'no';                                  // Ad Nauseam: keep a cushion of life
+      case 'taintedTake': return keepValue(s, q.c) >= 3 ? 'take' : 'next';
+      case 'chooseCardName': {                                                                  // Demonic Consultation: with a library-empty win in hand or play, name a card not in the library; otherwise the best card in it
+        const lib = new Set(P(s, me).lib.map(i => MF.def(s, i).name));
+        const wins = P(s, me).hand.concat(s.bf.filter(i => I(s, i).ctrl === me)).some(i => /win the game/.test(MF.def(s, i).text || ''));
+        if (wins) { const o = q.opts.find(o2 => !lib.has(o2.id)); return o.id; }
+        const best = P(s, me).lib.slice().sort((a, b) => keepValue(s, b) - keepValue(s, a))[0];
+        return best != null ? MF.def(s, best).name : q.opts[0].id;
+      }
+      case 'limdul': return 'keep';
+      case 'orderCards': return q.opts.slice().sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0].id;
+      case 'oppPicks': return q.to === 'hand' ? q.opts.slice().sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0].id : q.opts.slice().sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0].id;   // the opponent gives the worst card to the hand, the best to the graveyard
+      case 'altExileBlue': return q.opts.slice().sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0].id;
+      case 'gemstone': return 'yes';
+      case 'gemstoneExile': return q.opts.slice().sort((a, b) => keepValue(s, a.iid) - keepValue(s, b.iid))[0].id;
+      case 'moxDiamond': { const c = q.opts.filter(o => o.iid != null)[0]; return c ? c.id : 'none'; }
       case 'addCostYes': return 'no';
       case 'blightOn': return q.opts.slice().sort((a, b) => permValue(s, a.iid) - permValue(s, b.iid))[0].id;
       case 'teamworkTap': return q.opts.some(o => o.id === 'done') ? 'done' : q.opts.filter(o => o.iid != null).sort((a, b) => MF.chars(s, b.iid).p - MF.chars(s, a.iid).p)[0].id;

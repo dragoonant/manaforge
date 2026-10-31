@@ -31,6 +31,23 @@
   for the official rulings of Kujo's 102 cards, which the implementation follows. Kept in gitignored
   `scratch/kujo/rulings.json`; nothing from Scryfall is in the repository.
 
+## Championship Commander decks (PLAN D22)
+
+- **EDHTop16** (<https://edhtop16.com>): tournament pages and decklist pages, read 2026-10-31 with a browser
+  user-agent (the site's data is embedded in each page; its GraphQL endpoint accepts only persisted queries).
+  The tournament list came from its 2026 events page; the 16 largest open events' top 16 were scanned. Raw
+  pages are kept in gitignored `scratch/web/cedh/`; `tools/fetch-cedh.mjs` writes the five chosen lists to
+  `data/lists/cedh-*.txt`, each naming its event, standing, record, player and decklist URL:
+  | Deck | Event | Date | Standing | Player |
+  |---|---|---|---|---|
+  | Kraum & Tymna | Just Jam D-Grid | 2026-05-30 | 1st of 200 | Matt Hayes |
+  | Thrasios & Vial Smasher | The Fish Bowl 7 | 2026-06-27 | 1st of 209 | Joe Holland |
+  | Scion of the Ur-Dragon | cEDH UK Open — Benfest III | 2026-09-12 | 3rd of 156 | Janos Nado |
+  | Najeela | Commandergeddon 10 | 2026-06-05 | 7th of 173 | Dan Cross |
+  | Terra | Pittsburgh 2026 — t/cEDH $10k–$25,000 | 2026-07-11 | 8th of 195 | Nicholas Benson |
+- Oracle text for their cards: the same MTGJSON AtomicCards file (2026-10-31). `data/cards.js` now also
+  carries `MF.CARD_NAMES`, every card name in that file (34,907), for "choose a card name" (CR 201.3).
+
 ## Registered decks
 
 | Deck | MTGJSON fileName | Product | Set | Released | Fetched |

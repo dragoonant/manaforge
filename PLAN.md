@@ -33,12 +33,48 @@ This file owns decisions. No other file states one.
 | D20 | 2026-10-27 | **Touch: a tap reads, a drag commits, a hold peeks.** Owner: "give these games the hearthstone treatment on mobile. I hate that I can't zoom in on cards and that when tapping on cards they automatically play." Agreed with the owner: drag and buttons both, landscape only, the same model in all three sister projects. On touch a tap on a card opens the card sheet — the card with its Oracle text, current numbers and why it can't be played, beside its legal actions as buttons with their costs; nothing a finger touches commits except a button. A drag commits: a hand card onto your battlefield plays it when there is exactly one way to (a land, or a spell with one cost; several — a back face, an alternative cost — open the sheet); during declare attackers an attacker dragged at the opponent is added; during declare blockers a blocker dragged onto an attacker is assigned; Confirm still ends either declaration. A hold shows the card until the finger lifts. On a phone (coarse pointer, short side ≤ 540 px) the hand rests as a fan of card tops and rises on a tap; recent plays run down the left edge; the prompt is a column on the right with its buttons stacked at the thumb; the mat shows art and numbers and a hold reads the rest; portrait shows a "turn sideways" gate; Add to Home Screen opens it full-screen and landscape (`manifest.webmanifest`). A mouse plays as before. `js/touch.js`. | owner |
 
 | D21 | 2026-10-31 | **Kujo's Commander deck, under a heading of its own.** Owner: "My friend Kujo put a decklist together … add this decklist to the game. Implement it in game with art, and add it to the deck lists under a new heading for Kujo." The list — "Zellix, of Halaster", commanders Zellix, Sanity Flayer and Scion of Halaster (choose a Background) — is kept as `data/lists/kujo-zellix.txt` and compiled like every other deck; it registers only because all 100 cards compile. Owner's choices, asked before work began: **the Commander rules in full (CR 903)** — 40 life, the command zone, commander tax, 903.9a-b, 21 commander damage, colour identity — so a Commander deck plays only another Commander deck (a mirror until there is a second); and **art prompts written here, rendered at home** with `tools/gen-art-sdxl.py` (D13), since this session's container has no GPU; until then those cards show the procedural fallback. Its two-card Moxfield sideboard is left out (CR 903.5e). Two of its cards come from licensed crossovers beyond D16's: Raul, Trouble Shooter (Fallout) and Hidden Lair (a Marvel set); Raul's prompt paints a generic undead rogue, not the licensed character, and Hidden Lair is a landscape — the owner may want to say otherwise. | owner |
+| D22 | 2026-10-31 | **Commander as a mode of its own, and five championship Commander decks.** Owner: "it plays under the commander format - you will need to add that too as a separate mode. Implement 5 championship commander decks (all different) to play with." The picker has two modes, **Duel** (20 life, 60-card decks) and **Commander** (40 life, 100 cards, CR 903); each lists only its own decks, so a Commander deck always meets another. The five decks are championship cEDH lists from EDHTop16 (the standings and decklists of competitive Commander events): from the top 16 of the 16 largest open events of 2026, the best-placed list of each commander, choosing five different commanders whose lists together needed the fewest cards the compiler could not yet read (120). Kraum & Tymna (1st of 200, Just Jam D-Grid), Thrasios & Vial Smasher (1st of 209, The Fish Bowl 7), Scion of the Ur-Dragon (3rd of 156, cEDH UK Open — Benfest III), Najeela (7th of 173, Commandergeddon 10), Terra (8th of 195, Pittsburgh 2026). `tools/fetch-cedh.mjs` writes them to `data/lists/cedh-*.txt` with their provenance; they compile like any other list and register only because every card compiles. They play under the "cEDH championship" heading, beside Kujo's. Licensed crossover cards in them, beyond D16 and D21: Terra, Tataru Taru, Flash Photography and Starting Town (Final Fantasy), Borne Upon a Wind and Lotho, Corrupt Shirriff (The Lord of the Rings), Redirect Lightning and The Cabbage Merchant (Avatar), Permission Denied (a Jurassic World set); their prompts paint generic figures. | owner |
 
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.
 
 ## Status
+
+**2026-10-31 — Commander mode and five championship Commander decks (D22): all registered, 100 of 100 cards each.**
+
+- The picker has a Duel / Commander switch; the chooser lists only that mode's decks, under "cEDH
+  championship" and "Kujo" headings in Commander mode. `tools/fetch-cedh.mjs` writes the five
+  EDHTop16 lists with their event, standing, record, player and source page.
+- 120 cards new to the compiler, each by an anchored sentence, with no change to any card compiled
+  before (checked card by card against the last commit). New in the engine: alternative costs (CR 118.9:
+  Force of Will, Force of Negation, Fierce Guardianship, Mindbreak Trap, Flare of Duplication,
+  Misdirection, Commandeer, Snapback, Deflecting Swat); dash (702.109) and escape granted by Underworld
+  Breach (702.138); spells and abilities as targets by type, colour and "a single target" (115.10);
+  changing targets (115.7) and gaining control of a spell (Commandeer); split second (702.61); casting
+  prohibitions and permissions (Silence, Orim's Chant, Grand Abolisher, Dosan, Ranger-Captain, Revel in
+  Silence; Borne Upon a Wind, Valley Floodcaller, Emergence Zone, Flash Photography); Veil of Summer and
+  Autumn's Veil; a general library search (701.23, with 701.23d's "must find"); mana abilities that work
+  from the hand (the spirit guides), Lion's Eye Diamond, Mox Diamond's replacement, Gemstone Caverns in
+  the opening hand, Food Chain's creature-only mana, Jeweled Amulet, Carpet of Flowers; partner pairs
+  (702.124h); Derevi's command-zone ability; extra turns (500.7, Final Fortune); "becomes a copy until
+  end of turn" (Scion of the Ur-Dragon, Shifting Woodland); copies that enter as an enchantment, artifact
+  or an opponent's creature (Imposter Mech, a Vehicle); Demonic Consultation naming any card name (CR
+  201.3: every Oracle name is offered, the cards in the game first); Intuition and Gifts Ungiven (the
+  opponent chooses); Praetor's Grasp (a face-down card its caster may look at and play); Tainted Pact,
+  Ad Nauseam, Lim-Dûl's Vault, Chain of Vapor, Terra // Esper Terra (transform, a Saga back face).
+- Checked in the real browser (Playwright, Chromium, 1600×900 and a touch phone at 844×390): the Duel /
+  Commander switch moving both slots; the chooser's two Commander headings, the six Commander decks and a
+  championship deck's detail with its standing, record, player and EDHTop16 link; Kraum & Tymna against
+  Najeela played by the AI on both seats to turn 14 with both partner commanders on the plate, each with
+  its own tax; and Force of Will cast for its alternative cost on the opponent's turn — target, then
+  "exile a blue card", 1 life paid, the spell countered. No page error.
+- Gates: `tools/test.mjs` 438/438 (75 new in tests/27-cedh.mjs); audit 535 cards 0 FAIL / 0 WARN;
+  check-pages clean (193 log types, 104 question kinds); `tools/sim.mjs` 12 random mirror games for each
+  of the five decks and 40 across every deck, 0 violations; two AI-vs-AI mirror games for each deck run
+  to a finish (40–120 ms a step); `tools/policy-sweep.mjs 60`, every AI answer legal (74 question kinds).
+- Art: 143 prompts added to `tools/art-identity.mjs` (the five decks' cards and tokens), linted; not yet
+  rendered.
 
 **2026-10-31 — Kujo's Commander deck (D21) registered: 100 of 100 cards compile.**
 

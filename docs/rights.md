@@ -45,7 +45,12 @@ re-checked. This is not permission; it is the current state of the world, dated.
 2. Decks came from Wizards-owned settings only until PLAN D15/D16 (2025-era Final Fantasy and Hobbit
    Standard decks, licensed crossovers, owner's call after the concern was stated) and D21 (Kujo's
    Commander deck, 2026-10-31, which adds Raul, Trouble Shooter from Fallout and Hidden Lair from a
-   Marvel set; their art prompts paint a generic undead rogue and a landscape, not licensed characters).
+   Marvel set; their art prompts paint a generic undead rogue and a landscape, not licensed characters), and D22
+   (five championship Commander decks, 2026-10-31), whose licensed crossover cards are Terra, Tataru Taru,
+   Flash Photography and Starting Town (Final Fantasy), Borne Upon a Wind and Lotho, Corrupt Shirriff (The Lord of the Rings), Redirect Lightning and
+   The Cabbage Merchant (Avatar) and Permission Denied (a Jurassic World set); their prompts paint generic
+   figures. The decklists are tournament results published by EDHTop16 and name the players who played
+   them, as the published standings do.
 3. Card text is Oracle text, shown because fidelity is the product; the repo is private (D1).
 4. `docs/takedown.md` says exactly what to run if asked to stop.
 

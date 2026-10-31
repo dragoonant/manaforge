@@ -3,6 +3,11 @@
 - **Art for Kujo's deck (D21)**: 95 cards and tokens have prompts but no painting yet; they show the
   procedural fallback. On the GPU machine: `python tools/gen-art-sdxl.py` (it skips what exists), then
   `tools/shrink-art.ps1` and `node tools/write-manifest.mjs`.
+- **Art for the championship Commander decks (D22)**: 143 cards and tokens have prompts but no painting yet.
+- **The AI and the championship Commander decks (D22)**: the AI plays them card by card. It does not know
+  their lines (Thassa's Oracle with Demonic Consultation or Tainted Pact, Underworld Breach with Lion's Eye
+  Diamond, Food Chain, Najeela's extra combats, Kraum and Tymna's card draw); it names a card not in its
+  library for Demonic Consultation only when a "win the game" card is in its hand or on its battlefield.
 - **The AI and a combo deck**: the AI plays Kujo's deck card by card with its one-turn roll-outs; it does
   not plan the deck's combos (Isochron Scepter + Dramatic Reversal, Painter's Servant + Grindstone,
   Doomsday into Thassa's Oracle, Bloodchief Ascension + Mindcrank). Its evaluator counts a short
