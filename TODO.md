@@ -1,9 +1,8 @@
 # TODO — wanted improvements to things that already work
 
-- **Art for Kujo's deck (D21)**: 95 cards and tokens have prompts but no painting yet; they show the
-  procedural fallback. On the GPU machine: `python tools/gen-art-sdxl.py` (it skips what exists), then
-  `tools/shrink-art.ps1` and `node tools/write-manifest.mjs`.
-- **Art for the championship Commander decks (D22)**: 143 cards and tokens have prompts but no painting yet.
+- **Review the hosted renders (D23)**: Kujo's and the championship decks' 238 cards and tokens were rendered
+  through Hugging Face on 2026-10-31; re-roll any that miss their subject with `python3 tools/gen-art-hf.py --force <key>
+  --seed-offset N` (or the local GPU script), then `node tools/write-manifest.mjs`.
 - **The AI and the championship Commander decks (D22)**: the AI plays them card by card. It does not know
   their lines (Thassa's Oracle with Demonic Consultation or Tainted Pact, Underworld Breach with Lion's Eye
   Diamond, Food Chain, Najeela's extra combats, Kraum and Tymna's card draw); it names a card not in its
