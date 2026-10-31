@@ -129,6 +129,10 @@
     yourTurn: x => x.s.ap === x.ctrl,
     // PLAN D22
     notYourTurn: x => x.s.ap !== x.ctrl,
+    notEvPlayersTurn: x => x.s.ap !== x.ev.who,                                                                // Tataru Taru: "if it isn't that player's turn"
+    inCombat: x => ['boc', 'attackers', 'blockers', 'fsdamage', 'damage', 'eoc'].includes(x.s.step),           // "Activate only during combat" (CR 506.1)
+    evSrcEnteredThisTurn: x => (P(x.s, x.ev.srcCtrl).h.enteredIids || []).includes(x.ev.src),                  // Samut: "if that creature entered this turn"
+    evSpentAtLeast: (x, c) => (x.ev.spent || 0) >= c.n,                                                         // Exhibition Tidecaller: "if five or more mana was spent to cast that spell"
     selfNoCounter: (x, c) => !((I(x.s, x.src).ctr[c.kind] || 0) > 0),                                        // Jeweled Amulet: "only if there are no charge counters on ~"
     notCarpetTurn: x => I(x.s, x.src).carpetTurn !== x.s.turn,                                                 // Carpet of Flowers: "if you haven't added mana with this ability this turn"
     controlCommander: x => x.s.bf.some(i => I(x.s, i).ctrl === x.ctrl && I(x.s, i).cmdr),                     // CR 903.3: a commander on the battlefield, yours or not by ownership
@@ -168,6 +172,8 @@
     castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
     evAmount: x => x.ev.n,
     evMv: x => x.ev.mv,
+    oppCowards: x => x.s.bf.filter(i => I(x.s, i).ctrl !== x.ctrl && MF.chars(x.s, i).subtypes.includes('Coward')).length,   // Gornog
+    lkiPowerT: (x, v) => { const q = (x.t[v.t] || [])[0]; if (!q || q.c == null) return 0; const c = I(x.s, q.c); return c.zone === 'bf' ? MF.chars(x.s, q.c).p : c.lki ? c.lki.p : 0; },   // Swords to Plowshares: "its power", as it last existed
     namedInGraves: x => x.s.players.reduce((n, p) => n + p.grave.filter(g => I(x.s, g).id === I(x.s, x.src).id).length, 0),   // Rite of Flame: "for each card named ~ in each graveyard" (itself excluded: it is on the stack)
     handOf: (x, v) => players(x, v.who).reduce((n, seat) => n + P(x.s, seat).hand.length, 0),   // "each card in target opponent's hand"
     countOf: (x, v) => { const seats = (x.t[v.ctrlOfT] || []).filter(q => q && q.p != null).map(q => q.p); return x.s.bf.filter(i => seats.includes(I(x.s, i).ctrl) && MF.matchChars(x.s, i, MF.chars(x.s, i), v.f, x.ctrl, x.src)).length; },   // "the number of Islands target opponent controls"                                                                         // "that spell's mana value"                                                                      // "that much damage"
@@ -236,8 +242,11 @@
       case 'drawCard': return (!a.you || ev.who === src.ctrl) && (!a.opp || ev.who !== src.ctrl) && (!a.nth || ev.nth === a.nth);
       case 'counterPut': return ev.iid === iid && (!a.ctrKind || ev.kind === a.ctrKind) && (!a.nth || (ev.before < a.nth && ev.after >= a.nth));   // "When the fourth plan counter is put on this"                               // "When this Class becomes level N" (CR 716.2a)
       case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.oppOnly || ev.ctrl !== src.ctrl) && (!a.chosenParity || (s.cards[iid].chosen && ((ev.mv % 2 === 0) === (s.cards[iid].chosen === 'even')))) && (!a.nth || ev.nth === a.nth) && (!a.nthNoncre || ev.nthNoncre === a.nthNoncre) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t))) && (a.spell.mvGE == null || ev.mv >= a.spell.mvGE)));
-      case 'dealsDamage': return (a.who && a.who !== 'self' ? (ev.srcCtrl === src.ctrl && (!a.who.types || a.who.types.some(ty => (ev.srcTypes || []).includes(ty))) && (!a.who.subtypes || a.who.subtypes.some(st => (ev.srcSubtypes || []).includes(st)))) : ev.src === iid) && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);   // "Whenever a Horror you control deals combat damage to a player"
-      case 'sacrificed': return ev.iid === iid;
+      case 'dealsDamage': if (a.anyCreToYou) return !!ev.combat && ev.to.p === src.ctrl && (ev.srcTypes || []).includes('Creature');   // The Cabbage Merchant
+        return (a.who && a.who !== 'self' ? (ev.srcCtrl === src.ctrl && (!a.who.types || a.who.types.some(ty => (ev.srcTypes || []).includes(ty))) && (!a.who.subtypes || a.who.subtypes.some(st => (ev.srcSubtypes || []).includes(st)))) : ev.src === iid) && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);   // "Whenever a Horror you control deals combat damage to a player"
+      case 'sacrificed': return a.anySac === 'any' ? true : a.anySac === 'you' ? ev.ctrl === src.ctrl : ev.iid === iid;   // Mayhem Devil, Korvold
+      case 'copied': return ev.ctrl === src.ctrl && (!a.spell || !a.spell.types || a.spell.types.some(t => ev.types.includes(t)));   // magecraft: "or copy"
+      case 'combatDamageBatch': return ev.ctrl === src.ctrl && ev.who !== src.ctrl;
       case 'activated': return !a.oppOnly || ev.ctrl !== src.ctrl;
       case 'dies':
         if (a.who === 'equipped') return !!(ev.lki && (ev.lki.attachedBy || []).includes(iid));   // Skullclamp: what it was attached to as it left (CR 603.10a)
@@ -382,6 +391,7 @@
     },
     token(x, op) {                                                                             // CR 111.1
       if (op.forCtrlOf) { const w = ctrlOfTarget(x, op.forCtrlOf); if (w == null) return; return OPS.token(Object.assign({}, x, { ctrl: w }), Object.assign({}, op, { forCtrlOf: null })); }   // "Its controller creates ..."
+      if (op.forEvCtrl) { const w = x.ev.ctrl; return OPS.token(Object.assign({}, x, { ctrl: w }), Object.assign({}, op, { forEvCtrl: null })); }   // Najeela: "have its controller create"
       if (op.forPlayer) { const w = players(x, op.forPlayer)[0]; if (w == null) return; return OPS.token(Object.assign({}, x, { ctrl: w }), Object.assign({}, op, { forPlayer: null })); }   // "target opponent creates ..."
       const s = x.s, n = num(x, op.n);
       for (let k = 0; k < n; k++) {
@@ -1116,6 +1126,59 @@
       MF.counterSpell(s, L, x.L ? (x.L.srcId || x.L.id) : null, op.exile);
     },
     counterTarget(x, op) { const iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return; MF.counterSpell(x.s, x.s.stack.find(l => l.kind === 'spell' && l.iid === iid), x.L ? (x.L.srcId || x.L.id) : null, op.exile, x); },   // CR 701.6a; Force of Negation: "exile it instead"
+    // ---- PLAN D22: triggered and activated abilities ----
+    mayDraw(x, op) { for (const seat of players(x, op.who)) if (MF.ask(x.x, { who: seat, kind: 'may', src: x.src, what: 'draw', opts: [{ id: 'yes' }, { id: 'no' }] }) === 'yes') MF.draw(x.s, seat, 1); },   // Tataru Taru: "target opponent may draw a card" — that player decides
+    // Smothering Tithe: "that player may pay {2}. If the player doesn't, you create a Treasure token."
+    payOrElse(x, op) {
+      const s = x.s, payer = players(x, 'evPlayer')[0], need = MF.parseMana(op.pay);
+      if (MF.canPayMana(s, payer, need) && MF.ask(x.x, { who: payer, kind: 'payToDeny', src: x.src, mana: op.pay, opts: [{ id: 'pay' }, { id: 'no' }] }) === 'pay') { MF.payMana(x.x, payer, need, x.src, false); log(s, 'paidToDeny', { who: payer, c: x.L.srcId, mana: op.pay }); return; }
+      MF.runOps(x, op.ops);
+    },
+    // Thrasios: "reveal the top card of your library. If it's a land card, put it onto the battlefield tapped. Otherwise, draw a card."
+    thrasios(x) {
+      const s = x.s, p = P(s, x.ctrl); if (!p.lib.length) return;
+      const top = p.lib[0], id = I(s, top).id; log(s, 'reveal', { who: x.ctrl, cs: [id] });
+      if (MF.def(s, top).types.includes('Land')) { MF.move(s, top, 'bf', { ctrl: x.ctrl, tapped: true, x: x.x }); log(s, 'putOnto', { who: x.ctrl, c: id, tapped: true, from: 'library' }); }
+      else MF.draw(s, x.ctrl, 1);
+    },
+    // Ragavan: "exile the top card of that player's library. Until end of turn, you may cast that card."
+    exileTopMayCast(x, op) {
+      const s = x.s, seat = players(x, op.who)[0], p = P(s, seat); if (!p.lib.length) return;
+      const id = I(s, p.lib[0]).id, n = MF.move(s, p.lib[0], 'exile');
+      s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, castOnly: true, until: 'endOfTurn', turn: s.turn });
+      log(s, 'exiled', { who: seat, c: id, by: x.L ? x.L.srcId : null });
+    },
+    // Ancient Copper Dragon: "roll a d20. You create a number of Treasure tokens equal to the result." (CR 706: the roll is inside apply)
+    rollTreasures(x, op) { const r = 1 + MF.randInt(x.s, op.sides); log(x.s, 'roll', { who: x.ctrl, sides: op.sides, n: r }); OPS.token(x, { o: 'token', id: op.id, n: r }); },
+    // The Cabbage Merchant: "sacrifice a Food token" — Food tokens are indistinguishable unless one differs (CLAUDE.md 11)
+    sacSub(x, op) {
+      const s = x.s, list = s.bf.filter(i => I(s, i).ctrl === x.ctrl && MF.chars(s, i).subtypes.includes(op.sub) && (!op.tok || I(s, i).tok)); if (!list.length) return;
+      const kinds = new Set(list.map(i => I(s, i).id + ':' + (I(s, i).tapped ? 't' : '')));
+      MF.sacrifice(s, kinds.size > 1 ? MF.ask(x.x, { who: x.ctrl, kind: 'sacrifice', src: x.src, opts: list.map(i => ({ id: i, iid: i })) }) : list[0]);
+    },
+    // Korvold: "sacrifice another permanent" — the controller's choice
+    sacOther(x) {
+      const s = x.s, list = s.bf.filter(i => I(s, i).ctrl === x.ctrl && i !== x.src); if (!list.length) return;
+      MF.sacrifice(s, MF.ask(x.x, { who: x.ctrl, kind: 'sacrifice', src: x.src, opts: list.map(i => ({ id: i, iid: i })) }));
+    },
+    // Derevi: "you may tap or untap target permanent"
+    tapOrUntap(x, op) {
+      const s = x.s, q = (x.t[op.on.t] || [])[0]; if (!q || q.c == null || I(s, q.c).zone !== 'bf') return;
+      const a = MF.ask(x.x, { who: x.ctrl, kind: 'tapOrUntap', src: x.src, c: q.c, opts: [{ id: 'tap' }, { id: 'untap' }, { id: 'neither' }] });
+      if (a === 'tap' && !I(s, q.c).tapped) { MF.tapPerm(s, q.c); log(s, 'tapped', { who: I(s, q.c).ctrl, c: I(s, q.c).id }); }
+      if (a === 'untap' && I(s, q.c).tapped) MF.untap(s, q.c);
+    },
+    // Derevi: "Put ~ onto the battlefield from the command zone."
+    fromCommand(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'command') return; log(s, 'fromCommand', { who: c.owner, c: c.id }); MF.move(s, x.src, 'bf', { ctrl: c.owner, x: x.x }); },
+    becomeCoward(x, op) { for (const i of MF.resolveRefs(x, op.on)) { x.s.effects.push({ k: 'coward', iid: i, ts: x.s.ts++ }); log(x.s, 'becomesCoward', { c: I(x.s, i).id }); } },   // Gornog (no duration)
+    // Tymna: X = the number of opponents dealt combat damage this turn (one opponent: 0 or 1). "you may pay X life. If you do, draw X cards."
+    tymna(x) {
+      const s = x.s, n = P(s, 1 - x.ctrl).h.combatDamaged ? 1 : 0; if (!n || P(s, x.ctrl).life < n) return;
+      if (MF.ask(x.x, { who: x.ctrl, kind: 'mayPay', src: x.src, life: n, opts: [{ id: 'yes' }, { id: 'no' }] }) !== 'yes') return;
+      MF.loseLife(s, x.ctrl, n, 'pay', I(s, x.src).id); MF.draw(s, x.ctrl, n);
+    },
+    // Wishclaw Talisman: "An opponent gains control of ~." (CR 613.1b, layer 2; no duration)
+    oppGainsControl(x) { const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'bf') return; const to = 1 - c.ctrl; s.effects.push({ k: 'control', iid: x.src, who: to, ts: s.ts++ }); c.ctrl = to; c.ctlTurn = s.turn; log(s, 'gainControl', { who: to, c: c.id }); },
     // ---- PLAN D22: mana ----
     // Rite of Flame: "add {R} for each card named ~ in each graveyard"; Jeska's Will: "Add {R} for each card in target opponent's hand".
     addManaPer(x, op) { const n = Math.max(0, num(x, op.n)); if (!n) return; P(x.s, x.ctrl).pool[op.col] += n; log(x.s, 'addManaStr', { who: x.ctrl, mana: ('{' + op.col + '}').repeat(n), c: x.L ? x.L.srcId || x.L.id : null }); },
@@ -1491,10 +1554,11 @@
     },
     // Rhystic Study, Mystic Remora: the spell's controller decides whether to pay; then you decide whether to draw (Rhystic Study's ruling).
     drawUnlessPays(x, op) {
-      const s = x.s, payer = players(x, 'evPlayer')[0], need = MF.parseMana(op.pay);
+      const s = x.s, payer = players(x, 'evPlayer')[0], xv = op.xv ? Math.max(0, num(x, op.xv)) : 0, payStr = op.xv ? '{' + xv + '}' : op.pay, need = MF.parseMana(payStr);   // Esper Sentinel: X is its power as this resolves
+      if (op.xv && xv === 0) { log(s, 'paidToDeny', { who: payer, c: x.L.srcId, mana: '{0}' }); return; }   // paying {0} is always possible — and costs nothing (CR 118.5)
       const paid = MF.canPayMana(s, payer, need) && MF.ask(x.x, { who: payer, kind: 'payToDeny', src: x.src, mana: op.pay, opts: [{ id: 'pay' }, { id: 'no' }] }) === 'pay';
-      if (paid) { MF.payMana(x.x, payer, need, x.src, false); log(s, 'paidToDeny', { who: payer, c: x.L.srcId, mana: op.pay }); return; }
-      if (MF.ask(x.x, { who: x.ctrl, kind: 'may', src: x.src, what: 'draw', opts: [{ id: 'yes' }, { id: 'no' }] }) === 'yes') MF.draw(s, x.ctrl, 1);
+      if (paid) { MF.payMana(x.x, payer, need, x.src, false); log(s, 'paidToDeny', { who: payer, c: x.L.srcId, mana: payStr }); return; }
+      if (op.must || MF.ask(x.x, { who: x.ctrl, kind: 'may', src: x.src, what: 'draw', opts: [{ id: 'yes' }, { id: 'no' }] }) === 'yes') MF.draw(s, x.ctrl, 1);
     },
     bounceSpell(x, op) {                                                                       // Hullbreaker Horror: a spell returned to its owner's hand leaves the stack without resolving
       if (op.orPerm) { const q = (x.t[op.on.t] || [])[0]; if (q && q.c != null && I(x.s, q.c) && I(x.s, q.c).zone === 'bf') return OPS.bounce(x, { on: op.on }); }   // Sink into Stupor: a permanent
@@ -1540,6 +1604,7 @@
       });
       s.stack.push(L);
       log(s, 'copy', { who: x.ctrl, c: L0.id, gone: !live, tg: L.t.map(sl => sl.map(r => MF.refLabel(s, r))) });
+      MF.emit(s, { t: 'copied', ctrl: x.ctrl, types: MF.chars(s, iid).types.slice(), lid: L.lid });   // magecraft: "Whenever you cast or copy" (CR 707.10)
     },
   };
   // CR 702.174e: "Gift a card" — the chosen player draws a card.
@@ -1683,7 +1748,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste', 'storied', 'freeEquipOnce', 'leyline', 'equipDiscountTarget', 'hexproofFrom', 'engines', 'torpor', 'nameLock', 'nameGrantC', 'chooseBackground', 'morph', 'storm', 'millDouble', 'millPlus', 'paint', 'raulCast', 'cantBeBlocked', 'mindskinner', 'zombieDamageMill', 'skipDraw', 'urborg', 'firstDrawReplace', 'altCost', 'dash', 'splitSecond', 'oppNoActivate', 'onlyOwnTurn', 'flashNoncreature', 'flashIfOwnTarget', 'uncounterableYours', 'breach', 'moxDiamond', 'gemstone'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste', 'storied', 'freeEquipOnce', 'leyline', 'equipDiscountTarget', 'hexproofFrom', 'engines', 'torpor', 'nameLock', 'nameGrantC', 'chooseBackground', 'morph', 'storm', 'millDouble', 'millPlus', 'paint', 'raulCast', 'cantBeBlocked', 'mindskinner', 'zombieDamageMill', 'skipDraw', 'urborg', 'firstDrawReplace', 'altCost', 'dash', 'splitSecond', 'oppNoActivate', 'onlyOwnTurn', 'flashNoncreature', 'flashIfOwnTarget', 'uncounterableYours', 'breach', 'moxDiamond', 'gemstone', 'partner', 'cowards', 'selfDieExile', 'castFromGraveExile', 'grantStorm'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
@@ -1720,7 +1785,8 @@
         for (const e of deck.main.concat(deck.commanders.map(c => ({ id: c })))) { const d = MF.cards[e.id]; if (d && d.identity.some(k => !ident.has(k))) bad.push(id + ': ' + e.id + ' is outside the commanders\' colour identity'); }   // 903.5c
         const legendCre = c => c.supers.includes('Legendary') && c.types.includes('Creature');
         const pairOk = cmd.length === 1 ? legendCre(cmd[0])
-          : cmd.length === 2 && cmd.some(c => legendCre(c) && c.ab.some(a => a.k === 'chooseBackground')) && cmd.some(c => c.supers.includes('Legendary') && c.subtypes.includes('Background'));   // 903.3, 702.124k
+          : cmd.length === 2 && ((cmd.some(c => legendCre(c) && c.ab.some(a => a.k === 'chooseBackground')) && cmd.some(c => c.supers.includes('Legendary') && c.subtypes.includes('Background')))   // 903.3, 702.124k
+            || cmd.every(c => legendCre(c) && c.ab.some(a => a.k === 'partner')));                 // 702.124h: two commanders that both have partner
         if (!pairOk) bad.push(id + ': not a legal commander or commander pair');
       } else if (n < deck.min) bad.push(id + ': ' + n + ' cards, fewer than ' + deck.min);
       for (const t of deck.tokens || []) if (!MF.cards[t]) bad.push(id + ': token not in the pack ' + t);

@@ -209,6 +209,28 @@ function cedhLine(line, ctx, d, kw, ab) {
   if (line === "If an opponent cast three or more spells this turn, you may pay {0} rather than pay this spell's mana cost.") { ab.push({ k: 'altCost', cond: { c: 'oppCastAtLeast', n: 3 } }); return true; }   // Mindbreak Trap
   if (line === "You may sacrifice a nontoken red creature rather than pay this spell's mana cost.") { ab.push({ k: 'altCost', sacNontokenRed: true }); return true; }   // Flare of Duplication
   if ((m = line.match(/^At the beginning of your next upkeep, pay (\{[^ ]+\})\. If you don't, you lose the game\.$/)) && d.types.includes('Instant')) { const sp = ab.find(a => a.k === 'spell'); if (!sp) throw new Fail('a Pact rider before its spell'); sp.ops.push({ o: 'delayed', on: 'beginStep', step: 'upkeep', yours: true, ops: [{ o: 'payOrLose', cost: m[1] }] }); return true; }   // CR 603.7
+  if (line === 'Partner') { ab.push({ k: 'partner' }); return true; }                             // CR 702.124h
+  // Triggered and static abilities (PLAN D22)
+  if (line === "When ~ enters, you draw a card and target opponent may draw a card.") { ab.push({ k: 'trig', on: 'enters', who: 'self', tg: [{ f: { player: 'opp' } }], ops: [{ o: 'draw', n: 1 }, { o: 'mayDraw', who: { t: 0 } }] }); return true; }   // Tataru Taru
+  if (line === "Scions' Secretary — Whenever an opponent draws a card, if it isn't that player's turn, create a tapped Treasure token. This ability triggers only once each turn.") { ab.push({ k: 'trig', on: 'drawCard', opp: true, cond: { c: 'notEvPlayersTurn' }, oncePerTurn: true, ops: [{ o: 'token', id: ctx.token.treasure(), n: 1, tapped: true }] }); return true; }
+  if (line === '~ gets +1/+0 for each artifact you control.') { ab.push({ k: 'static', affects: 'self', pOnly: { v: 'countYou', f: { types: ['Artifact'] } } }); return true; }   // Storm-Kiln Artist
+  if (line === "Cowards can't block Warriors.") { ab.push({ k: 'cowards' }); return true; }   // Gornog (CR 509.1b)
+  if (line === 'Attacking Warriors you control get +X/+0, where X is the number of Cowards your opponents control.') { ab.push({ k: 'static', affects: { subtypes: ['Warrior'], attacking: true, ctrl: 'you' }, pOnly: { v: 'oppCowards' } }); return true; }
+  if (line === 'Delirium — As long as there are four or more card types among cards in your graveyard, ~ gets +2/+2, has flying, and attacks each combat if able.') { const c = { c: 'graveTypes', n: 4 }; ab.push({ k: 'static', affects: 'self', cond: c, p: 2, t: 2, grant: ['flying'] }, { k: 'mustAttack', cond: c }); return true; }   // Dragon's Rage Channeler (CR 207.2c)
+  if (line === 'If ~ would die, exile it instead.') { ab.push({ k: 'selfDieExile' }); return true; }   // Gloomshrieker (CR 614.1a)
+  if (line === 'You may cast this card from your graveyard or from exile.') { ab.push({ k: 'castFromGraveExile' }); return true; }   // Squee
+  if (line === 'Instant and sorcery spells you cast have storm.') { ab.push({ k: 'grantStorm' }); return true; }   // Prismari (CR 702.40)
+  if ((m = line.match(/^\{1\}\{G\}\{W\}\{U\}: Put ~ onto the battlefield from the command zone\.$/))) { ab.push({ k: 'act', zone: 'command', cost: { mana: '{1}{G}{W}{U}', tap: false, sacSelf: false }, ops: [{ o: 'fromCommand' }] }); return true; }   // Derevi (CR 903.3: a commander's ability that functions in the command zone)
+  if (line === 'When ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.') { const tg = [{ f: { types: null } }], ops = [{ o: 'tapOrUntap', on: { t: 0 } }]; ab.push({ k: 'trig', on: 'enters', who: 'self', tg: tg, ops: ops }, { k: 'trig', on: 'dealsDamage', who: { types: ['Creature'] }, combat: true, toPlayer: true, tg: tg, ops: ops }); return true; }
+  if (line === '{W}{U}{B}{R}{G}: Untap all attacking creatures. They gain trample, lifelink, and haste until end of turn. After this phase, there is an additional combat phase. Activate only during combat.') { const each = { each: { types: ['Creature'], attacking: true } }; ab.push({ k: 'act', cost: { mana: '{W}{U}{B}{R}{G}', tap: false, sacSelf: false }, cond: { c: 'inCombat' }, ops: [{ o: 'untap', on: each }, { o: 'pump', on: each, p: 0, t: 0, grant: ['trample', 'lifelink', 'haste'] }, { o: 'extraCombat' }] }); return true; }   // Najeela (CR 500.8)
+  if (line === "Whenever a Warrior attacks, you may have its controller create a 1/1 white Warrior creature token that's tapped and attacking.") { ab.push({ k: 'trig', on: 'attacks', who: { subtypes: ['Warrior'] }, anyCtrl: true, ops: [{ o: 'may', what: 'token', ops: [{ o: 'token', id: ctx.token({ p: 1, t: 1, color: 'white', sub: 'Warrior' }), n: 1, attacking: true, forEvCtrl: true }] }] }); return true; }
+  if (line === 'Whenever one or more Warriors you control attack a player, target creature that player controls becomes a Coward.') { ab.push({ k: 'trig', on: 'attackWith', sub: 'Warrior', tg: [{ f: { types: ['Creature'], ctrl: 'opp' } }], ops: [{ o: 'becomeCoward', on: { t: 0 } }] }); return true; }
+  if (line === 'At the beginning of each of your postcombat main phases, you may pay X life, where X is the number of opponents that were dealt combat damage this turn. If you do, draw X cards.') { ab.push({ k: 'trig', on: 'beginStep', step: 'main2', yours: true, ops: [{ o: 'tymna' }] }); return true; }   // CR 505.1a
+  if (line === 'Whenever a creature you control deals combat damage to a player, if that creature entered this turn, draw a card.') { ab.push({ k: 'trig', on: 'dealsDamage', who: { types: ['Creature'] }, combat: true, toPlayer: true, cond: { c: 'evSrcEnteredThisTurn' }, ops: [{ o: 'draw', n: 1 }] }); return true; }   // Samut
+  if (line === 'Opus — Whenever you cast an instant or sorcery spell, target player mills three cards. If five or more mana was spent to cast that spell, that player mills ten cards instead.') { ab.push({ k: 'trig', on: 'cast', spell: { types: ['Instant', 'Sorcery'] }, tg: [{ f: { player: 'any' } }], ops: [{ o: 'if', cond: { c: 'evSpentAtLeast', n: 5 }, ops: [{ o: 'mill', who: { t: 0 }, n: 10 }], else: [{ o: 'mill', who: { t: 0 }, n: 3 }] }] }); return true; }   // Exhibition Tidecaller (CR 207.2c)
+  if (line === 'Sacrifice a Treasure: Exile the top card of your library. You may play that card this turn.') { ab.push({ k: 'act', cost: { mana: '', tap: false, sacSelf: false, sacType: { types: ['Artifact'], subtypes: ['Treasure'] } }, ops: [{ o: 'impulse', until: 'eot' }] }); return true; }   // Professional Face-Breaker
+  if (line === "{1}, {T}, Remove a wish counter from ~: Search your library for a card, put it into your hand, then shuffle. An opponent gains control of ~. Activate only during your turn.") { ab.push({ k: 'act', cost: { mana: '{1}', tap: true, sacSelf: false, removeCtr: { n: 1, kind: 'wish' } }, cond: { c: 'yourTurn' }, ops: [{ o: 'searchLib', dest: 'hand', what: 'card' }, { o: 'oppGainsControl' }] }); return true; }   // Wishclaw Talisman
+  if (line === '~ enters with three wish counters on it.') { ab.push({ k: 'etbCounters', n: 3, kind: 'wish' }); return true; }
   // Mana (PLAN D22)
   if (line === 'Until end of turn, lands you control gain "Sacrifice ~: Add {B}."' && d.types.includes('Instant')) { ab.push({ k: 'spell', ops: [{ o: 'grantAbEach', on: { each: { types: ['Land'], ctrl: 'you' } }, what: 'Sacrifice this land: Add {B}.', ab: [{ k: 'mana', cost: { mana: '', tap: false, sacSelf: true }, cols: ['B'] }] }] }); return true; }   // Rain of Filth (CR 611.2c)
   if ((m = line.match(/^Exile this card from your hand: Add \{([WUBRG])\}\.$/))) { ab.push({ k: 'mana', zone: 'hand', cost: { mana: '', tap: false, sacSelf: false, exileSelf: true }, cols: [m[1]] }); return true; }   // the spirit guides (CR 113.6)
@@ -245,6 +267,11 @@ function cedhLine(line, ctx, d, kw, ab) {
 }
 function cedhEffects(T, ctx, t) {
   let m;
+  if (/^that player may pay \{2\}\. If the player doesn't, you create a Treasure token$/i.test(t) && ctx.evPlayer) return [{ o: 'payOrElse', pay: '{2}', ops: [{ o: 'token', id: ctx.token.treasure(), n: 1 }] }];   // Smothering Tithe
+  if (/^scry 1, then reveal the top card of your library\. If it's a land card, put it onto the battlefield tapped\. Otherwise, draw a card$/i.test(t)) return [{ o: 'scry', n: 1 }, { o: 'thrasios' }];   // Thrasios
+  if (/^create a Treasure token and exile the top card of that player's library\. Until end of turn, you may cast that card$/i.test(t) && ctx.evPlayer) return [{ o: 'token', id: ctx.token.treasure(), n: 1 }, { o: 'exileTopMayCast', who: 'evPlayer' }];   // Ragavan
+  if (/^roll a d20\. You create a number of Treasure tokens equal to the result$/i.test(t)) return [{ o: 'rollTreasures', sides: 20, id: ctx.token.treasure() }];   // Ancient Copper Dragon (CR 706)
+  if (/^exile target creature\. Its controller gains life equal to its power$/i.test(t)) { T.push({ f: { types: ['Creature'] } }); return [{ o: 'exile', on: { t: T.length - 1 } }, { o: 'gain', n: { v: 'lkiPowerT', t: T.length - 1 }, forCtrlOf: { t: T.length - 1 } }]; }   // Swords to Plowshares (its power as it last existed, CR 608.2h)
   if (/^add \{R\}\{R\}, then add \{R\} for each card named ~ in each graveyard$/i.test(t)) return [{ o: 'addManaStr', mana: '{R}{R}' }, { o: 'addManaPer', col: 'R', n: { v: 'namedInGraves' } }];   // Rite of Flame
   if (/^destroy each nonland permanent with mana value 2 or less\. Add \{B\} or \{G\} for each permanent destroyed this way$/i.test(t)) return [{ o: 'cullingRitual' }];
   if ((m = t.match(/^exile the top (three) cards of your library\. You may play them this turn$/i))) return [{ o: 'impulse', until: 'eot', n: numOf(m[1]) }];   // Jeska's Will
@@ -295,6 +322,15 @@ function cedhEffect(T, ctx, s) {
   if ((m = s.match(/^[Ii]ts controller creates (two) Treasure tokens$/)) && T.length) return [{ o: 'token', id: ctx.token.treasure(), n: numOf(m[1]), forCtrlOf: { t: T.length - 1 } }];   // An Offer You Can't Refuse
   if (/^[Ii]ts controller creates a 2\/2 blue Bird creature token with flying$/.test(s) && T.length) return [{ o: 'token', id: ctx.token({ p: 2, t: 2, color: 'blue', sub: 'Bird', kw: ['flying'] }), n: 1, forCtrlOf: { t: T.length - 1 } }];   // Swan Song
   if (/^[Yy]ou may cast spells this turn as though they had flash$/.test(s)) return [{ o: 'flashAll' }];   // CR 601.3e
+  if (/^[Dd]raw a card unless that player pays \{X\}, where X is ~'s power$/.test(s) && ctx.evPlayer) return [{ o: 'drawUnlessPays', pay: '{X}', xv: { v: 'power', of: 'self' }, must: true }];   // Esper Sentinel
+  if ((m = s.match(/^[Yy]ou lose (\d+) life and create a Treasure token$/))) return [{ o: 'loseLife', who: 'you', n: +m[1] }, { o: 'token', id: ctx.token.treasure(), n: 1 }];   // Lotho
+  if (/^[Cc]reate a Food token$/.test(s)) return [{ o: 'token', id: ctx.token.food(), n: 1 }];
+  if (/^[Ss]acrifice a Food token$/.test(s)) return [{ o: 'sacSub', sub: 'Food', tok: true }];   // The Cabbage Merchant
+  if (/^[Ss]acrifice another permanent$/.test(s)) return [{ o: 'sacOther' }];   // Korvold
+  if (/^[Pp]ut a \+1\/\+1 counter on ~ and draw a card$/.test(s)) return [{ o: 'counter', on: 'self', n: 1, kind: '+1/+1' }, { o: 'draw', n: 1 }];
+  if ((m = s.match(/^~ deals (\d+) damage to (any target)$/))) return [{ o: 'damage', from: 'self', n: +m[1], to: parseRef(T, ctx, m[2]) }];
+  if (/^[Tt]wo target players each draw a card$/.test(s)) { T.push({ f: { player: 'any' }, n: 2 }); return [{ o: 'draw', n: 1, who: { t: T.length - 1 } }]; }   // Gleaming Splendor: two different players (CR 115.3)
+  if (/^[Ss]acrifice ~$/.test(s)) return [{ o: 'sacrificeSelf' }];
   if (/^[Aa]dd two mana in any combination of colors$/.test(s)) return [{ o: 'addManaCombo', n: 2 }];   // Manamorphose
   if ((m = s.match(/^[Aa]dd \{R\} for each card in (target opponent)'s hand$/))) { const r = parseRef(T, ctx, m[1].toLowerCase()); return [{ o: 'addManaPer', col: 'R', n: { v: 'handOf', who: r } }]; }   // Jeska's Will
   if (/^[Cc]ounter that spell$/.test(s) && ctx.spellEv) return [{ o: 'counterEvSpell' }];               // Vexing Bauble
@@ -749,6 +785,18 @@ const EVENTS = [
   [/^a player casts their second spell each turn$/, () => [{ on: 'cast', spell: null, anyPlayer: true, nth: 2 }]],   // Lotho
   [/^you cast your first spell each turn$/, () => [{ on: 'cast', spell: null, nth: 1 }]],   // Vial Smasher
   [/^a player casts a spell$/, () => [{ on: 'cast', spell: null, anyPlayer: true }]],   // Vexing Bauble
+  [/^a player sacrifices a permanent$/, () => [{ on: 'sacrificed', anySac: 'any' }]],   // Mayhem Devil
+  [/^you sacrifice a permanent$/, () => [{ on: 'sacrificed', anySac: 'you' }]],   // Korvold
+  [/^~ enters or attacks$/, () => [{ on: 'enters', who: 'self' }, { on: 'attacks', who: 'self' }]],
+  [/^you cast or copy an instant or sorcery spell$/, () => [{ on: 'cast', spell: { types: ['Instant', 'Sorcery'] } }, { on: 'copied', spell: { types: ['Instant', 'Sorcery'] } }]],   // magecraft (CR 207.2c)
+  [/^an opponent draws their second card each turn$/, () => [{ on: 'drawCard', opp: true, nth: 2 }]],
+  [/^an opponent draws a card$/, () => [{ on: 'drawCard', opp: true }]],
+  [/^a creature deals combat damage to you$/, () => [{ on: 'dealsDamage', anyCreToYou: true, combat: true }]],   // The Cabbage Merchant
+  [/^one or more creatures you control deal combat damage to a player$/, () => [{ on: 'combatDamageBatch' }]],   // Professional Face-Breaker (CR 603.2c)
+  [/^a Warrior attacks$/, () => [{ on: 'attacks', who: { subtypes: ['Warrior'] }, anyCtrl: true }]],   // Najeela
+  [/^one or more Warriors you control attack a player$/, () => [{ on: 'attackWith', sub: 'Warrior', toPlayer: true }]],   // Gornog
+  [/^the beginning of each of your postcombat main phases$/, () => [{ on: 'beginStep', step: 'main2', yours: true }]],   // Tymna (CR 505.1a)
+  [/^the beginning of the end step$/, () => [{ on: 'beginStep', step: 'end' }]],   // Underworld Breach: each end step
   [/^an opponent activates an ability that isn't a mana ability$/, () => [{ on: 'activated', oppOnly: true, nonMana: true }]],   // Flamescroll Celebrant
   // Kujo's Commander deck (PLAN D21)
   [/^a player mills one or more creature cards$/, () => [{ on: 'milled', creOnly: true }]],                              // CR 603.2c: once per instruction
@@ -857,14 +905,14 @@ function parseTrigger(line, ctx, out) {
         if (tr.on === 'cast') { c2.spellEv = true; if (tr.anyPlayer) c2.evPlayer = true; }
         if (tr.on === 'dealsDamage') { c2.evAmount = true; if (tr.toPlayer) c2.evPlayer = true; }
         if (tr.on === 'drawCard' && tr.opp) c2.evPlayer = true;
-        if (tr.on === 'activated') c2.evPlayer = true;                                            // Flamescroll Celebrant: "that player"
+        if (tr.on === 'activated' || tr.on === 'combatDamageBatch' || tr.anyCreToYou) c2.evPlayer = true;                                            // Flamescroll Celebrant: "that player"
         if (tr.on === 'discardBatch') c2.evAmount = true;
         if (tr.on === 'dealtDamage') c2.evAmount = true;
         if (tr.on === 'lostLife') { c2.evPlayer = true; c2.evAmount = true; }                     // "that player mills that many cards"
         if (tr.on === 'untapped' || tr.on === 'toGrave' || (tr.on === 'beginStep' && tr.opps)) c2.evPlayer = true;   // "that permanent's controller", "that player"
         if (tr.door) { if (ctx.door == null) throw new Fail('"unlock this door" on a card that is not a Room'); tr.door = ctx.door; }
         const ops = parseEffects(T, c2, cap(eff.replace(/^this creature\b/, '~')));
-        const extra = {}; for (const k of ['creOnly', 'opps', 'cre', 'notFromBf', 'lookBackAlso', 'zone', 'anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind', 'you', 'opp', 'evCond', 'oppOnly', 'chosenParity', 'ownCreature', 'byOpp', 'permOnly', 'nthNoncre', 'nonMana', 'tapForMana', 'notYourTurnEv']) if (tr[k] != null) extra[k] = tr[k];
+        const extra = {}; for (const k of ['creOnly', 'opps', 'cre', 'notFromBf', 'lookBackAlso', 'zone', 'anyPlayer', 'step', 'yours', 'byYou', 'firstEachTurn', 'sub', 'defMostLife', 'youMostLife', 'door', 'combat', 'toPlayer', 'nth', 'level', 'ctrKind', 'you', 'opp', 'evCond', 'oppOnly', 'chosenParity', 'ownCreature', 'byOpp', 'permOnly', 'nthNoncre', 'nonMana', 'tapForMana', 'notYourTurnEv', 'anySac', 'anyCreToYou', 'anyCtrl', 'toPlayer']) if (tr[k] != null) extra[k] = tr[k];
         out.push(Object.assign({ k: 'trig', on: tr.on, ops: ops }, tr.who ? { who: tr.who } : {}, tr.spell !== undefined ? { spell: tr.spell } : {}, tr.toOpp ? { toOpp: true } : {}, tr.lookBack ? { lookBack: true } : {}, T.length ? { tg: T } : {}, cond ? { cond: cond } : {}, oncePerTurn ? { oncePerTurn: true } : {}, JSON.stringify(ops).includes('selfFromGrave') ? { zone: 'grave' } : {}, extra));   // CR 113.6m: returns this card from the graveyard, so it functions there
       }
       return true;

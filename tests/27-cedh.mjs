@@ -307,3 +307,113 @@ test('Jeska\'s Will: with a commander you may choose both — {R} for each card 
   s = cast(s, 'jeskas-will', 'both', player(1), 'auto'); s = resolveAll(s);
   eq(s.players[0].pool.R, 5); eq(s.players[0].exile.length, 3);
 });
+
+// ---- Triggered and activated abilities -------------------------------------------------------------
+test('Esper Sentinel: an opponent\'s first noncreature spell each turn draws you a card unless they pay {X} (X = its power)', () => {
+  let s = setup({ me: { bf: ['esper-sentinel'], lib: [W, W] }, opp: { hand: ['opt', 'opt'], bf: [U, U] } });
+  s = oppTurn(s); s = act(s, 'cast', 'opt'); s = answer(s, ['auto']);
+  s = MF.apply(s, { type: 'pass' }); s = resolveAll(s, 'no', q => q.opts[q.opts.length - 1].id);
+  eq(s.players[0].hand.length, 1, 'the opponent declined to pay {1}: a card');
+  s = MF.clone(s); s.priority = 1; s = MF.run(s);
+  s = act(s, 'cast', 'opt'); s = answer(s, ['auto']);
+  eq(s.stack.length, 1, 'the second noncreature spell: no trigger');
+});
+test('Smothering Tithe: whenever an opponent draws, they may pay {2}; if they don\'t, you create a Treasure', () => {
+  let s = setup({ me: { bf: ['smothering-tithe'] }, opp: { lib: [U, U] } });
+  s = MF.clone(s); MF.draw(s, 1, 1); s = MF.run(s);
+  s = resolveAll(s);
+  eq(findAll(s, 'token-treasure', 'bf', 0).length, 1, 'no mana to pay: a Treasure');
+});
+test('Lotho, Corrupt Shirriff: a player\'s second spell each turn — lose 1 life and create a Treasure', () => {
+  let s = setup({ me: { bf: ['lotho-corrupt-shirriff', R, R], hand: ['burst-lightning', 'burst-lightning'] } });
+  s = cast(s, 'burst-lightning', player(1), 'auto'); s = resolveAll(s);
+  s = cast(s, 'burst-lightning', player(1), 'auto'); s = resolveAll(s);
+  eq(s.players[0].life, 19); eq(findAll(s, 'token-treasure', 'bf', 0).length, 1);
+});
+test('Kraum: an opponent\'s second spell each turn draws you a card; Vial Smasher: your first spell each turn deals its mana value', () => {
+  let s = setup({ me: { bf: ['kraum-ludevics-opus', 'vial-smasher-the-fierce', R, R], hand: ['burst-lightning'], lib: [W] } });
+  s = cast(s, 'burst-lightning', player(1), 'auto'); s = resolveAll(s);
+  eq(s.players[1].life, 17, 'Vial Smasher 1 + Burst Lightning 2');
+});
+test('Partner: two commanders that both have partner are a legal pair (CR 702.124h)', () => {
+  for (const id of ['cedh-kraum-tymna', 'cedh-thrasios-vial-smasher']) { const d = MF.decks[id]; ok(d && d.commanders.length === 2, id); }
+});
+test('Storm-Kiln Artist: +1/+0 for each artifact; magecraft makes a Treasure when you cast or copy an instant or sorcery', () => {
+  let s = setup({ me: { bf: ['storm-kiln-artist', 'sol-ring', R], hand: ['burst-lightning'] } });
+  eq(MF.chars(s, find(s, 'storm-kiln-artist', 'bf')).p, 3, '2 + Sol Ring');
+  s = cast(s, 'burst-lightning', player(1), 'auto'); s = resolveAll(s);
+  eq(findAll(s, 'token-treasure', 'bf', 0).length, 1);
+});
+test('Korvold: when it enters, sacrifice another permanent; whenever you sacrifice one, a +1/+1 counter and a card', () => {
+  let s = setup({ me: { hand: ['korvold-fae-cursed-king'], bf: [B, R, G, 'sol-ring', 'sol-ring'], lib: [W, W, W] } });
+  s = cast(s, 'korvold-fae-cursed-king', 'auto'); s = resolveAll(s, (q, st) => q.opts.find(o => o.iid != null && st.cards[o.iid].id === 'sol-ring').id);
+  const k = find(s, 'korvold-fae-cursed-king', 'bf');
+  eq(s.cards[k].ctr['+1/+1'], 1); eq(s.players[0].hand.length, 1);
+});
+test('Mayhem Devil: whenever a player sacrifices a permanent, 1 damage to any target', () => {
+  let s = setup({ me: { bf: ['mayhem-devil', 'lions-eye-diamond'] } });
+  s = act(s, 'mana', 'lions-eye-diamond'); s = answer(s, ['RRR']);
+  s = resolveAll(s, player(1));
+  eq(s.players[1].life, 19);
+});
+test('Ragavan: combat damage to a player makes a Treasure and exiles their top card, castable this turn; dash returns it', () => {
+  let s = setup({ me: { hand: ['ragavan-nimble-pilferer'], bf: [R, R] }, opp: { lib: ['burst-lightning', U] } });
+  s = act(s, 'cast', 'ragavan-nimble-pilferer', { via: 'dash' }); s = answer(s, ['auto']); s = resolveAll(s);
+  s = toStep(s, 'attackers'); s = answer(s, [(q, st) => viewId(q, st, 'ragavan-nimble-pilferer'), 'done']);
+  s = toStep(s, 'main2');
+  eq(findAll(s, 'token-treasure', 'bf', 0).length, 1); ok(exile(s, 1).includes('burst-lightning'));
+  ok(can(s, 'cast', 'burst-lightning'), 'the opponent\'s card is castable with the Treasure');
+  s = toStep(s, 'end'); s = resolveAll(s);
+  ok(find(s, 'ragavan-nimble-pilferer', 'hand', 0) != null, 'dash: back to hand at the end step');
+});
+test('Najeela: a Warrior attacking brings a tapped and attacking 1/1 Warrior; WUBRG gives an additional combat', () => {
+  let s = setup({ me: { bf: ['najeela-the-blade-blossom'] } });
+  s = toStep(s, 'attackers'); s = answer(s, [(q, st) => viewId(q, st, 'najeela-the-blade-blossom'), 'done']);
+  s = resolveAll(s, 'yes');
+  eq(findAll(s, 'token-warrior-1-1-w', 'bf', 0).length, 1);
+  ok(s.combat.attackers.length === 2, 'the token is attacking');
+});
+test('Tymna the Weaver: in your postcombat main phase, pay 1 life per opponent dealt combat damage to draw that many', () => {
+  let s = setup({ me: { bf: ['tymna-the-weaver'], lib: [W, W] } });
+  s = toStep(s, 'attackers'); s = answer(s, [(q, st) => viewId(q, st, 'tymna-the-weaver'), 'done']);
+  s = toStep(s, 'main2', 'yes');
+  s = resolveAll(s, 'yes');
+  eq(s.players[0].hand.length, 1); eq(s.players[0].life, 21, 'lifelink 2, then 1 life paid: 20 + 2 - 1');
+});
+test('Thrasios: {4}: scry 1, then a land on top goes onto the battlefield tapped; otherwise draw', () => {
+  let s = setup({ me: { bf: ['thrasios-triton-hero', U, U, U, U], lib: [W, 'opt'] } });
+  s = activate(s, 'thrasios-triton-hero', null, 'auto'); s = resolveAll(s, q => q.opts.find(o => o.id === 'top' || o.id === 'keep' || o.id === 'done').id);
+  ok(findAll(s, W, 'bf', 0).length === 1, 'the Plains entered tapped');
+});
+test('Wishclaw Talisman: search for a card; an opponent gains control of it; only during your turn', () => {
+  let s = setup({ me: { bf: ['wishclaw-talisman', R], lib: [U, 'opt'] } });
+  s.cards[find(s, 'wishclaw-talisman', 'bf')].ctr.wish = 3;
+  s = activate(s, 'wishclaw-talisman', null, 'auto'); s = resolveAll(s, (q, st) => viewId(q, st, 'opt'));
+  ok(find(s, 'opt', 'hand', 0) != null); eq(s.cards[find(s, 'wishclaw-talisman', 'bf')].ctrl, 1);
+});
+test('Swords to Plowshares: exile target creature; its controller gains life equal to its power', () => {
+  let s = setup({ me: { hand: ['swords-to-plowshares'], bf: [W] }, opp: { bf: ['korvold-fae-cursed-king'] } });
+  s = cast(s, 'swords-to-plowshares', (q, st) => viewId(q, st, 'korvold-fae-cursed-king'), 'auto'); s = resolveAll(s);
+  eq(s.players[1].life, 24);
+});
+test('Gloomshrieker: if it would die, it is exiled instead', () => {
+  let s = setup({ me: { bf: ['gloomshrieker'] } });
+  s = MF.clone(s); MF.destroy(s, find(s, 'gloomshrieker', 'bf'), 'test'); s = MF.run(s);
+  ok(exile(s, 0).includes('gloomshrieker'));
+});
+test('Squee, the Immortal: cast from the graveyard or from exile', () => {
+  let s = setup({ me: { grave: ['squee-the-immortal'], bf: [R, R, R] } });
+  ok(can(s, 'cast', 'squee-the-immortal'), 'from the graveyard');
+});
+test('Dragon\'s Rage Channeler: surveil 1 on a noncreature spell; with delirium a 3/3 flier', () => {
+  let s = setup({ me: { bf: ['dragons-rage-channeler'], grave: ['opt', 'ragavan-nimble-pilferer', U, 'sol-ring'] } });
+  const d = find(s, 'dragons-rage-channeler', 'bf');
+  eq(MF.chars(s, d).p, 3); ok(MF.chars(s, d).kw.flying);
+});
+test('Underworld Breach: cast a card from your graveyard for its mana cost plus exiling three others; sacrificed at end step', () => {
+  let s = setup({ me: { bf: ['underworld-breach', R], grave: ['burst-lightning', U, U, U] } });
+  s = act(s, 'cast', 'burst-lightning', { via: 'escape' }); s = answer(s, [player(1), q => q.opts[0].id, q => q.opts[0].id, q => q.opts[0].id, 'auto']);
+  s = resolveAll(s);
+  eq(s.players[1].life, 18); eq(s.players[0].exile.length, 3);
+  s = toStep(s, 'end'); s = resolveAll(s); ok(grave(s, 0).includes('underworld-breach'), 'sacrificed at the end step');
+});

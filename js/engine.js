@@ -136,6 +136,7 @@
       log(s, 'exiledInstead', { who: c.owner, c: c.id });                                     // Torch the Tower: it would die; it is exiled instead
       zone = 'exile';
     }
+    if (from === 'bf' && zone === 'grave' && chars(s, iid).ab.some(a => a.k === 'selfDieExile') && chars(s, iid).types.includes('Creature')) { log(s, 'exiledInstead', { who: c.owner, c: c.id }); zone = 'exile'; }   // Gloomshrieker: "If ~ would die, exile it instead"
     if (zone === 'grave' && !c.tok && !c.copySpell && s.effects.some(e => e.k === 'graveToExile' && e.who === c.owner)) { log(s, 'exiledInsteadOfGrave', { who: c.owner, c: c.id }); zone = 'exile'; }   // Yawgmoth's Will: "If a card would be put into your graveyard from anywhere this turn, exile that card instead" (CR 614.1a)
     if (from === 'moved') throw new Error('moving an object that no longer exists: ' + iid);
     if (zone === 'bf' && def(s, iid).ab.some(a => a.k === 'moxDiamond') && !c.faceDown) {         // Mox Diamond: "you may discard a land card instead. If you do, put ~ onto the battlefield. If you don't, put it into its owner's graveyard" (CR 614.1a)
@@ -454,6 +455,7 @@
       const ty = I(s, i).chosen, col = { Plains: 'W', Island: 'U', Swamp: 'B', Mountain: 'R', Forest: 'G' }[ty];
       if (col && !out[i].subtypes.includes(ty)) { out[i].subtypes.push(ty); out[i].ab = out[i].ab.concat([{ k: 'mana', cost: { tap: true }, cols: [col] }]); }
     }
+    for (const e of s.effects) if (e.k === 'coward' && out[e.iid] && out[e.iid].types.includes('Creature')) out[e.iid].subtypes = out[e.iid].subtypes.filter(st => !MF.CREATURE_TYPES.includes(st)).concat(['Coward']);   // Gornog: "becomes a Coward" — instead of its other creature types (layer 4)
     for (const st of statics) if (st.a.addSubtypes) for (const i of affected(st)) for (const sub of st.a.addSubtypes) if (!out[i].subtypes.includes(sub)) out[i].subtypes.push(sub);
     for (const st of statics) if (st.a.setTypes) for (const i of affected(st)) { out[i].types = st.a.setTypes.types.slice(); out[i].subtypes = st.a.setTypes.subtypes.slice(); }   // layer 4: Kaito "is a 3/4 Ninja creature"
     for (const st of statics) if (st.a.removeTypes) for (const i of affected(st)) {           // layer 4: Phenax "isn't a creature" — and so loses its creature types (its ruling)
@@ -499,6 +501,7 @@
     for (const st of statics) if (st.a.k === 'static' && (st.a.p || st.a.t)) for (const i of affected(st)) { out[i].p += st.a.p || 0; out[i].t += st.a.t || 0; }
     for (const e of s.bf) { const ec = I(s, e); if (ec.ctr.hone > 0 && ec.att != null && out[ec.att] && out[ec.att].p != null && out[e] && out[e].subtypes.includes('Equipment')) out[ec.att].p += ec.ctr.hone; }   // CR 122.1j
     for (const st of statics) if (st.a.k === 'static' && st.a.pv) for (const i of affected(st)) { const v = MF.valueStatic(s, st.src, st.a.pv, out); out[i].p += v; out[i].t += v; }   // "+1/+1 for each other Rat you control"
+    for (const st of statics) if (st.a.k === 'static' && st.a.pOnly) for (const i of affected(st)) out[i].p += MF.valueStatic(s, st.src, st.a.pOnly, out);   // "+1/+0 for each artifact you control"; Gornog's +X/+0
     for (const e of s.effects) if (e.k === 'pt' && out[e.iid]) { out[e.iid].p += e.p; out[e.iid].t += e.t; }
     for (const iid of s.bf) { const c = I(s, iid), o = out[iid]; const n = (c.ctr['+1/+1'] || 0) - (c.ctr['-1/-1'] || 0); if (o.p != null) { o.p += n; o.t += n; } }
     // Layer 7d: switching. (None yet.)
@@ -551,6 +554,7 @@
       log(s, 'damageCreature', { who: c.ctrl, n: n, src: sid === 'face-down' ? 'a face-down creature' : sc.name, srcId: sid, c: pubId(s, o.to.c), combat: !!o.combat });
     }
     if (sc.kw.lifelink) { if (o.gainBatch) { const g = o.gainBatch[sc.iid] || (o.gainBatch[sc.iid] = { sc: sc, n: 0 }); g.n += n; } else gainLife(s, sc.ctrl, n, sc); }   // CR 702.15b
+    if (o.combat && o.to.p != null && n > 0) P(s, o.to.p).h.combatDamaged = true;              // Tymna: "opponents that were dealt combat damage this turn"
     emit(s, { t: 'dealsDamage', src: sc.iid, srcCtrl: sc.ctrl, srcTypes: sc.types.slice(), srcSubtypes: (sc.subtypes || []).slice(), to: o.to, n: n, combat: !!o.combat });
     return n;
   };
@@ -1189,6 +1193,7 @@
     if (restricted(s, b, 'block', tbl)) return false;
     if (ach.kw.flying && !bch.kw.flying && !bch.kw.reach) return false;                      // CR 702.9b
     if (ach.kw.fear && !bch.types.includes('Artifact') && !bch.colors.includes('B')) return false;   // CR 702.36b
+    if (bch.subtypes.includes('Coward') && ach.subtypes.includes('Warrior') && s.bf.some(i => (tbl ? tbl[i] : chars(s, i)).ab.some(k => k.k === 'cowards'))) return false;   // Gornog: "Cowards can't block Warriors"
     return true;
   };
   EXEC_DEF('declareAttackers', function (x) {                                                // CR 508.1
@@ -1197,7 +1202,7 @@
       const tbl = MF.charsAll(s);
       const opts = s.bf.filter(i => !chosen.includes(i) && canAttack(s, i, tbl)).map(i => ({ id: i, iid: i }));
       if (!opts.length && !chosen.length) break;                                             // nothing could attack: not a choice
-      const must = opts.filter(o => tbl[o.iid].ab.some(a => a.k === 'mustAttack'));       // CR 508.1d: requirements obeyed where possible
+      const must = opts.filter(o => tbl[o.iid].ab.some(a => a.k === 'mustAttack' && (!a.cond || MF.condStatic(s, o.iid, a.cond, tbl))));       // CR 508.1d: requirements obeyed where possible; Dragon's Rage Channeler only with delirium
       if (!must.length) opts.push({ id: 'done' });
       if (chosen.length) opts.push({ id: 'undo' });
       const a = ask(x, { who: who, kind: 'attack', chosen: chosen.slice(), opts: opts });
@@ -1302,6 +1307,8 @@
     for (const as of assigns) dealDamage(s, { srcChars: srcChars[as.src], to: as.to, n: as.n, combat: true, batch: batch, gainBatch: gainBatch });
     for (const k in gainBatch) gainLife(s, gainBatch[k].sc.ctrl, gainBatch[k].n, gainBatch[k].sc);   // one life-gain event per source
     for (const k in batch) emit(s, { t: 'dealtDamage', iid: +k, n: batch[k], combat: true });   // Screaming Nemesis: one trigger for the total (its ruling, CR 603.2c)
+    const hit = new Set(); for (const as of assigns) if (as.to.p != null && as.n > 0 && srcChars[as.src].types.includes('Creature')) hit.add(srcChars[as.src].ctrl + ':' + as.to.p);
+    for (const k of hit) { const [by, to] = k.split(':').map(Number); emit(s, { t: 'combatDamageBatch', ctrl: by, who: to }); }   // "Whenever one or more creatures you control deal combat damage to a player" (CR 603.2c)
     setPriority(s, s.ap);                                                                     // CR 510.3
   });
   // Lethal damage for assignment (CR 702.19b, 702.2c): toughness minus damage already marked
@@ -1690,6 +1697,10 @@
     for (const iid of P(s, who).hand) {                                                       // CR 702.29a: abilities that function in the hand (cycling)
       const ab = chars(s, iid).ab;
       for (let i = 0; i < ab.length; i++) if (ab[i].k === 'act' && ab[i].zone === 'hand' && canActivate(s, who, iid, i)) out.push({ type: 'act', iid: iid, ab: i });
+    }
+    for (const iid of P(s, who).command || []) {                                              // Derevi: an ability that functions in the command zone (CR 113.6)
+      const ab = chars(s, iid).ab;
+      for (let i = 0; i < ab.length; i++) if (ab[i].k === 'act' && ab[i].zone === 'command' && canActivate(s, who, iid, i)) out.push({ type: 'act', iid: iid, ab: i });
     }
     for (const iid of P(s, who).grave) {                                                      // CR 113.6m: abilities that function in the graveyard
       const ab = chars(s, iid).ab;
@@ -2086,7 +2097,7 @@
     const spell = { id: card.id, t: JSON.parse(JSON.stringify(L.t)), x: L.x, mode: L.mode, alt: L.alt, door: L.door, kicked: !!L.kicked, offspring: !!L.offspring, gift: L.gift, bargained: !!L.bargained };
     const nthNoncre = ch.types.includes('Creature') ? 0 : p.h.castList.filter(e => !e.types.includes('Creature')).length;   // "their first noncreature spell each turn"
     emit(s, { t: 'cast', iid: iid, ctrl: who, types: ch.types.slice(), subtypes: ch.subtypes.slice(), colors: ch.colors.slice(), lid: L.lid, spell: spell, nth: p.h.cast, nthNoncre: nthNoncre, mv: ch.mv + (L.x || 0) * costRaw.x, spent: L.spent, from: from });   // CR 601.2i
-    if (card.ab.some(a => a.k === 'storm') && !morph) {                                         // CR 702.40a: it triggers as it is cast — counting every spell cast before it this turn, by either player
+    if ((card.ab.some(a => a.k === 'storm') || ((ch.types.includes('Instant') || ch.types.includes('Sorcery')) && s.bf.some(i => I(s, i).ctrl === who && chars(s, i).ab.some(a => a.k === 'grantStorm')))) && !morph) {   // Prismari: "Instant and sorcery spells you cast have storm"                                         // CR 702.40a: it triggers as it is cast — counting every spell cast before it this turn, by either player
       const before = s.players.reduce((n, q) => n + q.h.cast, 0) - 1;
       s.trigs.push({ src: iid, ab: -1, inl: { k: 'trig', on: 'cast', storm: true, ops: [{ o: 'storm' }] }, ctrl: who, ev: { t: 'cast', iid: iid, ctrl: who, lid: L.lid, spell: spell, storm: before }, lki: null });
     }

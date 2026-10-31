@@ -135,6 +135,10 @@
     activate: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'activate', 'activates')} ${tag(e.c)}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
     mana: (e, v) => `${W(e.who, v)} ${e.how ? V(e.who, v, 'use', 'uses') : V(e.who, v, 'tap', 'taps')} ${tag(e.c)} for ${e.col.split('').map(sym).join('')}${e.only === 'creature' ? ' (only for creature spells)' : ''}.`,
     // PLAN D22
+    roll: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'roll', 'rolls')} a d${e.sides}: <b>${e.n}</b>.`,
+    fromCommand: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${tag(e.c)} onto the battlefield from the command zone.`,
+    becomesCoward: (e, v) => `${tag(e.c)} becomes a Coward.`,
+    gainControl: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'gain', 'gains')} control of ${tag(e.c)}.`,
     moxDiamondGrave: (e, v) => `No land card is discarded: ${tag(e.c)} goes to ${T.whose(e.who, v)} graveyard instead.`,
     tappedFoods: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'tap', 'taps')} ${e.n} Foods for ${tag(e.c)}.`,
     gemstone: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'begin', 'begins')} the game with ${tag(e.c)} on the battlefield with a luck counter.`,
@@ -286,6 +290,7 @@
     mayDiscard: (s, q) => ({ title: `${C(s, q.src)}: discard a card?`, body: `If you discard one, the rest happens.${oracle(s, q.src)}`, labels: { none: 'Discard nothing' } }),
     exileFromGrave: (s, q) => ({ title: `${C(s, q.src)}: exile a card from your graveyard${q.n ? ' (' + q.k + ' of ' + q.n + ')' : ''}`, body: 'Exiling it is part of the cost. Click a glowing card in your graveyard.', labels: {} }),
     forage: (s, q) => ({ title: `Forage to cast ${C(s, q.src)} from your graveyard`, body: 'Exile three other cards from your graveyard, or sacrifice a Food (CR 701.61). It enters with a finality counter.', labels: { exile: 'Exile three cards from my graveyard', food: 'Sacrifice a Food' } }),
+    tapOrUntap: (s, q) => ({ title: `${C(s, q.src)}: tap or untap ${C(s, q.c)}?`, body: 'You may tap it, untap it, or leave it as it is.', labels: { tap: 'Tap it', untap: 'Untap it', neither: 'Leave it' } }),
     moxDiamond: (s, q) => ({ title: `${tag(q.c)}: discard a land card, or it goes to the graveyard`, body: 'If you discard a land card, it enters the battlefield; if you don’t, it is put into your graveyard instead (a replacement, CR 614.1a). Click a glowing land in your hand.', labels: { none: 'Discard nothing — it goes to the graveyard' } }),
     gemstone: (s, q) => ({ title: `Begin the game with ${tag(q.c)} on the battlefield?`, body: 'You are not the starting player: it may begin on the battlefield with a luck counter, and then you exile a card from your hand.', labels: { yes: 'Put it onto the battlefield', no: 'Keep it in my hand' } }),
     gemstoneExile: (s, q) => ({ title: 'Gemstone Caverns: exile a card from your hand', body: 'Part of beginning the game with it on the battlefield. Click a glowing card.', labels: {} }),

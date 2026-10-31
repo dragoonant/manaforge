@@ -4264,31 +4264,19 @@ window.MF.decks = {
   "record": "4-1-3",
   "compiles": false,
   "refused": [
-   "kraum-ludevics-opus: ability: Partner",
-   "tymna-the-weaver: trigger event: the beginning of each of your postcombat main phases, you may pay X life, where X is the number of opponents that were dealt combat damage this turn. If you do, draw X cards.",
    "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
    "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
    "copy-enchantment: ability: You may have ~ enter as a copy of any enchantment on the battlefield.",
-   "dragons-rage-channeler: static body: ~ gets +2/+2, has flying, and attacks each combat if able",
-   "esper-sentinel: effect: Draw a card unless that player pays {X}, where X is ~'s power",
    "final-fortune: effect: Take an extra turn after this one",
    "firestorm: effect: As an additional cost to cast this spell, discard X cards",
    "gifts-ungiven: effect: Search your library for up to four cards with different names and reveal them",
    "imposter-mech: ability: You may have ~ enter as a copy of a creature an opponent controls, except it's a Vehicle artifact with crew 3 and it loses all other card types.",
    "intuition: effect: Search your library for three cards and reveal them",
-   "lotho-corrupt-shirriff: effect: You lose 1 life and create a Treasure token",
-   "mayhem-devil: trigger event: a player sacrifices a permanent, ~ deals 1 damage to any target.",
    "mirrormade: ability: You may have ~ enter as a copy of any artifact or enchantment on the battlefield.",
    "otawara-soaring-city: filter qualifier: , creature, enchantment, or planeswalker",
-   "professional-face-breaker: trigger event: one or more creatures you control deal combat damage to a player, create a Treasure token.",
-   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
    "scheming-symmetry: effect: Choose two target players",
    "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
-   "smothering-tithe: effect: That player may pay {2}",
-   "storm-kiln-artist: ability: ~ gets +1/+0 for each artifact you control.",
-   "tainted-pact: effect: Exile the top card of your library",
-   "tataru-taru: effect: You draw a card and target opponent may draw a card",
-   "underworld-breach: trigger event: the beginning of the end step, sacrifice ~."
+   "tainted-pact: effect: Exile the top card of your library"
   ],
   "tokens": [
    "token-treasure",
@@ -4716,31 +4704,22 @@ window.MF.decks = {
   "record": "3-3-1",
   "compiles": false,
   "refused": [
-   "najeela-the-blade-blossom: trigger event: a Warrior attacks, you may have its controller create a 1/1 white Warrior creature token that's tapped and attacking.",
    "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
    "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
    "crop-rotation: effect: As an additional cost to cast this spell, sacrifice a land",
    "demonic-consultation: effect: Choose a card name",
-   "derevi-empyrial-tactician: trigger event: ~ enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.",
    "eldritch-evolution: effect: Search your library for a creature card with mana value X or less, where X is 2 plus the sacrificed creature's mana value",
-   "esper-sentinel: effect: Draw a card unless that player pays {X}, where X is ~'s power",
    "final-fortune: effect: Take an extra turn after this one",
-   "gornog-the-red-reaper: ability: Cowards can't block Warriors.",
    "intuition: effect: Search your library for three cards and reveal them",
-   "lotho-corrupt-shirriff: effect: You lose 1 life and create a Treasure token",
-   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
-   "rograkh-son-of-rohgahh: ability: Partner",
-   "samut-vizier-of-naktamun: intervening if: if that creature entered this turn, draw a card.",
    "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
-   "swords-to-plowshares: effect: Exile target creature",
-   "tainted-pact: effect: Exile the top card of your library",
-   "the-cabbage-merchant: effect: Create a Food token",
-   "underworld-breach: trigger event: the beginning of the end step, sacrifice ~."
+   "tainted-pact: effect: Exile the top card of your library"
   ],
   "tokens": [
    "token-treasure",
    "token-bird-2-2-u-flying",
-   "token-warrior-1-1-r"
+   "token-food",
+   "token-warrior-1-1-r",
+   "token-warrior-1-1-w"
   ]
  },
  "cedh-scion-of-the-ur-dragon": {
@@ -5164,27 +5143,16 @@ window.MF.decks = {
   "compiles": false,
   "refused": [
    "scion-of-the-ur-dragon: effect: Search your library for a Dragon permanent card and put it into your graveyard",
-   "ancient-copper-dragon: effect: Roll a d20",
    "beseech-the-mirror: effect: Search your library for a card, exile it face down, then shuffle",
    "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
    "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
    "copy-enchantment: ability: You may have ~ enter as a copy of any enchantment on the battlefield.",
    "crop-rotation: effect: As an additional cost to cast this spell, sacrifice a land",
    "demonic-consultation: effect: Choose a card name",
-   "esper-sentinel: effect: Draw a card unless that player pays {X}, where X is ~'s power",
    "final-fortune: effect: Take an extra turn after this one",
-   "gleaming-splendor: effect: Two target players each draw a card",
-   "korvold-fae-cursed-king: effect: Sacrifice another permanent",
    "lim-d-ls-vault: effect: Look at the top five cards of your library",
-   "lotho-corrupt-shirriff: effect: You lose 1 life and create a Treasure token",
-   "prismari-the-inspiration: ability: Instant and sorcery spells you cast have storm.",
-   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
    "shifting-woodland: effect: ~ becomes a copy of target permanent card in your graveyard until end of turn",
-   "smothering-tithe: effect: That player may pay {2}",
-   "storm-kiln-artist: ability: ~ gets +1/+0 for each artifact you control.",
-   "tainted-pact: effect: Exile the top card of your library",
-   "tataru-taru: effect: You draw a card and target opponent may draw a card",
-   "underworld-breach: trigger event: the beginning of the end step, sacrifice ~."
+   "tainted-pact: effect: Exile the top card of your library"
   ],
   "tokens": [
    "token-treasure",
@@ -5617,27 +5585,17 @@ window.MF.decks = {
    "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
    "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
    "demonic-consultation: effect: Choose a card name",
-   "esper-sentinel: effect: Draw a card unless that player pays {X}, where X is ~'s power",
-   "exhibition-tidecaller: condition: five or more mana was spent to cast that spell",
    "final-fortune: effect: Take an extra turn after this one",
    "flashback: filter noun: instant or sorcery card in your graveyard",
    "gifts-ungiven: effect: Search your library for up to four cards with different names and reveal them",
-   "gloomshrieker: ability: If ~ would die, exile it instead.",
    "intuition: effect: Search your library for three cards and reveal them",
-   "lotho-corrupt-shirriff: effect: You lose 1 life and create a Treasure token",
    "noxious-revival: effect: Put target card from a graveyard on top of its owner's library",
-   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
    "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
-   "smothering-tithe: effect: That player may pay {2}",
-   "squee-the-immortal: ability: You may cast this card from your graveyard or from exile.",
-   "tainted-pact: effect: Exile the top card of your library",
-   "tataru-taru: effect: You draw a card and target opponent may draw a card",
-   "the-cabbage-merchant: effect: Create a Food token",
-   "underworld-breach: trigger event: the beginning of the end step, sacrifice ~.",
-   "wishclaw-talisman: effect: An opponent gains control of ~"
+   "tainted-pact: effect: Exile the top card of your library"
   ],
   "tokens": [
    "token-treasure",
+   "token-food",
    "token-warrior-1-1-r"
   ]
  },
@@ -6058,8 +6016,6 @@ window.MF.decks = {
   "record": "6-2-1",
   "compiles": false,
   "refused": [
-   "thrasios-triton-hero: effect: Scry 1, then reveal the top card of your library",
-   "vial-smasher-the-fierce: ability: Partner",
    "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
    "beseech-the-mirror: effect: Search your library for a card, exile it face down, then shuffle",
    "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
@@ -6070,18 +6026,14 @@ window.MF.decks = {
    "noxious-revival: effect: Put target card from a graveyard on top of its owner's library",
    "otawara-soaring-city: filter qualifier: , creature, enchantment, or planeswalker",
    "praetors-grasp: effect: Search target opponent's library for a card and exile it face down",
-   "ragavan-nimble-pilferer: effect: Create a Treasure token and exile the top card of that player's library",
    "shifting-woodland: effect: ~ becomes a copy of target permanent card in your graveyard until end of turn",
-   "storm-kiln-artist: ability: ~ gets +1/+0 for each artifact you control.",
-   "tainted-pact: effect: Exile the top card of your library",
-   "the-cabbage-merchant: effect: Create a Food token",
-   "underworld-breach: trigger event: the beginning of the end step, sacrifice ~.",
-   "wishclaw-talisman: effect: An opponent gains control of ~"
+   "tainted-pact: effect: Exile the top card of your library"
   ],
   "tokens": [
    "token-treasure",
    "token-spirit-1-1-c",
-   "token-bird-2-2-u-flying"
+   "token-bird-2-2-u-flying",
+   "token-food"
   ]
  },
  "kujo-zellix-of-halaster": {

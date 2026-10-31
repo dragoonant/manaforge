@@ -6,8 +6,8 @@
   const MF = window.MF;
   const KWNAME = { flying: 'flying', reach: 'reach', firstStrike: 'first strike', doubleStrike: 'double strike', deathtouch: 'deathtouch', lifelink: 'lifelink', trample: 'trample', vigilance: 'vigilance', haste: 'haste', menace: 'menace', defender: 'defender', flash: 'flash', hexproof: 'hexproof', indestructible: 'indestructible', prowess: 'prowess', shroud: 'shroud', fear: 'fear' };
   MF.KWNAME = KWNAME;
-  const VN = { handSize: 'the number of cards in your hand', sacPower: 'the sacrificed creature’s power', oppGraveSize: 'the number of cards in their graveyard', oppGraveCount: 'the number of cards in your opponents’ graveyards', evTypes: 'the number of card types among those cards', halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control', evMv: 'that spell’s mana value', namedInGraves: 'the number of cards named this in each graveyard' };
-  const N = n => typeof n === 'number' ? String(n) : n.v === 'toughness' ? 'this creature’s toughness' : n.v === 'gravesWith' ? 'the number of graveyards with ' + ['', '', '', '', '', '', '', 'seven'][n.n] + ' or more cards in them' : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'lands' ? 'the number of lands you control' : n.v === 'graveCount' ? 'the number of permanent cards in your graveyard' : n.v === 'creLeftYou' ? 'the number of creatures that left the battlefield under your control this turn' : n.v === 'countYou' ? 'the number of ' + filt(n.f) + 's you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'handOf' ? 'the number of cards in ' + ref(n.who) + '’s hand' : n.v === 'countOf' ? 'the number of ' + filt(n.f) + 's target opponent controls' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
+  const VN = { handSize: 'the number of cards in your hand', sacPower: 'the sacrificed creature’s power', oppGraveSize: 'the number of cards in their graveyard', oppGraveCount: 'the number of cards in your opponents’ graveyards', evTypes: 'the number of card types among those cards', halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control', evMv: 'that spell’s mana value', namedInGraves: 'the number of cards named this in each graveyard', oppCowards: 'the number of Cowards your opponents control' };
+  const N = n => typeof n === 'number' ? String(n) : n.v === 'toughness' ? 'this creature’s toughness' : n.v === 'gravesWith' ? 'the number of graveyards with ' + ['', '', '', '', '', '', '', 'seven'][n.n] + ' or more cards in them' : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'lands' ? 'the number of lands you control' : n.v === 'graveCount' ? 'the number of permanent cards in your graveyard' : n.v === 'creLeftYou' ? 'the number of creatures that left the battlefield under your control this turn' : n.v === 'countYou' ? 'the number of ' + filt(n.f) + 's you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'lkiPowerT' ? 'its power' : n.v === 'handOf' ? 'the number of cards in ' + ref(n.who) + '’s hand' : n.v === 'countOf' ? 'the number of ' + filt(n.f) + 's target opponent controls' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
   function filt(f) {
     if (!f) return 'anything';
     if (f.any) return 'any target';
@@ -122,6 +122,10 @@
     lifeAtMostHalfStart: () => 'your life total is less than or equal to half your starting life total',
     yourTurn: () => 'it is your turn',
     notYourTurn: () => 'it’s not your turn',
+    notEvPlayersTurn: () => 'it isn’t that player’s turn',
+    inCombat: () => 'during combat',
+    evSrcEnteredThisTurn: () => 'that creature entered this turn',
+    evSpentAtLeast: c => c.n + ' or more mana was spent to cast that spell',
     selfNoCounter: c => 'there are no ' + c.kind + ' counters on this',
     notCarpetTurn: () => 'you haven’t added mana with this ability this turn',
     controlCommander: () => 'you control a commander',
@@ -133,6 +137,18 @@
   MF.describeCond = cond;
   const D = MF.describeOp = {
     // PLAN D22
+    mayDraw: op => ref(op.who) + ' may draw a card',
+    payOrElse: op => 'that player may pay ' + op.pay + '; if the player doesn’t, ' + ops(op.ops),
+    thrasios: () => 'reveal the top card of your library; if it’s a land card, put it onto the battlefield tapped; otherwise, draw a card',
+    exileTopMayCast: () => 'exile the top card of that player’s library; until end of turn, you may cast that card',
+    rollTreasures: op => 'roll a d' + op.sides + '; you create a number of Treasure tokens equal to the result',
+    sacSub: op => 'sacrifice a ' + op.sub + (op.tok ? ' token' : ''),
+    sacOther: () => 'sacrifice another permanent',
+    tapOrUntap: op => 'you may tap or untap ' + ref(op.on),
+    fromCommand: () => 'put this onto the battlefield from the command zone',
+    becomeCoward: op => ref(op.on) + ' becomes a Coward',
+    tymna: () => 'you may pay X life, where X is the number of opponents that were dealt combat damage this turn; if you do, draw X cards',
+    oppGainsControl: () => 'an opponent gains control of this',
     addManaPer: op => 'add {' + op.col + '} for each — ' + N(op.n),
     addManaCombo: op => 'add ' + N(op.n) + ' mana in any combination of colors',
     addManaOneColor: op => 'add ' + (op.n == null ? 'one mana' : N(op.n) + ' mana') + ' of any ' + (op.n == null ? '' : 'one ') + 'color',
@@ -337,6 +353,11 @@
       case 'sneak': return 'sneak ' + a.cost + ' (you may cast this for ' + a.cost + ' during your declare blockers step by returning an unblocked attacker you control to its owner’s hand)';
       case 'oppNoCast': return 'your opponents can’t cast spells during your turn';
       // PLAN D22
+      case 'partner': return 'partner (you can have two commanders if both have partner)';
+      case 'cowards': return 'Cowards can’t block Warriors';
+      case 'selfDieExile': return 'if this would die, exile it instead';
+      case 'castFromGraveExile': return 'you may cast this card from your graveyard or from exile';
+      case 'grantStorm': return 'instant and sorcery spells you cast have storm';
       case 'moxDiamond': return 'if this would enter, you may discard a land card instead; if you do, put this onto the battlefield; if you don’t, put it into its owner’s graveyard';
       case 'gemstone': return 'if this card is in your opening hand and you’re not the starting player, you may begin the game with it on the battlefield with a luck counter on it; if you do, exile a card from your hand';
       case 'altCost': return (a.cond ? 'if ' + cond(a.cond) + ', ' : '') + 'you may ' + ([a.life ? 'pay ' + a.life + ' life' : '', a.exileBlue ? 'exile ' + (a.exileBlue === 1 ? 'a blue card' : 'two blue cards') + ' from your hand' : '', a.sacNontokenRed ? 'sacrifice a nontoken red creature' : ''].filter(Boolean).join(' and ') || (a.cond && a.cond.c === 'oppCastAtLeast' ? 'pay {0}' : 'cast this spell without paying its mana cost')) + (a.cond && a.cond.c === 'controlCommander' ? '' : ' rather than pay this spell’s mana cost');
@@ -364,6 +385,14 @@
         // PLAN D22
         if (a.exalted) return 'exalted (whenever a creature you control attacks alone, that creature gets +1/+1 until end of turn)';
         if (a.on === 'landPlayed') e = 'When you play another land';
+        else if (a.on === 'sacrificed' && a.anySac) e = 'Whenever ' + (a.anySac === 'you' ? 'you sacrifice' : 'a player sacrifices') + ' a permanent';
+        else if (a.on === 'copied') e = 'Whenever you copy an instant or sorcery spell';
+        else if (a.on === 'combatDamageBatch') e = 'Whenever one or more creatures you control deal combat damage to a player';
+        else if (a.on === 'dealsDamage' && a.anyCreToYou) e = 'Whenever a creature deals combat damage to you';
+        else if (a.on === 'attacks' && a.anyCtrl) e = 'Whenever a ' + a.who.subtypes[0] + ' attacks';
+        else if (a.on === 'attackWith' && a.sub && a.toPlayer) e = 'Whenever one or more ' + a.sub + 's you control attack a player';
+        else if (a.on === 'beginStep' && a.step === 'main2') e = 'At the beginning of each of your postcombat main phases';
+        else if (a.on === 'drawCard' && a.opp && a.cond) e = 'Whenever an opponent draws a card';
         else if (a.on === 'tappedForMana') e = 'Whenever you tap this for mana';
         else if (a.on === 'beginStep' && a.steps) e = 'At the beginning of each of your main phases';
         else if (a.on === 'activated') e = 'Whenever an opponent activates an ability that isn’t a mana ability';
@@ -428,7 +457,8 @@
         if (a.modes) return e + ', choose one that hasn’t been chosen — ' + a.modes.map((m, i) => '(' + (i + 1) + ') ' + ops(m.ops)).join(' / ');
         return e + (a.cond ? ', if ' + cond(a.cond) : '') + ': ' + ops(a.ops) + (a.oncePerTurn ? ' (only once each turn)' : '');
       }
-      case 'static': if (a.addSubtypes) return 'the equipped creature gets ' + sgn(a.p) + '/' + sgn(a.t) + ' and is a ' + a.addSubtypes.join(' ') + ' in addition to its other types';
+      case 'static': if (a.pOnly) return (typeof a.affects === 'string' ? 'this' : 'each ' + filt(a.affects)) + ' gets +X/+0, where X is ' + N(a.pOnly);
+        if (a.addSubtypes) return 'the equipped creature gets ' + sgn(a.p) + '/' + sgn(a.t) + ' and is a ' + a.addSubtypes.join(' ') + ' in addition to its other types';
         if (a.setTypes) return (a.cond ? 'As long as ' + cond(a.cond) + ', ' : '') + 'this is a ' + a.setPT.join('/') + ' ' + a.setTypes.subtypes.join(' ') + ' creature' + (a.grant ? ' and has ' + a.grant.map(k => KWNAME[k]).join(', ') : '');
         if (a.removeTypes) return 'As long as ' + cond(a.cond) + ', this isn’t a creature';
         if (a.pv) return 'this gets +1/+1 for each other ' + filt(a.pv.f).replace(' you control', '') + ' you control';
