@@ -3,7 +3,12 @@
 - **Review the hosted renders (D23)**: Kujo's and the championship decks' 238 cards and tokens were rendered
   through Hugging Face on 2026-10-31; re-roll any that miss their subject with `python3 tools/gen-art-hf.py --force <key>
   --seed-offset N` (or the local GPU script), then `node tools/write-manifest.mjs`.
-- **The AI and the championship Commander decks (D22)**: the AI plays them card by card. It does not know
+- **The AI and the championship Commander decks (D22)** — measured 2026-10-31 (`node tools/arena.mjs --mixed
+  --commander`, 10 games): games last 20 turns (about 10 each) and end by combat or commander damage; 12.8
+  spells cast per game for both players together; 13.9% of turns with no land, spell or attack; it casts in
+  1.9% of the opponent's-turn windows where it could (counterspells and free spells are rarely used: its
+  roll-out only sees to the end of the turn, so a counterspell's value is the card it stops, scored as
+  board). Real cEDH games end on turn 3-6 with dozens of spells. The AI plays them card by card. It does not know
   their lines (Thassa's Oracle with Demonic Consultation or Tainted Pact, Underworld Breach with Lion's Eye
   Diamond, Food Chain, Najeela's extra combats, Kraum and Tymna's card draw); it names a card not in its
   library for Demonic Consultation only when a "win the game" card is in its hand or on its battlefield.

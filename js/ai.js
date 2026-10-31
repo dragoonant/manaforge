@@ -16,7 +16,7 @@
   // The evaluator. Board presence persists in Magic (handoff 11.8.5): power, toughness and
   // evasion on the battlefield, cards in hand, lands, and life with a low-life cliff.
   // ---------------------------------------------------------------------------------------------
-  const W = { landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
+  const W = { colorAccess: 0.9, pactUnpaid: 400, landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
   MF.aiWeights = W;
   const lifeScore = l => l * W.life - (l < W.lowLife ? (W.lowLife - l) * W.lowLifeExtra : 0);
   function permValue(s, iid) {
@@ -49,6 +49,18 @@
         if (ch.noUntap && c.tapped) x -= permValue(s, iid) * 0.8;
       }
       x += Math.min(lands, W.landCap) * W.land + Math.max(0, lands - W.landCap) * 0.3;
+      // Colours its permanents can make (PLAN D22): a colourless land is not a coloured one, so City of
+      // Traitors is not worth keeping over every second land drop in a five-colour deck.
+      const cols = new Set();
+      for (const iid of s.bf) { if (I(s, iid).ctrl !== seat) continue; for (const a of MF.chars(s, iid).ab) if (a.k === 'mana' && !a.zone && !a.special) for (const k of MF.manaCols(s, seat, iid, a)) if (k !== 'C') cols.add(k); }
+      x += cols.size * W.colorAccess;
+      // A Pact due at this player's next upkeep (CR 603.7): the roll-out ends before it, so the loss is
+      // counted here when the mana it asks for isn't there — every mana source this player controls, untapped.
+      const owed = [].concat((s.delayed || []).map(d => ({ ctrl: d.ctrl, ab: d.ab })), (s.trigs || []).map(t => ({ ctrl: t.ctrl, ab: t.inl })), s.stack.filter(L => L.kind === 'trig').map(L => ({ ctrl: L.ctrl, ab: L.inl })));   // still delayed, triggered, or on the stack at the horizon
+      for (const d of owed) if (d.ab && typeof d.ab === 'object') for (const op of d.ab.ops || []) if (op.o === 'payOrLose' && d.ctrl === seat) {
+        const srcs = s.bf.filter(i => I(s, i).ctrl === seat && MF.chars(s, i).ab.some(a => a.k === 'mana' && !a.zone && a.cost && a.cost.tap)).length;
+        if (srcs < MF.manaValue(MF.parseMana(op.cost))) x -= W.pactUnpaid;
+      }
       if (p.lib.length < 3) x -= (3 - p.lib.length) * 4;
       // My turn has just ended at the horizon: an instant-speed card I could still cast with my untapped
       // lands is a threat the opponent must play around (TODO: the AI rarely held mana for a trick).
