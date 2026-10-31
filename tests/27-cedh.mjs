@@ -218,3 +218,92 @@ test('Sink into Stupor: return a spell an opponent controls to its owner\'s hand
   let t = setup({ me: { hand: ['sink-into-stupor-soporific-springs'] } });
   ok(MF.legalActions(t).some(a => a.type === 'land' && a.alt), 'Soporific Springs can be played as a land');
 });
+
+// ---- Mana ---------------------------------------------------------------------------------------
+test('Simian Spirit Guide: exile it from your hand for {R} — a mana ability that works from the hand', () => {
+  let s = setup({ me: { hand: ['simian-spirit-guide', 'burst-lightning'] } });
+  ok(can(s, 'mana', 'simian-spirit-guide'), 'offered at priority');
+  s = cast(s, 'burst-lightning', player(1), 'auto');
+  ok(exile(s, 0).includes('simian-spirit-guide'), 'exiled to pay'); s = resolveAll(s);
+  eq(s.players[1].life, 18);
+});
+test('Lion\'s Eye Diamond: discard your hand and sacrifice it for three mana of one color; not while an effect asks for mana', () => {
+  let s = setup({ me: { hand: ['opt', 'burst-lightning'], bf: ['lions-eye-diamond'] } });
+  s = act(s, 'mana', 'lions-eye-diamond'); s = answer(s, ['RRR']);
+  eq(s.players[0].pool.R, 3); eq(s.players[0].hand.length, 0, 'hand discarded'); ok(grave(s, 0).includes('lions-eye-diamond'));
+  ok(!MF.manaSources(setup({ me: { bf: ['lions-eye-diamond'] } }), 0, undefined).some(m => m.id === 'lions-eye-diamond'), 'not for an effect\'s payment');
+});
+test('Mox Diamond: discard a land card as it would enter, or it goes to the graveyard (CR 614.1a)', () => {
+  let s = setup({ me: { hand: ['mox-diamond', 'mox-diamond', W] } });
+  s = cast(s, 'mox-diamond'); s = resolveAll(s, (q, st) => viewId(q, st, W));
+  ok(find(s, 'mox-diamond', 'bf', 0) != null && grave(s, 0).includes(W), 'the Plains discarded, the Mox entered');
+  s = cast(s, 'mox-diamond'); s = resolveAll(s);
+  ok(grave(s, 0).includes('mox-diamond'), 'no land left: to the graveyard');
+});
+test('Flooded Strand: pay 1 life, sacrifice it, put a Plains or Island card onto the battlefield', () => {
+  let s = setup({ me: { bf: ['flooded-strand'], lib: [R, U, B] } });
+  s = activate(s, 'flooded-strand'); s = resolveAll(s, (q, st) => viewId(q, st, U));
+  eq(s.players[0].life, 19); ok(find(s, U, 'bf', 0) != null, 'an Island');
+});
+test('Rite of Flame: {R}{R}, plus {R} for each Rite of Flame in each graveyard', () => {
+  let s = setup({ me: { hand: ['rite-of-flame'], bf: [R], grave: ['rite-of-flame'] }, opp: { grave: ['rite-of-flame'] } });
+  s = cast(s, 'rite-of-flame', 'auto'); s = resolveAll(s);
+  eq(s.players[0].pool.R, 4);
+});
+test('Manamorphose: two mana in any combination of colors, and a card', () => {
+  let s = setup({ me: { hand: ['manamorphose'], bf: [R, G] } });
+  s = cast(s, 'manamorphose', 'R', 'auto'); s = resolveAll(s, 'U', 'B');
+  eq([s.players[0].pool.U, s.players[0].pool.B], [1, 1]); eq(s.players[0].hand.length, 1);
+});
+test('Culling Ritual: destroy each nonland permanent with mana value 2 or less; {B} or {G} for each', () => {
+  let s = setup({ me: { hand: ['culling-ritual'], bf: [B, B, G, G, 'sol-ring'] }, opp: { bf: ['ignoble-hierarch', 'grand-abolisher', 'ranger-captain-of-eos'] } });
+  s = cast(s, 'culling-ritual', 'auto'); s = resolveAll(s, 'BBG');
+  eq([s.players[0].pool.B, s.players[0].pool.G], [2, 1], 'Sol Ring, Ignoble Hierarch and Grand Abolisher: three');
+  ok(find(s, 'ranger-captain-of-eos', 'bf', 1) != null, 'mana value 3 survives');
+});
+test('Exalted: a creature attacking alone gets +1/+1 for each instance', () => {
+  let s = setup({ me: { bf: ['ignoble-hierarch', 'noble-hierarch', 'ragavan-nimble-pilferer'] } });
+  s = toStep(s, 'attackers'); s = answer(s, [(q, st) => viewId(q, st, 'ragavan-nimble-pilferer'), 'done']);
+  s = resolveAll(s, q => q.opts[0].id);
+  eq(MF.chars(s, find(s, 'ragavan-nimble-pilferer', 'bf')).p, 4, '2 + 1 + 1');
+});
+test('Gemstone Caverns: the player who doesn\'t start may begin with it, with a luck counter; it then taps for any color', () => {
+  let s = setup({ me: { bf: [{ id: 'gemstone-caverns', ctr: { luck: 1 } }, 'gemstone-caverns'] } });
+  const srcs = MF.manaSources(s, 0, { any: true }).filter(m => m.id === 'gemstone-caverns');
+  eq(srcs.map(m => m.cols.length).sort(), [1, 5]);
+});
+test('City of Traitors: sacrificed when you play another land', () => {
+  let s = setup({ me: { bf: ['city-of-traitors'], hand: [R] } });
+  s = MF.apply(s, MF.legalActions(s).find(a => a.type === 'land')); s = resolveAll(s);
+  ok(grave(s, 0).includes('city-of-traitors'));
+});
+test('Food Chain: exile a creature for 1 + its mana value in one color, only for creature spells', () => {
+  let s = setup({ me: { bf: ['food-chain', 'ranger-captain-of-eos'] } });
+  s = act(s, 'mana', 'food-chain'); s = answer(s, [(q, st) => viewId(q, st, 'ranger-captain-of-eos'), 'G']);
+  eq(s.players[0].pool.G, 4); eq(s.players[0].poolCre.G, 4);
+});
+test('Mox Amber: one mana of a color among your legendary creatures', () => {
+  let s = setup({ me: { bf: ['mox-amber', 'ragavan-nimble-pilferer'] } });
+  eq(MF.manaSources(s, 0, { any: true }).find(m => m.id === 'mox-amber').cols, ['R']);
+});
+test('Deathrite Shaman: exile a land card from a graveyard for one mana of any color (an ability with a target uses the stack, CR 605.1a)', () => {
+  let s = setup({ me: { bf: ['deathrite-shaman'] }, opp: { grave: [U] } });
+  s = activate(s, 'deathrite-shaman', 0, (q, st) => viewId(q, st, U)); s = resolveAll(s, 'G');
+  eq(s.players[0].pool.G, 1); ok(exile(s, 1).includes(U));
+});
+test('Rain of Filth: your lands gain "Sacrifice this land: Add {B}." until end of turn', () => {
+  let s = setup({ me: { hand: ['rain-of-filth'], bf: [B, R] } });
+  s = cast(s, 'rain-of-filth', 'auto'); s = resolveAll(s);
+  eq(MF.manaSources(s, 0, { any: true }).filter(m => m.id === R && m.cols.includes('B')).length, 1, 'the untapped Mountain can be sacrificed for {B}');
+});
+test('Forbidden Orchard: tapping it for mana gives target opponent a 1/1 Spirit', () => {
+  let s = setup({ me: { bf: ['forbidden-orchard'] } });
+  s = act(s, 'mana', 'forbidden-orchard'); s = answer(s, ['U']);
+  s = resolveAll(s, player(1));
+  eq(findAll(s, 'token-spirit-1-1-c', 'bf', 1).length, 1);
+});
+test('Jeska\'s Will: with a commander you may choose both — {R} for each card in the opponent\'s hand, and three cards to play this turn', () => {
+  let s = setup({ commander: true, me: { identity: ['R'], hand: ['jeskas-will'], bf: [R, R, R, { id: 'najeela-the-blade-blossom', cmdr: true }], lib: [R, R, R, R] }, opp: { hand: [U, U, U, U, U] } });
+  s = cast(s, 'jeskas-will', 'both', player(1), 'auto'); s = resolveAll(s);
+  eq(s.players[0].pool.R, 5); eq(s.players[0].exile.length, 3);
+});

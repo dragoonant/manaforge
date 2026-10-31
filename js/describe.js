@@ -6,8 +6,8 @@
   const MF = window.MF;
   const KWNAME = { flying: 'flying', reach: 'reach', firstStrike: 'first strike', doubleStrike: 'double strike', deathtouch: 'deathtouch', lifelink: 'lifelink', trample: 'trample', vigilance: 'vigilance', haste: 'haste', menace: 'menace', defender: 'defender', flash: 'flash', hexproof: 'hexproof', indestructible: 'indestructible', prowess: 'prowess', shroud: 'shroud', fear: 'fear' };
   MF.KWNAME = KWNAME;
-  const VN = { handSize: 'the number of cards in your hand', sacPower: 'the sacrificed creature’s power', oppGraveSize: 'the number of cards in their graveyard', oppGraveCount: 'the number of cards in your opponents’ graveyards', evTypes: 'the number of card types among those cards', halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control', evMv: 'that spell’s mana value' };
-  const N = n => typeof n === 'number' ? String(n) : n.v === 'toughness' ? 'this creature’s toughness' : n.v === 'gravesWith' ? 'the number of graveyards with ' + ['', '', '', '', '', '', '', 'seven'][n.n] + ' or more cards in them' : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'lands' ? 'the number of lands you control' : n.v === 'graveCount' ? 'the number of permanent cards in your graveyard' : n.v === 'creLeftYou' ? 'the number of creatures that left the battlefield under your control this turn' : n.v === 'countYou' ? 'the number of ' + filt(n.f) + 's you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
+  const VN = { handSize: 'the number of cards in your hand', sacPower: 'the sacrificed creature’s power', oppGraveSize: 'the number of cards in their graveyard', oppGraveCount: 'the number of cards in your opponents’ graveyards', evTypes: 'the number of card types among those cards', halfX: 'half X, rounded down', oppsLostLife: 'the number of opponents who lost life this turn', oppExiledCreatures: 'the number of creatures exiled under your opponents’ control this turn', gainedThisTurn: 'the life you gained this turn', countOthers: 'the number of other matching permanents you control', evMv: 'that spell’s mana value', namedInGraves: 'the number of cards named this in each graveyard' };
+  const N = n => typeof n === 'number' ? String(n) : n.v === 'toughness' ? 'this creature’s toughness' : n.v === 'gravesWith' ? 'the number of graveyards with ' + ['', '', '', '', '', '', '', 'seven'][n.n] + ' or more cards in them' : VN[n.v] ? VN[n.v] : n.v === 'x' ? 'X' : n.v === 'creatures' ? 'the number of creatures you control' : n.v === 'lands' ? 'the number of lands you control' : n.v === 'graveCount' ? 'the number of permanent cards in your graveyard' : n.v === 'creLeftYou' ? 'the number of creatures that left the battlefield under your control this turn' : n.v === 'countYou' ? 'the number of ' + filt(n.f) + 's you control' : n.v === 'power' ? 'its power' : n.v === 'castNoncreature' ? 'the number of noncreature spells that player has cast this turn' : n.v === 'evAmount' ? 'that much' : n.v === 'handOf' ? 'the number of cards in ' + ref(n.who) + '’s hand' : n.v === 'countOf' ? 'the number of ' + filt(n.f) + 's target opponent controls' : n.v === 'kicked' ? n.no + ' (' + n.yes + ' if kicked)' : '?';
   function filt(f) {
     if (!f) return 'anything';
     if (f.any) return 'any target';
@@ -122,6 +122,8 @@
     lifeAtMostHalfStart: () => 'your life total is less than or equal to half your starting life total',
     yourTurn: () => 'it is your turn',
     notYourTurn: () => 'it’s not your turn',
+    selfNoCounter: c => 'there are no ' + c.kind + ' counters on this',
+    notCarpetTurn: () => 'you haven’t added mana with this ability this turn',
     controlCommander: () => 'you control a commander',
     oppCastAtLeast: c => 'an opponent cast ' + c.n + ' or more spells this turn',
     evNoMana: () => 'no mana was spent to cast it',
@@ -131,6 +133,12 @@
   MF.describeCond = cond;
   const D = MF.describeOp = {
     // PLAN D22
+    addManaPer: op => 'add {' + op.col + '} for each — ' + N(op.n),
+    addManaCombo: op => 'add ' + N(op.n) + ' mana in any combination of colors',
+    addManaOneColor: op => 'add ' + (op.n == null ? 'one mana' : N(op.n) + ' mana') + ' of any ' + (op.n == null ? '' : 'one ') + 'color',
+    cullingRitual: () => 'destroy each nonland permanent with mana value 2 or less; add {B} or {G} for each permanent destroyed this way',
+    grantAbEach: op => 'until end of turn, ' + ref(op.on) + ' gain “' + op.what + '”',
+    amuletCharge: () => 'put a charge counter on this; note the type of mana spent to pay this activation cost',
     ifTargetColor: op => ops(op.ops) + ' if it’s ' + MF.COLOR_NAME[op.color],
     exileSpells: op => 'exile any number of target spells',
     cantCast: op => (op.who === 'eachOpp' ? 'your opponents' : ref(op.who)) + ' can’t cast ' + (op.noncreature ? 'noncreature ' : '') + 'spells' + (op.noLoyalty ? ' or activate planeswalkers’ loyalty abilities' : '') + ' this turn',
@@ -152,7 +160,7 @@
     pump: op => { if (op.p && op.p.v === 'power') return 'double the power of ' + ref(op.on) + ' until end of turn'; if (op.until === 'yourNext') return 'until your next turn, ' + ref(op.on) + ' gets ' + sgn(op.p) + '/' + sgn(op.t); const pt = (op.p != null || op.t != null) && (op.p !== 0 || op.t !== 0); return ref(op.on) + (pt ? ' gets ' + sgn(op.p) + '/' + sgn(op.t) : '') + (op.grant ? (pt ? ' and' : '') + ' gains ' + op.grant.map(k => KWNAME[k]).join(', ') : '') + ' until end of turn'; },
     unblockable: op => ref(op.on) + ' can’t be blocked this turn',
     scry: op => 'scry ' + N(op.n),
-    token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); if (!d.types.includes('Creature')) return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + (op.tapped ? 'tapped ' : '') + d.name + ' token' + (op.n === 1 ? '' : 's') + (d.text ? ' (“' + d.text + '”)' : d.types.includes('Land') ? ' (a ' + d.types.join(' ').toLowerCase() + ' — ' + d.subtypes.join(' ') + ')' : ''); return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : '') + (d.text && !kws.length ? ' with “' + d.text + '”' : '') + (op.attacking ? ' that are tapped and attacking' : '') + (op.attackingIf ? '; if ' + cond(op.attackingIf) + ', they enter tapped and attacking' : '') + (op.sacEnd ? '; sacrifice them at the beginning of the next end step' : ''); },
+    token: op => { const d = MF.cards[op.id], kws = Object.keys(d.kw); if (op.forPlayer) return ref(op.forPlayer) + ' creates ' + N(op.n) + ' ' + (d.power != null ? d.power + '/' + d.toughness + ' ' + (d.colors.length ? d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') : 'colorless') + ' ' + d.name + ' creature' : d.name) + ' token' + (op.n === 1 ? '' : 's'); if (!d.types.includes('Creature')) return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + (op.tapped ? 'tapped ' : '') + d.name + ' token' + (op.n === 1 ? '' : 's') + (d.text ? ' (“' + d.text + '”)' : d.types.includes('Land') ? ' (a ' + d.types.join(' ').toLowerCase() + ' — ' + d.subtypes.join(' ') + ')' : ''); return (op.forCtrlOf ? 'its controller [' + (op.forCtrlOf.t + 1) + '] creates ' : 'create ') + N(op.n) + ' ' + d.power + '/' + d.toughness + ' ' + d.colors.map(c => MF.COLOR_NAME[c]).join(' and ') + ' ' + d.name + ' creature token' + (op.n === 1 ? '' : 's') + (kws.length ? ' with ' + kws.map(k => KWNAME[k]).join(', ') : '') + (d.text && !kws.length ? ' with “' + d.text + '”' : '') + (op.attacking ? ' that are tapped and attacking' : '') + (op.attackingIf ? '; if ' + cond(op.attackingIf) + ', they enter tapped and attacking' : '') + (op.sacEnd ? '; sacrifice them at the beginning of the next end step' : ''); },
     tokenCopy: op => 'create a token that’s a copy of ' + ref(op.of) + (op.except && op.except.pt ? ', except it is ' + op.except.pt.join('/') : '') + (op.sacEnd ? '; sacrifice it at the beginning of the next end step' : ''),
     destroy: op => 'destroy ' + ref(op.on),
     damage: op => ref(op.from) + ' deals ' + N(op.n) + ' damage to ' + ref(op.to),
@@ -293,7 +301,14 @@
     if (a.solved) { const b = Object.assign({}, a); delete b.solved; return 'Solved — ' + MF.describeAbility(b); }   // CR 719.3c
     if (a.level > 1) { const b = Object.assign({}, a); delete b.level; return 'Level ' + a.level + ': ' + MF.describeAbility(b); }   // CR 716.2a
     switch (a.k) {
-      case 'mana': if (a.combo) return a.cost.mana + ': add X mana in any combination of ' + a.cols.map(c => '{' + c + '}').join(' and/or ') + ', where X is this creature’s power (only during your turn, only once each turn)';
+      case 'mana': if (a.special === 'foodChain') return 'exile a creature you control: add X mana of any one color, where X is 1 plus the exiled creature’s mana value (spend this mana only to cast creature spells)';
+        if (a.zone === 'hand') return 'exile this card from your hand: add {' + a.cols[0] + '}';
+        if (a.cost.discardHand) return 'discard your hand, sacrifice this: add three mana of any one color (only as an instant)';
+        if (a.cost.tapFoods) return 'tap two untapped Foods you control: add one mana of any color';
+        if (a.colsFrom === 'luck') return '{T}: add {C}; if this has a luck counter on it, instead add one mana of any color';
+        if (a.colsFrom === 'legendary') return '{T}: add one mana of any color among legendary creatures and planeswalkers you control';
+        if (a.colsFrom === 'noted') return '{T}, remove a charge counter from this: add one mana of this artifact’s last noted type';
+        if (a.combo) return a.cost.mana + ': add X mana in any combination of ' + a.cols.map(c => '{' + c + '}').join(' and/or ') + ', where X is this creature’s power (only during your turn, only once each turn)';
         if (a.yields || a.per || a.colsFrom) return [a.cost.mana || '', a.cost.tap ? '{T}' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : '', a.cost.sacType ? 'sacrifice a ' + a.cost.sacType.types[0].toLowerCase() : ''].filter(Boolean).join(', ') + ': add ' + (a.yields ? a.yields.map(y => y.split('').map(c => '{' + c + '}').join('')).join(', or ') : a.per ? '{' + a.cols[0] + '} for each ' + filt(a.per.f) + ' you control' : ({ identity: 'one mana of any color in your commander’s color identity', imprint: 'one mana of any of the exiled card’s colors', oppLands: 'one mana of any color that a land an opponent controls could produce', myLands: 'one mana of any type that a land you control could produce' })[a.colsFrom]) + (a.selfDamage ? '; this deals ' + a.selfDamage + ' damage to you' : '');
         return [a.cost.mana || '', a.cost.tap ? '{T}' : '', a.cost.life ? 'pay ' + a.cost.life + ' life' : '', a.cost.exileGrave ? 'exile a card from your graveyard' : ''].filter(Boolean).join(', ') + ': add ' + (a.cols.length === 5 ? 'one mana of any color' : a.cols.map(c => '{' + c + '}').join(' or ')) + (a.only === 'chosenType' ? ' (spend only on a creature spell of the chosen type; that spell can’t be countered)' : a.only ? ' (spend only on a creature spell)' : '') + (a.cond ? ' — only if ' + cond(a.cond) : '') + (a.selfDamage ? '; this deals ' + a.selfDamage + ' damage to you' : '');
       case 'etbPayOrTap': return 'as this enters, you may pay ' + a.life + ' life; if you don’t, it enters tapped';
@@ -322,6 +337,8 @@
       case 'sneak': return 'sneak ' + a.cost + ' (you may cast this for ' + a.cost + ' during your declare blockers step by returning an unblocked attacker you control to its owner’s hand)';
       case 'oppNoCast': return 'your opponents can’t cast spells during your turn';
       // PLAN D22
+      case 'moxDiamond': return 'if this would enter, you may discard a land card instead; if you do, put this onto the battlefield; if you don’t, put it into its owner’s graveyard';
+      case 'gemstone': return 'if this card is in your opening hand and you’re not the starting player, you may begin the game with it on the battlefield with a luck counter on it; if you do, exile a card from your hand';
       case 'altCost': return (a.cond ? 'if ' + cond(a.cond) + ', ' : '') + 'you may ' + ([a.life ? 'pay ' + a.life + ' life' : '', a.exileBlue ? 'exile ' + (a.exileBlue === 1 ? 'a blue card' : 'two blue cards') + ' from your hand' : '', a.sacNontokenRed ? 'sacrifice a nontoken red creature' : ''].filter(Boolean).join(' and ') || (a.cond && a.cond.c === 'oppCastAtLeast' ? 'pay {0}' : 'cast this spell without paying its mana cost')) + (a.cond && a.cond.c === 'controlCommander' ? '' : ' rather than pay this spell’s mana cost');
       case 'dash': return 'dash ' + a.cost + ' (you may cast this for its dash cost; it gains haste and returns to its owner’s hand at the beginning of the next end step)';
       case 'splitSecond': return 'split second (as long as this spell is on the stack, players can’t cast spells or activate abilities that aren’t mana abilities)';
@@ -344,8 +361,18 @@
         if (a.ward) return 'ward — ' + ops(a.ops);
         if (a.solveTrig) return 'to solve — ' + cond(a.cond.of[0]) + ' (checked at the beginning of your end step)';
         let e;
+        // PLAN D22
+        if (a.exalted) return 'exalted (whenever a creature you control attacks alone, that creature gets +1/+1 until end of turn)';
+        if (a.on === 'landPlayed') e = 'When you play another land';
+        else if (a.on === 'tappedForMana') e = 'Whenever you tap this for mana';
+        else if (a.on === 'beginStep' && a.steps) e = 'At the beginning of each of your main phases';
+        else if (a.on === 'activated') e = 'Whenever an opponent activates an ability that isn’t a mana ability';
+        else if (a.on === 'cast' && a.nthNoncre) e = 'Whenever an opponent casts their first noncreature spell each turn';
+        else if (a.on === 'cast' && a.nth && a.oppOnly) e = 'Whenever an opponent casts their second spell each turn';
+        else if (a.on === 'cast' && a.nth && a.anyPlayer) e = 'Whenever a player casts their ' + (a.nth === 1 ? 'first' : 'second') + ' spell each turn';
+        else if (a.on === 'cast' && a.nth === 1) e = 'Whenever you cast your first spell each turn';
         // Kujo's Commander deck (PLAN D21)
-        if (a.on === 'milled') e = 'Whenever a player mills one or more creature cards';
+        else if (a.on === 'milled') e = 'Whenever a player mills one or more creature cards';
         else if (a.on === 'unblocked') e = 'Whenever this attacks and isn’t blocked';
         else if (a.on === 'libToGrave' && a.who === 'self') e = 'When this card is put into your graveyard from your library (this works from your graveyard)';
         else if (a.on === 'libToGrave') e = 'Whenever a creature card is put into an opponent’s graveyard from their library';

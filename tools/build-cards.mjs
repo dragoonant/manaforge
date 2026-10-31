@@ -88,6 +88,7 @@ function targetSlot(T, phrase) {
   if (phrase === 'any other target') { if (T.length) T.push({ f: { any: true }, diff: T.length - 1 }); else T.push({ f: { any: true, other: true } }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^target (.+?), (.+?), (.+?), or (.+?) you control$/))) { T.push({ f: Object.assign(parseFilter('creature you control'), { subtypes: [m[1], m[2], m[3], m[4]] }) }); return { t: T.length - 1 }; }
   if ((m = phrase.match(/^target (instant or sorcery|creature|land|permanent) card from your graveyard$/))) { T.push({ f: { card: 'grave', own: true, types: m[1] === 'instant or sorcery' ? ['Instant', 'Sorcery'] : m[1] === 'permanent' ? ['Artifact', 'Battle', 'Creature', 'Enchantment', 'Land', 'Planeswalker'] : [cap(m[1])] } }); return { t: T.length - 1 }; }
+  if ((m = phrase.match(/^target (land|instant or sorcery|creature) card from a graveyard$/))) { T.push({ f: { card: 'grave', types: m[1] === 'instant or sorcery' ? ['Instant', 'Sorcery'] : [cap(m[1])] } }); return { t: T.length - 1 }; }   // Deathrite Shaman
   if (phrase === "target spell you don't control") { T.push({ f: { spell: true, notYours: true } }); return { t: T.length - 1 }; }   // Hullbreaker Horror
   if ((m = phrase.match(/^target (noncreature )?spell(?: with mana value (\d+))?$/))) { T.push({ f: Object.assign({ spell: true }, m[1] ? { notTypes: ['Creature'] } : {}, m[2] ? { mvIs: +m[2] } : {}) }); return { t: T.length - 1 }; }
   // PLAN D22: spells by type or colour, spells and abilities, "with a single target" (CR 115.10)
@@ -208,6 +209,27 @@ function cedhLine(line, ctx, d, kw, ab) {
   if (line === "If an opponent cast three or more spells this turn, you may pay {0} rather than pay this spell's mana cost.") { ab.push({ k: 'altCost', cond: { c: 'oppCastAtLeast', n: 3 } }); return true; }   // Mindbreak Trap
   if (line === "You may sacrifice a nontoken red creature rather than pay this spell's mana cost.") { ab.push({ k: 'altCost', sacNontokenRed: true }); return true; }   // Flare of Duplication
   if ((m = line.match(/^At the beginning of your next upkeep, pay (\{[^ ]+\})\. If you don't, you lose the game\.$/)) && d.types.includes('Instant')) { const sp = ab.find(a => a.k === 'spell'); if (!sp) throw new Fail('a Pact rider before its spell'); sp.ops.push({ o: 'delayed', on: 'beginStep', step: 'upkeep', yours: true, ops: [{ o: 'payOrLose', cost: m[1] }] }); return true; }   // CR 603.7
+  // Mana (PLAN D22)
+  if (line === 'Until end of turn, lands you control gain "Sacrifice ~: Add {B}."' && d.types.includes('Instant')) { ab.push({ k: 'spell', ops: [{ o: 'grantAbEach', on: { each: { types: ['Land'], ctrl: 'you' } }, what: 'Sacrifice this land: Add {B}.', ab: [{ k: 'mana', cost: { mana: '', tap: false, sacSelf: true }, cols: ['B'] }] }] }); return true; }   // Rain of Filth (CR 611.2c)
+  if ((m = line.match(/^Exile this card from your hand: Add \{([WUBRG])\}\.$/))) { ab.push({ k: 'mana', zone: 'hand', cost: { mana: '', tap: false, sacSelf: false, exileSelf: true }, cols: [m[1]] }); return true; }   // the spirit guides (CR 113.6)
+  if (line === 'Discard your hand, Sacrifice ~: Add three mana of any one color. Activate only as an instant.') { ab.push({ k: 'mana', cost: { mana: '', tap: false, sacSelf: true, discardHand: true }, cols: ['W', 'U', 'B', 'R', 'G'], yields: ['WWW', 'UUU', 'BBB', 'RRR', 'GGG'], instantOnly: true }); return true; }   // Lion's Eye Diamond
+  if (line === "If ~ would enter, you may discard a land card instead. If you do, put ~ onto the battlefield. If you don't, put it into its owner's graveyard.") { ab.push({ k: 'moxDiamond' }); return true; }   // CR 614.1a
+  if (line === "If this card is in your opening hand and you're not the starting player, you may begin the game with ~ on the battlefield with a luck counter on it. If you do, exile a card from your hand.") { ab.push({ k: 'gemstone' }); return true; }   // CR 103.6
+  if (line === '{T}: Add {C}. If ~ has a luck counter on it, instead add one mana of any color.') { ab.push({ k: 'mana', cost: { mana: '', tap: true, sacSelf: false }, cols: ['W', 'U', 'B', 'R', 'G', 'C'], colsFrom: 'luck' }); return true; }
+  if (line === 'When you play another land, sacrifice ~.') { ab.push({ k: 'trig', on: 'landPlayed', ops: [{ o: 'sacrificeSelf' }] }); return true; }   // City of Traitors
+  if (line === 'Sacrifice ~: Add {R}{R}.') { ab.push({ k: 'mana', cost: { mana: '', tap: false, sacSelf: true }, cols: ['R'], yields: ['RR'] }); return true; }   // Tinder Wall
+  if (line === "{R}, Sacrifice ~: It deals 2 damage to target creature it's blocking.") { ab.push({ k: 'act', cost: { mana: '{R}', tap: false, sacSelf: true }, tg: [{ f: { types: ['Creature'], blockedBySelf: true } }], ops: [{ o: 'damage', from: 'self', n: 2, to: { t: 0 } }] }); return true; }
+  if ((m = line.match(/^\{T\}: Add \{([WUBRG])\}\. ~ deals (\d+) damage to you\.$/))) { ab.push({ k: 'mana', cost: { mana: '', tap: true, sacSelf: false }, cols: [m[1]], selfDamage: +m[2] }); return true; }   // Elves of Deep Shadow
+  if ((m = line.match(/^\{T\}: Add one mana of any color\. ~ deals (\d+) damage to you\.$/))) { ab.push({ k: 'mana', cost: { mana: '', tap: true, sacSelf: false }, cols: ['W', 'U', 'B', 'R', 'G'], selfDamage: +m[1] }); return true; }   // Tarnished Citadel
+  if ((m = line.match(/^\{T\}: Add \{([WUBRG])\}, \{([WUBRG])\}, or \{([WUBRG])\}\.$/))) { ab.push({ k: 'mana', cost: { mana: '', tap: true, sacSelf: false }, cols: [m[1], m[2], m[3]] }); return true; }   // the Hierarchs
+  if (line === 'Exalted') { ab.push({ k: 'trig', on: 'attacksAlone', exalted: true, ops: [{ o: 'pump', on: 'ev', p: 1, t: 1 }] }); return true; }   // CR 702.83a
+  if (line === '{T}: Add one mana of any color among legendary creatures and planeswalkers you control.') { ab.push({ k: 'mana', cost: { mana: '', tap: true, sacSelf: false }, cols: ['W', 'U', 'B', 'R', 'G'], colsFrom: 'legendary' }); return true; }   // Mox Amber
+  if (line === '{1}, {T}: Put a charge counter on ~. Note the type of mana spent to pay this activation cost. Activate only if there are no charge counters on ~.') { ab.push({ k: 'act', cost: { mana: '{1}', tap: true, sacSelf: false }, cond: { c: 'selfNoCounter', kind: 'charge' }, ops: [{ o: 'amuletCharge' }] }); return true; }   // Jeweled Amulet
+  if (line === "{T}, Remove a charge counter from ~: Add one mana of ~'s last noted type.") { ab.push({ k: 'mana', cost: { mana: '', tap: true, sacSelf: false, removeCtr: { n: 1, kind: 'charge' } }, cols: ['W', 'U', 'B', 'R', 'G', 'C'], colsFrom: 'noted' }); return true; }
+  if (line === "At the beginning of each of your main phases, if you haven't added mana with this ability this turn, you may add X mana of any one color, where X is the number of Islands target opponent controls.") { ab.push({ k: 'trig', on: 'beginStep', steps: ['main1', 'main2'], yours: true, cond: { c: 'notCarpetTurn' }, tg: [{ f: { player: 'opp' } }], ops: [{ o: 'may', what: 'addMana', ops: [{ o: 'addManaOneColor', n: { v: 'countOf', f: { subtypes: ['Island'] }, ctrlOfT: 0 }, mark: true }] }] }); return true; }   // Carpet of Flowers
+  if (line === 'Exile a creature you control: Add X mana of any one color, where X is 1 plus the exiled creature\'s mana value. Spend this mana only to cast creature spells.') { ab.push({ k: 'mana', special: 'foodChain', cost: { mana: '', tap: false, sacSelf: false, exileCreature: true }, cols: ['W', 'U', 'B', 'R', 'G'], colsFrom: 'foodChain', only: 'creature' }); return true; }   // Food Chain (CR 106.6)
+  if (line === 'Tap two untapped Foods you control: Add one mana of any color.') { ab.push({ k: 'mana', cost: { mana: '', tap: false, sacSelf: false, tapFoods: 2 }, cols: ['W', 'U', 'B', 'R', 'G'] }); return true; }   // The Cabbage Merchant
+  if (line === 'Whenever you tap ~ for mana, target opponent creates a 1/1 colorless Spirit creature token.') { ab.push({ k: 'trig', on: 'tappedForMana', who: 'self', tg: [{ f: { player: 'opp' } }], ops: [{ o: 'token', id: ctx.token({ p: 1, t: 1, color: 'colorless', sub: 'Spirit' }), n: 1, forPlayer: { t: 0 } }] }); return true; }   // Forbidden Orchard (CR 605.4a)
   if ((m = line.match(/^Dash (\{[^ ]+\})$/))) { ab.push({ k: 'dash', cost: m[1] }); return true; }   // CR 702.109a
   if (line === 'As an additional cost to cast this spell, pay 5 life or pay {2}.') { ab.push({ k: 'addCost', what: 'lifeOrMana', life: 5, mana: '{2}' }); return true; }   // Redirect Lightning
   // Casting: permissions and prohibitions
@@ -223,6 +245,10 @@ function cedhLine(line, ctx, d, kw, ab) {
 }
 function cedhEffects(T, ctx, t) {
   let m;
+  if (/^add \{R\}\{R\}, then add \{R\} for each card named ~ in each graveyard$/i.test(t)) return [{ o: 'addManaStr', mana: '{R}{R}' }, { o: 'addManaPer', col: 'R', n: { v: 'namedInGraves' } }];   // Rite of Flame
+  if (/^destroy each nonland permanent with mana value 2 or less\. Add \{B\} or \{G\} for each permanent destroyed this way$/i.test(t)) return [{ o: 'cullingRitual' }];
+  if ((m = t.match(/^exile the top (three) cards of your library\. You may play them this turn$/i))) return [{ o: 'impulse', until: 'eot', n: numOf(m[1]) }];   // Jeska's Will
+  if ((m = t.match(/^exile (target (?:land|instant or sorcery|creature) card from a graveyard)\. (Add one mana of any color|Each opponent loses 2 life|You gain 2 life)$/i))) { const r = parseRef(T, ctx, m[1]); return [{ o: 'exile', on: r }].concat(parseEffect(T, ctx, m[2])); }   // Deathrite Shaman
   if ((m = t.match(/^counter (target noncreature spell)\. If that spell is countered this way, exile it instead of putting it into its owner's graveyard$/i))) return [{ o: 'counterTarget', on: parseRef(T, ctx, m[1]), exile: true }];   // Force of Negation
   if (/^counter target activated or triggered ability\. If a permanent's ability is countered this way, activated abilities of that permanent can't be activated this turn$/i.test(t)) { T.push({ f: { ability: true } }); return [{ o: 'trickbind', on: { t: T.length - 1 } }]; }
   if ((m = t.match(/^(target player) can't cast spells this turn\. If this spell was kicked, creatures can't attack this turn$/i))) return [{ o: 'cantCast', who: parseRef(T, ctx, m[1].toLowerCase()) }, { o: 'if', cond: { c: 'kicked' }, ops: [{ o: 'noAttacks' }] }];   // Orim's Chant
@@ -269,6 +295,8 @@ function cedhEffect(T, ctx, s) {
   if ((m = s.match(/^[Ii]ts controller creates (two) Treasure tokens$/)) && T.length) return [{ o: 'token', id: ctx.token.treasure(), n: numOf(m[1]), forCtrlOf: { t: T.length - 1 } }];   // An Offer You Can't Refuse
   if (/^[Ii]ts controller creates a 2\/2 blue Bird creature token with flying$/.test(s) && T.length) return [{ o: 'token', id: ctx.token({ p: 2, t: 2, color: 'blue', sub: 'Bird', kw: ['flying'] }), n: 1, forCtrlOf: { t: T.length - 1 } }];   // Swan Song
   if (/^[Yy]ou may cast spells this turn as though they had flash$/.test(s)) return [{ o: 'flashAll' }];   // CR 601.3e
+  if (/^[Aa]dd two mana in any combination of colors$/.test(s)) return [{ o: 'addManaCombo', n: 2 }];   // Manamorphose
+  if ((m = s.match(/^[Aa]dd \{R\} for each card in (target opponent)'s hand$/))) { const r = parseRef(T, ctx, m[1].toLowerCase()); return [{ o: 'addManaPer', col: 'R', n: { v: 'handOf', who: r } }]; }   // Jeska's Will
   if (/^[Cc]ounter that spell$/.test(s) && ctx.spellEv) return [{ o: 'counterEvSpell' }];               // Vexing Bauble
   if (/^[Yy]our opponents can't cast spells this turn$/.test(s)) return [{ o: 'cantCast', who: 'eachOpp' }];
   if (/^[Yy]our opponents can't cast noncreature spells this turn$/.test(s)) return [{ o: 'cantCast', who: 'eachOpp', noncreature: true }];
@@ -1175,7 +1203,7 @@ export function compileCard(c, tokens, alt, room) {
     const lines = normalize(d.text, faceName, d.supers.includes('Legendary'));
     for (let i = 0; i < lines.length; i++) {
       // A modal spell: "Choose one —" then bullet lines, one mode each (CR 700.2).
-      const mm = lines[i].match(/^Choose (one|two|one or both) —$/);
+      const mm = lines[i].match(/^Choose (one|two|one or both)(?: —|\. If you control a commander as you cast this spell, you may choose both instead\.)$/);
       if (mm && (d.types.includes('Instant') || d.types.includes('Sorcery'))) {
         if (mm[1] === 'one or both') throw new Fail('modal "choose one or both" is not compiled');
         const modes = [];
@@ -1186,7 +1214,7 @@ export function compileCard(c, tokens, alt, room) {
         }
         if (modes.length < 2) throw new Fail('modal spell with fewer than two modes');
         if (mm[1] === 'two' && modes.some(x => x.tg)) throw new Fail('"choose two" with a targeted mode');
-        d.ab.push(Object.assign({ k: 'spell', modes: modes }, mm[1] === 'two' ? { choose: 2 } : {}));
+        d.ab.push(Object.assign({ k: 'spell', modes: modes }, mm[1] === 'two' ? { choose: 2 } : {}, /commander/.test(lines[i - modes.length]) ? { bothIf: { c: 'controlCommander' } } : {}));   // Jeska's Will
         continue;
       }
       if (lines[i] === 'Spree') {                                                                 // CR 702.172a: one or more modes, each with an additional cost

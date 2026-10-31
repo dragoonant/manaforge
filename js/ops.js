@@ -48,6 +48,7 @@
     if (f.cmdr && !(I(s, iid) && I(s, iid).cmdr)) return false;                                   // CR 903.3d: a commander
     if (f.owned && !(I(s, iid) && I(s, iid).owner === who)) return false;                         // "you own"
     if (f.colors && !f.colors.some(k => ch.colors.includes(k))) return false;                     // "blue creatures"
+    if (f.blockedBySelf && !(s.combat && (s.combat.blocks[srcIid] || []).includes(iid))) return false;   // Tinder Wall: "target creature it's blocking"
     return true;
   };
   // A card in a hidden or public zone by its own characteristics (a search, a reveal).
@@ -128,6 +129,8 @@
     yourTurn: x => x.s.ap === x.ctrl,
     // PLAN D22
     notYourTurn: x => x.s.ap !== x.ctrl,
+    selfNoCounter: (x, c) => !((I(x.s, x.src).ctr[c.kind] || 0) > 0),                                        // Jeweled Amulet: "only if there are no charge counters on ~"
+    notCarpetTurn: x => I(x.s, x.src).carpetTurn !== x.s.turn,                                                 // Carpet of Flowers: "if you haven't added mana with this ability this turn"
     controlCommander: x => x.s.bf.some(i => I(x.s, i).ctrl === x.ctrl && I(x.s, i).cmdr),                     // CR 903.3: a commander on the battlefield, yours or not by ownership
     oppCastAtLeast: (x, c) => P(x.s, 1 - x.ctrl).h.cast >= c.n,
     evNoMana: x => !!x.ev && x.ev.spent === 0,                                                                 // Vexing Bauble (CR 601.2h)
@@ -164,7 +167,10 @@
     power: (x, v) => { const r = MF.resolveRefs(x, v.of)[0]; if (r != null) return MF.chars(x.s, r).p; if (v.of === 'self' && x.lki) return x.lki.p; return 0; },
     castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
     evAmount: x => x.ev.n,
-    evMv: x => x.ev.mv,                                                                         // "that spell's mana value"                                                                      // "that much damage"
+    evMv: x => x.ev.mv,
+    namedInGraves: x => x.s.players.reduce((n, p) => n + p.grave.filter(g => I(x.s, g).id === I(x.s, x.src).id).length, 0),   // Rite of Flame: "for each card named ~ in each graveyard" (itself excluded: it is on the stack)
+    handOf: (x, v) => players(x, v.who).reduce((n, seat) => n + P(x.s, seat).hand.length, 0),   // "each card in target opponent's hand"
+    countOf: (x, v) => { const seats = (x.t[v.ctrlOfT] || []).filter(q => q && q.p != null).map(q => q.p); return x.s.bf.filter(i => seats.includes(I(x.s, i).ctrl) && MF.matchChars(x.s, i, MF.chars(x.s, i), v.f, x.ctrl, x.src)).length; },   // "the number of Islands target opponent controls"                                                                         // "that spell's mana value"                                                                      // "that much damage"
     kicked: (x, v) => x.L && x.L.kicked ? v.yes : v.no,
     countYou: (x, v, table) => x.s.bf.filter(i => I(x.s, i).ctrl === x.ctrl && MF.matchChars(x.s, i, table ? table[i] : MF.chars(x.s, i), v.f, x.ctrl, x.src)).length,   // "the number of Plains you control"
     creLeftYou: x => P(x.s, x.ctrl).h.creLeft || 0,                                              // "each creature that left the battlefield under your control this turn"
@@ -246,7 +252,10 @@
       case 'becomesTapped': return ev.iid === iid;
       case 'untapped': return true;
       case 'unblocked': return ev.iid === iid;
-      case 'beginStep': return ev.step === a.step && (!a.yours || ev.ap === src.ctrl) && (!a.opps || ev.ap !== src.ctrl);
+      case 'attacksAlone': return ev.ctrl === src.ctrl;
+      case 'landPlayed': return ev.ctrl === src.ctrl && ev.iid !== iid;
+      case 'tappedForMana': return ev.iid === iid;
+      case 'beginStep': return (a.steps ? a.steps.includes(ev.step) : ev.step === a.step) && (!a.yours || ev.ap === src.ctrl) && (!a.opps || ev.ap !== src.ctrl);
       case 'gainLife': return ev.who === src.ctrl;
       // Valiant: "becomes the target of a spell or ability you control for the first time each turn".
       case 'targeted': if (a.ownCreature) { const tc = s.cards[ev.iid]; return !!tc && (tc.zone === 'bf' || (tc.zone === 'stack' && !a.permOnly)) && tc.ctrl === src.ctrl && MF.chars(s, ev.iid).types.includes('Creature') && ev.by !== src.ctrl; }   // Surrak
@@ -373,6 +382,7 @@
     },
     token(x, op) {                                                                             // CR 111.1
       if (op.forCtrlOf) { const w = ctrlOfTarget(x, op.forCtrlOf); if (w == null) return; return OPS.token(Object.assign({}, x, { ctrl: w }), Object.assign({}, op, { forCtrlOf: null })); }   // "Its controller creates ..."
+      if (op.forPlayer) { const w = players(x, op.forPlayer)[0]; if (w == null) return; return OPS.token(Object.assign({}, x, { ctrl: w }), Object.assign({}, op, { forPlayer: null })); }   // "target opponent creates ..."
       const s = x.s, n = num(x, op.n);
       for (let k = 0; k < n; k++) {
         const iid = s.nid++;
@@ -616,6 +626,7 @@
     // Alania's Pathmaker: "exile the top card of your library. Until the end of your next turn, you may play that card."
     impulse(x, op) {
       const s = x.s, p = P(s, x.ctrl);
+      if (op.n > 1) { for (let k = 0; k < op.n; k++) OPS.impulse(x, Object.assign({}, op, { n: 1 })); return; }   // Jeska's Will: "the top three cards"
       if (!p.lib.length) return;
       const id = I(s, p.lib[0]).id;
       const n = MF.move(s, p.lib[0], 'exile');
@@ -1105,6 +1116,48 @@
       MF.counterSpell(s, L, x.L ? (x.L.srcId || x.L.id) : null, op.exile);
     },
     counterTarget(x, op) { const iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return; MF.counterSpell(x.s, x.s.stack.find(l => l.kind === 'spell' && l.iid === iid), x.L ? (x.L.srcId || x.L.id) : null, op.exile, x); },   // CR 701.6a; Force of Negation: "exile it instead"
+    // ---- PLAN D22: mana ----
+    // Rite of Flame: "add {R} for each card named ~ in each graveyard"; Jeska's Will: "Add {R} for each card in target opponent's hand".
+    addManaPer(x, op) { const n = Math.max(0, num(x, op.n)); if (!n) return; P(x.s, x.ctrl).pool[op.col] += n; log(x.s, 'addManaStr', { who: x.ctrl, mana: ('{' + op.col + '}').repeat(n), c: x.L ? x.L.srcId || x.L.id : null }); },
+    // Manamorphose: "Add two mana in any combination of colors" (CR 106.1a: each mana's colour is a choice).
+    addManaCombo(x, op) {
+      const p = P(x.s, x.ctrl), got = [];
+      for (let k = 0; k < op.n; k++) got.push(MF.ask(x.x, { who: x.ctrl, kind: 'manaColor', src: x.src, k: k + 1, n: op.n, opts: MF.COLORS.map(c => ({ id: c })) }));
+      for (const c of got) p.pool[c]++;
+      log(x.s, 'addManaStr', { who: x.ctrl, mana: got.map(c => '{' + c + '}').join(''), c: x.L ? x.L.srcId || x.L.id : null });
+    },
+    // "Add one mana of any color" (Deathrite Shaman); "add X mana of any one color" (Carpet of Flowers).
+    addManaOneColor(x, op) {
+      const n = op.n == null ? 1 : Math.max(0, num(x, op.n)); if (!n) return;
+      const c = MF.ask(x.x, { who: x.ctrl, kind: 'manaColor', src: x.src, n: n, opts: MF.COLORS.map(k => ({ id: k })) });
+      P(x.s, x.ctrl).pool[c] += n; log(x.s, 'addManaStr', { who: x.ctrl, mana: ('{' + c + '}').repeat(n), c: x.L ? x.L.srcId || x.L.id : null });
+      if (op.mark) I(x.s, x.src).carpetTurn = x.s.turn;                                        // Carpet of Flowers: "if you haven't added mana with this ability this turn"
+    },
+    // Culling Ritual: "Destroy each nonland permanent with mana value 2 or less. Add {B} or {G} for each permanent destroyed this way."
+    cullingRitual(x) {
+      const s = x.s, list = s.bf.filter(i => !MF.chars(s, i).types.includes('Land') && MF.chars(s, i).mv <= 2);
+      let n = 0;
+      for (const i of list) { if (I(s, i).zone !== 'bf') continue; MF.destroy(s, i, 'effect'); if (I(s, i).zone !== 'bf') n++; }   // "destroyed this way": it left (regeneration or indestructible keep it)
+      if (!n) return;
+      const opts = []; for (let k = n; k >= 0; k--) opts.push({ id: 'B'.repeat(k) + 'G'.repeat(n - k) });   // CR 106.1a
+      const pick = MF.ask(x.x, { who: x.ctrl, kind: 'manaCombo', src: x.src, amount: n, cols: ['B', 'G'], opts: opts });
+      const p = P(s, x.ctrl); for (const c of pick) p.pool[c]++;
+      log(s, 'addManaStr', { who: x.ctrl, mana: pick.split('').map(c => '{' + c + '}').join(''), c: x.L ? x.L.srcId || x.L.id : null });
+    },
+    // Rain of Filth: "Until end of turn, lands you control gain "Sacrifice this land: Add {B}."" — the lands it affects are fixed as it resolves (CR 611.2c).
+    grantAbEach(x, op) {
+      const s = x.s, list = MF.resolveRefs(x, op.on);
+      for (const i of list) s.effects.push({ k: 'grantAb', iid: i, abs: op.ab, until: 'eot', ts: s.ts++ });
+      log(s, 'gainsAbilityAll', { who: x.ctrl, n: list.length, src: x.L ? x.L.srcId || x.L.id : null, what: op.what });
+    },
+    // Jeweled Amulet: "Put a charge counter on ~. Note the type of mana spent to pay this activation cost."
+    amuletCharge(x) {
+      const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'bf') return;
+      c.ctr.charge = (c.ctr.charge || 0) + 1;
+      const spent = Object.keys((x.L && x.L.spentCols) || {}).filter(k => x.L.spentCols[k] > 0);
+      if (spent.length) c.noted = spent[0];
+      log(s, 'amuletNote', { who: x.ctrl, c: c.id, col: c.noted || null });
+    },
     // ---- PLAN D22: the championship Commander decks — the stack ----
     // CR 701.23: search a library for a card. With a stated quality the searcher may find nothing
     // (701.23b); for just "a card" they must find one if the library has any (701.23d).
@@ -1630,7 +1683,7 @@
   // -------------------------------------------------------------------------------------------
   // Load-time validation: refuse to run rather than play a card wrongly.
   // -------------------------------------------------------------------------------------------
-  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste', 'storied', 'freeEquipOnce', 'leyline', 'equipDiscountTarget', 'hexproofFrom', 'engines', 'torpor', 'nameLock', 'nameGrantC', 'chooseBackground', 'morph', 'storm', 'millDouble', 'millPlus', 'paint', 'raulCast', 'cantBeBlocked', 'mindskinner', 'zombieDamageMill', 'skipDraw', 'urborg', 'firstDrawReplace', 'altCost', 'dash', 'splitSecond', 'oppNoActivate', 'onlyOwnTurn', 'flashNoncreature', 'flashIfOwnTarget', 'uncounterableYours', 'breach'];
+  const ABKINDS = ['mana', 'act', 'trig', 'static', 'cda', 'noUntap', 'etbTapped', 'enchant', 'costLess', 'costLessFor', 'spell', 'offspring', 'enterAsCopy', 'kicker', 'etbPayOrTap', 'restrict', 'hexproofFrom', 'lifeLossDouble', 'gift', 'bargain', 'harmonize', 'sneak', 'oppNoCast', 'warp', 'evasion', 'oppDieExile', 'addCost', 'etbCounters', 'flashback', 'mayhem', 'mustAttack', 'enterChoice', 'extraLand', 'landsFromGrave', 'uncounterable', 'affinity', 'maxBlockers', 'chosenLandType', 'plot', 'costLessPer', 'preventCombatToSelf', 'impending', 'oneSpellPerTurn', 'oppCreaturesEnterTapped', 'castFree', 'compleated', 'entersPrepared', 'targetTax', 'evoke', 'anyColorCreatureAbilities', 'cauldronGrant', 'abilitiesHaste', 'storied', 'freeEquipOnce', 'leyline', 'equipDiscountTarget', 'hexproofFrom', 'engines', 'torpor', 'nameLock', 'nameGrantC', 'chooseBackground', 'morph', 'storm', 'millDouble', 'millPlus', 'paint', 'raulCast', 'cantBeBlocked', 'mindskinner', 'zombieDamageMill', 'skipDraw', 'urborg', 'firstDrawReplace', 'altCost', 'dash', 'splitSecond', 'oppNoActivate', 'onlyOwnTurn', 'flashNoncreature', 'flashIfOwnTarget', 'uncounterableYours', 'breach', 'moxDiamond', 'gemstone'];
   MF.validate = function () {
     const bad = [];
     const walkOps = (id, ops) => { for (const op of ops || []) { if (!OPS[op.o]) bad.push(id + ': op with no handler: ' + op.o); if (!MF.describeOp || !MF.describeOp[op.o]) bad.push(id + ': op with no describer: ' + op.o); if (op.ops) walkOps(id, op.ops); if (op.else) walkOps(id, op.else); if (op.cond && !CONDS[op.cond.c]) bad.push(id + ': no condition ' + op.cond.c); } };
