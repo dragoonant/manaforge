@@ -530,3 +530,13 @@ test('Beseech the Mirror, bargained: the card found may be cast free if its mana
   s = resolveAll(s, (q, st) => viewId(q, st, 'ranger-captain-of-eos'), 'yes', 'no');
   ok(find(s, 'ranger-captain-of-eos', 'bf', 0) != null, 'cast for free');
 });
+test('Gornog, the Red Reaper: a Coward can\'t block a Warrior; attacking Warriors get +X/+0 per opposing Coward (read inside the layers)', () => {
+  let s = setup({ me: { bf: ['gornog-the-red-reaper', 'najeela-the-blade-blossom'] }, opp: { bf: ['ranger-captain-of-eos'] } });
+  s = toStep(s, 'attackers'); s = answer(s, [(q, st) => viewId(q, st, 'najeela-the-blade-blossom'), 'done']);
+  const reply = (q, st) => q.kind === 'may' ? 'no' : q.kind === 'target' ? viewId(q, st, 'ranger-captain-of-eos') : q.opts[0].id;
+  s = resolveAll(s, reply, reply, reply, reply);
+  const rc = find(s, 'ranger-captain-of-eos', 'bf', 1), nj = find(s, 'najeela-the-blade-blossom', 'bf', 0);
+  eq(MF.chars(s, rc).subtypes, ['Coward']);
+  eq(MF.chars(s, nj).p, 4, 'Najeela 3 + 1 Coward');
+  ok(!MF.canBlock(s, rc, nj), 'Cowards can\'t block Warriors');
+});

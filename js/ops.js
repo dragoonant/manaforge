@@ -174,7 +174,7 @@
     evAmount: x => x.ev.n,
     evMv: x => x.ev.mv,
     sacMvPlus: (x, v) => (x.L && x.L.sacMv != null ? x.L.sacMv : 0) + v.n,                      // Eldritch Evolution: "2 plus the sacrificed creature's mana value"
-    oppCowards: x => x.s.bf.filter(i => I(x.s, i).ctrl !== x.ctrl && MF.chars(x.s, i).subtypes.includes('Coward')).length,   // Gornog
+    oppCowards: (x, v, table) => x.s.bf.filter(i => { const ch = table ? table[i] : MF.chars(x.s, i); return ch.ctrl !== x.ctrl && ch.subtypes.includes('Coward'); }).length,   // Gornog: read from the layer table when the characteristics door asks (a static's value)
     lkiPowerT: (x, v) => { const q = (x.t[v.t] || [])[0]; if (!q || q.c == null) return 0; const c = I(x.s, q.c); return c.zone === 'bf' ? MF.chars(x.s, q.c).p : c.lki ? c.lki.p : 0; },   // Swords to Plowshares: "its power", as it last existed
     namedInGraves: x => x.s.players.reduce((n, p) => n + p.grave.filter(g => I(x.s, g).id === I(x.s, x.src).id).length, 0),   // Rite of Flame: "for each card named ~ in each graveyard" (itself excluded: it is on the stack)
     handOf: (x, v) => players(x, v.who).reduce((n, seat) => n + P(x.s, seat).hand.length, 0),   // "each card in target opponent's hand"
