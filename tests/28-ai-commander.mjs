@@ -43,3 +43,8 @@ test('AI: a tutor finds the missing piece of a win line (Demonic Tutor gets Demo
   for (let k = 0; k < 30 && !inHand(s) && s.turn === 3; k++) s = MF.apply(s, MF.ai.choose(s));
   ok(inHand(s), 'Consultation is in hand');
 });
+test('AI: it doesn\'t cast Final Fortune or a Pact it can\'t pay for (the loss is past its one-turn horizon)', () => {
+  let s = setup({ me: { hand: ['final-fortune', 'summoners-pact'], bf: [R, R], lib: [U, U, 'the-cabbage-merchant'] } });
+  for (let k = 0; k < 40 && s.turn === 3 && s.winner == null; k++) s = MF.apply(s, MF.ai.choose(s));
+  ok(s.players[0].hand.length === 2, 'both still in hand: ' + s.players[0].hand.map(i => s.cards[i].id));
+});

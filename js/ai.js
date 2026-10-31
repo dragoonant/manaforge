@@ -33,6 +33,19 @@
     return W.perm + (ch.subtypes.includes('Aura') ? 0.6 : 0);
   }
   MF.aiPermValue = permValue;
+  // The Pacts this player owes at its next upkeep: still delayed, triggered, or on the stack (CR 603.7).
+  function pactsOwed(s, seat) {
+    const owed = [].concat((s.delayed || []).map(d => ({ ctrl: d.ctrl, ab: d.ab })), (s.trigs || []).map(t => ({ ctrl: t.ctrl, ab: t.inl })), s.stack.filter(L => L.kind === 'trig').map(L => ({ ctrl: L.ctrl, ab: L.inl })));
+    const out = []; for (const d of owed) if (d.ab && typeof d.ab === 'object' && d.ctrl === seat) for (const op of d.ab.ops || []) if (op.o === 'payOrLose') out.push(MF.parseMana(op.cost));
+    return out;
+  }
+  // Could it pay with everything it controls untapped (its upkeep, CR 502.3), colours and all? `extra`: a card imagined in hand.
+  function pactPayable(s, seat, cost, extra) {
+    const u = MF.clone(s); for (const i of u.bf) if (I(u, i).ctrl === seat) I(u, i).tapped = false;
+    for (const pl of u.players) pl.pool = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
+    if (extra != null && I(u, extra)) { const c = I(u, extra), z = MF.zoneArr(u, c); if (z) z.splice(z.indexOf(extra), 1); c.zone = 'hand'; P(u, seat).hand.push(extra); }
+    return MF.canPayMana(u, seat, cost);
+  }
   // A card that wins with an empty library in hand or on the battlefield (Thassa's Oracle, PLAN D24).
   const isLibraryWin = d => /win the game/.test(d.text || '') && /librar/.test(d.text || '');
   function winsOnEmpty(s, seat) { return P(s, seat).hand.concat(s.bf.filter(i => I(s, i).ctrl === seat)).some(i => isLibraryWin(MF.def(s, i))); }
@@ -60,12 +73,8 @@
       x += cols.size * W.colorAccess;
       // A Pact due at this player's next upkeep (CR 603.7): the roll-out ends before it, so the loss is
       // counted here when the mana it asks for isn't there — every mana source this player controls, untapped.
-      const owed = [].concat((s.delayed || []).map(d => ({ ctrl: d.ctrl, ab: d.ab })), (s.trigs || []).map(t => ({ ctrl: t.ctrl, ab: t.inl })), s.stack.filter(L => L.kind === 'trig').map(L => ({ ctrl: L.ctrl, ab: L.inl })));   // still delayed, triggered, or on the stack at the horizon
-      for (const d of owed) if (d.ab && typeof d.ab === 'object') for (const op of d.ab.ops || []) if (op.o === 'payOrLose' && d.ctrl === seat) {
-        const u = MF.clone(s); for (const i of u.bf) if (I(u, i).ctrl === seat) I(u, i).tapped = false;   // its next upkeep: everything untapped (CR 502.3), colours and all
-        for (const pl of u.players) pl.pool = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
-        if (!MF.canPayMana(u, seat, MF.parseMana(op.cost))) x -= W.pactUnpaid;
-      }
+      for (const cost of pactsOwed(s, seat)) if (!pactPayable(s, seat, cost)) x -= W.pactUnpaid;
+      if ((s.delayed || []).concat(s.trigs || [], s.stack).some(d => d.ctrl === seat && (d.ab || d.inl) && JSON.stringify(d.ab && d.ab.ops ? d.ab.ops : (d.inl || {}).ops || []).includes('"loseGame"'))) x -= W.pactUnpaid;   // Final Fortune: a loss already arranged (its extra turn is past the horizon)
       if (p.lib.length < 3) x -= (3 - p.lib.length) * 4;
       // An empty library at the horizon (CR 704.5b): its owner loses at their next draw unless something
       // wins first (Thassa's Oracle). Brain Freeze's mill-out is scored here (PLAN D24).
@@ -199,6 +208,8 @@
       case 'surveil': { const lands = s.bf.filter(i => I(s, i).ctrl === me && MF.isType(s, i, 'Land')).length; const land = MF.def(s, q.opts[0].iid).types.includes('Land'); return land && lands >= 5 ? 'grave' : 'top'; }
       case 'search': case 'searchMany': {                                                     // PLAN D24: the missing piece of the nearest win line, else the card most worth having
         const cards = q.opts.filter(o => o.iid != null), v = MF.view(s), want = wantedPieces(v, q.who);
+        const own = q.src != null && v.cards[q.src] ? (opsOf(MF.def(v, q.src)).match(/"o":"payOrLose","cost":"([^"]+)"/) || [])[1] : null;   // the Pact doing the searching owes it next
+        for (const cost of pactsOwed(v, q.who).concat(own ? [MF.parseMana(own)] : [])) if (!pactPayable(v, q.who, cost)) { const pay = cards.find(o => pactPayable(v, q.who, cost, o.iid)); if (pay) return pay.id; }   // a Pact owed: find what pays it (Elvish Spirit Guide for Summoner's Pact)
         const hit = cards.find(o => want.some(w => w(MF.def(v, o.iid))));
         if (hit) return hit.id;
         if (!cards.length) return q.opts[0].id;
@@ -532,6 +543,7 @@
         catch (e) { throw e; }
         MF.ai.stats.rollouts++;
         if (a.type === 'pass' || a.id === 'done' || a.id === 'no' || a.id === 'keep') v += 0.05;   // ties go to doing nothing
+        if (MF.ai.debug) MF.ai.debug(a, v);                                                       // tools and tests may watch the scores
         if (v > bs + 1e-9) { bs = v; best = a; }
       }
       MF.ai.stats.applies += st.n;
