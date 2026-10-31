@@ -457,3 +457,17 @@ test('CR 733: a mana ability at priority whose own cost can\'t be completed is r
   ok(!s.pending && s.priority === 0, 'back to priority'); ok(logs(s, 'undone').length >= 1, 'the action was reversed');
   eq(s.players[0].pool, { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 });
 });
+test('Captain N\'ghathrod: combat damage to a blocking creature mills nothing — only damage to a player (regression)', () => {
+  let s = setup({ me: { bf: ['captain-nghathrod', 'zellix-sanity-flayer'] }, opp: { bf: ['hedron-crab', 'ruin-crab'], lib: Array(20).fill(U) } });
+  s = toStep(s, 'attackers'); s = answer(s, [(q, st) => viewId(q, st, 'zellix-sanity-flayer'), 'done']);
+  s = toStep(s, 'main2', (q, st) => q.opts.find(o => o.iid != null).id, (q, st) => q.opts.find(o => o.iid != null).id, 'done', q => q.opts[0].id);   // both Crabs block (menace)
+  eq(s.players[1].lib.length, 20, 'Zellix\'s combat damage went to the Crabs: nothing milled');
+});
+test('Deals-damage triggers keep their "to a player" and "combat" conditions (regression: a stray comment once dropped them for every deck)', () => {
+  const ab = { k: 'trig', on: 'dealsDamage', who: 'self', combat: true, toPlayer: true };
+  const ev = (to, combat) => ({ t: 'dealsDamage', src: 7, srcCtrl: 0, srcTypes: ['Creature'], srcSubtypes: [], to: to, n: 2, combat: combat });
+  const s = setup({});
+  ok(MF.trigMatch(s, 7, { ctrl: 0 }, ab, ev({ p: 1 }, true)), 'combat damage to a player');
+  ok(!MF.trigMatch(s, 7, { ctrl: 0 }, ab, ev({ c: 99 }, true)), 'not to a creature');
+  ok(!MF.trigMatch(s, 7, { ctrl: 0 }, ab, ev({ p: 1 }, false)), 'not noncombat damage');
+});

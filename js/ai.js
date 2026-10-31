@@ -283,6 +283,7 @@
   const SEARCH_KINDS = { addCostYes: 1, attackWhom: 1, wardPay: 1, bargain: 1, payOrCounter: 1, gift: 1, handPick: 1, mode: 1, target: 1, attack: 1, block: 1, may: 1, enterAsCopy: 1, offspring: 1, kicker: 1, chooseKw: 1, x: 1, lookTop: 1 };
 
   const OPP_WINDOWS = { boc: 1, attackers: 1, blockers: 1, end: 1 };
+  const MAX_CANDIDATES = 12;
   function candidates(s, legal) {
     const seen = new Set(), out = [];
     for (const a of legal) {
@@ -312,6 +313,13 @@
       // turn, so the first window always looks best — a pump spent in their upkeep, a Role on a creature
       // that won't attack until my turn. Act where timing matters: their beginning of combat, combat, end step.
       if (W.waitWindows && !s.pending && s.ap !== me && !s.stack.length && !OPP_WINDOWS[s.step]) { const p = legal.find(a => a.type === 'pass'); if (p) return p; }
+      // A question with very many answers (blocks on a board of tokens: 155 pairs once took 37 s) rolls out
+      // the policy's own answer, "done", and the first others up to MAX_CANDIDATES — a count, so the AI stays
+      // deterministic. Only big boards reach it.
+      if (s.pending && legal.length > MAX_CANDIDATES) {
+        const pa = policyAnswer(s, s.pending.q), must = legal.filter(a => a.id === 'done' || a.id === 'no' || a.id === pa);
+        legal = must.concat(legal.filter(a => !must.includes(a)).slice(0, Math.max(0, MAX_CANDIDATES - must.length)));
+      }
       if (legal.length === 1) return legal[0];
       // Every candidate and pass, rolled to the same horizon from the same determinized copy.
       const root = determinize(s, s.log.length);

@@ -7,6 +7,11 @@
   not plan the deck's combos (Isochron Scepter + Dramatic Reversal, Painter's Servant + Grindstone,
   Doomsday into Thassa's Oracle, Bloodchief Ascension + Mindcrank). Its evaluator counts a short
   library only below three cards, so milling an opponent is barely valued.
+- **AI speed on very big boards**: in Kujo mirror games with 35–50 permanents (Zellix's Horror tokens) an
+  AI decision takes up to about 4.5 s (99% under 3 s, median under 0.1 s; 2026-10-31, one core). Most of
+  it is now `MF.clone`, a JSON copy of a state whose `cards` keeps every moved object as last known
+  information; pruning objects nothing refers to would be the next step. A question with more than 12
+  answers rolls out only 12 of them (the policy's own answer and "done" always among them).
 - Art: every card in every registered deck is illustrated (D13, D17). Re-roll any card with `--force <key> --seed-offset N` in `tools/gen-art-sdxl.py`; review with `tools/contact-sheet.ps1`.
 - **Sound and music**: ElevenLabs effects and music with a synthesised fallback voice (D9).
 - The animation layer (D18) plays motion from a diff of each render. Not yet: an attacker lunging at

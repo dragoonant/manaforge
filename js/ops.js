@@ -221,7 +221,7 @@
       case 'drawCard': return (!a.you || ev.who === src.ctrl) && (!a.opp || ev.who !== src.ctrl) && (!a.nth || ev.nth === a.nth);
       case 'counterPut': return ev.iid === iid && (!a.ctrKind || ev.kind === a.ctrKind) && (!a.nth || (ev.before < a.nth && ev.after >= a.nth));   // "When the fourth plan counter is put on this"                               // "When this Class becomes level N" (CR 716.2a)
       case 'cast': return (a.anyPlayer || ev.ctrl === src.ctrl) && (!a.oppOnly || ev.ctrl !== src.ctrl) && (!a.chosenParity || (s.cards[iid].chosen && ((ev.mv % 2 === 0) === (s.cards[iid].chosen === 'even')))) && (!a.nth || ev.nth === a.nth) && (!a.spell || ((!a.spell.notTypes || !a.spell.notTypes.some(t => ev.types.includes(t))) && (!a.spell.types || a.spell.types.some(t => ev.types.includes(t))) && (a.spell.mvGE == null || ev.mv >= a.spell.mvGE)));
-      case 'dealsDamage': return (a.who && a.who !== 'self' ? (ev.srcCtrl === src.ctrl && (!a.who.types || a.who.types.some(ty => (ev.srcTypes || []).includes(ty))) && (!a.who.subtypes || a.who.subtypes.some(st => (ev.srcSubtypes || []).includes(st)))) : ev.src === iid)   // "Whenever a Horror you control deals combat damage" && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);
+      case 'dealsDamage': return (a.who && a.who !== 'self' ? (ev.srcCtrl === src.ctrl && (!a.who.types || a.who.types.some(ty => (ev.srcTypes || []).includes(ty))) && (!a.who.subtypes || a.who.subtypes.some(st => (ev.srcSubtypes || []).includes(st)))) : ev.src === iid) && (!a.toOpp || (ev.to.p != null && ev.to.p !== src.ctrl)) && (!a.toPlayer || ev.to.p != null) && (!a.combat || ev.combat);   // "Whenever a Horror you control deals combat damage to a player"
       case 'sacrificed': return ev.iid === iid;
       case 'dies':
         if (a.who === 'equipped') return !!(ev.lki && (ev.lki.attachedBy || []).includes(iid));   // Skullclamp: what it was attached to as it left (CR 603.10a)
@@ -1385,7 +1385,8 @@
     const s = x.s, p = P(s, who);
     if (n > 0) {
       const reps = [];
-      for (const i of s.bf) { const ch = MF.chars(s, i); if (ch.ctrl === who) continue; for (const a of ch.ab) if (a.k === 'millDouble' || a.k === 'millPlus') reps.push({ k: a.k, n: a.n || 0, src: I(s, i).id }); }
+      const tbl = MF.charsAll(s);
+      for (const i of s.bf) { const ch = tbl[i]; if (ch.ctrl === who) continue; for (const a of ch.ab) if (a.k === 'millDouble' || a.k === 'millPlus') reps.push({ k: a.k, n: a.n || 0, src: I(s, i).id }); }
       while (reps.length) {
         const kinds = [...new Set(reps.map(r => r.k + ':' + r.n))];
         const pick = kinds.length > 1 ? MF.ask(x.x || s._x, { who: who, kind: 'millOrder', n: n, opts: kinds.map(k => { const r = reps.find(q => q.k + ':' + q.n === k); return { id: k, src: r.src, what: r.k, plus: r.n }; }) }) : kinds[0];
@@ -1491,7 +1492,7 @@
   MF.replacers.damage.push(function (s, o, n) {
     if (o.to.p == null || n <= 0 || !o.srcChars) return n;
     const sc = o.srcChars, ctrl = sc.ctrl, to = o.to.p;
-    const mine = k => s.bf.some(i => I(s, i).ctrl === ctrl && MF.chars(s, i).ab.some(a => a.k === k));
+    const tbl = MF.charsAll(s), mine = k => s.bf.some(i => I(s, i).ctrl === ctrl && tbl[i].ab.some(a => a.k === k));
     const skin = to !== ctrl && mine('mindskinner');
     const zombie = o.combat && (sc.subtypes || []).includes('Zombie') && mine('zombieDamageMill');
     if (!skin && !zombie) return n;

@@ -562,12 +562,13 @@
   // player would receive priority, then goes on the stack in APNAP order (CR 603.3b).
   // -------------------------------------------------------------------------------------------
   const emit = MF.emit = function (s, ev) {
-    if (ev.t === 'enters' && s.cards[ev.iid] && chars(s, ev.iid).types.includes('Creature') && s.bf.some(i => chars(s, i).ab.some(a => a.k === 'torpor'))) return;   // Torpor Orb
+    const tbl = MF.charsAll(s);                                                               // the battlefield's characteristics, once for this event (nothing below changes them)
+    if (ev.t === 'enters' && s.cards[ev.iid] && tbl[ev.iid] && tbl[ev.iid].types.includes('Creature') && s.bf.some(i => tbl[i].ab.some(a => a.k === 'torpor'))) return;   // Torpor Orb
     const seen = new Set();
     const scan = (iid, lki, also) => {
       const key = iid + (lki ? 'L' : '');
       if (seen.has(key)) return; seen.add(key);
-      const src = lki || chars(s, iid);
+      const src = lki || tbl[iid] || chars(s, iid);
       const ab = lki ? abFromLki(s, lki) : src.ab;
       for (let i = 0; i < ab.length; i++) {
         const a = ab[i];
@@ -699,6 +700,13 @@
     const singles = srcs.filter(m => !m.multi), multis = srcs.filter(m => m.multi);
     const r0 = solve1(pool, singles, need);
     if (r0 || !multis.length) return r0;
+    // An upper bound first: all the mana every source could add, less the multis' own costs, against the
+    // cost's size. Most unaffordable spells stop here instead of trying every combination.
+    const per = new Map();
+    for (const m of singles) per.set(m.iid, Math.max(per.get(m.iid) || 0, m.amount || 1));
+    for (const m of multis) per.set(m.iid, Math.max(per.get(m.iid) || 0, Math.max(...m.multi.map(y => y.length)) - (m.cost ? MF.manaValue(m.cost) : 0)));
+    let most = poolTotal(pool); for (const v of per.values()) most += Math.max(0, v);
+    if (most < MF.manaValue(need)) return null;
     const ways = (pl, sg, nd) => { for (const w of MF.hybridWays(Object.assign({}, nd, { h: nd.h || [] }))) { const r = solve1(pl, sg, w); if (r) return r; } return null; };
     const perms = arr => arr.length <= 1 ? [arr] : arr.flatMap((e, i) => perms(arr.slice(0, i).concat(arr.slice(i + 1))).map(r => [e].concat(r)));
     const zero = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0, g: 0, x: 0, h: [] };
@@ -1104,24 +1112,24 @@
     if (cb.blocks[iid]) { for (const a of cb.blocks[iid]) cb.blockedBy[a] = (cb.blockedBy[a] || []).filter(b => b !== iid); delete cb.blocks[iid]; }
     if (cb.blockedBy[iid]) { for (const b of cb.blockedBy[iid]) if (cb.blocks[b]) cb.blocks[b] = cb.blocks[b].filter(a => a !== iid); delete cb.blockedBy[iid]; }
   }
-  const restricted = MF.restricted = (s, iid, what) => chars(s, iid).ab.some(a => a.k === 'restrict' && a[what] && !(a.unless && MF.cond({ s: s, ctrl: I(s, iid).ctrl, src: iid, flags: {} }, a.unless)));
-  const canAttack = MF.canAttack = function (s, iid) {                                       // CR 508.1a
-    const c = I(s, iid), ch = chars(s, iid);
+  const restricted = MF.restricted = (s, iid, what, tbl) => (tbl ? tbl[iid] : chars(s, iid)).ab.some(a => a.k === 'restrict' && a[what] && !(a.unless && MF.cond({ s: s, ctrl: I(s, iid).ctrl, src: iid, flags: {} }, a.unless)));
+  const canAttack = MF.canAttack = function (s, iid, tbl) {                                  // CR 508.1a; tbl: the battlefield's characteristics, when the caller has them
+    const c = I(s, iid), ch = tbl ? tbl[iid] : chars(s, iid);
     if (c.ctrl !== s.ap || !ch.types.includes('Creature') || c.tapped) return false;
     if (ch.kw.defender) return false;                                                        // CR 702.3b
-    if (restricted(s, iid, 'attack')) return false;
+    if (restricted(s, iid, 'attack', tbl)) return false;
     if (!ch.kw.haste && !(c.ctlTurn < s.turn)) return false;                                 // CR 302.6
     if (s.effects.some(e => e.k === 'cantAttack' && e.iid === iid)) return false;
     return true;
   };
   // Can this creature block that attacker, given what else has been declared?
-  const canBlock = MF.canBlock = function (s, b, a) {
-    const bc = I(s, b), bch = chars(s, b), ach = chars(s, a);
+  const canBlock = MF.canBlock = function (s, b, a, tbl) {
+    const bc = I(s, b), bch = tbl ? tbl[b] : chars(s, b), ach = tbl ? tbl[a] : chars(s, a);
     if (bc.ctrl === s.ap || bc.tapped || !bch.types.includes('Creature')) return false;       // CR 509.1a
     if (s.effects.some(e => e.k === 'cantBlock' && e.iid === b)) return false;
     if (ach.unblockable) return false;
     for (const ea of ach.ab) if (ea.k === 'evasion' && MF.matchChars(s, b, bch, ea.blockerNot, bch.ctrl, a)) return false;   // CR 509.1b
-    if (restricted(s, b, 'block')) return false;
+    if (restricted(s, b, 'block', tbl)) return false;
     if (ach.kw.flying && !bch.kw.flying && !bch.kw.reach) return false;                      // CR 702.9b
     if (ach.kw.fear && !bch.types.includes('Artifact') && !bch.colors.includes('B')) return false;   // CR 702.36b
     return true;
@@ -1129,9 +1137,10 @@
   EXEC_DEF('declareAttackers', function (x) {                                                // CR 508.1
     const s = x.s, who = x.inv.who, chosen = [];
     for (;;) {
-      const opts = s.bf.filter(i => !chosen.includes(i) && canAttack(s, i)).map(i => ({ id: i, iid: i }));
+      const tbl = MF.charsAll(s);
+      const opts = s.bf.filter(i => !chosen.includes(i) && canAttack(s, i, tbl)).map(i => ({ id: i, iid: i }));
       if (!opts.length && !chosen.length) break;                                             // nothing could attack: not a choice
-      const must = opts.filter(o => chars(s, o.iid).ab.some(a => a.k === 'mustAttack'));       // CR 508.1d: requirements obeyed where possible
+      const must = opts.filter(o => tbl[o.iid].ab.some(a => a.k === 'mustAttack'));       // CR 508.1d: requirements obeyed where possible
       if (!must.length) opts.push({ id: 'done' });
       if (chosen.length) opts.push({ id: 'undo' });
       const a = ask(x, { who: who, kind: 'attack', chosen: chosen.slice(), opts: opts });
@@ -1171,10 +1180,11 @@
   }
   EXEC_DEF('declareBlockers', function (x) {                                                 // CR 509.1
     const s = x.s, who = x.inv.who, cb = s.combat, assign = {}, order = [];
-    const full = a => { const n = order.filter(b => assign[b] === a).length; return chars(s, a).ab.some(ab => ab.k === 'maxBlockers' && n >= ab.n); };   // CR 509.1b: one more could never be legal
+    const tbl = MF.charsAll(s);                                                              // nothing changes while blockers are declared
+    const full = a => { const n = order.filter(b => assign[b] === a).length; return tbl[a].ab.some(ab => ab.k === 'maxBlockers' && n >= ab.n); };   // CR 509.1b: one more could never be legal
     for (;;) {
       const opts = [];
-      for (const b of s.bf) if (assign[b] == null) for (const a of cb.attackers) if (canBlock(s, b, a) && !full(a)) opts.push({ id: b + '>' + a, iid: b, att: a });
+      for (const b of s.bf) if (assign[b] == null) for (const a of cb.attackers) if (canBlock(s, b, a, tbl) && !full(a)) opts.push({ id: b + '>' + a, iid: b, att: a });
       if (!opts.length && !Object.keys(assign).length) break;
       if (blockLegal(s, assign)) opts.push({ id: 'done' });
       if (Object.keys(assign).length) opts.push({ id: 'undo' });
@@ -1279,9 +1289,9 @@
       for (const z of ['grave', 'exile']) for (const iid of p[z]) if (I(s, iid).cmdrNew) out.push({ k: 'commandZone', iid: iid, who: p.seat });   // CR 704.6d, 903.9a
     }
     for (const p of s.players) for (const z of ['hand', 'lib', 'grave', 'exile']) for (const iid of p[z]) if (I(s, iid).tok || I(s, iid).copyCard) out.push({ k: 'tokenGone', iid: iid });   // CR 704.5d, 704.5e
-    const legends = {};
+    const legends = {}, tbl = MF.charsAll(s);                                                 // read-only: the battlefield's characteristics once
     for (const iid of s.bf) {
-      const c = I(s, iid), ch = chars(s, iid);
+      const c = I(s, iid), ch = tbl[iid];
       if (ch.types.includes('Creature')) {
         if (ch.t <= 0) out.push({ k: 'grave', iid: iid, why: 'toughness' });                  // CR 704.5f
         else if (c.dmg >= ch.t && !ch.kw.indestructible) out.push({ k: 'destroy', iid: iid, why: 'lethal' });   // CR 704.5g
@@ -1289,7 +1299,7 @@
       }
       if (ch.subtypes.includes('Saga') && ch.ab.some(a => a.chapter) && (c.ctr.lore || 0) >= Math.max(...ch.ab.filter(a => a.chapter).map(a => a.chapter)) && !s.stack.some(L => L.kind === 'trig' && L.src === iid) && !s.trigs.some(tg => tg.src === iid)) out.push({ k: 'sagaSac', iid: iid });   // CR 714.4
       if (ch.ab.some(a => a.k === 'engines') && P(s, c.ctrl).speed == null && !out.some(o => o.k === 'speed' && o.who === c.ctrl)) out.push({ k: 'speed', who: c.ctrl });   // CR 702.179a
-      if (ch.ab.some(a => a.k === 'storied') && !P(s, c.ctrl).enduring && s.bf.filter(i => I(s, i).ctrl === c.ctrl && (chars(s, i).types.includes('Artifact') || chars(s, i).subtypes.includes('Saga') || chars(s, i).supers.includes('Legendary'))).length >= 3 && !out.some(o => o.k === 'enduring' && o.who === c.ctrl)) out.push({ k: 'enduring', who: c.ctrl });
+      if (ch.ab.some(a => a.k === 'storied') && !P(s, c.ctrl).enduring && s.bf.filter(i => I(s, i).ctrl === c.ctrl && (tbl[i].types.includes('Artifact') || tbl[i].subtypes.includes('Saga') || tbl[i].supers.includes('Legendary'))).length >= 3 && !out.some(o => o.k === 'enduring' && o.who === c.ctrl)) out.push({ k: 'enduring', who: c.ctrl });
       if (ch.types.includes('Planeswalker') && !(c.ctr.loyalty > 0)) out.push({ k: 'grave', iid: iid, why: 'loyalty' });   // CR 704.5i
       if (ch.supers.includes('Legendary')) { const key = c.ctrl + '|' + ch.name; (legends[key] = legends[key] || []).push(iid); }
       if (ch.subtypes.includes('Aura')) {                                                     // CR 704.5m, 303.4c

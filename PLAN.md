@@ -73,8 +73,14 @@ Deck count, never quality. A deck that does not compile in full is not registere
   16 random mirror games over four seeds and `tools/sim.mjs --games 44` across every deck, 0
   violations; `tools/policy-sweep.mjs` 60 games, every AI answer legal; AI-vs-AI mirror games run to
   a finish (22 turns at about 80 ms a step) — the AI plays the deck card by card, not its combos (TODO).
-- Found by the sims and fixed: the AI's answer to "choose a color" (Painter's Servant), and a mana
-  ability at priority that could stop the game when its own cost couldn't be finished.
+- Found by the sims and fixed: the AI's answer to "choose a color" (Painter's Servant); a mana ability
+  at priority that could stop the game when its own cost couldn't be finished; a stray comment that,
+  for a few hours of this session, dropped "to a player" and "combat" from every deals-damage trigger
+  (never committed to `main`; two regression tests now hold it).
+- Speed: each event's trigger scan, the state-based actions, attack and block legality, the mill
+  door and the damage replacements read the battlefield's layers once instead of once per permanent
+  (an AI attack decision on a 36-permanent board: 8.5 s → 1.1 s). The AI rolls out at most 12 answers
+  to one question (a 155-pair block once took 37 s). Big boards are still slow (TODO).
 - Art: 95 prompts added to `tools/art-identity.mjs`, linted; not yet rendered (D21).
 
 **2026-10-27 — the touch model (D20).** Checked under phone emulation (844×390, touch events):
