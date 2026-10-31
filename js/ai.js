@@ -16,7 +16,7 @@
   // The evaluator. Board presence persists in Magic (handoff 11.8.5): power, toughness and
   // evasion on the battlefield, cards in hand, lands, and life with a low-life cliff.
   // ---------------------------------------------------------------------------------------------
-  const W = { emptyLibrary: 150, colorAccess: 0.9, pactUnpaid: 400, landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
+  const W = { castCommander: 0.6, manaRock: 1.2, emptyLibrary: 150, colorAccess: 0.9, pactUnpaid: 400, landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
   MF.aiWeights = W;
   const lifeScore = l => l * W.life - (l < W.lowLife ? (W.lowLife - l) * W.lowLifeExtra : 0);
   function permValue(s, iid) {
@@ -29,6 +29,7 @@
       if (k.firstStrike || k.doubleStrike || k.deathtouch || k.lifelink) v += 0.8;
       return v;
     }
+    if (ch.ab.some(a => a.k === 'mana' && !a.zone)) return W.perm + W.manaRock;               // a mana rock (Sol Ring, Chrome Mox): tempo, as a land is (PLAN D24)
     return W.perm + (ch.subtypes.includes('Aura') ? 0.6 : 0);
   }
   MF.aiPermValue = permValue;
@@ -61,8 +62,9 @@
       // counted here when the mana it asks for isn't there — every mana source this player controls, untapped.
       const owed = [].concat((s.delayed || []).map(d => ({ ctrl: d.ctrl, ab: d.ab })), (s.trigs || []).map(t => ({ ctrl: t.ctrl, ab: t.inl })), s.stack.filter(L => L.kind === 'trig').map(L => ({ ctrl: L.ctrl, ab: L.inl })));   // still delayed, triggered, or on the stack at the horizon
       for (const d of owed) if (d.ab && typeof d.ab === 'object') for (const op of d.ab.ops || []) if (op.o === 'payOrLose' && d.ctrl === seat) {
-        const srcs = s.bf.filter(i => I(s, i).ctrl === seat && MF.chars(s, i).ab.some(a => a.k === 'mana' && !a.zone && a.cost && a.cost.tap)).length;
-        if (srcs < MF.manaValue(MF.parseMana(op.cost))) x -= W.pactUnpaid;
+        const u = MF.clone(s); for (const i of u.bf) if (I(u, i).ctrl === seat) I(u, i).tapped = false;   // its next upkeep: everything untapped (CR 502.3), colours and all
+        for (const pl of u.players) pl.pool = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
+        if (!MF.canPayMana(u, seat, MF.parseMana(op.cost))) x -= W.pactUnpaid;
       }
       if (p.lib.length < 3) x -= (3 - p.lib.length) * 4;
       // An empty library at the horizon (CR 704.5b): its owner loses at their next draw unless something
@@ -195,7 +197,14 @@
       case 'chooseKw': return q.opts[0].id;
       case 'payLifeOrTap': return P(s, me).life > 8 ? 'pay' : 'tapped';
       case 'surveil': { const lands = s.bf.filter(i => I(s, i).ctrl === me && MF.isType(s, i, 'Land')).length; const land = MF.def(s, q.opts[0].iid).types.includes('Land'); return land && lands >= 5 ? 'grave' : 'top'; }
-      case 'search': return q.opts[0].id;
+      case 'search': case 'searchMany': {                                                     // PLAN D24: the missing piece of the nearest win line, else the card most worth having
+        const cards = q.opts.filter(o => o.iid != null), v = MF.view(s), want = wantedPieces(v, q.who);
+        const hit = cards.find(o => want.some(w => w(MF.def(v, o.iid))));
+        if (hit) return hit.id;
+        if (!cards.length) return q.opts[0].id;
+        const lands = v.bf.filter(i => I(v, i).ctrl === q.who && MF.isType(v, i, 'Land')).length;
+        return cards.slice().sort((a, b) => searchValue(v, b.iid, lands) - searchValue(v, a.iid, lands))[0].id;
+      }
       case 'mode': return q.opts[0].id;
       case 'pickMilled': case 'dig': { const c = q.opts.filter(o => o.iid != null).sort((a, b) => keepValue(s, b.iid) - keepValue(s, a.iid))[0]; return c ? c.id : 'none'; }
       case 'discardUpTo': return 'done';
@@ -448,6 +457,21 @@
       underway: (s, me) => s.bf.some(i => I(s, i).ctrl === me && isBreach(MF.def(s, i))) && castThisTurn(s, me, d => isLED(d) || isFreeze(d)),
     },
   ];
+  // What a tutor should find (PLAN D24): for each line, its pieces not yet in hand, graveyard or play,
+  // the line with the most pieces present first.
+  function wantedPieces(s, me) {
+    const mine = P(s, me).hand.concat(P(s, me).grave, s.bf.filter(i => I(s, i).ctrl === me), P(s, me).command || []).map(i => MF.def(s, i));
+    const lines = [[isLibraryWin, isEnabler], [isBreach, isLED, isFreeze]].map(ps => ({ ps: ps, have: ps.filter(p => mine.some(p)).length }));
+    lines.sort((a, b) => b.have - a.have);
+    return lines.filter(l => l.have > 0).flatMap(l => l.ps.filter(p => !mine.some(p)));
+  }
+  // Without a line to finish: a spell over a land once there are four lands, the most expensive spell it can soon cast.
+  function searchValue(s, iid, lands) {
+    const d = MF.def(s, iid), mv = MF.manaValue(MF.parseMana(d.mana));
+    if (d.types.includes('Land')) return lands < 4 ? 5 : 0.5;
+    return 2 + Math.min(mv, lands + 1) + (LINE_PIECE(d) ? 3 : 0) + (/Search your library for a card/.test(d.text || '') ? 2 : 0);
+  }
+  MF.aiWanted = wantedPieces;
   // The first line that wins when played out from here, and its next action now.
   function planLine(s, me) {
     if (s.winner != null || me == null) return null;
@@ -498,7 +522,11 @@
       let best = legal[0], bs = -Infinity;
       for (const a of legal) {
         let v;
-        try { const r = rolloutState(MF.apply(root, a), me, s.turn, st); v = evalFor(r, me); for (const t of threats) if (!resolvedAfter(r, t.L, s.log.length)) v += t.v; }
+        try {
+          const r = rolloutState(MF.apply(root, a), me, s.turn, st); v = evalFor(r, me);
+          for (const t of threats) if (!resolvedAfter(r, t.L, s.log.length)) v += t.v;
+          if (s.commander && a.type === 'cast') v += W.castCommander;   // PLAN D24: a spell cast is tempo the one-turn horizon doesn't see (a cantrip's look, storm, magecraft, Kraum and Lotho's triggers)
+        }
         catch (e) { throw e; }
         MF.ai.stats.rollouts++;
         if (a.type === 'pass' || a.id === 'done' || a.id === 'no' || a.id === 'keep') v += 0.05;   // ties go to doing nothing

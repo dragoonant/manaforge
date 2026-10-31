@@ -36,3 +36,10 @@ test('AI: it counters an opponent\'s tutor with Force of Will\'s alternative cos
   const c = MF.ai.choose(s);
   ok(c.type === 'cast' && s.cards[c.iid].id === 'force-of-will', 'it casts Force of Will: ' + JSON.stringify(c));
 });
+test('AI: a tutor finds the missing piece of a win line (Demonic Tutor gets Demonic Consultation to go with Thassa\'s Oracle)', () => {
+  let s = setup({ me: { hand: ['demonic-tutor', 'thassas-oracle'], bf: [B, B], lib: [U, 'sol-ring', 'demonic-consultation', 'force-of-will', U, U] } });
+  s = MF.apply(s, MF.legalActions(s).find(a => a.type === 'cast' && s.cards[a.iid].id === 'demonic-tutor'));
+  const inHand = st => st.players[0].hand.some(i => st.cards[i].id === 'demonic-consultation');
+  for (let k = 0; k < 30 && !inHand(s) && s.turn === 3; k++) s = MF.apply(s, MF.ai.choose(s));
+  ok(inHand(s), 'Consultation is in hand');
+});

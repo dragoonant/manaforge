@@ -649,7 +649,7 @@
         if (a.cost.exileGrave && !P(s, who).grave.some(g => !a.cost.exileGrave.types || a.cost.exileGrave.types.some(ty => def(s, g).types.includes(ty)))) return;   // Molt Tender
         if (a.cost.sacType && !s.bf.some(k => I(s, k).ctrl === who && a.cost.sacType.types.some(ty => chars(s, k).types.includes(ty)))) return;   // Phyrexian Tower: a creature to sacrifice
         const multi = manaYields(s, who, iid, a);
-        if (multi) { if (multi.length) out.push({ iid: iid, ab: i, cols: a.cols, name: ch.name, id: c.id, amount: Math.max(...multi.map(y => y.length)), multi: multi, cost: a.cost.mana && MF.manaValue(MF.parseMana(a.cost.mana)) > 0 ? MF.parseMana(a.cost.mana) : null }); return; }
+        if (multi) { if (multi.length) out.push(Object.assign({ iid: iid, ab: i, cols: a.cols, name: ch.name, id: c.id, amount: Math.max(...multi.map(y => y.length)), multi: multi, cost: a.cost.mana && MF.manaValue(MF.parseMana(a.cost.mana)) > 0 ? MF.parseMana(a.cost.mana) : null }, a.cost.discardHand ? { manual: true } : {})); return; }   // Lion's Eye Diamond: proposed only when nothing else pays (it discards the hand)
         const amount = a.amount ? Math.max(0, MF.num({ s: s, ctrl: who, src: iid }, a.amount)) : 1;   // "X mana ... where X is its power", read now
         if (!amount) return;
         const cols = manaCols(s, who, iid, a); if (!cols.length) return;                          // an ability that could add no mana now (Arcane Signet with no commander, Chrome Mox with nothing exiled)
