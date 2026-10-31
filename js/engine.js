@@ -403,17 +403,21 @@
       colors = [...new Set(open.flatMap(f => f.colors))];
       ab = d.ab.map(a => u[a.door] ? a : LOCKED);
     }
-    if (c.copy) {                                                                             // CR 613.2a layer 1a: copiable values
-      const src = MF.cards[c.copy.id];
+    const bc = c.zone === 'bf' ? s.effects.filter(e => e.k === 'becomeCopy' && e.iid === iid).pop() : null;   // Scion of the Ur-Dragon, Shifting Woodland: "becomes a copy of that card until end of turn" (CR 707.2, latest timestamp)
+    const cpy = bc ? { id: bc.id, except: {} } : c.copy;
+    if (cpy) {                                                                                // CR 613.2a layer 1a: copiable values
+      const src = MF.cards[cpy.id];
       name = src.name; types = src.types.slice(); subtypes = src.subtypes.slice(); supers = src.supers.slice(); colors = src.colors.slice();
       p = src.power; t = src.toughness; ab = src.ab; kw = Object.assign({}, src.kw); mana = src.mana;
-      const ex = c.copy.except || {};                                                         // CR 707.9a-b: exceptions are part of the copiable values
+      const ex = cpy.except || {};                                                            // CR 707.9a-b: exceptions are part of the copiable values
       if (ex.addSubtypes) for (const st of ex.addSubtypes) if (!subtypes.includes(st)) subtypes.push(st);
       if (ex.kw) for (const k of ex.kw) kw[k] = (kw[k] || 0) + 1;
       if (ex.pt) { p = ex.pt[0]; t = ex.pt[1]; }
       if (ex.name) name = ex.name;                                                            // Superior Spider-Man: "except his name is ~"
       if (ex.colors) colors = ex.colors.slice();                                              // Ardyn: "except it's a 5/5 black Demon"
       if (ex.setSubtypes) subtypes = ex.setSubtypes.slice();
+      if (ex.setTypes) types = ex.setTypes.slice();                                           // Imposter Mech: "it's a Vehicle artifact ... and it loses all other card types"
+      if (ex.addAb) ab = ab.concat(ex.addAb);                                                 // "with crew 3"
     }
     if (c.zone !== 'bf') for (const a of ab) if (a.k === 'cda') {                             // CR 604.3: a characteristic-defining ability works in every zone (on the battlefield, layer 7a does it)
       const v = MF.vals[a.v.v]({ s: s, ctrl: c.ctrl, src: iid }, a.v, null);
@@ -1074,7 +1078,7 @@
     const s = x.s, out = [];
     slots.forEach((slot, si) => {
       const picked = [];
-      const n = slot.n || 1;
+      const n = slot.n == null ? 1 : slot.n;                                                   // Firestorm's X may be 0
       for (let k = 0; k < n; k++) {
         const opts = MF.targetOptions(s, slot, who, srcIid, picked).map(r => Object.assign({ id: refId(r) }, r.c != null ? { iid: r.c } : r.a != null ? { lid: r.a, ctrl: s.stack.find(L => L.lid === r.a).ctrl, abSrc: s.stack.find(L => L.lid === r.a).srcId } : { seat: r.p }));
         if (slot.diff != null) for (const r of out[slot.diff] || []) { const i = opts.findIndex(o => o.id === refId(r)); if (i >= 0) opts.splice(i, 1); }
@@ -1090,7 +1094,7 @@
   }
   MF.chooseTargets = chooseTargets;
   const slotsLegalNow = MF.slotsLegalNow = function (s, who, srcIid, slots) {
-    return slots.every(slot => slot.upTo || MF.targetOptions(s, slot, who, srcIid, []).length >= 1);
+    return slots.every(slot => slot.upTo || slot.n === 'X' || MF.targetOptions(s, slot, who, srcIid, []).length >= 1);   // X may be 0
   };
 
   // -------------------------------------------------------------------------------------------
@@ -1122,7 +1126,9 @@
     s.step = STEPS[i]; s.sub = 0;
   }
   function nextTurn(s) {
-    s.ap = 1 - s.ap; s.turn++; s.step = 'untap'; s.sub = 0; s.firstTurn = false; s.extraCombat = 0;
+    const ex = (s.extraTurns || []).shift();                                                  // CR 500.7: an extra turn comes directly after this one; the most recently created first
+    s.ap = ex ? ex.who : 1 - s.ap; s.turn++;
+    if (ex) log(s, 'extraTurn', { who: ex.who }); s.step = 'untap'; s.sub = 0; s.firstTurn = false; s.extraCombat = 0;
     for (const p of s.players) { p.landsPlayed = 0; p.h = freshHist(); }
     s.diedThisTurn = 0; s.exiledCre = {};
     s.effects = s.effects.filter(e => !(e.untilNextTurnOf === s.ap && e.turn < s.turn));   // "until your next turn"
@@ -1566,6 +1572,7 @@
     if (I(s, iid).zone === 'command' && !I(s, iid).cmdr) return false;
     if (via === 'flashback') { const fb = d0.ab.find(a => a.k === 'flashback'); if (fb && fb.sac && s.bf.filter(i => I(s, i).ctrl === who && fb.sac.types.some(ty => chars(s, i).types.includes(ty))).length < fb.sac.n) return false; }   // Dread Return: three creatures to sacrifice
     for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'sacCreature' && !s.bf.some(i => I(s, i).ctrl === who && chars(s, i).types.includes('Creature'))) return false;   // Diabolic Intent
+    for (const a of d0.ab) if (a.k === 'addCost' && a.what === 'sacLand' && !s.bf.some(i => I(s, i).ctrl === who && chars(s, i).types.includes('Land'))) return false;   // Crop Rotation
     if (via === 'warp' && (I(s, iid).zone !== 'hand' || !d0.ab.some(a => a.k === 'warp'))) return false;
     if (via === 'impending' && !d0.ab.some(a => a.k === 'impending')) return false;
     if (via === 'evoke' && !(I(s, iid).zone === 'hand' && d0.ab.some(a => a.k === 'evoke'))) return false;
@@ -1639,7 +1646,7 @@
     if (a.maxSpeed && !((P(s, who).speed || 0) >= 4)) return false;                            // "Max speed —" (CR 702.178)
     if (s.effects.some(e => e.k === 'lockTapped' && e.iid === iid) && c.tapped) return false;   // Braided Net
     if (s.bf.some(i => { const h = I(s, i); return h.chosenName && h.chosenName === ch.name && chars(s, i).ab.some(b => b.k === 'nameLock'); })) return false;   // Petrified Hamlet (mana abilities aren't 'act')
-    if (a.cost.sacType && !s.bf.some(i => I(s, i).ctrl === who && (!a.cost.sacType.other || i !== iid) && a.cost.sacType.types.some(ty => chars(s, i).types.includes(ty)))) return false;
+    if (a.cost.sacType && !s.bf.some(i => I(s, i).ctrl === who && (!a.cost.sacType.other || i !== iid) && a.cost.sacType.types.some(ty => chars(s, i).types.includes(ty)) && (!a.cost.sacType.subtypes || a.cost.sacType.subtypes.some(st => chars(s, i).subtypes.includes(st))))) return false;
     if (a.cost.tapOthers && s.bf.filter(i => i !== iid && I(s, i).ctrl === who && !I(s, i).tapped && MF.matchChars(s, i, chars(s, i), a.cost.tapOthers.f, who, iid)).length < a.cost.tapOthers.n) return false;
     if (a.cost.craftArtifact && !(s.bf.some(i => i !== iid && I(s, i).ctrl === who && chars(s, i).types.includes('Artifact')) || P(s, who).grave.some(g => def(s, g).types.includes('Artifact')))) return false;   // CR 702.167a
     if (a.cost.exileGrave && !P(s, who).grave.some(g => g !== iid && (!a.cost.exileGrave.types || a.cost.exileGrave.types.some(ty => def(s, g).types.includes(ty))))) return false;
@@ -1963,7 +1970,16 @@
       } else if (a.what === 'sacCreature') {                                                  // Diabolic Intent: exactly one creature (its ruling)
         const opts = s.bf.filter(i => I(s, i).ctrl === who && chars(s, i).types.includes('Creature')).map(i => ({ id: i, iid: i }));
         if (!opts.length) throw new Illegal('no creature to sacrifice');
+        const v = ask(x, { who: who, kind: 'sacrificeCost', src: iid, opts: opts, cancel: true }); L.sacMv = chars(s, v).mv; addPay.push(() => MF.sacrifice(s, v));   // Eldritch Evolution: "the sacrificed creature's mana value"
+      } else if (a.what === 'sacLand') {                                                      // Crop Rotation: "sacrifice a land"
+        const opts = s.bf.filter(i => I(s, i).ctrl === who && chars(s, i).types.includes('Land')).map(i => ({ id: i, iid: i }));
+        if (!opts.length) throw new Illegal('no land to sacrifice');
         const v = ask(x, { who: who, kind: 'sacrificeCost', src: iid, opts: opts, cancel: true }); addPay.push(() => MF.sacrifice(s, v));
+      } else if (a.what === 'discardX') {                                                     // Firestorm: "discard X cards" — X is announced with the costs (CR 601.2b)
+        const hand = P(s, who).hand, opts = []; for (let n = 0; n <= hand.length; n++) opts.push({ id: n });
+        L.x = ask(x, { who: who, kind: 'x', src: iid, opts: opts, cancel: true });
+        const got = []; for (let k = 0; k < L.x; k++) got.push(ask(x, { who: who, kind: 'discard', src: iid, left: L.x - k, opts: hand.filter(i => !got.includes(i)).map(i => ({ id: i, iid: i })), cancel: true }));
+        addPay.push(() => { for (const g of got) MF.discard(s, g); });
       } else if (a.what === 'sacArtCre') {
         const opts = s.bf.filter(i => I(s, i).ctrl === who && (chars(s, i).types.includes('Artifact') || chars(s, i).types.includes('Creature'))).map(i => ({ id: i, iid: i }));
         if (!opts.length) throw new Illegal('nothing to sacrifice');
@@ -2039,7 +2055,7 @@
       else { L.mode = m0; if (sp.modes[L.mode].tg) L.t = chooseTargets(x, who, iid, sp.modes[L.mode].tg, 'spell', true); }
     }
     const part = sp && !sp.modes ? spellPart(sp, L) : null;
-    if (part && part.tg) L.t = chooseTargets(x, who, iid, part.tg, 'spell', true);           // CR 601.2c
+    if (part && part.tg) L.t = chooseTargets(x, who, iid, part.tg.map(sl => sl.n === 'X' ? Object.assign({}, sl, { n: L.x }) : sl), 'spell', true);   // CR 601.2c; Firestorm: "each of X targets"
     if (aura) L.t = chooseTargets(x, who, iid, [{ f: aura.f }], 'aura', true);                 // CR 303.4a
     const fbSac = via === 'flashback' ? (card.ab.find(a => a.k === 'flashback') || {}).sac : null;
     if (fbSac) {                                                                              // Dread Return: "Flashback—Sacrifice three creatures", chosen after its target (its ruling)
@@ -2149,7 +2165,7 @@
     if (a.cost.discard) { const card = ask(x, { who: who, kind: 'discard', src: iid, left: 1, opts: P(s, who).hand.filter(i => i !== iid).map(i => ({ id: i, iid: i })), cancel: true }); MF.discard(s, card); }
     if (a.cost.sacToken) { const opts = s.bf.filter(i => I(s, i).ctrl === who && I(s, i).tok).map(i => ({ id: i, iid: i })); if (!opts.length) throw new Illegal('no token to sacrifice'); MF.sacrifice(s, ask(x, { who: who, kind: 'sacToken', src: iid, opts: opts, cancel: true })); }
     if (a.cost.sacType) {                                                                      // "Sacrifice an artifact", "Sacrifice another artifact": which one is a choice
-      const opts = s.bf.filter(i => I(s, i).ctrl === who && (!a.cost.sacType.other || i !== iid) && a.cost.sacType.types.some(ty => chars(s, i).types.includes(ty))).map(i => ({ id: i, iid: i }));
+      const opts = s.bf.filter(i => I(s, i).ctrl === who && (!a.cost.sacType.other || i !== iid) && a.cost.sacType.types.some(ty => chars(s, i).types.includes(ty)) && (!a.cost.sacType.subtypes || a.cost.sacType.subtypes.some(st => chars(s, i).subtypes.includes(st)))).map(i => ({ id: i, iid: i }));   // "Sacrifice a Treasure"
       if (!opts.length) throw new Illegal('nothing to sacrifice');
       const v = ask(x, { who: who, kind: 'sacrificeCost', src: iid, opts: opts, cancel: true });
       L.sacMv = chars(s, v).mv; L.sacPow = chars(s, v).p; MF.sacrifice(s, v);                   // Repurposing Bay: "the sacrificed artifact's mana value"; Altar of Dementia: its power as it last existed

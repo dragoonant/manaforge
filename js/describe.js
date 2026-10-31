@@ -137,6 +137,24 @@
   MF.describeCond = cond;
   const D = MF.describeOp = {
     // PLAN D22
+    adNauseam: () => 'reveal the top card of your library and put that card into your hand; you lose life equal to its mana value; you may repeat this process any number of times',
+    taintedPact: () => 'exile the top card of your library; you may put that card into your hand unless it has the same name as another card exiled this way; repeat until you put a card into your hand or you exile two cards with the same name',
+    consultation: () => 'choose a card name; exile the top six cards of your library, then reveal cards from the top until you reveal a card with the chosen name; put that card into your hand and exile all other cards revealed this way',
+    oppChoosesFromSearch: op => 'search your library for ' + (op.upTo ? 'up to ' : '') + N(op.n) + ' cards' + (op.diffNames ? ' with different names' : '') + ' and reveal them; target opponent chooses ' + (op.pick === 1 ? 'one' : 'two') + '; put ' + (op.pickTo === 'hand' ? 'that card into your hand and the rest into your graveyard' : 'the chosen cards into your graveyard and the rest into your hand') + '; then shuffle',
+    beseech: () => 'if this spell was bargained, you may cast the exiled card without paying its mana cost if its mana value is 4 or less; put the exiled card into your hand if it wasn’t cast this way',
+    mayPlayFound: () => 'you may play that card for as long as it remains exiled',
+    eachSearchTop: op => 'each of ' + ref(op.who) + ' searches their library for a card, then shuffles and puts that card on top',
+    limdul: () => 'look at the top five cards of your library; as many times as you choose, you may pay 1 life, put those cards on the bottom in any order, then look at the top five; then shuffle and put the last cards you looked at on top in any order',
+    chainOfVapor: op => 'return ' + ref(op.on) + ' to its owner’s hand; then that permanent’s controller may sacrifice a land of their choice; if the player does, they may copy this spell and may choose a new target for that copy',
+    ctrlMaySearchLand: () => 'that player may search their library for a land card with a basic land type, put it onto the battlefield, then shuffle',
+    copySelfIfFromGrave: () => 'if this spell was cast from a graveyard, you may copy this spell and may choose a new target for the copy',
+    grantFlashback: op => ref(op.on) + ' gains flashback until end of turn; the flashback cost is equal to its mana cost',
+    extraTurn: op => 'take an extra turn after this one' + (op.loseAtEnd ? '; at the beginning of that turn’s end step, you lose the game' : ''),
+    loseGame: () => 'you lose the game',
+    becomeCopyOf: op => 'this becomes a copy of ' + (op.of === 'found' ? 'that card' : ref(op.of)) + ' until end of turn',
+    esperTerraCopy: op => 'create a token that’s a copy of ' + ref(op.on) + '; it gains haste; if it’s a Saga, put up to three lore counters on it; sacrifice it at the beginning of your next end step',
+    exileReturnFront: () => 'exile this, then return it to the battlefield front face up',
+    exileReturnTransformed: () => 'exile this, then return it to the battlefield transformed under its owner’s control',
     mayDraw: op => ref(op.who) + ' may draw a card',
     payOrElse: op => 'that player may pay ' + op.pay + '; if the player doesn’t, ' + ops(op.ops),
     thrasios: () => 'reveal the top card of your library; if it’s a land card, put it onto the battlefield tapped; otherwise, draw a card',
@@ -499,7 +517,8 @@
       case 'restrict': return 'this can’t ' + [a.attack ? 'attack' : '', a.block ? 'block' : ''].filter(Boolean).join(' or ') + (a.unless ? ' unless ' + cond(a.unless) : '');
       case 'offspring': return 'offspring ' + a.cost + ' (an optional additional cost)';
       case 'kicker': return 'kicker ' + a.cost + ' (an optional additional cost)';
-      case 'enterAsCopy': if (a.from === 'grave') return 'you may have this enter as a copy of any creature card in a graveyard, except its name is ' + a.except.name + ' and it’s a ' + a.except.pt.join('/') + ' ' + a.except.addSubtypes.join(' ') + ' in addition to its other types; when you do, exile that card';
+      case 'enterAsCopy': if (a.f) return 'you may have this enter as a copy of any ' + filt(a.f).replace(' an opponent controls', '') + (a.f.ctrl === 'opp' ? ' an opponent controls' : ' on the battlefield') + (a.except && a.except.setTypes ? ', except it’s a Vehicle artifact with crew 3 and it loses all other card types' : '');
+        if (a.from === 'grave') return 'you may have this enter as a copy of any creature card in a graveyard, except its name is ' + a.except.name + ' and it’s a ' + a.except.pt.join('/') + ' ' + a.except.addSubtypes.join(' ') + ' in addition to its other types; when you do, exile that card';
         return 'may enter as a copy of a creature with mana value up to the mana spent, except it is also a ' + a.except.addSubtypes.join(' ') + ' and has ' + a.except.kw.map(k => KWNAME[k]).join(', ');
       // Kujo's Commander deck (PLAN D21)
       case 'chooseBackground': return 'choose a Background (a legendary Background enchantment may be your second commander)';

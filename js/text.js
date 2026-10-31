@@ -135,6 +135,16 @@
     activate: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'activate', 'activates')} ${tag(e.c)}${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
     mana: (e, v) => `${W(e.who, v)} ${e.how ? V(e.who, v, 'use', 'uses') : V(e.who, v, 'tap', 'taps')} ${tag(e.c)} for ${e.col.split('').map(sym).join('')}${e.only === 'creature' ? ' (only for creature spells)' : ''}.`,
     // PLAN D22
+    extraTurn: (e, v) => `${e.who === v ? 'You take' : 'The opponent takes'} an extra turn.`,
+    extraTurnAdded: (e, v) => `${W(e.who, v)} will take an extra turn after this one.`,
+    taintedStop: (e, v) => `${tag(e.c)} has the same name as a card already exiled: Tainted Pact stops.`,
+    exiledTop: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'exile', 'exiles')} the top ${e.cs.length} cards of ${T.whose(e.who, v)} library: ${e.cs.map(tag).join(', ')}.`,
+    consultationNone: (e, v) => `No card with the chosen name: ${e.n} revealed cards are exiled — ${T.whose(e.who, v)} library is empty.`,
+    look: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'look', 'looks')} at the top ${plural(e.n, 'card')} of ${T.whose(e.who, v)} library.`,
+    limdulDone: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'shuffle', 'shuffles')} and ${V(e.who, v, 'put', 'puts')} ${plural(e.n, 'card')} back on top.`,
+    grantFlashback: (e, v) => `${tag(e.c)} gains flashback until end of turn.`,
+    becomesCopy: (e, v) => `${tag(e.c)} becomes a copy of ${tag(e.of)} until end of turn.`,
+    returned: (e, v) => `${tag(e.c)} returns to the battlefield.`,
     roll: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'roll', 'rolls')} a d${e.sides}: <b>${e.n}</b>.`,
     fromCommand: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${tag(e.c)} onto the battlefield from the command zone.`,
     becomesCoward: (e, v) => `${tag(e.c)} becomes a Coward.`,
@@ -290,6 +300,15 @@
     mayDiscard: (s, q) => ({ title: `${C(s, q.src)}: discard a card?`, body: `If you discard one, the rest happens.${oracle(s, q.src)}`, labels: { none: 'Discard nothing' } }),
     exileFromGrave: (s, q) => ({ title: `${C(s, q.src)}: exile a card from your graveyard${q.n ? ' (' + q.k + ' of ' + q.n + ')' : ''}`, body: 'Exiling it is part of the cost. Click a glowing card in your graveyard.', labels: {} }),
     forage: (s, q) => ({ title: `Forage to cast ${C(s, q.src)} from your graveyard`, body: 'Exile three other cards from your graveyard, or sacrifice a Food (CR 701.61). It enters with a finality counter.', labels: { exile: 'Exile three cards from my graveyard', food: 'Sacrifice a Food' } }),
+    repeat: (s, q) => ({ title: `${C(s, q.src)}: reveal another card?`, body: `You have taken ${q.n} so far. Your life: ${q.life}. You lose life equal to the next card’s mana value.`, labels: { yes: 'Reveal the next card', no: 'Stop' } }),
+    taintedTake: (s, q) => ({ title: `${C(s, q.src)}: put ${tag(s.cards[q.c].id)} into your hand?`, body: 'If you don’t, the next card is exiled; the process stops if two exiled cards share a name.', labels: { take: 'Put it into my hand', next: 'Exile the next card' } }),
+    chooseCardName: (s, q) => ({ title: `${C(s, q.src)}: choose a card name`, body: 'Any card name may be chosen (CR 201.3); the cards in this game are listed first. Naming a card not in your library exiles your whole library.', labels: Object.fromEntries(q.opts.map(o => [o.id, o.id])) }),
+    searchMany: (s, q) => ({ title: `${C(s, q.src)}: search for ${q.upTo ? 'up to ' : ''}${q.n} cards${q.diffNames ? ' with different names' : ''} (${q.k} of ${q.n})`, body: 'They are revealed; the opponent then chooses among them. Click a card.', labels: { done: 'Stop here' } }),
+    oppPicks: (s, q) => ({ title: `${C(s, q.src)}: choose a card for the opponent’s ${q.to === 'hand' ? 'hand' : 'graveyard'} (${q.k} of ${q.n})`, body: `The cards you don’t choose go to the opponent’s ${q.to === 'hand' ? 'graveyard' : 'hand'}.`, labels: {} }),
+    orderCards: (s, q) => ({ title: `${C(s, q.src)}: order the cards for the ${q.where} of your library (${q.k} of ${q.n})`, body: q.where === 'top' ? 'The card you choose first is on top.' : 'The card you choose first goes nearest the top of the bottom group.', labels: {} }),
+    limdul: (s, q) => ({ title: `${C(s, q.src)}: keep these five, or pay 1 life to look at the next five?`, body: `Your life: ${q.life}. Paying puts these on the bottom in an order you choose.`, labels: { keep: 'Keep these on top', again: 'Pay 1 life — next five' } }),
+    chainSac: (s, q) => ({ title: `${C(s, q.src)}: sacrifice a land to copy it?`, body: 'If you sacrifice a land, you may copy the spell and choose a new target for the copy.', labels: { no: 'Don’t sacrifice' } }),
+    loreUpTo: (s, q) => ({ title: `${C(s, q.src)}: put how many lore counters on the copy?`, body: 'Up to three; each one can trigger its chapter abilities.', labels: Object.fromEntries(q.opts.map(o => [o.id, String(o.id)])) }),
     tapOrUntap: (s, q) => ({ title: `${C(s, q.src)}: tap or untap ${C(s, q.c)}?`, body: 'You may tap it, untap it, or leave it as it is.', labels: { tap: 'Tap it', untap: 'Untap it', neither: 'Leave it' } }),
     moxDiamond: (s, q) => ({ title: `${tag(q.c)}: discard a land card, or it goes to the graveyard`, body: 'If you discard a land card, it enters the battlefield; if you don’t, it is put into your graveyard instead (a replacement, CR 614.1a). Click a glowing land in your hand.', labels: { none: 'Discard nothing — it goes to the graveyard' } }),
     gemstone: (s, q) => ({ title: `Begin the game with ${tag(q.c)} on the battlefield?`, body: 'You are not the starting player: it may begin on the battlefield with a luck counter, and then you exile a card from your hand.', labels: { yes: 'Put it onto the battlefield', no: 'Keep it in my hand' } }),
@@ -354,7 +373,7 @@
       : q.what === 'digOnto' ? ({ title: `Put ${tag(q.c)} onto the battlefield?`, body: 'Its mana value is low enough: it may go onto the battlefield and gain haste until end of turn. Otherwise it goes into your hand.', labels: { yes: 'Onto the battlefield, with haste', no: 'Into my hand' } })
       : ({ title: `${C(s, q.src)}`, body: oracle(s, q.src), labels: { yes: 'Yes', no: 'No' } }),
     newTargets: (s, q) => ({ title: `Change ${q.slots > 1 ? 'target ' + (q.slot + 1) + ' of ' + q.slots : 'the target'} of the copy of ${C(s, q.src)}?`, body: 'You may keep the original target or choose a new one (CR 707.10c). A target with no legal new choice stays as it is.', labels: { keep: 'Keep this target', new: 'Choose a new target' } }),
-    enterAsCopy: (s, q) => q.fromGrave ? ({ title: `${C(s, q.src)}: enter as a copy of a creature card in a graveyard?`, body: `Click a glowing card in either graveyard; it keeps its own name and becomes a 4/4 Spider Human Hero in addition, and the card is then exiled.${oracle(s, q.src)}`, labels: { no: 'Enter as itself' } }) : ({ title: `${C(s, q.src)}: enter as a copy?`, body: `It may enter as a copy of a creature with mana value ${q.spent} or less (the mana spent to cast it), and it is also a Bird with flying. Click a glowing creature, or decline.`, labels: { no: 'Enter as itself' } }),
+    enterAsCopy: (s, q) => q.what ? ({ title: `${C(s, q.src)}: enter as a copy of ${/^[aeiou]/.test(q.what) ? 'an' : 'a'} ${q.what}?`, body: `Click a glowing permanent, or decline and it enters as itself.${oracle(s, q.src)}`, labels: { no: 'Enter as itself' } }) : q.fromGrave ? ({ title: `${C(s, q.src)}: enter as a copy of a creature card in a graveyard?`, body: `Click a glowing card in either graveyard; it keeps its own name and becomes a 4/4 Spider Human Hero in addition, and the card is then exiled.${oracle(s, q.src)}`, labels: { no: 'Enter as itself' } }) : ({ title: `${C(s, q.src)}: enter as a copy?`, body: `It may enter as a copy of a creature with mana value ${q.spent} or less (the mana spent to cast it), and it is also a Bird with flying. Click a glowing creature, or decline.`, labels: { no: 'Enter as itself' } }),
   };
   const poolStr = p => p ? ['W', 'U', 'B', 'R', 'G', 'C'].map(k => sym(k).repeat(p[k] || 0)).join('') : '';
   T.poolStr = poolStr;

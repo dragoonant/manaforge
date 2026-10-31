@@ -417,3 +417,116 @@ test('Underworld Breach: cast a card from your graveyard for its mana cost plus 
   eq(s.players[1].life, 18); eq(s.players[0].exile.length, 3);
   s = toStep(s, 'end'); s = resolveAll(s); ok(grave(s, 0).includes('underworld-breach'), 'sacrificed at the end step');
 });
+
+// ---- Libraries, copies, extra turns ------------------------------------------------------------------
+test('Ad Nauseam: reveal and take the top card, losing life equal to its mana value, as many times as you choose', () => {
+  let s = setup({ me: { hand: ['ad-nauseam'], bf: [B, B, B, B, B], lib: ['korvold-fae-cursed-king', W, 'sol-ring'] } });
+  s = cast(s, 'ad-nauseam', 'auto'); s = resolveAll(s, 'yes', 'no');
+  eq(s.players[0].life, 15, 'Korvold 5, Plains 0'); eq(s.players[0].hand.length, 2);
+});
+test('Tainted Pact: exile until you take one or two share a name', () => {
+  let s = setup({ me: { hand: ['tainted-pact'], bf: [B, B], lib: [U, 'opt', U, 'sol-ring'] } });
+  s = cast(s, 'tainted-pact', 'auto'); s = resolveAll(s, 'next', 'next');
+  eq(logs(s, 'taintedStop').length, 1, 'the second Island stops it'); eq(s.players[0].exile.length, 3);
+});
+test('Demonic Consultation: naming a card not in your library exiles all of it (CR 201.3)', () => {
+  let s = setup({ me: { hand: ['demonic-consultation'], bf: [B], lib: [U, U, U, U, U, U, U, W, R] } });
+  s = cast(s, 'demonic-consultation', 'auto'); s = resolveAll(s, 'Black Lotus');
+  eq(s.players[0].lib.length, 0); eq(s.players[0].exile.length, 9);
+  let t = setup({ me: { hand: ['demonic-consultation'], bf: [B], lib: [U, U, U, U, U, U, U, 'sol-ring', R] } });
+  t = cast(t, 'demonic-consultation', 'auto'); t = resolveAll(t, 'Sol Ring');
+  ok(find(t, 'sol-ring', 'hand', 0) != null); eq(t.players[0].lib.length, 1, 'the Mountain stays');
+});
+test('Intuition: three cards revealed; the opponent chooses one for your hand, the rest go to your graveyard', () => {
+  let s = setup({ me: { hand: ['intuition'], bf: [U, U, U], lib: ['opt', 'sol-ring', 'force-of-will', W] } });
+  s = cast(s, 'intuition', player(1), 'auto'); s = resolveAll(s, (q, st) => viewId(q, st, 'opt'), (q, st) => viewId(q, st, 'sol-ring'), (q, st) => viewId(q, st, 'force-of-will'), (q, st) => { eq(q.who, 1, 'the opponent chooses'); return viewId(q, st, 'opt'); });
+  ok(find(s, 'opt', 'hand', 0) != null); ok(grave(s, 0).includes('sol-ring') && grave(s, 0).includes('force-of-will'));
+});
+test('Gifts Ungiven: up to four with different names; the opponent puts two into your graveyard, the rest go to your hand', () => {
+  let s = setup({ me: { hand: ['gifts-ungiven'], bf: [U, U, U, U], lib: ['opt', 'sol-ring', 'force-of-will', W] } });
+  s = cast(s, 'gifts-ungiven', player(1), 'auto'); s = resolveAll(s, (q, st) => viewId(q, st, 'opt'), (q, st) => viewId(q, st, 'sol-ring'), 'done', (q, st) => viewId(q, st, 'opt'), (q, st) => viewId(q, st, 'sol-ring'));
+  ok(grave(s, 0).includes('opt') && grave(s, 0).includes('sol-ring'), 'two chosen: both to the graveyard');
+});
+test('Final Fortune: an extra turn after this one; at the beginning of its end step, you lose', () => {
+  let s = setup({ me: { hand: ['final-fortune'], bf: [R, R] } });
+  s = cast(s, 'final-fortune', 'auto'); s = resolveAll(s);
+  s = toStep(s, 'end'); s = resolveAll(s);
+  s = toStep(s, 'upkeep'); eq(s.ap, 0, 'my extra turn');
+  s = toStep(s, 'end');
+  for (let g = 0; g < 6 && s.winner == null; g++) s = MF.apply(s, { type: 'pass' });
+  eq(s.winner, 1);
+});
+test('Firestorm: discard X cards; X damage to each of X targets', () => {
+  let s = setup({ me: { hand: ['firestorm', U, U], bf: [R] }, opp: { bf: ['korvold-fae-cursed-king'] } });
+  s = cast(s, 'firestorm', 2, q => q.opts[0].id, q => q.opts[0].id, player(1), (q, st) => viewId(q, st, 'korvold-fae-cursed-king'), 'auto');
+  s = resolveAll(s);
+  eq(s.players[1].life, 18); eq(s.cards[find(s, 'korvold-fae-cursed-king', 'bf', 1)].dmg, 2);
+});
+test('Chain of Vapor: bounce; the permanent\'s controller may sacrifice a land to copy it and choose a new target', () => {
+  let s = setup({ me: { hand: ['chain-of-vapor'], bf: [U, 'sol-ring'] }, opp: { bf: ['korvold-fae-cursed-king', B] } });
+  s = cast(s, 'chain-of-vapor', (q, st) => viewId(q, st, 'korvold-fae-cursed-king'), 'auto');
+  s = resolveAll(s, (q, st) => viewId(q, st, B), 'yes', 'new', (q, st) => viewId(q, st, 'sol-ring'), 'no');
+  ok(find(s, 'korvold-fae-cursed-king', 'hand', 1) != null && find(s, 'sol-ring', 'hand', 0) != null, 'both bounced');
+});
+test('Copy Enchantment: enters as a copy of an enchantment', () => {
+  let s = setup({ me: { hand: ['copy-enchantment'], bf: [U, U, U, 'smothering-tithe'] } });
+  s = cast(s, 'copy-enchantment', 'auto'); s = resolveAll(s, (q, st) => viewId(q, st, 'smothering-tithe'));
+  eq(s.bf.filter(i => MF.chars(s, i).name === 'Smothering Tithe').length, 2);
+});
+test('Imposter Mech: a copy of an opponent\'s creature that is a Vehicle artifact with crew 3', () => {
+  let s = setup({ me: { hand: ['imposter-mech'], bf: [U, U] }, opp: { bf: ['korvold-fae-cursed-king'] } });
+  s = cast(s, 'imposter-mech', 'auto'); s = resolveAll(s, (q, st) => viewId(q, st, 'korvold-fae-cursed-king'), q => q.opts[0].id);   // a copy of Korvold: its enters trigger sacrifices another permanent
+  const m = find(s, 'imposter-mech', 'bf', 0), ch = MF.chars(s, m);
+  eq(ch.name, 'Korvold, Fae-Cursed King'); eq(ch.types, ['Artifact']); ok(ch.subtypes.includes('Vehicle')); ok(ch.ab.some(a => a.crew === 3));
+});
+test('Scion of the Ur-Dragon: {2}: a Dragon into your graveyard; Scion becomes a copy of it until end of turn', () => {
+  let s = setup({ me: { bf: ['scion-of-the-ur-dragon', R, R], lib: ['korvold-fae-cursed-king', W] } });
+  s = activate(s, 'scion-of-the-ur-dragon', null, 'auto'); s = resolveAll(s, (q, st) => viewId(q, st, 'korvold-fae-cursed-king'));
+  eq(MF.chars(s, find(s, 'scion-of-the-ur-dragon', 'bf')).name, 'Korvold, Fae-Cursed King');
+  s = toStep(s, 'end', 'done'); s = resolveAll(s); s = toStep(s, 'upkeep');
+  eq(MF.chars(s, find(s, 'scion-of-the-ur-dragon', 'bf')).name, 'Scion of the Ur-Dragon', 'the copy effect ended');
+});
+test('Sevinne\'s Reclamation from the graveyard (flashback): return a permanent card with mana value 3 or less, and a copy', () => {
+  let s = setup({ me: { grave: ['sevinnes-reclamation', 'sol-ring', 'mox-amber'], bf: [W, W, W, W, W] } });
+  s = act(s, 'cast', 'sevinnes-reclamation', { via: 'flashback' }); s = answer(s, [(q, st) => viewId(q, st, 'sol-ring'), 'auto']);
+  s = resolveAll(s, 'yes', 'new', (q, st) => viewId(q, st, 'mox-amber'));
+  ok(find(s, 'sol-ring', 'bf', 0) != null && find(s, 'mox-amber', 'bf', 0) != null);
+});
+test('Flashback (the card): an instant in your graveyard gains flashback equal to its mana cost', () => {
+  let s = setup({ me: { hand: ['flashback'], grave: ['burst-lightning'], bf: [R, R] } });
+  s = cast(s, 'flashback', (q, st) => viewId(q, st, 'burst-lightning'), 'auto'); s = resolveAll(s);
+  ok(can(s, 'cast', 'burst-lightning', { via: 'flashback' }));
+});
+test('Eldritch Evolution: sacrifice a creature; a creature card with mana value up to 2 more onto the battlefield; exile it', () => {
+  let s = setup({ me: { hand: ['eldritch-evolution'], bf: [G, G, G, 'ragavan-nimble-pilferer'], lib: ['korvold-fae-cursed-king', 'ranger-captain-of-eos'] } });
+  s = cast(s, 'eldritch-evolution', (q, st) => viewId(q, st, 'ragavan-nimble-pilferer'), 'auto');
+  s = resolveAll(s, q => { ok(!q.opts.some(o => o.iid != null && s.cards[o.iid] && s.cards[o.iid].id === 'korvold-fae-cursed-king'), 'mana value 5 is too much'); return q.opts.find(o => o.iid != null).id; }, 'no');
+  ok(find(s, 'ranger-captain-of-eos', 'bf', 0) != null); ok(exile(s, 0).includes('eldritch-evolution'));
+});
+test('Boseiju, Who Endures: channel from hand — destroy a nonbasic land; its controller may search for a land with a basic land type', () => {
+  let s = setup({ me: { hand: ['boseiju-who-endures'], bf: [G, G] }, opp: { bf: ['city-of-traitors'], lib: [U, W] } });
+  s = activate(s, 'boseiju-who-endures', null, (q, st) => viewId(q, st, 'city-of-traitors'), 'auto'); s = resolveAll(s, 'yes', (q, st) => viewId(q, st, U));
+  ok(grave(s, 1).includes('city-of-traitors')); ok(find(s, U, 'bf', 1) != null);
+});
+test('Terra, Magical Adept: mill five and take up to one enchantment; Trance transforms it into Esper Terra', () => {
+  let s = setup({ me: { hand: ['terra-magical-adept-esper-terra'], bf: [R, G, G], lib: ['smothering-tithe', U, U, U, U, U] } });
+  s = cast(s, 'terra-magical-adept-esper-terra', 'auto'); s = resolveAll(s, (q, st) => viewId(q, st, 'smothering-tithe'));
+  ok(find(s, 'smothering-tithe', 'hand', 0) != null);
+});
+test('Lim-Dûl\'s Vault: pay 1 life to see the next five; keep, then shuffle and put them on top in any order', () => {
+  let s = setup({ me: { hand: ['lim-d-ls-vault'], bf: [U, B], lib: [W, W, W, W, W, 'opt', 'sol-ring', U, U, U, R, R] } });
+  s = cast(s, 'lim-d-ls-vault', 'auto');
+  s = resolveAll(s, 'again', q => q.opts[0].id, q => q.opts[0].id, q => q.opts[0].id, q => q.opts[0].id, 'keep', (q, st) => viewId(q, st, 'sol-ring'), q => q.opts[0].id, q => q.opts[0].id, q => q.opts[0].id);
+  eq(s.players[0].life, 19); eq(s.cards[s.players[0].lib[0]].id, 'sol-ring', 'Sol Ring on top');
+});
+test('Praetor\'s Grasp: exile a card from the opponent\'s library face down; you may play it', () => {
+  let s = setup({ me: { hand: ['praetors-grasp'], bf: [B, B, B, R] }, opp: { lib: [U, 'sol-ring'] } });
+  s = cast(s, 'praetors-grasp', player(1), 'auto'); s = resolveAll(s, (q, st) => viewId(q, st, 'sol-ring'));
+  ok(can(s, 'cast', 'sol-ring'), 'castable from exile');
+});
+test('Beseech the Mirror, bargained: the card found may be cast free if its mana value is 4 or less', () => {
+  let s = setup({ me: { hand: ['beseech-the-mirror'], bf: [B, B, B, B, 'sol-ring'], lib: [U, 'ranger-captain-of-eos'] } });
+  s = cast(s, 'beseech-the-mirror', (q, st) => viewId(q, st, 'sol-ring'), 'auto');
+  s = resolveAll(s, (q, st) => viewId(q, st, 'ranger-captain-of-eos'), 'yes', 'no');
+  ok(find(s, 'ranger-captain-of-eos', 'bf', 0) != null, 'cast for free');
+});

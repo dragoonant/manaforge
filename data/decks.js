@@ -3858,7 +3858,7 @@ window.MF.decks = {
   "released": "2026-05-30",
   "fetched": "2026-10-31",
   "source": "https://edhtop16.com/tournament/d-grid-on-the-stack/decklist/z0rVgKt4HGOWE57DB3qolitDrri1",
-  "registered": false,
+  "registered": true,
   "format": "Commander",
   "min": 100,
   "commanders": [
@@ -4262,22 +4262,7 @@ window.MF.decks = {
   "rank": 1,
   "players": 200,
   "record": "4-1-3",
-  "compiles": false,
-  "refused": [
-   "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
-   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
-   "copy-enchantment: ability: You may have ~ enter as a copy of any enchantment on the battlefield.",
-   "final-fortune: effect: Take an extra turn after this one",
-   "firestorm: effect: As an additional cost to cast this spell, discard X cards",
-   "gifts-ungiven: effect: Search your library for up to four cards with different names and reveal them",
-   "imposter-mech: ability: You may have ~ enter as a copy of a creature an opponent controls, except it's a Vehicle artifact with crew 3 and it loses all other card types.",
-   "intuition: effect: Search your library for three cards and reveal them",
-   "mirrormade: ability: You may have ~ enter as a copy of any artifact or enchantment on the battlefield.",
-   "otawara-soaring-city: filter qualifier: , creature, enchantment, or planeswalker",
-   "scheming-symmetry: effect: Choose two target players",
-   "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
-   "tainted-pact: effect: Exile the top card of your library"
-  ],
+  "compiles": true,
   "tokens": [
    "token-treasure",
    "token-fish-1-1-u",
@@ -4295,7 +4280,7 @@ window.MF.decks = {
   "released": "2026-06-05",
   "fetched": "2026-10-31",
   "source": "https://edhtop16.com/tournament/commandergeddon-10-brought-to-you-by-jenes-mtg/decklist/Tn7hc9tJIjhoDu0yDp7OHtJRG3i2",
-  "registered": false,
+  "registered": true,
   "format": "Commander",
   "min": 100,
   "commanders": [
@@ -4702,18 +4687,7 @@ window.MF.decks = {
   "rank": 7,
   "players": 173,
   "record": "3-3-1",
-  "compiles": false,
-  "refused": [
-   "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
-   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
-   "crop-rotation: effect: As an additional cost to cast this spell, sacrifice a land",
-   "demonic-consultation: effect: Choose a card name",
-   "eldritch-evolution: effect: Search your library for a creature card with mana value X or less, where X is 2 plus the sacrificed creature's mana value",
-   "final-fortune: effect: Take an extra turn after this one",
-   "intuition: effect: Search your library for three cards and reveal them",
-   "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
-   "tainted-pact: effect: Exile the top card of your library"
-  ],
+  "compiles": true,
   "tokens": [
    "token-treasure",
    "token-bird-2-2-u-flying",
@@ -4733,7 +4707,7 @@ window.MF.decks = {
   "released": "2026-09-12",
   "fetched": "2026-10-31",
   "source": "https://edhtop16.com/tournament/cedh-uk-open-benfest-iii/decklist/4CRipOBe3HdnR3NN4NQNImyZu8J2",
-  "registered": false,
+  "registered": true,
   "format": "Commander",
   "min": 100,
   "commanders": [
@@ -5140,20 +5114,7 @@ window.MF.decks = {
   "rank": 3,
   "players": 156,
   "record": "4-2-3",
-  "compiles": false,
-  "refused": [
-   "scion-of-the-ur-dragon: effect: Search your library for a Dragon permanent card and put it into your graveyard",
-   "beseech-the-mirror: effect: Search your library for a card, exile it face down, then shuffle",
-   "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
-   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
-   "copy-enchantment: ability: You may have ~ enter as a copy of any enchantment on the battlefield.",
-   "crop-rotation: effect: As an additional cost to cast this spell, sacrifice a land",
-   "demonic-consultation: effect: Choose a card name",
-   "final-fortune: effect: Take an extra turn after this one",
-   "lim-d-ls-vault: effect: Look at the top five cards of your library",
-   "shifting-woodland: effect: ~ becomes a copy of target permanent card in your graveyard until end of turn",
-   "tainted-pact: effect: Exile the top card of your library"
-  ],
+  "compiles": true,
   "tokens": [
    "token-treasure",
    "token-bird-2-2-u-flying"
@@ -5170,7 +5131,7 @@ window.MF.decks = {
   "released": "2026-07-11",
   "fetched": "2026-10-31",
   "source": "https://edhtop16.com/tournament/pittsburgh-2026-tcedh-10k-25000/decklist/9XwMYS3gwrTGnhaRXEF6QkpXc5K2",
-  "registered": false,
+  "registered": true,
   "format": "Commander",
   "min": 100,
   "commanders": [
@@ -5577,22 +5538,7 @@ window.MF.decks = {
   "rank": 8,
   "players": 195,
   "record": "3-3-2",
-  "compiles": false,
-  "refused": [
-   "terra-magical-adept-esper-terra: effect: Put up to one enchantment card milled this way into your hand",
-   "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
-   "beseech-the-mirror: effect: Search your library for a card, exile it face down, then shuffle",
-   "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
-   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
-   "demonic-consultation: effect: Choose a card name",
-   "final-fortune: effect: Take an extra turn after this one",
-   "flashback: filter noun: instant or sorcery card in your graveyard",
-   "gifts-ungiven: effect: Search your library for up to four cards with different names and reveal them",
-   "intuition: effect: Search your library for three cards and reveal them",
-   "noxious-revival: effect: Put target card from a graveyard on top of its owner's library",
-   "sevinnes-reclamation: effect: Return target permanent card with mana value 3 or less from your graveyard to the battlefield",
-   "tainted-pact: effect: Exile the top card of your library"
-  ],
+  "compiles": true,
   "tokens": [
    "token-treasure",
    "token-food",
@@ -5610,7 +5556,7 @@ window.MF.decks = {
   "released": "2026-06-27",
   "fetched": "2026-10-31",
   "source": "https://edhtop16.com/tournament/the-fishbowl-san-diego-copy-1767729472000/decklist/EkjAv5v9icSG7jTKu4vBewlX6RO2",
-  "registered": false,
+  "registered": true,
   "format": "Commander",
   "min": 100,
   "commanders": [
@@ -6014,21 +5960,7 @@ window.MF.decks = {
   "rank": 1,
   "players": 209,
   "record": "6-2-1",
-  "compiles": false,
-  "refused": [
-   "ad-nauseam: effect: Reveal the top card of your library and put that card into your hand",
-   "beseech-the-mirror: effect: Search your library for a card, exile it face down, then shuffle",
-   "boseiju-who-endures: filter qualifier: , enchantment, or nonbasic land an opponent controls",
-   "chain-of-vapor: effect: That permanent's controller may sacrifice a land of their choice",
-   "crop-rotation: effect: As an additional cost to cast this spell, sacrifice a land",
-   "demonic-consultation: effect: Choose a card name",
-   "final-fortune: effect: Take an extra turn after this one",
-   "noxious-revival: effect: Put target card from a graveyard on top of its owner's library",
-   "otawara-soaring-city: filter qualifier: , creature, enchantment, or planeswalker",
-   "praetors-grasp: effect: Search target opponent's library for a card and exile it face down",
-   "shifting-woodland: effect: ~ becomes a copy of target permanent card in your graveyard until end of turn",
-   "tainted-pact: effect: Exile the top card of your library"
-  ],
+  "compiles": true,
   "tokens": [
    "token-treasure",
    "token-spirit-1-1-c",

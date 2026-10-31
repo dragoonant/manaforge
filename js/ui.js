@@ -20,7 +20,7 @@
     // CR 708.5, 406.3: a face-down permanent or spell may be looked at only by its controller; a card
     // exiled face down (Necropotence) by nobody. Hidden ones are drawn as a nameless 2/2 or a card back.
     const fc = o.iid != null && v && v.cards[o.iid];
-    if (fc && fc.faceDown && (fc.zone === 'exile' || fc.ctrl !== ui.human)) {
+    if (fc && fc.faceDown && ((fc.zone === 'exile' && !(fc.seenBy || []).includes(ui.human)) || (fc.zone !== 'exile' && fc.ctrl !== ui.human))) {   // Praetor's Grasp, Beseech the Mirror: its exiler may look (seenBy)
       const cls = ['card', 'sz-' + (o.size || 'md'), 'facedown'];
       if (fc.zone === 'bf' && fc.tapped) cls.push('tapped');
       if (v.combat && v.combat.attackers.includes(o.iid)) cls.push('attacking');

@@ -48,6 +48,7 @@
     if (f.cmdr && !(I(s, iid) && I(s, iid).cmdr)) return false;                                   // CR 903.3d: a commander
     if (f.owned && !(I(s, iid) && I(s, iid).owner === who)) return false;                         // "you own"
     if (f.colors && !f.colors.some(k => ch.colors.includes(k))) return false;                     // "blue creatures"
+    if (f.anyOf && !f.anyOf.some(g => MF.matchChars(s, iid, ch, g, who, srcIid))) return false;   // Boseiju: "artifact, enchantment, or nonbasic land"
     if (f.blockedBySelf && !(s.combat && (s.combat.blocks[srcIid] || []).includes(iid))) return false;   // Tinder Wall: "target creature it's blocking"
     return true;
   };
@@ -172,6 +173,7 @@
     castNoncreature: (x, v) => { const who = x.ev.ctrl; return (P(x.s, who).h.castList || []).filter(e => !e.types.includes('Creature')).length; },   // "the number of noncreature spells they've cast this turn"
     evAmount: x => x.ev.n,
     evMv: x => x.ev.mv,
+    sacMvPlus: (x, v) => (x.L && x.L.sacMv != null ? x.L.sacMv : 0) + v.n,                      // Eldritch Evolution: "2 plus the sacrificed creature's mana value"
     oppCowards: x => x.s.bf.filter(i => I(x.s, i).ctrl !== x.ctrl && MF.chars(x.s, i).subtypes.includes('Coward')).length,   // Gornog
     lkiPowerT: (x, v) => { const q = (x.t[v.t] || [])[0]; if (!q || q.c == null) return 0; const c = I(x.s, q.c); return c.zone === 'bf' ? MF.chars(x.s, q.c).p : c.lki ? c.lki.p : 0; },   // Swords to Plowshares: "its power", as it last existed
     namedInGraves: x => x.s.players.reduce((n, p) => n + p.grave.filter(g => I(x.s, g).id === I(x.s, x.src).id).length, 0),   // Rite of Flame: "for each card named ~ in each graveyard" (itself excluded: it is on the stack)
@@ -264,7 +266,7 @@
       case 'attacksAlone': return ev.ctrl === src.ctrl;
       case 'landPlayed': return ev.ctrl === src.ctrl && ev.iid !== iid;
       case 'tappedForMana': return ev.iid === iid;
-      case 'beginStep': return (a.steps ? a.steps.includes(ev.step) : ev.step === a.step) && (!a.yours || ev.ap === src.ctrl) && (!a.opps || ev.ap !== src.ctrl);
+      case 'beginStep': return (a.steps ? a.steps.includes(ev.step) : ev.step === a.step) && (a.onTurn == null || s.turn === a.onTurn) && (!a.yours || ev.ap === src.ctrl) && (!a.opps || ev.ap !== src.ctrl);
       case 'gainLife': return ev.who === src.ctrl;
       // Valiant: "becomes the target of a spell or ability you control for the first time each turn".
       case 'targeted': if (a.ownCreature) { const tc = s.cards[ev.iid]; return !!tc && (tc.zone === 'bf' || (tc.zone === 'stack' && !a.permOnly)) && tc.ctrl === src.ctrl && MF.chars(s, ev.iid).types.includes('Creature') && ev.by !== src.ctrl; }   // Surrak
@@ -1126,6 +1128,166 @@
       MF.counterSpell(s, L, x.L ? (x.L.srcId || x.L.id) : null, op.exile);
     },
     counterTarget(x, op) { const iid = MF.resolveTargetSpell(x, op.on); if (iid == null) return; MF.counterSpell(x.s, x.s.stack.find(l => l.kind === 'spell' && l.iid === iid), x.L ? (x.L.srcId || x.L.id) : null, op.exile, x); },   // CR 701.6a; Force of Negation: "exile it instead"
+    // ---- PLAN D22: libraries ----
+    // Ad Nauseam: reveal the top card, put it into your hand, lose life equal to its mana value; repeat any number of times.
+    adNauseam(x) {
+      const s = x.s, p = P(s, x.ctrl);
+      for (let k = 0; p.lib.length; k++) {
+        if (k > 0 && MF.ask(x.x, { who: x.ctrl, kind: 'repeat', src: x.src, life: p.life, n: k, opts: [{ id: 'yes' }, { id: 'no' }] }) !== 'yes') return;
+        const top = p.lib[0], id = I(s, top).id, mv = MF.chars(s, top).mv;
+        log(s, 'reveal', { who: x.ctrl, cs: [id] }); MF.move(s, top, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'library' });
+        if (mv) MF.loseLife(s, x.ctrl, mv, 'effect', I(s, x.src).id);
+        if (s.winner != null || P(s, x.ctrl).life <= 0) return;                                   // the state-based action is checked after it resolves; nothing more to choose
+      }
+    },
+    // Tainted Pact: exile the top card; you may put it into your hand unless it shares a name with another card exiled this way; repeat until one goes to hand or two share a name.
+    taintedPact(x) {
+      const s = x.s, p = P(s, x.ctrl), names = new Set();
+      while (p.lib.length) {
+        const top = p.lib[0], id = I(s, top).id, nm = MF.def(s, top).name, n = MF.move(s, top, 'exile');
+        log(s, 'exiled', { who: x.ctrl, c: id, by: x.L ? x.L.srcId : null });
+        if (names.has(nm)) { log(s, 'taintedStop', { who: x.ctrl, c: id }); return; }
+        names.add(nm);
+        if (MF.ask(x.x, { who: x.ctrl, kind: 'taintedTake', src: x.src, c: n, opts: [{ id: 'take' }, { id: 'next' }] }) === 'take') { MF.move(s, n, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'exile' }); return; }
+      }
+    },
+    // Demonic Consultation: choose a card name (CR 201.3: any card name); exile the top six; reveal until that name; it goes to hand; the rest revealed is exiled.
+    consultation(x) {
+      const s = x.s, p = P(s, x.ctrl);
+      const mine = [...new Set(Object.values(MF.cards).filter(d => !d.token).map(d => d.name))].sort();
+      const nm = MF.ask(x.x, { who: x.ctrl, kind: 'chooseCardName', src: x.src, opts: mine.concat(MF.CARD_NAMES.filter(n0 => !mine.includes(n0))).map(n0 => ({ id: n0 })) });
+      log(s, 'chose', { who: x.ctrl, c: I(s, x.src).id, choice: nm });
+      const six = p.lib.slice(0, 6); for (const i of six) MF.move(s, i, 'exile');
+      if (six.length) log(s, 'exiledTop', { who: x.ctrl, cs: six.map(i => I(s, i).id) });
+      const rev = [];
+      while (p.lib.length) {
+        const top = p.lib[0], id = I(s, top).id; rev.push(id);
+        if (MF.def(s, top).name === nm || (MF.def(s, top).alt && MF.def(s, top).alt.name === nm)) { log(s, 'reveal', { who: x.ctrl, cs: rev }); MF.move(s, top, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'library' }); return; }
+        MF.move(s, top, 'exile');
+      }
+      if (rev.length) log(s, 'reveal', { who: x.ctrl, cs: rev });
+      log(s, 'consultationNone', { who: x.ctrl, n: rev.length });
+    },
+    // Intuition: three cards revealed; target opponent chooses one for your hand, the rest to the graveyard. Gifts Ungiven: up to four
+    // with different names; the opponent chooses two for the graveyard, the rest to hand. (CR 701.23d: "three cards" must find as many as it can.)
+    oppChoosesFromSearch(x, op) {
+      const s = x.s, p = P(s, x.ctrl), opp = players(x, op.opp)[0], got = [];
+      MF.emit(s, { t: 'search', who: x.ctrl });
+      for (let k = 0; k < op.n; k++) {
+        const names = new Set(got.map(i => MF.def(s, i).name)), seen = new Set();
+        const opts = p.lib.filter(i => !got.includes(i) && (!op.diffNames || !names.has(MF.def(s, i).name)) && (id => { if (seen.has(id)) return false; seen.add(id); return true; })(I(s, i).id)).map(i => ({ id: i, iid: i }));
+        if (!opts.length) break;
+        if (op.upTo) opts.push({ id: 'done' });
+        const a = MF.ask(x.x, { who: x.ctrl, kind: 'searchMany', src: x.src, k: k + 1, n: op.n, upTo: !!op.upTo, diffNames: !!op.diffNames, opts: opts });
+        if (a === 'done') break; got.push(a);
+      }
+      if (got.length) log(s, 'reveal', { who: x.ctrl, cs: got.map(i => I(s, i).id) });
+      const picked = [];
+      for (let k = 0; k < Math.min(op.pick, got.length); k++) picked.push(got.length - picked.length <= op.pick - picked.length && op.pick >= got.length ? got.filter(i => !picked.includes(i))[0] : MF.ask(x.x, { who: opp, kind: 'oppPicks', src: x.src, k: k + 1, n: op.pick, to: op.pickTo, opts: got.filter(i => !picked.includes(i)).map(i => ({ id: i, iid: i })) }));
+      for (const i of got) { const toHand = picked.includes(i) === (op.pickTo === 'hand'), id = I(s, i).id; MF.move(s, i, toHand ? 'hand' : 'grave'); log(s, toHand ? 'toHand' : 'searchToGrave', { who: x.ctrl, c: id, revealed: true, from: 'library' }); }
+      MF.shuffle(s, p.lib);
+    },
+    // Beseech the Mirror: the found card exiled face down; bargained, you may cast it free if its mana value is 4 or less; else it goes to hand.
+    beseech(x) {
+      const s = x.s, n = x.found; if (n == null || I(s, n).zone !== 'exile') return;
+      const d = MF.def(s, n);
+      const castable = x.L && x.L.bargained && !d.types.includes('Land') && MF.chars(s, n).mv <= 4;
+      if (castable && MF.ask(x.x, { who: x.ctrl, kind: 'may', src: x.src, what: 'castFree', c: I(s, n).id, opts: [{ id: 'yes' }, { id: 'no' }] }) === 'yes') { I(s, n).faceDown = false; log(s, 'reveal', { who: x.ctrl, cs: [I(s, n).id] }); s.todo.unshift({ t: 'cast', iid: n, alt: false, via: 'free', who: x.ctrl, answers: [], midResolve: true }); return; }   // CR 608.2g
+      I(s, n).faceDown = false; MF.move(s, n, 'hand'); log(s, 'toHand', { who: x.ctrl, c: I(s, n).id, revealed: false, from: 'exile' });
+    },
+    // Praetor's Grasp: "You may play that card for as long as it remains exiled."
+    mayPlayFound(x) { const n = x.found; if (n == null) return; x.s.effects.push({ k: 'mayPlay', iid: n, who: x.ctrl, until: 'exiled' }); },
+    // Scheming Symmetry: each of two target players searches for a card, then shuffles and puts it on top (CR 701.23i: in APNAP order).
+    eachSearchTop(x, op) {
+      const s = x.s, seats = players(x, op.who).sort((a, b) => (a === s.ap ? -1 : b === s.ap ? 1 : 0));
+      for (const seat of seats) OPS.searchLib(Object.assign({}, x, { ctrl: seat }), { o: 'searchLib', dest: 'top', what: 'card' });
+    },
+    // Lim-Dûl's Vault.
+    limdul(x) {
+      const s = x.s, p = P(s, x.ctrl);
+      const order = (cards, where) => { const out = []; let left = cards.slice(); while (left.length > 1) { const a = MF.ask(x.x, { who: x.ctrl, kind: 'orderCards', src: x.src, where: where, k: out.length + 1, n: cards.length, opts: left.map(i => ({ id: i, iid: i })) }); out.push(a); left = left.filter(i => i !== a); } return out.concat(left); };
+      for (;;) {
+        const five = p.lib.slice(0, 5); if (!five.length) return;
+        log(s, 'look', { who: x.ctrl, n: five.length });
+        const again = p.life >= 1 && p.lib.length > five.length && MF.ask(x.x, { who: x.ctrl, kind: 'limdul', src: x.src, cs: five, life: p.life, opts: [{ id: 'keep' }, { id: 'again' }] }) === 'again';
+        if (!again) {
+          const top = order(five, 'top'); for (const i of five) p.lib.splice(p.lib.indexOf(i), 1);
+          MF.shuffle(s, p.lib); p.lib.unshift(...top); log(s, 'limdulDone', { who: x.ctrl, n: top.length }); return;
+        }
+        MF.loseLife(s, x.ctrl, 1, 'pay', I(s, x.src).id);
+        const bottom = order(five, 'bottom'); for (const i of five) p.lib.splice(p.lib.indexOf(i), 1); p.lib.push(...bottom);
+        log(s, 'toBottom', { who: x.ctrl, n: bottom.length });
+      }
+    },
+    // Chain of Vapor: "Then that permanent's controller may sacrifice a land of their choice. If the player does, they may copy this spell and may choose a new target for that copy."
+    chainOfVapor(x, op) {
+      const s = x.s, q = (x.t[op.on.t] || [])[0]; if (!q || q.c == null) return;
+      const c = I(s, q.c), who = c.zone === 'bf' ? c.ctrl : c.lki ? c.lki.ctrl : c.ctrl;
+      OPS.bounce(x, { on: op.on });
+      const lands = s.bf.filter(i => I(s, i).ctrl === who && MF.chars(s, i).types.includes('Land'));
+      if (!lands.length) return;
+      const a = MF.ask(x.x, { who: who, kind: 'chainSac', src: x.src, opts: lands.map(i => ({ id: i, iid: i })).concat([{ id: 'no' }]) });
+      if (a === 'no') return;
+      MF.sacrifice(s, a);
+      if (MF.ask(x.x, { who: who, kind: 'may', src: x.src, what: 'copy', opts: [{ id: 'yes' }, { id: 'no' }] }) !== 'yes') return;
+      OPS.copySpell(Object.assign({}, x, { ctrl: who, ev: { lid: -1, spell: { id: x.L.id, t: JSON.parse(JSON.stringify(x.L.t)), x: 0 } } }), {});
+    },
+    // Boseiju: "That player may search their library for a land card with a basic land type, put it onto the battlefield, then shuffle."
+    ctrlMaySearchLand(x, op) {
+      const who = ctrlOfTarget(x, op.on); if (who == null) return;
+      if (MF.ask(x.x, { who: who, kind: 'may', src: x.src, what: 'search', opts: [{ id: 'yes' }, { id: 'no' }] }) !== 'yes') return;
+      OPS.searchLib(Object.assign({}, x, { ctrl: who }), { o: 'searchLib', f: { types: ['Land'], subtypes: ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'] }, dest: 'bf', what: 'land card with a basic land type' });
+    },
+    // Sevinne's Reclamation: "If this spell was cast from a graveyard, you may copy this spell and may choose a new target for the copy."
+    copySelfIfFromGrave(x) {
+      if (!x.L || x.L.from !== 'grave') return;
+      if (MF.ask(x.x, { who: x.ctrl, kind: 'may', src: x.src, what: 'copy', opts: [{ id: 'yes' }, { id: 'no' }] }) !== 'yes') return;
+      OPS.copySpell(Object.assign({}, x, { ev: { lid: -1, spell: { id: x.L.id, t: JSON.parse(JSON.stringify(x.L.t)), x: 0 } } }), {});
+    },
+    // Flashback (the card): the target gains flashback until end of turn; its cost is its mana cost.
+    grantFlashback(x, op) { for (const q of x.t[op.on.t] || []) { if (!q || q.c == null || I(x.s, q.c).zone !== 'grave') continue; x.s.effects.push({ k: 'grantFlashback', iid: q.c, until: 'eot' }); log(x.s, 'grantFlashback', { c: I(x.s, q.c).id }); } },
+    // Final Fortune: "Take an extra turn after this one. At the beginning of that turn's end step, you lose the game." (CR 500.7, 603.7)
+    extraTurn(x, op) {
+      const s = x.s; (s.extraTurns = s.extraTurns || []).unshift({ who: x.ctrl });
+      log(s, 'extraTurnAdded', { who: x.ctrl });
+      if (op.loseAtEnd) (s.delayed = s.delayed || []).push({ src: x.src, ctrl: x.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', onTurn: s.turn + 1, ops: [{ o: 'loseGame' }] } });
+    },
+    loseGame(x) { const s = x.s; log(s, 'lose', { who: x.ctrl, why: 'effect', c: x.L ? x.L.srcId : null }); s.winner = 1 - x.ctrl; log(s, 'win', { who: s.winner }); },
+    // Scion of the Ur-Dragon, Shifting Woodland: "becomes a copy of that card until end of turn" (CR 707.2, layer 1)
+    becomeCopyOf(x, op) {
+      const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'bf') return;
+      const card = op.of === 'found' ? x.found : ((x.t[op.of.t] || [])[0] || {}).c; if (card == null || !I(s, card)) return;
+      if (op.of === 'found' && I(s, card).zone !== 'grave') return;
+      s.effects.push({ k: 'becomeCopy', iid: x.src, id: I(s, card).id, until: 'eot', ts: s.ts++ });
+      log(s, 'becomesCopy', { who: x.ctrl, c: c.id, of: I(s, card).id });
+    },
+    // Esper Terra, I–III: "Create a token that's a copy of target nonlegendary enchantment you control. It gains haste. If it's a Saga, put up to three lore counters on it. Sacrifice it at the beginning of your next end step."
+    esperTerraCopy(x, op) {
+      const s = x.s, q = (x.t[op.on.t] || [])[0]; if (!q || q.c == null || I(s, q.c).zone !== 'bf') return;
+      const before = s.nid; OPS.tokenCopy(x, { o: 'tokenCopy', of: op.on, targeted: true });
+      const tk = s.nid - 1; if (tk < before || !I(s, tk) || I(s, tk).zone !== 'bf') return;
+      (s.delayed = s.delayed || []).push({ src: x.src, ctrl: x.ctrl, once: true, ab: { k: 'trig', on: 'beginStep', step: 'end', yours: true, ops: [{ o: 'sacThese', iids: [tk] }] } });   // "at the beginning of your next end step"
+      s.effects.push({ k: 'grant', iid: tk, kws: ['haste'], ts: s.ts++ });
+      if (MF.chars(s, tk).subtypes.includes('Saga')) {
+        if (I(s, tk).ctr.lore == null) { I(s, tk).ctr.lore = 1; MF.emit(s, { t: 'lore', iid: tk, before: 0, after: 1 }); }   // CR 714.3a: a Saga enters with a lore counter
+        const n = MF.ask(x.x, { who: x.ctrl, kind: 'loreUpTo', src: x.src, opts: [3, 2, 1, 0].map(k => ({ id: k })) });
+        for (let k = 0; k < n; k++) { const c = I(s, tk), before = c.ctr.lore || 0; c.ctr.lore = before + 1; MF.emit(s, { t: 'lore', iid: tk, before: before, after: c.ctr.lore }); }
+        if (n) log(s, 'lore', { who: x.ctrl, c: I(s, tk).id, n: I(s, tk).ctr.lore });
+      }
+    },
+    // Terra, Magical Adept: "Exile Terra, then return it to the battlefield transformed under its owner's control." (CR 712)
+    exileReturnTransformed(x) {
+      const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'bf') return;
+      const owner = c.owner, n = MF.move(s, x.src, 'exile'); log(s, 'exiled', { who: owner, c: I(s, n).id, by: I(s, n).id });
+      const m = MF.move(s, n, 'bf', { ctrl: owner, transformed: true, x: x.x });
+      log(s, 'putOnto', { who: owner, c: I(s, m).id, tapped: false, from: 'exile', transformed: true });
+    },
+    // Esper Terra, IV: "Exile Esper Terra, then return it to the battlefield (front face up)."
+    exileReturnFront(x) {
+      const s = x.s, c = I(s, x.src); if (!c || c.zone !== 'bf') return;
+      const owner = c.owner, n = MF.move(s, x.src, 'exile'); log(s, 'exiled', { who: owner, c: I(s, n).id, by: I(s, n).id });
+      MF.move(s, n, 'bf', { ctrl: owner, x: x.x }); log(s, 'returned', { who: owner, c: I(s, n).id });
+    },
     // ---- PLAN D22: triggered and activated abilities ----
     mayDraw(x, op) { for (const seat of players(x, op.who)) if (MF.ask(x.x, { who: seat, kind: 'may', src: x.src, what: 'draw', opts: [{ id: 'yes' }, { id: 'no' }] }) === 'yes') MF.draw(x.s, seat, 1); },   // Tataru Taru: "target opponent may draw a card" — that player decides
     // Smothering Tithe: "that player may pay {2}. If the player doesn't, you create a Treasure token."
@@ -1689,16 +1851,18 @@
       log(s, 'enterAsCopy', { who: L.ctrl, c: L.id, of: I(s, ans).id });
       return { id: I(s, ans).id, except: JSON.parse(JSON.stringify(a.except)), exileFrom: a.exileCopied ? ans : null };
     }
-    const opts = s.bf.filter(i => MF.isType(s, i, 'Creature') && MF.chars(s, i).mv <= (L.spent || 0)).map(i => ({ id: i, iid: i }));
+    const opts = s.bf.filter(i => i !== L.iid && (a.f ? MF.matchChars(s, i, MF.chars(s, i), a.f, L.ctrl, null) : MF.isType(s, i, 'Creature') && MF.chars(s, i).mv <= (L.spent || 0))).map(i => ({ id: i, iid: i }));   // Copy Enchantment, Mirrormade, Imposter Mech: by their own filters
     if (!opts.length) return null;                                                             // nothing it could copy: not a choice
     opts.push({ id: 'no' });
-    const ans = MF.ask(x.x, { who: L.ctrl, kind: 'enterAsCopy', src: L.iid, spent: L.spent || 0, opts: opts });
+    const ans = MF.ask(x.x, Object.assign({ who: L.ctrl, kind: 'enterAsCopy', src: L.iid, spent: L.spent || 0, opts: opts }, a.f ? { what: a.f.types.join(' or ').toLowerCase() + (a.f.ctrl === 'opp' ? ' an opponent controls' : '') } : {}));
     if (ans === 'no') return null;
     const t = I(s, ans);
     const base = t.copy ? t.copy : { id: t.id, except: {} };                                  // CR 707.2: the copiable values, including an earlier copy effect
     const except = Object.assign({}, base.except);
     except.addSubtypes = (except.addSubtypes || []).concat(a.except.addSubtypes || []);
     except.kw = (except.kw || []).concat(a.except.kw || []);
+    if (a.except.setTypes) except.setTypes = a.except.setTypes.slice();
+    if (a.except.addAb) except.addAb = (except.addAb || []).concat(a.except.addAb);
     log(s, 'enterAsCopy', { who: L.ctrl, c: L.id, of: t.id });
     return { id: base.id, except: except };
   };
