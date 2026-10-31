@@ -43,6 +43,24 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
+**2026-10-31 — the AI and the championship Commander decks (D24).**
+
+- Measured with `tools/arena.mjs --mixed --commander` (10 games, the six Commander decks), before → after:
+  spells cast per game 12.8 → 19.6; opponent's-turn windows used 1.9% → 4.3%; turns with no land, spell
+  or attack 13.9% → 11.0%; mean game 20.4 → 19.1 turns. Six championship pairings (`scratch`): before, three
+  of six ended with a player losing to its own Pact; now none, and no game ends by the AI's own Final Fortune.
+  Duel arena (12 mixed games) unchanged in character: 13.3 spells a game (11.3 before), 6.9% empty turns.
+- Found and fixed on the way: Gornog's Coward count recursed inside the characteristics door; Crop Rotation
+  sacrificed its land before paying with it (now CR 601.2g-h: mana first); a roll-out of a reversed action
+  could win (it now scores nothing, and the AI cancels when every answer is refused); Lion's Eye Diamond was
+  proposed for ordinary payments (now only when nothing else pays); `tools/arena.mjs --mixed` paired
+  Commander and duel decks.
+- tests/28-ai-commander.mjs: both Oracle lines and the Breach line won from a set-up hand; no line without
+  the mana; Force of Will on a tutor; a tutor fetching Demonic Consultation for Oracle; Final Fortune and an
+  unpayable Pact left in hand. 447/447.
+- Still short of real cEDH: the lines win when the AI holds them, but in these games it rarely assembles
+  one, and games are still decided by combat around turn 19 (TODO).
+
 **2026-10-31 — Commander mode and five championship Commander decks (D22): all registered, 100 of 100 cards each.**
 
 - The picker has a Duel / Commander switch; the chooser lists only that mode's decks, under "cEDH
