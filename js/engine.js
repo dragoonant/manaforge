@@ -2091,9 +2091,9 @@
     if (L.bargainSac != null) MF.sacrifice(s, L.bargainSac);
     const tax = L.t.flat().reduce((n, r) => n + (r && r.c != null && I(s, r.c).zone === 'bf' && I(s, r.c).ctrl !== who ? chars(s, r.c).ab.filter(a => a.k === 'targetTax').reduce((m, a) => m + a.life, 0) : 0), 0);
     if (tax) { if (P(s, who).life < tax) throw new Illegal('cannot pay ' + tax + ' life'); addPay.push(() => MF.loseLife(s, who, tax, 'pay', card.id)); }
-    for (const f of addPay) f();
+    payMana(x, who, cost, iid, true, ctx);                                                    // CR 601.2g-h: mana abilities first — a land may be tapped for mana and then sacrificed (Crop Rotation)
+    for (const f of addPay) f();                                                              // CR 601.2h: the rest of the total cost, in any order
     if (sneakBack != null) { log(s, 'sneakReturn', { who: who, c: I(s, sneakBack).id }); move(s, sneakBack, 'hand'); }                                  // CR 702.166a: paid with the total cost (601.2h)
-    payMana(x, who, cost, iid, true, ctx);                                                    // CR 601.2g-h
     L.spent = MF.manaValue(cost);                                                             // "the amount of mana spent to cast" (CR 601.2h)
     if (from === 'command') { const cc = P(s, who).cmdCasts; cc[card.id] = (cc[card.id] || 0) + 1; }   // CR 903.8: the tax counts casts from the command zone
     if (ctx.usedCavern) L.uncounterable = true;                                               // Cavern of Souls

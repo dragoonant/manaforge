@@ -540,3 +540,10 @@ test('Gornog, the Red Reaper: a Coward can\'t block a Warrior; attacking Warrior
   eq(MF.chars(s, nj).p, 4, 'Najeela 3 + 1 Coward');
   ok(!MF.canBlock(s, rc, nj), 'Cowards can\'t block Warriors');
 });
+test('CR 601.2g-h: Crop Rotation with one Forest — tap it for {G}, then sacrifice it as the additional cost', () => {
+  let s = setup({ me: { hand: ['crop-rotation'], bf: [G], lib: ['city-of-traitors', U] } });
+  s = cast(s, 'crop-rotation', (q, st) => viewId(q, st, G), 'auto');
+  ok(grave(s, 0).includes(G), 'the Forest was sacrificed after paying');
+  s = resolveAll(s, (q, st) => viewId(q, st, 'city-of-traitors'));
+  ok(find(s, 'city-of-traitors', 'bf', 0) != null);
+});

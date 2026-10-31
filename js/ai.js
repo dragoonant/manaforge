@@ -397,11 +397,12 @@
   function linePay(s, me, q, reserve) {
     const taps = q.opts.filter(o => typeof o.id === 'string' && o.id.startsWith('tap:'));
     if (!taps.length) return 'auto';
-    const need = q.need, col = ['W', 'U', 'B', 'R', 'G', 'C'].find(k => need[k] > (s.players[me].pool[k] || 0));
+    const need = q.need, pool = MF.view(s).players[me].pool, col = ['W', 'U', 'B', 'R', 'G', 'C'].find(k => need[k] > (pool[k] || 0));   // the payment in progress lives in the question's view
     if (col) { const o = taps.find(t => t.col === col) || taps.find(t => String(t.col).includes(col)); if (o) return o.id; }   // a multi-mana source offers its multisets ("UUU")
     const spare = taps.find(t => ![...String(t.col)].some(k => reserve.includes(k))) || taps[0];
     return spare.id;
   }
+  const linePiece = (s, iid) => { const v = MF.view(s); return iid != null && !!v.cards[iid] && LINE_PIECE(MF.def(v, iid)); };   // a payment the line makes, not any payment that turn
   const pipsOf = (s, iids) => iids.flatMap(i => (MF.def(s, i).mana.match(/\{[WUBRG]\}/g) || []).map(x => x[1]));
   const castOf = (s, me, pred, vias) => MF.legalActions(s).find(a => a.type === 'cast' && pred(MF.def(s, a.iid)) && (vias ? vias.includes(a.via || 'plain') : true));
   // A line under way is read from the game, not remembered: this turn's casts include one of its pieces.
@@ -415,7 +416,7 @@
         if (s.pending) {
           const q = s.pending.q;
           if (q.kind === 'taintedTake') return { type: 'answer', id: 'next' };
-          if (q.kind === 'pay' && q.who === me) return { type: 'answer', id: linePay(s, me, q, pipsOf(s, P(s, me).hand.filter(i => isLibraryWin(MF.def(s, i))))) };
+          if (q.kind === 'pay' && q.who === me && linePiece(s, q.src)) return { type: 'answer', id: linePay(s, me, q, pipsOf(s, P(s, me).hand.filter(i => isLibraryWin(MF.def(s, i))))) };
           return undefined;
         }
         if (s.priority !== me) return undefined;
@@ -436,7 +437,7 @@
           const v = MF.view(s);                                                                   // the spell being cast exists in the question's view (CLAUDE.md rule 4)
           if (q.kind === 'target' && q.src != null && v.cards[q.src] && isFreeze(MF.def(v, q.src))) return { type: 'answer', id: 'p' + (3 * (storm + 1) >= oppLib || P(s, me).lib.length < 3 * storm + 8 ? opp : me) };   // the Brain Freeze that kills, or fuel for escape (never decking itself)
           if (q.kind === 'newTargets') return { type: 'answer', id: 'keep' };
-          if (q.kind === 'pay' && q.who === me) return { type: 'answer', id: linePay(s, me, q, ['U']) };
+          if (q.kind === 'pay' && q.who === me && linePiece(s, q.src)) return { type: 'answer', id: linePay(s, me, q, ['U']) };
           return undefined;
         }
         if (s.priority !== me) return undefined;
@@ -524,6 +525,7 @@
         let v;
         try {
           const r = rolloutState(MF.apply(root, a), me, s.turn, st); v = evalFor(r, me);
+          if (r.log.slice(s.log.length).some(e => e.t === 'undone' && e.who === me)) v = -Infinity;   // the action, or the cast this answer belongs to, was refused and reversed (CR 733): never pick it again
           for (const t of threats) if (!resolvedAfter(r, t.L, s.log.length)) v += t.v;
           if (s.commander && a.type === 'cast') v += W.castCommander;   // PLAN D24: a spell cast is tempo the one-turn horizon doesn't see (a cantrip's look, storm, magecraft, Kraum and Lotho's triggers)
         }
@@ -533,6 +535,7 @@
         if (v > bs + 1e-9) { bs = v; best = a; }
       }
       MF.ai.stats.applies += st.n;
+      if (bs === -Infinity && s.pending && s.pending.q.cancel) return { type: 'cancel' };   // every answer is refused: take the action back (CR 733.1)
       return best;
     },
   };
