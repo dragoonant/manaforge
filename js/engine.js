@@ -636,7 +636,7 @@
         if (a.cost.tap && c.tapped) return;
         if (ctx && ctx.keep === iid && a.cost.sacSelf) return;                                  // Tinder Wall: an ability that sacrifices it as a cost can't also be paid by sacrificing it for mana (CR 601.2h)
         if (activateForbidden(s, who, iid, a)) return;
-        if (a.instantOnly && !ctx) return;                                                      // Lion's Eye Diamond: "Activate only as an instant" — not while an effect asks for mana (CR 605.3a)
+        if (a.instantOnly && !(ctx && ctx.any)) return;                                         // Lion's Eye Diamond: "Activate only as an instant" — only with priority (CR 602.5e, 304.5; ruling 2004-10-04: "only at times when you can cast an instant"), never inside a payment (CR 605.3a's other times)
         if (a.cost.tapFoods && s.bf.filter(k => I(s, k).ctrl === who && !I(s, k).tapped && chars(s, k).subtypes.includes('Food')).length < a.cost.tapFoods) return;   // The Cabbage Merchant
         if (a.cost.exileCreature && !s.bf.some(k => I(s, k).ctrl === who && chars(s, k).types.includes('Creature'))) return;   // Food Chain                                          // Grand Abolisher stops mana abilities too
         if (a.only === 'creature' && !(ctx && (ctx.creature || ctx.any))) return;

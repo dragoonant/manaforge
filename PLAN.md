@@ -43,6 +43,32 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
+**2026-11-01 — a crash sweep over every registered deck, the page included.**
+
+- Three sweeps, random deck pairs (duel and Commander), each seat random, mixed or the AI, with a cancel
+  now and then: the engine with `tools/sim.mjs`'s invariants (549 games, 311k steps: no crash); the page
+  itself, every decision state drawn in Chromium from the acting seat, cards hovered and menus opened
+  (457 games, 110k states; the script is `scratch/`, as it needs Playwright); and the new
+  `tools/text-sweep.mjs`, every prompt, log line and Pass label run through `js/text.js` from both seats
+  (about 430 games). `tools/policy-sweep.mjs 250`: every AI answer legal.
+- The page could not draw (each a crash modal in play): Vivi Ornitier as a payment source; Tainted Pact's
+  prompt, which named an object from a discarded partial run; Lion's Eye Diamond's discardHand line; the
+  speed trigger (no source card) in the Pass label and on the stack; Korvold's and The Cabbage Merchant's
+  'sacrifice' question, which had no prompt; United Battlefront taking none. A Map token read "null/null".
+  `tools/check-pages.mjs` missed two of these because it searched all of `js/text.js` for a key, so a prompt
+  named like a log type stood in for its line: it now reads LINES and PROMPTS separately.
+- The engine (and AI roll-outs) threw: a payment that can't be reversed (Pact of Negation's upkeep) offered
+  a colour that left it unpayable — such a payment now offers only mana that lets it finish (CR 118.3);
+  Tinder Wall paid "{R}, Sacrifice" by sacrificing itself for {R}{R} — that source is now kept out (CR
+  601.2h); Lion's Eye Diamond paid mid-cast and discarded Otawara before its channel cost — it is now
+  activated only with priority (CR 602.5e, 304.5; its 2004-10-04 ruling), never inside a payment.
+- A rules defect on the way: Tinder Wall's damage ability always fizzled (its target, "creature it's
+  blocking", was re-checked after the Wall was sacrificed as the cost); combat now keeps last-known blocks
+  (CR 608.2h). The rules text was re-fetched into `scratch/rules/` (same 977,752 bytes): check-pages clean.
+- tests: 464/464 (tests/29-player-text.mjs runs `js/text.js` against engine states; every new test fails
+  before its fix). Commander arena, 6 mixed games after the Lion's Eye Diamond change: 21.2 spells a game,
+  6.8% empty turns, 4.6% of the opponent's-turn windows used.
+
 **2026-11-01 — the Commander AI, second pass (D24).**
 
 - New lines: Ad Nauseam into a line (played out on three reshuffled libraries, started if it wins on two);

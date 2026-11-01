@@ -577,3 +577,9 @@ test('Tinder Wall: "{R}, Sacrifice this creature" can\'t take its {R} from sacri
   s = act(s, 'act', 'tinder-wall'); s = resolveAll(s, tgt(find(s, 'warren-elder')), 'auto');
   ok(grave(s, 1).includes('warren-elder'), '2 damage to the creature it blocked'); ok(grave(s, 0).includes('tinder-wall'), 'sacrificed');
 });
+test('Lion\'s Eye Diamond: "Activate only as an instant" — with priority only, never in the middle of a payment (CR 602.5e, 304.5; ruling 2004-10-04)', () => {
+  const s = setup({ me: { hand: ['lightning-strike', 'otawara-soaring-city'], bf: ['lions-eye-diamond'] } });
+  ok(!can(s, 'cast', 'lightning-strike'), 'it can\'t pay for a spell being cast');
+  ok(!can(s, 'act', 'otawara-soaring-city'), 'nor for Otawara\'s channel (it would discard Otawara too)');
+  ok(can(s, 'mana', 'lions-eye-diamond'), 'it can be activated at priority, the mana floating');
+});

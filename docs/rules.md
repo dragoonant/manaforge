@@ -15,7 +15,7 @@ A citation that does not exist in that text fails the generator.
 | 103.6a | If a card allows a player to begin the game with that card on the battlefield, the player taking this action puts that card onto the battlefield. | `js/engine.js` `js/text.js` `tools/build-cards.mjs` |
 | 103.8 | The starting player takes their first turn. | `js/engine.js` |
 | 103.8a | In a two-player game, the player who plays first skips the draw step (see rule 504, “Draw Step”) of their first turn. | `js/engine.js` `js/text.js` |
-| 104.2b | An effect may state that a player wins the game. | `js/ops.js` `tools/build-cards.mjs` |
+| 104.2b | An effect may state that a player wins the game. | `js/ai.js` `js/ops.js` `tools/build-cards.mjs` |
 | 104.3c | If a player is required to draw more cards than are left in their library, they draw the remaining cards and then lose the game the next time a pla… | `js/engine.js` |
 | 104.3e | An effect may state that a player loses the game. | `js/ops.js` |
 | 104.4a | If all the players remaining in a game lose simultaneously, the game is a draw. | `js/engine.js` |
@@ -100,6 +100,7 @@ A citation that does not exist in that text fails the generator.
 | 303.4c | If an Aura is enchanting an illegal object or player as defined by its enchant ability and other applicable effects, the object it was attached to … | `js/engine.js` |
 | 303.7 | Some Aura enchantments also have the subtype “Role.” | `js/ops.js` |
 | 303.7a | If a permanent has more than one Role controlled by the same player attached to it, each of those Roles except the one with the most recent timesta… | `js/engine.js` |
+| 304.5 | If text states that a player may do something “any time they could cast an instant” or “only as an instant,” it means only that the player must hav… | `js/engine.js` |
 | 305.1 | A player who has priority may play a land card from their hand during a main phase of their turn when the stack is empty. Playing a land is a speci… | `js/engine.js` |
 | 305.2 | A player can normally play one land during their turn; however, continuous effects may increase this number. | `tools/build-cards.mjs` `tools/sim.mjs` |
 | 305.2a | To determine whether a player can play a land, compare the number of lands the player can play this turn with the number of lands they have already… | `js/engine.js` |
@@ -117,7 +118,7 @@ A citation that does not exist in that text fails the generator.
 | 500.5 | As a step or phase ends, if there are effects that last until the end of that step or phase, those effects expire. Then any unspent mana left in a … | `js/engine.js` |
 | 500.7 | Some effects can give a player extra turns. They do this by adding the turns directly after the specified turn. If a player is given multiple extra… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 500.8 | Some effects can add phases to a turn. They do this by adding the phases directly after the specified phase. If multiple extra phases are created a… | `js/engine.js` `tools/build-cards.mjs` |
-| 502.3 | Third, the active player determines which permanents they control will untap. Then they untap them all simultaneously. This turn-based action doesn… | `js/engine.js` `tools/build-cards.mjs` |
+| 502.3 | Third, the active player determines which permanents they control will untap. Then they untap them all simultaneously. This turn-based action doesn… | `js/ai.js` `js/engine.js` `tools/build-cards.mjs` |
 | 502.4 | No player receives priority during the untap step, so no spells can be cast or resolve and no abilities can be activated or resolve. Any ability th… | `js/engine.js` |
 | 503.1 | The upkeep step has no turn-based actions. Once it begins, the active player gets priority. (See rule 117, “Timing and Priority.”) | `js/engine.js` |
 | 503.1a | Any abilities that triggered during the untap step and any abilities that triggered at the beginning of the upkeep are put onto the stack before th… | `tools/build-cards.mjs` |
@@ -171,6 +172,7 @@ A citation that does not exist in that text fails the generator.
 | 602.2b | The remainder of the process for activating an ability is identical to the process for casting a spell listed in rules 601.2b–i. Those rules apply … | `js/engine.js` |
 | 602.5 | A player can’t begin to activate an ability that’s prohibited from being activated. | `js/engine.js` `tools/build-cards.mjs` |
 | 602.5b | If an activated ability has a restriction on its use (for example, “Activate only once each turn”), the restriction continues to apply to that obje… | `js/engine.js` `tools/build-cards.mjs` |
+| 602.5e | Activated abilities that read “Activate only as an instant” mean the player must follow the timing rules for casting an instant spell, though the a… | `js/engine.js` |
 | 603.2 | Whenever a game event or game state matches a triggered ability’s trigger event, that ability automatically triggers. The ability doesn’t do anythi… | `js/ops.js` `tools/build-cards.mjs` |
 | 603.2c | An ability triggers only once each time its trigger event occurs. However, it can trigger repeatedly if one event contains multiple occurrences. | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 603.2e | Some trigger events use the word “becomes” (for example, “becomes attached” or “becomes blocked”). These trigger only at the time the named event h… | `js/engine.js` |
@@ -178,7 +180,7 @@ A citation that does not exist in that text fails the generator.
 | 603.3c | If a triggered ability is modal, its controller announces the mode choice when putting the ability on the stack. If one of the modes would be illeg… | `js/engine.js` |
 | 603.3d | The remainder of the process for putting a triggered ability on the stack is identical to the process for casting a spell listed in rules 601.2c–d.… | `js/engine.js` |
 | 603.4 | A triggered ability may read “When/Whenever/At [trigger event], if [condition], [effect].” When the trigger event occurs, the ability checks whethe… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
-| 603.7 | An effect may create a delayed triggered ability that can do something at a later time. A delayed triggered ability will contain “when,” “whenever,… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
+| 603.7 | An effect may create a delayed triggered ability that can do something at a later time. A delayed triggered ability will contain “when,” “whenever,… | `js/ai.js` `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
 | 603.7b | A delayed triggered ability will trigger only once—the next time its trigger event occurs—unless it has a stated duration, such as “this turn.” If … | `js/engine.js` `tools/build-cards.mjs` |
 | 603.7c | A delayed triggered ability that refers to a particular object still affects it even if the object changes characteristics. However, if that object… | `js/ops.js` `tools/build-cards.mjs` |
 | 603.10a | Some zone-change triggers look back in time. These are leaves-the-battlefield abilities, abilities that trigger when a player sacrifices a permanen… | `js/engine.js` `js/ops.js` `tools/build-cards.mjs` |
@@ -351,7 +353,7 @@ A citation that does not exist in that text fails the generator.
 | 702.195a | Storied is a static ability. It means “Any time you control three or more permanents that are artifacts, Sagas, and/or legendary and you don’t have… | `js/engine.js` `tools/build-cards.mjs` |
 | 704.3 | Whenever a player would get priority (see rule 117, “Timing and Priority”), the game checks for any of the listed conditions for state-based action… | `js/engine.js` |
 | 704.5a | If a player has 0 or less life, that player loses the game. | `js/engine.js` |
-| 704.5b | If a player attempted to draw a card from a library with no cards in it since the last time state-based actions were checked, that player loses the… | `js/engine.js` |
+| 704.5b | If a player attempted to draw a card from a library with no cards in it since the last time state-based actions were checked, that player loses the… | `js/ai.js` `js/engine.js` |
 | 704.5d | If a token is in a zone other than the battlefield, it ceases to exist. | `js/engine.js` |
 | 704.5e | If a copy of a spell is in a zone other than the stack, it ceases to exist. If a copy of a card is in any zone other than the stack or the battlefi… | `js/engine.js` `js/ops.js` |
 | 704.5f | If a creature has toughness 0 or less, it’s put into its owner’s graveyard. Regeneration can’t replace this event. | `js/engine.js` |
@@ -414,7 +416,7 @@ A citation that does not exist in that text fails the generator.
 | 724.1 | Some cards end the turn. When an effect ends the turn, follow these steps in order, as they differ from the normal process for resolving spells and… | `tools/build-cards.mjs` |
 | 724.1a | If there are any triggered abilities that triggered before this process began but haven’t been put onto the stack yet, those abilities cease to exi… | `js/ops.js` |
 | 724.1c | Check state-based actions. No player gets priority, and no triggered abilities are put onto the stack. | `js/engine.js` |
-| 733.1 | If a player takes an illegal action or starts to take an action but can’t legally complete it, the entire action is reversed and any payments alrea… | `js/engine.js` |
+| 733.1 | If a player takes an illegal action or starts to take an action but can’t legally complete it, the entire action is reversed and any payments alrea… | `js/ai.js` `js/engine.js` |
 | 903.3 | Each deck has a legendary card designated as its commander. That card must be either (a) a creature card, (b) a Vehicle card, or (c) a Spacecraft c… | `js/engine.js` `js/ops.js` `js/ui.js` `tools/build-cards.mjs` |
 | 903.3d | If an effect refers to controlling a commander, it refers to a permanent on the battlefield that is a commander. If an effect refers to casting a c… | `js/ops.js` |
 | 903.4 | The Commander variant uses color identity to determine what cards can be in a deck with a certain commander. The color identity of a card is the co… | `js/engine.js` `tools/build-cards.mjs` |
@@ -424,7 +426,7 @@ A citation that does not exist in that text fails the generator.
 | 903.5e | Commander games do not use sideboards. | `js/main.js` |
 | 903.6 | At the start of the game, each player puts their commander from their deck face up into the command zone. Then each player shuffles the remaining c… | `js/engine.js` `js/ui.js` `tools/art-keys.mjs` |
 | 903.7 | Once the starting player has been determined, each player sets their life total to 40 and draws a hand of seven cards. | `js/engine.js` |
-| 903.8 | A player may cast a commander they own from the command zone. A commander cast from the command zone costs an additional {2} for each previous time… | `js/engine.js` `js/text.js` `js/ui.js` |
+| 903.8 | A player may cast a commander they own from the command zone. A commander cast from the command zone costs an additional {2} for each previous time… | `js/ai.js` `js/engine.js` `js/text.js` `js/ui.js` |
 | 903.9a | If a commander is in a graveyard or in exile and that object was put into that zone since the last time state-based actions were checked, its owner… | `js/engine.js` `js/text.js` |
 | 903.9b | If a commander would be put into its owner’s hand or library from anywhere, its owner may put it into the command zone instead. This replacement ef… | `js/engine.js` `js/text.js` |
 | 903.10a | A player who’s been dealt 21 or more combat damage by the same commander over the course of the game loses the game. (This is a state-based action.… | `js/engine.js` `js/ui.js` |
