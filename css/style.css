@@ -40,6 +40,7 @@ a { color: var(--gold); }
 .card.sz-hand { width: var(--card-hand-w); font-size: calc(var(--card-hand-w) / 9.5); }
 .card.sz-sm { width: var(--card-sm-w); font-size: calc(var(--card-sm-w) / 8.5); }
 .card.sz-xs { width: var(--card-xs-w); font-size: calc(var(--card-xs-w) / 8); }
+.card.nosrc { display: flex; align-items: center; justify-content: center; text-align: center; padding: 6%; box-sizing: border-box; font-family: var(--serif); color: #f0d9a8; background: radial-gradient(circle at 50% 35%, #4a3520, #1a1418); }   /* a stack item with no card: the speed trigger (CR 702.179d) */
 .card.sz-lg { width: var(--card-lg-w); font-size: calc(var(--card-lg-w) / 11); border-width: 3px; border-color: #8a6231; }
 .card .art { position: absolute; inset: 0; background-size: cover; background-position: 50% 25%; pointer-events: none; }
 .card::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 26%, rgba(0,0,0,0) 62%, rgba(0,0,0,.72) 100%); box-shadow: inset 0 0 0 1px rgba(255,226,166,.18); border-radius: inherit; }

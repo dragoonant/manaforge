@@ -1148,7 +1148,7 @@
         log(s, 'exiled', { who: x.ctrl, c: id, by: x.L ? x.L.srcId : null });
         if (names.has(nm)) { log(s, 'taintedStop', { who: x.ctrl, c: id }); return; }
         names.add(nm);
-        if (MF.ask(x.x, { who: x.ctrl, kind: 'taintedTake', src: x.src, c: n, opts: [{ id: 'take' }, { id: 'next' }] }) === 'take') { MF.move(s, n, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'exile' }); return; }
+        if (MF.ask(x.x, { who: x.ctrl, kind: 'taintedTake', src: x.src, c: n, cid: id, opts: [{ id: 'take' }, { id: 'next' }] }) === 'take') { MF.move(s, n, 'hand'); log(s, 'toHand', { who: x.ctrl, c: id, revealed: true, from: 'exile' }); return; }
       }
     },
     // Demonic Consultation: choose a card name (CR 201.3: any card name); exile the top six; reveal until that name; it goes to hand; the rest revealed is exiled.

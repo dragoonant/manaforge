@@ -202,8 +202,8 @@
       const tl = tgs.map(r => r.p != null ? (r.p === ui.human ? 'you' : 'the opponent') : (v.cards[r.c] ? (MF.pubId(v, r.c) === 'face-down' && v.cards[r.c].ctrl !== ui.human ? 'a face-down creature' : MF.cards[v.cards[r.c].id].name) : '(gone)')).join(', ');
       const hl = tgs.filter(r => r.c != null).map(r => r.c).concat(tgs.filter(r => r.p != null).map(r => 'p' + r.p));
       const what = L.kind === 'spell' ? (L.copy ? 'copy of a spell' : 'spell') : L.kind === 'trig' ? (L.inl === 'prowess' ? 'prowess' : 'triggered ability') : 'activated ability';
-      return `<div class="layer ${k === 0 ? 'top' : ''} ${L.ctrl === ui.human ? 'mine' : 'theirs'}" data-hl='${esc(JSON.stringify(hl))}'>${face(v, id, { iid: L.kind === 'spell' ? L.iid : null, size: 'sm', acts: L.kind === 'spell' ? am.m[L.iid] : null })}
-        <div class="linfo"><b>${L.faceDown && L.ctrl !== ui.human ? 'Face-down creature spell' : esc(MF.cards[id].name)}</b><span>${what} · ${L.ctrl === ui.human ? 'yours' : 'opponent’s'}</span>${tl ? `<span class="ltgt">→ ${esc(tl)}</span>` : ''}${L.x ? `<span>X = ${L.x}</span>` : ''}</div></div>`;
+      return `<div class="layer ${k === 0 ? 'top' : ''} ${L.ctrl === ui.human ? 'mine' : 'theirs'}" data-hl='${esc(JSON.stringify(hl))}'>${MF.cards[id] ? face(v, id, { iid: L.kind === 'spell' ? L.iid : null, size: 'sm', acts: L.kind === 'spell' ? am.m[L.iid] : null }) : `<div class="card sz-sm nosrc" title="${esc(T.cname(id))}: a rule of the game, not a card">${esc(T.cname(id))}</div>`}
+        <div class="linfo"><b>${L.faceDown && L.ctrl !== ui.human ? 'Face-down creature spell' : esc(T.cname(id))}</b><span>${what} · ${L.ctrl === ui.human ? 'yours' : 'opponent’s'}</span>${tl ? `<span class="ltgt">→ ${esc(tl)}</span>` : ''}${L.x ? `<span>X = ${L.x}</span>` : ''}</div></div>`;
     }).join('') + (v.stack.length ? `<div class="stack-note">${v.stack.length > 1 ? 'top first · ' : ''}resolves when both players pass</div>` : '');
   }
   function stepsHTML(s) {

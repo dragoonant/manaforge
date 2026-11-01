@@ -27,13 +27,15 @@ for (const f of js) {
 { const m = read('js/text.js').match(/const esc = (t => .*\));\s*(?:\/\/.*)?$/m); if (!m) bad.push('js/text.js: no esc function found'); else { const esc = eval(m[1]); if (/'/.test(esc("Oracle's Gift")) || /"/.test(esc('"'))) bad.push('js/text.js: esc leaves a quote unescaped'); } }
 const engine = ['js/engine.js', 'js/ops.js'].map(read).join('\n');
 const text = read('js/text.js');
-const hasKey = k => new RegExp('\\n\\s+' + k + ':').test(text);
+const block = name => { const i = text.indexOf('const ' + name + ' = {'), j = text.indexOf('\n  };', i); if (i < 0 || j < 0) { bad.push('js/text.js: no ' + name + ' table found'); return ''; } return text.slice(i, j); };
+const LINES = block('LINES'), PROMPTS = block('PROMPTS');   // each table on its own: a prompt named like a log type does not stand in for its line
+const hasKey = (k, t) => new RegExp('\\n\\s+' + k + ':').test(t);
 const logTypes = new Set([...engine.matchAll(/\b(?:MF\.)?log\(\s*(?:x\.)?s,\s*'([A-Za-z0-9_]+)'/g)].map(m => m[1]));
-for (const t of logTypes) if (!hasKey(t)) bad.push('engine log type with no line in js/text.js: ' + t);
+for (const t of logTypes) if (!hasKey(t, LINES)) bad.push('engine log type with no line in js/text.js: ' + t);
 const kinds = new Set([...engine.matchAll(/\{\s*who:[^{}]*?kind:\s*'([A-Za-z0-9_]+)'/g)].map(m => m[1]));   // questions asked, written as { who, kind: '...' } (a stack object's kind is not one)
 for (const m of engine.matchAll(/kind:\s*[^'\s,][^,}]*/g)) if (!/kind:\s*(L\.kind|e\.kind|a\.k|d\.kind|op\.kind|'[^']+')/.test(m[0])) bad.push('a question kind that is not a literal (the gate cannot check its prompt): ' + m[0].slice(0, 60));
 if (kinds.size < 10) bad.push('found only ' + kinds.size + ' question kinds: the scan is broken');
-for (const k of kinds) if (!hasKey(k)) bad.push('question kind with no prompt in js/text.js: ' + k);
+for (const k of kinds) if (!hasKey(k, PROMPTS)) bad.push('question kind with no prompt in js/text.js: ' + k);
 
 try { execFileSync(process.execPath, [path.join(ROOT, 'tools/rules-index.mjs'), '--check'], { stdio: 'pipe' }); }
 catch (e) { bad.push('rules-index: ' + String(e.stdout || e.message).trim()); }

@@ -207,6 +207,7 @@
     trigger: (e) => `${tag(e.c, e.cf)}${e.inl === 'prowess' ? '’s prowess' : ''} triggers${(e.tg || []).flat().length ? ', targeting ' + tgs(e.tg) : ''}.`,
     discard: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'discard', 'discards')} ${tag(e.c)}.`,
     sacrifice: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'sacrifice', 'sacrifices')} ${tag(e.c)}.`,
+    discardHand: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'discard', 'discards')} ${T.v(e.who, v, 'your', 'their')} hand (${plural(e.n, 'card')}) to activate ${tag(e.c)}.`,
     undone: (e, v) => `<span class="notice">${W(e.who, v)} could not complete that; it is reversed (${esc(e.why)}).</span>`,
     fizzle: (e) => `<span class="notice">${tag(e.c)} ${e.ab ? '’s ability ' : ''}does nothing: all its targets became illegal.</span>`,
     resolve: (e) => `${tag(e.c)} resolves.`,
@@ -217,7 +218,7 @@
     pump: (e) => `${e.all ? 'Each of ' : ''}${list(e.cs)} ${e.cs.length > 1 || e.all ? 'get' : 'gets'}${e.p || e.tou ? ' ' + (e.p >= 0 ? '+' : '') + e.p + '/' + (e.tou >= 0 ? '+' : '') + e.tou : ''}${e.grant ? (e.p || e.tou ? ' and' : '') + ' ' + e.grant.map(k => MF.KWNAME[k]).join(', ') : ''} until end of turn.`,
     unblockable: (e) => `${tag(e.c)} can’t be blocked this turn.`,
     scry: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'scry', 'scries')} ${e.n}: ${e.top} on top, ${e.bottom} on the bottom.`,
-    token: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'create', 'creates')} a${e.tapped ? ' tapped' : ''}${e.attacking ? ' and attacking' : ''} ${MF.cards[e.c].power}/${MF.cards[e.c].toughness} ${tag(e.c)} token.`,
+    token: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'create', 'creates')} a${e.tapped ? ' tapped' : ''}${e.attacking ? ' and attacking' : ''} ${MF.cards[e.c].power != null ? MF.cards[e.c].power + '/' + MF.cards[e.c].toughness + ' ' : ''}${tag(e.c)} token.`,
     tokenCopy: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'create', 'creates')} a 1/1 token copy of ${tag(e.c)}.`,
     noSource: () => `<span class="notice">The damage source is gone; no damage is dealt.</span>`,
     putOnto: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'put', 'puts')} ${tag(e.c)} onto the battlefield${e.tapped ? ' tapped' : ''}${e.attacking ? ' and attacking' : ''} from the ${e.from}${e.ctr ? ' with ' + Object.entries(e.ctr).map(([k, n]) => n + ' ' + k + ' counter' + (n === 1 ? '' : 's')).join(', ') : ''}.`,
@@ -303,7 +304,7 @@
     exileFromGrave: (s, q) => ({ title: `${C(s, q.src)}: exile a card from your graveyard${q.n ? ' (' + q.k + ' of ' + q.n + ')' : ''}`, body: 'Exiling it is part of the cost. Click a glowing card in your graveyard.', labels: {} }),
     forage: (s, q) => ({ title: `Forage to cast ${C(s, q.src)} from your graveyard`, body: 'Exile three other cards from your graveyard, or sacrifice a Food (CR 701.61). It enters with a finality counter.', labels: { exile: 'Exile three cards from my graveyard', food: 'Sacrifice a Food' } }),
     repeat: (s, q) => ({ title: `${C(s, q.src)}: reveal another card?`, body: `You have taken ${q.n} so far. Your life: ${q.life}. You lose life equal to the next card’s mana value.`, labels: { yes: 'Reveal the next card', no: 'Stop' } }),
-    taintedTake: (s, q) => ({ title: `${C(s, q.src)}: put ${tag(s.cards[q.c].id)} into your hand?`, body: 'If you don’t, the next card is exiled; the process stops if two exiled cards share a name.', labels: { take: 'Put it into my hand', next: 'Exile the next card' } }),
+    taintedTake: (s, q) => ({ title: `${C(s, q.src)}: put ${tag(q.cid)} into your hand?`, body: 'If you don’t, the next card is exiled; the process stops if two exiled cards share a name.', labels: { take: 'Put it into my hand', next: 'Exile the next card' } }),
     chooseCardName: (s, q) => ({ title: `${C(s, q.src)}: choose a card name`, body: 'Any card name may be chosen (CR 201.3); the cards in this game are listed first. Naming a card not in your library exiles your whole library.', labels: Object.fromEntries(q.opts.map(o => [o.id, o.id])) }),
     searchMany: (s, q) => ({ title: `${C(s, q.src)}: search for ${q.upTo ? 'up to ' : ''}${q.n} cards${q.diffNames ? ' with different names' : ''} (${q.k} of ${q.n})`, body: 'They are revealed; the opponent then chooses among them. Click a card.', labels: { done: 'Stop here' } }),
     oppPicks: (s, q) => ({ title: `${C(s, q.src)}: choose a card for the opponent’s ${q.to === 'hand' ? 'hand' : 'graveyard'} (${q.k} of ${q.n})`, body: `The cards you don’t choose go to the opponent’s ${q.to === 'hand' ? 'graveyard' : 'hand'}.`, labels: {} }),
@@ -336,6 +337,7 @@
     ninjutsuReturn: (s, q) => ({ title: `Ninjutsu ${C(s, q.src)}: return an unblocked attacker`, body: 'Return one of your unblocked attacking creatures to your hand; this enters tapped and attacking in its place (CR 702.49).', labels: {} }),
     chooseObj: (s, q) => ({ title: `${C(s, q.src)}: choose up to one creature`, body: `Not targeted: chosen as it resolves.${oracle(s, q.src)}`, labels: { none: 'Choose none' } }),
     chooseFromGrave: (s, q) => ({ title: `${C(s, q.src)}: choose a card (${q.k} of up to ${q.n})`, body: 'Click a glowing card in your graveyard.', labels: { done: 'Done choosing' } }),
+    sacrifice: (s, q) => ({ title: `${C(s, q.src)}: sacrifice a permanent`, body: `${C(s, q.src)} makes you sacrifice one: you choose which. Click one of your glowing permanents (${plural(q.opts.length, 'choice')}).`, labels: Object.fromEntries(q.opts.map(o => [o.id, 'Sacrifice this'])) }),
     sacrificeOne: (s, q) => ({ title: `${C(s, q.src)}: sacrifice a creature`, body: 'Choose which of your creatures with the greatest power to sacrifice.', labels: {} }),
     gift: (s, q) => ({ title: `${C(s, q.src)}: promise a gift?`, body: `Gift a ${q.what}: if you promise it, the opponent draws a card as this resolves, before its other effects (CR 702.174).${oracle(s, q.src)}`, labels: { yes: 'Promise the gift — the opponent draws a card', no: 'No gift' } }),
     handPick: (s, q) => ({ title: `${C(s, q.src)}: choose a card from ${q.from === T._viewer ? 'your' : 'the opponent’s'} hand`, body: `${q.then === 'exileUntil' ? 'Only you see their hand.' : 'The hand is revealed.'} Click the card to ${q.then === 'discard' ? 'make them discard' : 'exile'}${q.then === 'exileUntil' ? ' until this creature leaves the battlefield' : ''}.${oracle(s, q.src)}`, labels: { none: 'Exile nothing' } }),
@@ -391,7 +393,7 @@
     if (s.stack.length) {
       const L = s.stack[s.stack.length - 1];
       const id = L.kind === 'spell' ? (L.faceDown ? (L.ctrl === me ? L.realId : null) : L.id) : L.srcId;
-      return `Pass — let ${id ? MF.cards[id].name : 'the face-down creature spell'}${L.kind === 'spell' ? '' : '’s ability'} resolve`;
+      return `Pass — let ${id ? cname(id) : 'the face-down creature spell'}${L.kind === 'spell' ? '' : '’s ability'} resolve`;
     }
     if (s.ap !== me) return 'Pass';
     return { upkeep: 'Pass — to draw', draw: 'Pass — to main phase', main1: 'Pass — to combat', boc: 'Pass — declare attackers', attackers: 'Pass — to blockers', blockers: 'Pass — to damage', fsdamage: 'Pass — regular damage', damage: 'Pass — end combat', eoc: 'Pass — to second main', main2: 'Pass — end turn', end: 'Pass — end turn', cleanup: 'Pass' }[s.step];
