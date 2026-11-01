@@ -110,7 +110,7 @@
     const uses = [];
     const walk = ops => { for (const op of ops || []) { for (const k of ['on', 'to', 'from', 'who']) if (op[k] && op[k].t === slot) uses.push(op.o + ':' + k); walk(op.ops); } };
     walk(ab.ops);
-    return uses.some(u => /^(destroy|tap|damage:to|unblockable:never|handPick|loseLife)/.test(u));
+    return uses.some(u => /^(destroy|tap|damage:to|unblockable:never|handPick|loseLife|cantCast|mill:who|exile:on|counterTarget|counterUnless|exileSpells|ifTargetColor)/.test(u));   // PLAN D24: Orim's Chant, Brain Freeze, Swords, the counterspells
   }
   function abilityOfSource(s, q) {
     const c = I(s, q.src); if (!c) return null;
@@ -195,6 +195,10 @@
       case 'first': return 'me';
       case 'mulligan': {
         const lands = P(s, me).hand.filter(i => isLand(s, i)).length, n = P(s, me).hand.length;
+        if (s.commander) {                                                                       // PLAN D24: fast mana counts as a land does; a tutor or a line piece makes a thin hand keepable
+          const hand = P(s, me).hand.map(i => MF.def(s, i)), srcs = hand.filter(isManaCard).length, plan = hand.some(d => LINE_PIECE(d) || /Search your library for a card/.test(d.text || ''));
+          return q.mulls >= 2 || (srcs >= 3 && srcs <= n - 1) || (srcs >= 2 && plan) ? 'keep' : 'mull';
+        }
         return (q.mulls >= 2 || (lands >= 2 && lands <= n - 2)) ? 'keep' : 'mull';
       }
       case 'bottom': case 'discardHand': case 'discard':
@@ -366,6 +370,11 @@
   const isBreach = d => d.ab.some(a => a.k === 'breach');
   const isLED = d => d.ab.some(a => a.k === 'mana' && a.cost && a.cost.discardHand);
   const isFreeze = d => d.ab.some(a => a.k === 'storm') && hasOp(d, 'mill');
+  // A card that makes mana: a land, a rock or dork, a spirit guide, a ritual (for the Commander mulligan).
+  const isManaCard = d => d.types.includes('Land') || d.ab.some(a => a.k === 'mana') || /"o":"addMana/.test(opsOf(d));
+  const isAdNauseam = d => hasOp(d, 'adNauseam');
+  const isScepter = d => hasOp(d, 'scepterCast');
+  const isProtection = d => /"o":"cantCast"/.test(opsOf(d)) || hasOp(d, 'veil') || d.ab.some(a => a.k === 'oppNoActivate');   // Silence, Orim's Chant, Veil of Summer, Grand Abolisher
   const LINE_PIECE = d => isLibraryWin(d) || isEnabler(d) || isBreach(d) || isLED(d) || isFreeze(d);
   function threatOf(s, L, me) {
     if (L.kind !== 'spell') {                                                                    // an ability: Thassa's Oracle's trigger, a tutor's activation
@@ -468,7 +477,57 @@
       wins: (r, me) => r.winner === me || P(r, 1 - me).lib.length === 0,
       underway: (s, me) => s.bf.some(i => I(s, i).ctrl === me && isBreach(MF.def(s, i))) && castThisTurn(s, me, d => isLED(d) || isFreeze(d)),
     },
+    { // Isochron Scepter with Dramatic Reversal imprinted and mana rocks: each copy untaps the rocks and the Scepter; the
+      // surplus pays a tap ability that mills a target player (Zellix, Sanity Flayer) until the opponent's library is gone.
+      name: 'scepter',
+      applies: (s, me) => s.bf.some(i => I(s, i).ctrl === me && isScepter(MF.def(s, i)) && (I(s, i).exiled || []).some(e => I(s, e) && I(s, e).zone === 'exile' && hasOp(MF.def(s, e), 'untap'))) && !!millTap(s, me, true),
+      next: (s, me) => {
+        const opp = 1 - me;
+        if (s.pending) { const q = s.pending.q; if (q.kind === 'may') return { type: 'answer', id: 'yes' }; if (q.kind === 'target' && q.opts.some(o => o.id === 'p' + opp)) return { type: 'answer', id: 'p' + opp }; return undefined; }
+        if (s.priority !== me) return undefined;
+        if (s.stack.length) return { type: 'pass' };
+        if (P(s, opp).lib.length === 0) return null;
+        const legal = MF.legalActions(s), mill = millTap(s, me, false);
+        if (mill && MF.canActivate(s, me, mill.iid, mill.ab)) return { type: 'act', iid: mill.iid, ab: mill.ab };
+        const rock = legal.find(a => a.type === 'mana' && !MF.isType(s, a.iid, 'Land'));                           // tap the rocks first: the copy untaps them
+        if (rock) return rock;
+        const sc = s.bf.find(i => I(s, i).ctrl === me && isScepter(MF.def(s, i)));
+        const act = legal.find(a => a.type === 'act' && a.iid === sc);
+        return act || null;
+      },
+      wins: (r, me) => r.winner === me || P(r, 1 - me).lib.length === 0,
+      underway: (s, me) => (P(s, me).h.castList || []).some(e => /Dramatic Reversal/.test(e.name)) || s.log.slice(-60).some(e => e.t === 'copyCard' && e.who === me && /dramatic-reversal/.test(e.c)),
+    },
   ];
+  // A tap ability of mine that mills a target player (Zellix). `any`: untapped or not.
+  function millTap(s, me, any) {
+    for (const i of s.bf) { if (I(s, i).ctrl !== me || (!any && I(s, i).tapped)) continue; const ab = MF.chars(s, i).ab; for (let k = 0; k < ab.length; k++) { const a = ab[k]; if (a.k === 'act' && a.cost && a.cost.tap && (a.ops || []).some(o => o.o === 'mill') && a.tg && a.tg[0].f.player) return { iid: i, ab: k }; } }
+    return null;
+  }
+  // Ad Nauseam into a line: draw most of the deck, then any line above. Its draws are random, so it is
+  // played out on three reshuffled copies and started only if it wins on two (PLAN D24).
+  const AD_NAUSEAM = {
+    name: 'adNauseam',
+    applies: (s, me) => P(s, me).hand.some(i => isAdNauseam(MF.def(s, i))) && P(s, me).life >= 20,
+    next: (s, me) => {
+      if (s.pending) {
+        const q = s.pending.q;
+        if (q.kind === 'repeat') return { type: 'answer', id: P(MF.view(s), me).life > 9 ? 'yes' : 'no' };
+        if (q.kind === 'pay' && q.who === me && q.src != null && MF.view(s).cards[q.src] && isAdNauseam(MF.def(MF.view(s), q.src))) return { type: 'answer', id: linePay(s, me, q, ['U']) };   // keep blue for Oracle and Brain Freeze
+      }
+      if (!castThisTurn(s, me, isAdNauseam)) {
+        if (s.pending) return undefined;
+        if (s.priority !== me) return undefined;
+        if (s.stack.length) return { type: 'pass' };
+        return castOf(s, me, isAdNauseam) || null;
+      }
+      for (const line of LINES) if (line.applies(s, me)) { const a = line.next(s, me); if (a !== null) return a; }
+      if (s.pending) return undefined;
+      return s.priority === me && s.stack.length ? { type: 'pass' } : null;
+    },
+    wins: (r, me) => r.winner === me || P(r, 1 - me).lib.length === 0,
+    underway: (s, me) => castThisTurn(s, me, isAdNauseam),
+  };
   // What a tutor should find (PLAN D24): for each line, its pieces not yet in hand, graveyard or play,
   // the line with the most pieces present first.
   function wantedPieces(s, me) {
@@ -484,20 +543,48 @@
     return 2 + Math.min(mv, lands + 1) + (LINE_PIECE(d) ? 3 : 0) + (/Search your library for a card/.test(d.text || '') ? 2 : 0);
   }
   MF.aiWanted = wantedPieces;
+  // Protection (PLAN D24): before a line, with cards in the opponent's hand, a spell that stops them casting
+  // (Silence, Orim's Chant on them, Grand Abolisher) or keeps its spells from being countered (Veil of
+  // Summer) goes first — if the line still wins after it.
+  function protectFirst(s, me, line) {
+    if (s.pending || s.stack.length || !mainEmpty(s, me) || P(s, 1 - me).hand.length === 0) return null;
+    if (s.effects.some(e => e.k === 'noCast' && e.who === 1 - me) || castThisTurn(s, me, isProtection)) return null;   // already protected this turn
+    for (const a of MF.legalActions(s).filter(l => l.type === 'cast' && isProtection(MF.def(s, l.iid)))) {
+      let first = true;
+      const next = x => {
+        if (first) { if (x.pending) { const q = x.pending.q; if (q.kind === 'target') return { type: 'answer', id: 'p' + (1 - me) }; return undefined; } if (x.priority === me && x.stack.length) return { type: 'pass' }; if (castThisTurn(x, me, isProtection) && !x.stack.length) first = false; else return a; }
+        return line.next(x, me);
+      };
+      const r = runLine(determinize(s, s.log.length + 23), me, next, 3000);
+      if (r && line.wins(r, me)) return a;
+    }
+    return null;
+  }
   // The first line that wins when played out from here, and its next action now.
   function planLine(s, me) {
     if (s.winner != null || me == null) return null;
+    if (AD_NAUSEAM.applies(s, me) || (s.ap === me && AD_NAUSEAM.underway(s, me))) {
+      if (s.ap === me && AD_NAUSEAM.underway(s, me)) { const a = AD_NAUSEAM.next(s, me); if (a) return a; }
+      else if (mainEmpty(s, me) && !LINES.some(l => l.applies(s, me))) {
+        let won = 0; for (let k = 0; k < 3 && won < 2; k++) { const r = runLine(determinize(s, s.log.length + 31 * k), me, x => AD_NAUSEAM.next(x, me), 3000); if (r && AD_NAUSEAM.wins(r, me)) won++; }
+        if (won >= 2) { const a = AD_NAUSEAM.next(s, me); if (a) return a; }
+      }
+    }
     for (const line of LINES) {
       if (!line.applies(s, me)) continue;
       if (s.ap === me && line.underway(s, me)) { const a = line.next(s, me); if (a) return a; continue; }   // committed: follow it (its own questions; the rest by policy)
       if (!s.pending && !s.stack.length && !mainEmpty(s, me)) continue;                             // a line starts in my main phase (Oracle and Breach are cast as sorceries)
       const a = line.next(s, me); if (a == null) continue;
       const r = runLine(determinize(s, s.log.length + 17), me, x => line.next(x, me), 3000);
-      if (r && line.wins(r, me)) { MF.ai.stats.lines = (MF.ai.stats.lines || 0) + 1; return a; }
+      if (r && line.wins(r, me)) {
+        MF.ai.stats.lines = (MF.ai.stats.lines || 0) + 1;
+        const prot = protectFirst(s, me, line); if (prot) return prot;
+        return a;
+      }
     }
     return null;
   }
-  MF.aiPlanLine = planLine; MF.aiLines = LINES; MF.aiRunLine = runLine;
+  MF.aiPlanLine = planLine; MF.aiLines = LINES; MF.aiRunLine = runLine; MF.aiAdN = AD_NAUSEAM;
   MF.ai = {
     stats: { decisions: 0, rollouts: 0, applies: 0 },
     choose: function (s) {

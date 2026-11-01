@@ -48,3 +48,35 @@ test('AI: it doesn\'t cast Final Fortune or a Pact it can\'t pay for (the loss i
   for (let k = 0; k < 40 && s.turn === 3 && s.winner == null; k++) s = MF.apply(s, MF.ai.choose(s));
   ok(s.players[0].hand.length === 2, 'both still in hand: ' + s.players[0].hand.map(i => s.cards[i].id));
 });
+test('AI: Commander mulligan — fast mana counts as a land; a two-source hand with a tutor is kept', () => {
+  const q = (s) => ({ who: 0, kind: 'mulligan', mulls: 0, opts: [{ id: 'keep' }, { id: 'mull' }] });
+  let s = setup({ commander: true, me: { identity: ['U', 'B'], hand: [U, 'sol-ring', 'demonic-tutor', 'opt', 'force-of-will', 'opt', 'brain-freeze'] } });
+  eq(MF.aiPolicy(s, q(s)), 'keep');
+  let t = setup({ commander: true, me: { identity: ['U', 'B'], hand: [U, 'opt', 'opt', 'force-of-will', 'brain-freeze', 'gamble', 'silence'] } });
+  eq(MF.aiPolicy(t, q(t)), 'mull', 'one source');
+});
+test('AI: Silence before the Oracle line when the opponent holds cards', () => {
+  let s = setup({ me: { hand: ['thassas-oracle', 'demonic-consultation', 'silence'], bf: [U, U, B, 'plains'], lib: Array(20).fill(U) }, opp: { hand: ['force-of-will', U] } });
+  const a = MF.ai.choose(s);
+  eq(a.type === 'cast' && s.cards[a.iid].id, 'silence');
+  s = aiPlay(s, x => x.winner != null);
+  eq(s.winner, 0);
+});
+test('AI: Isochron Scepter with Dramatic Reversal and rocks mills the opponent out with Zellix', () => {
+  let s = setup({ me: { bf: ['isochron-scepter', 'sol-ring', 'mana-vault', 'arcane-signet', 'zellix-sanity-flayer', U, B], grave: [] }, opp: { lib: Array(40).fill(R) } });
+  const sc = find(s, 'isochron-scepter', 'bf'); s = MF.clone(s);
+  const dr = s.nid++; s.cards[dr] = { iid: dr, id: 'dramatic-reversal', owner: 0, ctrl: 0, zone: 'exile', ts: s.ts++, tapped: false, dmg: 0, dt: false, ctr: {}, att: null, ctlTurn: 0 }; s.players[0].exile.push(dr); s.cards[sc].exiled = [dr];
+  s = MF.run(s);
+  s = aiPlay(s, x => x.players[1].lib.length === 0, 1500);
+  eq(s.players[1].lib.length, 0);
+});
+test('AI: Najeela with five colours open in combat activates for an extra combat', () => {
+  let s = setup({ me: { bf: ['najeela-the-blade-blossom', 'token-warrior-1-1-w', 'token-warrior-1-1-w', 'plains', U, B, R, 'forest'] }, opp: { life: 12 } });
+  s = aiPlay(s, x => x.log.some(e => e.t === 'extraCombatAdded') || x.winner != null, 600);
+  ok(s.log.some(e => e.t === 'extraCombatAdded') || s.winner === 0, 'an additional combat (or the game already won)');
+});
+test('AI: Ad Nauseam into Thassa\'s Oracle and Demonic Consultation (played out on reshuffled libraries first)', () => {
+  let s = setup({ commander: true, me: { identity: ['U', 'B'], hand: ['ad-nauseam'], bf: [B, B, B, U, U, U, B, B], lib: ['thassas-oracle', 'demonic-consultation'].concat(Array(14).fill(U)) } });
+  s = aiPlay(s, x => x.winner != null, 1500);
+  eq(s.winner, 0);
+});
