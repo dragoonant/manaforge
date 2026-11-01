@@ -49,7 +49,7 @@
     if (f.owned && !(I(s, iid) && I(s, iid).owner === who)) return false;                         // "you own"
     if (f.colors && !f.colors.some(k => ch.colors.includes(k))) return false;                     // "blue creatures"
     if (f.anyOf && !f.anyOf.some(g => MF.matchChars(s, iid, ch, g, who, srcIid))) return false;   // Boseiju: "artifact, enchantment, or nonbasic land"
-    if (f.blockedBySelf && !(s.combat && (s.combat.blocks[srcIid] || []).includes(iid))) return false;   // Tinder Wall: "target creature it's blocking"
+    if (f.blockedBySelf && !(s.combat && (s.combat.blocks[srcIid] || (I(s, srcIid).zone !== 'bf' && s.combat.lkiBlocks && s.combat.lkiBlocks[srcIid]) || []).includes(iid))) return false;   // Tinder Wall: "target creature it's blocking" — sacrificed as the cost, it is read as it last existed (CR 608.2h, 608.2b)
     return true;
   };
   // A card in a hidden or public zone by its own characteristics (a search, a reveal).
@@ -970,7 +970,7 @@
         const a = MF.ask(x.x, { who: x.ctrl, kind: 'digOnto', src: x.src, n: look.length, k: k + 1, upTo: op.upTo, look: look, opts: opts });
         if (a === 'done') break; took.push(a);
       }
-      if (!took.length) log(s, 'lookedAt', { who: x.ctrl, cs: look.map(i => I(s, i).id) });
+      if (!took.length) log(s, 'digOntoNone', { who: x.ctrl, cs: look.map(i => I(s, i).id) });   // nothing revealed: the opponent learns only the count
       for (const i of took) { const id = I(s, i).id; MF.move(s, i, 'bf', { ctrl: x.ctrl, x: x.x }); log(s, 'putOnto', { who: x.ctrl, c: id, tapped: false, from: 'library' }); }
       const rest = look.filter(i => !took.includes(i));
       for (const i of rest) p.lib.splice(p.lib.indexOf(i), 1);

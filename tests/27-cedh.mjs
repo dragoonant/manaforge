@@ -552,3 +552,28 @@ test('CR 601.2h, 733: one object can\'t pay two costs — a Treasure chosen for 
   s = act(s, 'cast', 'dusk-rose-reliquary'); s = answer(s, [q => q.opts.find(o => o.iid != null).id, 'auto']);
   ok(logs(s, 'undone').length === 1, 'reversed'); ok(find(s, 'token-treasure', 'bf', 0) != null && find(s, 'dusk-rose-reliquary', 'hand', 0) != null, 'nothing changed');
 });
+test('Pact of Negation: the upkeep payment can\'t be reversed, so it never offers mana that leaves {3}{U}{U} unpayable (CR 118.3)', () => {
+  let s = setup({ me: { hand: ['pact-of-negation'], bf: [U, 'tundra', R, R, R] }, opp: { hand: ['opt'], bf: [U] } });
+  s = oppTurn(s); s = oppCasts(s, 'opt');
+  s = act(s, 'cast', 'pact-of-negation'); s = answer(s, [(q, st) => q.opts.find(o => o.iid != null && st.cards[o.iid].id === 'opt').id]); s = resolveAll(s);
+  s = toStep(s, 'upkeep');
+  for (let g = 0; g < 10 && !(s.pending && s.pending.q.kind === 'pay') && s.winner == null; g++) s = s.pending ? MF.apply(s, { type: 'answer', id: 'pay' }) : MF.apply(s, { type: 'pass' });
+  const q = s.pending.q, tu = find(s, 'tundra');
+  ok(!q.cancel, 'this payment can\'t be cancelled');
+  ok(!q.opts.some(o => o.iid === tu && o.col === 'W'), 'Tundra for {W} is not offered: only Tundra and the Island make {U}');
+  ok(q.opts.some(o => o.iid === tu && o.col === 'U'), 'Tundra for {U} is');
+  s = answer(s, ['auto']); eq(s.winner, null, 'paid');
+});
+test('Tinder Wall: "{R}, Sacrifice this creature" can\'t take its {R} from sacrificing itself for {R}{R} (CR 601.2h)', () => {
+  const block = me => {
+    let s = setup({ me: { bf: ['tinder-wall'].concat(me) }, opp: { bf: ['warren-elder'] } });
+    s = oppTurn(s); const we = find(s, 'warren-elder'), tw = find(s, 'tinder-wall');
+    s = toStep(s, 'attackers'); s = answer(s, [we, 'done']); s = toStep(s, 'blockers'); s = answer(s, [tw + '>' + we, 'done']);
+    for (let g = 0; g < 5 && MF.whoActs(s) !== 0; g++) s = MF.apply(s, { type: 'pass' });
+    return s;
+  };
+  ok(!can(block([]), 'act', 'tinder-wall'), 'no other {R}: the ability is not offered');
+  let s = block([R]); ok(can(s, 'act', 'tinder-wall'), 'with a Mountain it is');
+  s = act(s, 'act', 'tinder-wall'); s = resolveAll(s, tgt(find(s, 'warren-elder')), 'auto');
+  ok(grave(s, 1).includes('warren-elder'), '2 damage to the creature it blocked'); ok(grave(s, 0).includes('tinder-wall'), 'sacrificed');
+});

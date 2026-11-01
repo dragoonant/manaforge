@@ -124,6 +124,7 @@
     sneakReturn: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'return', 'returns')} the unblocked ${tag(e.c)} to hand to pay the sneak cost.`,
     delayedMade: (e, v) => `${tag(e.c)}: ${e.on === 'attackWith' ? 'whenever ' + (e.who === v ? 'you attack' : 'the opponent attacks') + ' this turn, it makes attacking Warriors' : 'a delayed ability is set'}.`,
     levelUp: (e, v) => `${tag(e.c)} becomes level ${e.n}.`,
+    digOntoNone: (e, v) => e.who === v ? `You look at ${list(e.cs)} and put none of them onto the battlefield.` : `The opponent looks at the top ${plural(e.cs.length, 'card')} of their library and puts none of them onto the battlefield.`,
     lookedAt: (e, v) => e.who === v ? `You look at ${list(e.cs)} — no ${e.type.toLowerCase()} card among them.` : `The opponent looks at the top ${plural(e.cs.length, 'card')} of their library and reveals no ${e.type.toLowerCase()} card.`,
     mill: (e, v) => `${W(e.who, v)} ${V(e.who, v, 'mill', 'mills')} ${list(e.cs)}.`,
     extraCombatAdded: (e, v) => `There will be an additional combat phase after this one.`,

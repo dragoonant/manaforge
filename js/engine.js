@@ -634,6 +634,7 @@
       ch.ab.forEach((a, i) => {
         if (a.k !== 'mana' || a.zone === 'hand') return;
         if (a.cost.tap && c.tapped) return;
+        if (ctx && ctx.keep === iid && a.cost.sacSelf) return;                                  // Tinder Wall: an ability that sacrifices it as a cost can't also be paid by sacrificing it for mana (CR 601.2h)
         if (activateForbidden(s, who, iid, a)) return;
         if (a.instantOnly && !ctx) return;                                                      // Lion's Eye Diamond: "Activate only as an instant" — not while an effect asks for mana (CR 605.3a)
         if (a.cost.tapFoods && s.bf.filter(k => I(s, k).ctrl === who && !I(s, k).tapped && chars(s, k).subtypes.includes('Food')).length < a.cost.tapFoods) return;   // The Cabbage Merchant
@@ -964,9 +965,15 @@
       if (!plan) throw new Illegal('cannot pay ' + MF.manaStr(need));
       // One option per distinguishable source and colour: identical basic lands are one option.
       const opts = [Object.assign({ id: 'auto', taps: plan.taps }, plan.multis ? { multis: plan.multis } : {})], seenKey = new Set();
-      for (const src of srcs.filter(m => m.combo)) opts.push({ id: 'combo:' + src.iid + ':' + src.ab, iid: src.iid, amount: src.amount, cols: src.cols });
-      for (const src of srcs.filter(m => m.multi)) for (const y of src.multi) opts.push({ id: 'tap:' + src.iid + ':' + src.ab + ':' + y, iid: src.iid, col: y });
+      // A payment that can't be reversed (a cost paid while an effect resolves: Pact of Negation's
+      // upkeep, ward, "pay or ...") offers only the mana that still lets it finish (CR 118.3): a
+      // wrong colour there would be a cost begun and never completed, with no reversal (CR 733).
+      const keeps = (iid, str) => cancel || !!solve(addMana(pool, str), srcs.filter(m => m.iid !== iid), need);
+      const combos = src => { const out = []; for (let k = src.amount; k >= 0; k--) { if (src.cols.length < 2 && k < src.amount) break; out.push(src.cols[0].repeat(k) + (src.cols[1] || '').repeat(src.amount - k)); } return out; };   // CR 106.1a: every combination is a choice
+      for (const src of srcs.filter(m => m.combo)) if (combos(src).some(y => keeps(src.iid, y))) opts.push({ id: 'combo:' + src.iid + ':' + src.ab, iid: src.iid, amount: src.amount, cols: src.cols });
+      for (const src of srcs.filter(m => m.multi)) for (const y of src.multi) if (keeps(src.iid, y)) opts.push({ id: 'tap:' + src.iid + ':' + src.ab + ':' + y, iid: src.iid, col: y });
       for (const src of srcs.filter(m => !m.combo && !m.multi && !m.special)) for (const col of src.cols) {
+        if (!keeps(src.iid, col.repeat(src.amount || 1))) continue;
         const key = src.id + ':' + col + ':' + JSON.stringify(chars(s, src.iid).ab.filter(a => a.k !== 'mana').length);
         if (seenKey.has(key)) continue; seenKey.add(key);
         opts.push({ id: 'tap:' + src.iid + ':' + src.ab + ':' + col, iid: src.iid, col: col });
@@ -983,7 +990,7 @@
         for (const { src, cols } of combos.values()) activateMana(s, who, src.iid, src.ab, (cols + src.cols[0].repeat(src.amount)).slice(0, src.amount));   // the proposal makes the rest in its first colour; tapping it yourself chooses
       } else if (a.startsWith('combo:')) {
         const [, iid, ab] = a.split(':'), src = srcs.find(m => m.iid === +iid && m.ab === +ab), opts2 = [];
-        for (let k = src.amount; k >= 0; k--) opts2.push({ id: src.cols[0].repeat(k) + src.cols[1].repeat(src.amount - k) });   // CR 106.1a: every combination is a choice
+        for (const y of combos(src)) if (keeps(src.iid, y)) opts2.push({ id: y });
         activateMana(s, who, +iid, +ab, ask(x, { who: who, kind: 'manaCombo', src: +iid, amount: src.amount, cols: src.cols, opts: opts2, cancel: cancel }));
       } else { const [, iid, ab, col] = a.split(':'); activateMana(s, who, +iid, +ab, col, x); }
     }
@@ -1176,7 +1183,7 @@
   function removeFromCombat(s, iid) {
     const cb = s.combat;
     cb.attackers = cb.attackers.filter(a => a !== iid);
-    if (cb.blocks[iid]) { for (const a of cb.blocks[iid]) cb.blockedBy[a] = (cb.blockedBy[a] || []).filter(b => b !== iid); delete cb.blocks[iid]; }
+    if (cb.blocks[iid]) { cb.lkiBlocks = Object.assign({}, cb.lkiBlocks, { [iid]: cb.blocks[iid] }); for (const a of cb.blocks[iid]) cb.blockedBy[a] = (cb.blockedBy[a] || []).filter(b => b !== iid); delete cb.blocks[iid]; }   // what it was blocking, kept as last known information (CR 608.2h)
     if (cb.blockedBy[iid]) { for (const b of cb.blockedBy[iid]) if (cb.blocks[b]) cb.blocks[b] = cb.blocks[b].filter(a => a !== iid); delete cb.blockedBy[iid]; }
   }
   const restricted = MF.restricted = (s, iid, what, tbl) => (tbl ? tbl[iid] : chars(s, iid)).ab.some(a => a.k === 'restrict' && a[what] && !(a.unless && MF.cond({ s: s, ctrl: I(s, iid).ctrl, src: iid, flags: {} }, a.unless)));
@@ -1666,10 +1673,10 @@
     if (a.equip && freeEquip(s, who, a)) need = MF.parseMana('');
     else if (a.equip && a.tg) { for (const r of MF.targetOptions(s, a.tg[0], who, iid, [])) { const n2 = abilityCost(s, who, iid, a, [[r]]); if (MF.manaValue(n2) < MF.manaValue(need)) need = n2; } }   // priced with its cheapest target
     if (a.cost.tap && MF.manaValue(need)) {                                                   // the source taps for its own cost: it cannot also pay mana
-      const pool = usablePool(P(s, who), null), srcs = manaSources(s, who).filter(m => m.iid !== iid);
+      const pool = usablePool(P(s, who), null), srcs = manaSources(s, who, { keep: iid }).filter(m => m.iid !== iid);
       return !!solve(pool, srcs, need);
     }
-    return canPayMana(s, who, need);
+    return canPayMana(s, who, need, { keep: iid });                                             // the context its payment has (act): inside a payment, and not with itself if it is sacrificed
   };
 
   MF.legalActions = function (s) {
@@ -2192,7 +2199,7 @@
     }
     let acost = abilityCost(s, who, iid, a, L.t);
     if (a.equip && freeEquip(s, who, a) && MF.manaValue(acost) > 0 && ask(x, { who: who, kind: 'freeEquip', src: iid, cost: MF.manaStr(acost), opts: [{ id: 'free' }, { id: 'pay' }], cancel: true }) === 'free') acost = MF.parseMana('');
-    const actx = {}; payMana(x, who, acost, iid, true, actx); L.spentCols = actx.spentCols || {};   // "Note the type of mana spent" (Jeweled Amulet)
+    const actx = { keep: iid }; payMana(x, who, acost, iid, true, actx); L.spentCols = actx.spentCols || {};   // "Note the type of mana spent" (Jeweled Amulet)
     if (a.equip) P(s, who).h.equips = (P(s, who).h.equips || 0) + 1;                          // "the first equip ability you activate each turn"
     if (a.once) c.usedOnce = true;
     if (a.oncePerTurn) { c.actTurn = c.actTurn || {}; c.actTurn[x.inv.ab] = s.turn; }

@@ -59,3 +59,9 @@ test('Vivi Ornitier: the payment prompt says "use", not "tap" ({0}, no {T})', ()
   s = MF.apply(s, MF.legalActions(s).find(a => a.type === 'cast')); s = MF.apply(s, { type: 'answer', id: player(1) });
   eq(s.pending.q.kind, 'pay'); ok(speak(s).labels.auto.startsWith('Pay: use Vivi'), 'use');
 });
+test('United Battlefront: looking at seven and taking none has its own line, and the opponent learns only the count', () => {
+  let s = setup({ me: { hand: ['united-battlefront'], bf: ['plains', 'plains', 'plains', 'plains'], lib: [U, U, U, U, U, U, U, U] } });
+  s = cast(s, 'united-battlefront', 'auto'); s = resolveAll(s);
+  const e = s.log.find(l => l.t === 'digOntoNone'); ok(e, 'logged');
+  ok(!plain(T.logLine(e, 1)).includes('Island'), 'the opponent is not told the cards'); speak(s);
+});
