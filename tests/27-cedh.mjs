@@ -547,3 +547,8 @@ test('CR 601.2g-h: Crop Rotation with one Forest — tap it for {G}, then sacrif
   s = resolveAll(s, (q, st) => viewId(q, st, 'city-of-traitors'));
   ok(find(s, 'city-of-traitors', 'bf', 0) != null);
 });
+test('CR 601.2h, 733: one object can\'t pay two costs — a Treasure chosen for the sacrifice and then sacrificed for mana reverses the cast', () => {
+  let s = setup({ me: { hand: ['dusk-rose-reliquary'], bf: ['token-treasure'] } });
+  s = act(s, 'cast', 'dusk-rose-reliquary'); s = answer(s, [q => q.opts.find(o => o.iid != null).id, 'auto']);
+  ok(logs(s, 'undone').length === 1, 'reversed'); ok(find(s, 'token-treasure', 'bf', 0) != null && find(s, 'dusk-rose-reliquary', 'hand', 0) != null, 'nothing changed');
+});
