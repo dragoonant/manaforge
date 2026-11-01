@@ -251,8 +251,10 @@
     pay: (s, q) => {
       const auto = q.opts.find(o => o.id === 'auto');
       const all = auto.taps.concat((auto.multis || []).map(u => ({ iid: u.iid, col: u.alt })));   // multi-mana abilities after the single ones, paying their own costs from the pool
-      const plan = all.map(t => tag(MF.view(s).cards[t.iid].id) + ' ' + t.col.split('').map(sym).join('')).join(', ');
-      return { title: `Pay ${mana(q.need)} for ${C(s, q.src)}`, body: `In your pool: ${poolStr(q.pool) || 'nothing'}. The suggested payment taps ${plan || 'nothing more'}. Or click your untapped lands one at a time.`, labels: { auto: 'Pay: tap ' + all.map(t => MF.cards[MF.view(s).cards[t.iid].id].name).join(', ') } };
+      const untapped = new Set(q.opts.filter(o => o.amount != null).map(o => o.iid));            // Vivi Ornitier's {0}: activated, not tapped
+      const verb = t => untapped.has(t.iid) ? 'use ' : 'tap ';
+      const plan = all.map(t => verb(t) + tag(MF.view(s).cards[t.iid].id) + ' ' + t.col.split('').map(sym).join('')).join(', ');
+      return { title: `Pay ${mana(q.need)} for ${C(s, q.src)}`, body: `In your pool: ${poolStr(q.pool) || 'nothing'}. The suggested payment: ${plan || 'nothing more'}. Or click your untapped lands one at a time.`, labels: { auto: 'Pay: ' + all.map(t => verb(t) + MF.cards[MF.view(s).cards[t.iid].id].name).join(', ') } };
     },
     spend: (s, q) => ({ title: `Which mana pays the generic part of ${mana(q.need)}?`, body: 'Your pool holds more than one kind of mana beyond the coloured symbols. Choose what to spend; the rest stays in your pool until the step ends.', labels: Object.fromEntries(q.opts.map(o => [o.id, 'Spend ' + Object.entries(o.plan).filter(([k, n]) => n).map(([k, n]) => n + '× ' + MF.COLOR_NAME[k]).join(' + ')])) }),
     target: (s, q) => {

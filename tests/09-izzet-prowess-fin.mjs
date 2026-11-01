@@ -31,7 +31,9 @@ test('Vivi Ornitier: {0}: X mana in any mix of {U}/{R} (X = power), once a turn 
   eq(MF.manaSources(s, 0).length, 0, 'only once each turn');
   let t = setup({ me: { hand: ['lightning-strike'], bf: [{ id: 'vivi-ornitier', ctr: { '+1/+1': 2 } }] } });
   t = MF.apply(t, MF.legalActions(t).find(a => a.type === 'cast')); t = MF.apply(t, { type: 'answer', id: player(1) });
-  t = MF.apply(t, { type: 'answer', id: t.pending.q.opts.find(o => String(o.id).startsWith('combo:')).id });
+  const combo = t.pending.q.opts.find(o => String(o.id).startsWith('combo:'));
+  eq([combo.amount, combo.cols], [2, ['U', 'R']], 'the pay option says how much and which colours: the page labels it from these (it has no single col)');
+  t = MF.apply(t, { type: 'answer', id: combo.id });
   eq(t.pending.q.kind, 'manaCombo'); eq(t.pending.q.opts.map(o => o.id), ['UU', 'UR', 'RR'], 'every combination is offered');
 });
 test('Wild Ride: harmonize from the graveyard (CR 702.180), tapping a creature to cut the generic cost; then it is exiled', () => {

@@ -97,6 +97,7 @@
       for (const o of q.opts) {
         const a = { type: 'answer', id: o.id };
         if (q.kind === 'block' && o.iid != null) { const ai = MF.pubId(v, o.att); add(o.iid, a, 'Block ' + (ai === 'face-down' ? 'the face-down creature' : MF.cards[ai].name), o.att); continue; }
+        if (q.kind === 'pay' && o.amount != null) { add(o.iid, a, 'Activate for ' + o.amount + ' mana in any combination of ' + o.cols.map(k => '{' + k + '}').join(' and/or ')); continue; }   // Vivi Ornitier: no single colour; the next prompt asks which
         if (q.kind === 'pay' && o.iid != null) { add(o.iid, a, o.col.length > 1 ? 'Activate for ' + o.col.split('').map(k => '{' + k + '}').join('') : 'Tap for ' + MF.COLOR_NAME[o.col] + ' mana'); continue; }
         if (o.seat != null) { add('p' + o.seat, a, prompt.labels[o.id] || 'Choose'); btns.push({ a: a, label: prompt.labels[o.id] || 'Choose', cls: '' }); continue; }
         if (o.iid != null) {

@@ -964,7 +964,7 @@
       if (!plan) throw new Illegal('cannot pay ' + MF.manaStr(need));
       // One option per distinguishable source and colour: identical basic lands are one option.
       const opts = [Object.assign({ id: 'auto', taps: plan.taps }, plan.multis ? { multis: plan.multis } : {})], seenKey = new Set();
-      for (const src of srcs.filter(m => m.combo)) opts.push({ id: 'combo:' + src.iid + ':' + src.ab, iid: src.iid, amount: src.amount });
+      for (const src of srcs.filter(m => m.combo)) opts.push({ id: 'combo:' + src.iid + ':' + src.ab, iid: src.iid, amount: src.amount, cols: src.cols });
       for (const src of srcs.filter(m => m.multi)) for (const y of src.multi) opts.push({ id: 'tap:' + src.iid + ':' + src.ab + ':' + y, iid: src.iid, col: y });
       for (const src of srcs.filter(m => !m.combo && !m.multi && !m.special)) for (const col of src.cols) {
         const key = src.id + ':' + col + ':' + JSON.stringify(chars(s, src.iid).ab.filter(a => a.k !== 'mana').length);
