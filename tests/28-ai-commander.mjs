@@ -80,3 +80,9 @@ test('AI: Ad Nauseam into Thassa\'s Oracle and Demonic Consultation (played out 
   s = aiPlay(s, x => x.winner != null, 1500);
   eq(s.winner, 0);
 });
+test('AI: Food Chain with Squee — loops creature mana, recasts Terra from the command zone until its library is milled, then Thassa\'s Oracle', () => {
+  let s = setup({ commander: true, me: { identity: ['U', 'R', 'G'], command: ['terra-magical-adept-esper-terra'], hand: ['thassas-oracle'], bf: ['food-chain', 'squee-the-immortal', U, U, R, 'forest'], lib: Array(22).fill(U) } });
+  s = aiPlay(s, x => x.winner != null, 4000);
+  eq(s.winner, 0);
+  ok(logs(s, 'winBy').length === 1, 'by Thassa\'s Oracle');
+});

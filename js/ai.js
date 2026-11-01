@@ -498,6 +498,48 @@
       wins: (r, me) => r.winner === me || P(r, 1 - me).lib.length === 0,
       underway: (s, me) => (P(s, me).h.castList || []).some(e => /Dramatic Reversal/.test(e.name)) || s.log.slice(-60).some(e => e.t === 'copyCard' && e.who === me && /dramatic-reversal/.test(e.c)),
     },
+    { // Food Chain with Squee, the Immortal: exile Squee for four, recast it from exile for three — a mana each time,
+      // only for creature spells. Spend it recasting Terra from the command zone (she mills five) until the library is
+      // gone, then Thassa's Oracle. Each step is forced and nothing in it is random, so it starts on its preconditions
+      // rather than a played-out copy (hundreds of loops).
+      name: 'foodChain', exact: true,
+      applies: (s, me) => {
+        const p = P(s, me), mine = s.bf.filter(i => I(s, i).ctrl === me).map(i => MF.def(s, i));
+        const squee = p.hand.concat(p.grave, p.exile, s.bf.filter(i => I(s, i).ctrl === me)).some(i => MF.def(s, i).ab.some(a => a.k === 'castFromGraveExile') && MF.def(s, i).types.includes('Creature'));
+        const terra = (p.command || []).concat(s.bf.filter(i => I(s, i).ctrl === me && I(s, i).cmdr)).some(i => opsOf(MF.def(s, i)).includes('"o":"mill"'));
+        return mine.some(d => d.ab.some(a => a.special === 'foodChain')) && squee && terra && p.hand.some(i => isLibraryWin(MF.def(s, i)));
+      },
+      next: (s, me) => {
+        const p = P(MF.view(s), me), v = MF.view(s), libEmpty = p.lib.length === 0;
+        const isSquee = i => MF.def(v, i).ab.some(a => a.k === 'castFromGraveExile');
+        const terraOn = v.bf.find(i => I(v, i).ctrl === me && I(v, i).cmdr && opsOf(MF.def(v, i)).includes('"o":"mill"'));
+        const cre = p.poolCre || {}, creTotal = ['W', 'U', 'B', 'R', 'G', 'C'].reduce((n, k) => n + (cre[k] || 0), 0);
+        const recast = terraOn != null ? 3 + 2 * ((p.cmdCasts || {})[I(v, terraOn).id] || 0) : 0;      // Terra's next cost from the command zone (CR 903.8)
+        const sendTerra = terraOn != null && !libEmpty && creTotal + 4 >= recast && (cre.G || 0) >= 1;     // exiling her adds four more
+        if (s.pending) {
+          const q = s.pending.q; if (q.who !== me) return undefined;
+          if (q.kind === 'commandZone' || q.kind === 'commandInstead') return { type: 'answer', id: 'command' };
+          if (q.kind === 'spend') { const keep = o => (o.plan.R || 0) * 3 + (o.plan.U || 0) * 2; return { type: 'answer', id: q.opts.slice().sort((x, y) => keep(x) - keep(y))[0].id }; }   // pay generic with what Squee ({1}{R}{R}) and Oracle ({U}{U}) don't need
+          if (q.kind === 'foodChainExile') { const sq = q.opts.find(o => isSquee(o.iid)), te = q.opts.find(o => I(v, o.iid).cmdr); return { type: 'answer', id: ((sendTerra && te) || sq || te || q.opts[0]).id }; }
+          if (q.kind === 'manaColor' && q.n) { const pool = p.pool; const want = pool.R < 2 ? 'R' : libEmpty ? (pool.U < 2 ? 'U' : 'R') : pool.G < 1 ? 'G' : 'R'; return { type: 'answer', id: want }; }
+          return undefined;
+        }
+        if (s.priority !== me) return undefined;
+        if (s.stack.length) return { type: 'pass' };
+        const legal = MF.legalActions(s), cast = pred => legal.find(a => a.type === 'cast' && pred(a.iid));
+        if (libEmpty) { const o = cast(i => isLibraryWin(MF.def(s, i))); if (o) return o; }
+        const squeeOn = s.bf.some(i => I(s, i).ctrl === me && isSquee(i));
+        if (!libEmpty) { const t = cast(i => I(s, i).cmdr && opsOf(MF.def(s, i)).includes('"o":"mill"')); if (t && (squeeOn || (cre.R || 0) >= 3 && creTotal - MF.manaValue(MF.costOf(s, me, t.iid)) >= 3)) return t; }   // keep enough to loop Squee again afterwards
+        const fc = legal.find(a => a.type === 'mana' && MF.chars(s, a.iid).ab.some(b => b.special === 'foodChain'));
+        if (fc && sendTerra) return fc;                                                                      // enough to bring her back: exile Terra (to the command zone)
+        if (fc && s.bf.some(i => I(s, i).ctrl === me && isSquee(i))) return fc;                            // Squee on the battlefield: exile it for mana
+        const sq = cast(i => isSquee(i)); if (sq) return sq;                                                 // recast it from exile
+        if (fc && !libEmpty && s.bf.some(i => I(s, i).ctrl === me && I(s, i).cmdr)) return fc;              // Terra has milled: exile her too, back to the command zone
+        return null;
+      },
+      wins: (r, me) => r.winner === me,
+      underway: (s, me) => s.log.some(e => e.t === 'mana' && e.who === me && e.c === 'food-chain' && e.turn === s.turn),
+    },
   ];
   // A tap ability of mine that mills a target player (Zellix). `any`: untapped or not.
   function millTap(s, me, any) {
@@ -575,6 +617,7 @@
       if (s.ap === me && line.underway(s, me)) { const a = line.next(s, me); if (a) return a; continue; }   // committed: follow it (its own questions; the rest by policy)
       if (!s.pending && !s.stack.length && !mainEmpty(s, me)) continue;                             // a line starts in my main phase (Oracle and Breach are cast as sorceries)
       const a = line.next(s, me); if (a == null) continue;
+      if (line.exact) return a;                                                                         // forced and not random: started on its preconditions
       const r = runLine(determinize(s, s.log.length + 17), me, x => line.next(x, me), 3000);
       if (r && line.wins(r, me)) {
         MF.ai.stats.lines = (MF.ai.stats.lines || 0) + 1;
