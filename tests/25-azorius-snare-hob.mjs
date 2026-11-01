@@ -99,3 +99,14 @@ test('The Fire Crystal: red spells cost {1} less; creatures have haste; a token 
   eq(findAll(s, 'token-doombot', 'bf').length, 2);
   s = toStep(s, 'end', 'done'); s = resolveAll(s); eq(findAll(s, 'token-doombot', 'bf').length, 1, 'the copy is sacrificed');
 });
+test('Pinnacle Starcage sacrificed for Dusk Rose Reliquary: Gollum returns and its "as it enters, choose odd or even" is asked mid-cast (CR 610.3, 614.12)', () => {
+  let s = setup({ me: { hand: ['pinnacle-starcage', 'dusk-rose-reliquary'], bf: [W, W, W, W] }, opp: { bf: ['gollum-riddle-master'] } });
+  s = cast(s, 'pinnacle-starcage', 'auto'); s = resolveAll(s);
+  ok(s.players[1].exile.some(i => s.cards[i].id === 'gollum-riddle-master'), 'Gollum exiled');
+  s = MF.apply(s, MF.legalActions(s).find(a => a.type === 'cast' && s.cards[a.iid].id === 'dusk-rose-reliquary'));
+  s = answer(s, [(q, st) => viewId(q, st, 'pinnacle-starcage')]);
+  for (let g = 0; g < 4 && s.pending && s.pending.q.kind !== 'enterChoice'; g++) s = MF.apply(s, { type: 'answer', id: s.pending.q.opts[0].id });
+  eq(s.pending.q.kind, 'enterChoice', 'Gollum\'s owner chooses'); eq(s.pending.q.who, 1);
+  s = answer(s, ['odd']);
+  const g = find(s, 'gollum-riddle-master', 'bf'); ok(g != null, 'back on the battlefield'); eq(s.cards[g].chosen, 'odd');
+});

@@ -61,11 +61,13 @@ Deck count, never quality. A deck that does not compile in full is not registere
   a colour that left it unpayable — such a payment now offers only mana that lets it finish (CR 118.3);
   Tinder Wall paid "{R}, Sacrifice" by sacrificing itself for {R}{R} — that source is now kept out (CR
   601.2h); Lion's Eye Diamond paid mid-cast and discarded Otawara before its channel cost — it is now
-  activated only with priority (CR 602.5e, 304.5; its 2004-10-04 ruling), never inside a payment.
+  activated only with priority (CR 602.5e, 304.5; its 2004-10-04 ruling), never inside a payment; Pinnacle
+  Starcage sacrificed for Dusk Rose Reliquary returned Gollum, whose "as it enters, choose" had no invocation
+  to ask — the entering replacements use the running one, as the others in `MF.move` do.
 - A rules defect on the way: Tinder Wall's damage ability always fizzled (its target, "creature it's
   blocking", was re-checked after the Wall was sacrificed as the cost); combat now keeps last-known blocks
   (CR 608.2h). The rules text was re-fetched into `scratch/rules/` (same 977,752 bytes): check-pages clean.
-- tests: 464/464 (tests/29-player-text.mjs runs `js/text.js` against engine states; every new test fails
+- tests: 465/465 (tests/29-player-text.mjs runs `js/text.js` against engine states; every new test fails
   before its fix). Commander arena, 6 mixed games after the Lion's Eye Diamond change: 21.2 spells a game,
   6.8% empty turns, 4.6% of the opponent's-turn windows used.
 

@@ -232,7 +232,7 @@
   // pay 2 life. If you don't, it enters tapped." — a choice made before it enters (614.12a), so the
   // move needs the invocation (o.x) to ask; every caller that puts a land onto the battlefield passes it.
   function enterReplacements(s, n, o) {
-    const c = I(s, n);
+    const c = I(s, n), ox = o.x || s._x;                                                     // the invocation to ask: the mover's, or the one running (an exiled card returning when its exiler leaves)
     const bc = baseChars(s, n);
     if (bc.types.includes('Creature') && s.bf.some(i => i !== n && I(s, i).ctrl !== c.ctrl && chars(s, i).ab.some(a => a.k === 'oppCreaturesEnterTapped'))) c.tapped = true;   // "Creatures your opponents control enter tapped"
     if (bc.subtypes.includes('Saga') && bc.ab.some(a => a.chapter) && c.ctr.lore == null) c.ctr.lore = 1;   // CR 714.3a
@@ -240,23 +240,23 @@
     for (const a of baseChars(s, n).ab) {
       if (a.k === 'etbCounters') c.ctr[a.kind] = (c.ctr[a.kind] || 0) + a.n;
       if (a.k === 'enterChoice') {
-        if (!o.x) throw new Error('a permanent with an entering choice was moved without the invocation to ask: ' + c.id);
+        if (!ox) throw new Error('a permanent with an entering choice was moved without the invocation to ask: ' + c.id);
         let opts = a.what === 'basicType' ? ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'] : a.what === 'color' ? MF.COLORS.slice() : ['odd', 'even'];
         if (a.what === 'creatureType') {                                                       // any creature type may be chosen (CR 205.3m); the ones in the player's cards are listed first
           const p = P(s, c.ctrl), mine = new Set();
           for (const i of p.hand.concat(p.lib, p.grave)) { const d0 = def(s, i); if (d0.types.includes('Creature')) for (const st of d0.subtypes) if (MF.CREATURE_TYPES.includes(st)) mine.add(st); }
           opts = [...mine].sort().concat(MF.CREATURE_TYPES.filter(t0 => !mine.has(t0)));
         }
-        c.chosen = ask(o.x, { who: c.ctrl, kind: 'enterChoice', c: c.id, what: a.what, opts: opts.map(v => ({ id: v })) });
+        c.chosen = ask(ox, { who: c.ctrl, kind: 'enterChoice', c: c.id, what: a.what, opts: opts.map(v => ({ id: v })) });
         log(s, 'chose', { who: c.ctrl, c: c.id, choice: c.chosen });
       }
       if (a.k === 'oppCreaturesEnterTapped') {}   // read from the other side below
       if (a.k === 'etbTapped' && !(a.unless && MF.cond({ s: s, ctrl: c.ctrl, src: n, flags: {} }, a.unless))) c.tapped = true;
       if (a.k === 'etbPayOrTap' && !o.tapped) {                                                // put onto the battlefield tapped anyway: paying could change nothing, so nothing is asked
-        if (!o.x) throw new Error('a land with an entering choice was moved without the invocation to ask: ' + c.id);
+        if (!ox) throw new Error('a land with an entering choice was moved without the invocation to ask: ' + c.id);
         const p = P(s, c.ctrl);
         const can = p.life >= a.life;                                                          // CR 119.4: a player can pay life only if they have that much
-        const ans = can ? ask(o.x, { who: c.ctrl, kind: 'payLifeOrTap', c: c.id, life: a.life, opts: [{ id: 'pay' }, { id: 'tapped' }] }) : 'tapped';
+        const ans = can ? ask(ox, { who: c.ctrl, kind: 'payLifeOrTap', c: c.id, life: a.life, opts: [{ id: 'pay' }, { id: 'tapped' }] }) : 'tapped';
         if (ans === 'pay') MF.loseLife(s, c.ctrl, a.life, 'pay', c.id); else c.tapped = true;
       }
     }
