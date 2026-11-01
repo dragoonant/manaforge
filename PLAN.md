@@ -43,6 +43,23 @@ Deck count, never quality. A deck that does not compile in full is not registere
 
 ## Status
 
+**2026-11-01 — the Commander AI, second pass (D24).**
+
+- New lines: Ad Nauseam into a line (played out on three reshuffled libraries, started if it wins on two);
+  Isochron Scepter with Dramatic Reversal and rocks, spending the surplus on Zellix's mill; Food Chain with
+  Squee recasting Terra from the command zone until the library is milled, then Thassa's Oracle (forced and
+  not random, so started on its preconditions). Protection before a line: Silence, Orim's Chant on the
+  opponent, Grand Abolisher or Veil of Summer first, when the opponent holds cards and the line still wins
+  after it. Najeela's extra combat works through the roll-outs now that her payment is fixed (a test holds it).
+- A Commander mulligan (fast mana counted as lands; two sources kept with a tutor) was measured against the
+  old one in a 10-game A/B and played worse — turns with nothing done 17.2% against 10.4%, lands a turn 0.60
+  against 0.67 — so it is off (`MF.aiWeights.cmdMulligan`).
+- `tools/arena.mjs --mixed --commander`, 10 games, with these: 20.7 spells a game (12.8 before D24), 4.6% of
+  the opponent's-turn windows used (1.9%), 10.4% empty turns (13.9%), games about 19 turns. The six
+  championship pairings end by combat or commander damage; none by a line, which the AI rarely assembles.
+- Found by the arena and fixed: a cast whose additional cost named something the mana payment had used (a
+  Treasure) crashed; it is now reversed (CR 601.2h, 733). tests: 454/454 (13 in tests/28-ai-commander.mjs).
+
 **2026-10-31 — the AI and the championship Commander decks (D24).**
 
 - Measured with `tools/arena.mjs --mixed --commander` (10 games, the six Commander decks), before → after:

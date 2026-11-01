@@ -3,14 +3,13 @@
 - **Review the hosted renders (D23)**: Kujo's and the championship decks' 238 cards and tokens were rendered
   through Hugging Face on 2026-10-31; re-roll any that miss their subject with `python3 tools/gen-art-hf.py --force <key>
   --seed-offset N` (or the local GPU script), then `node tools/write-manifest.mjs`.
-- **The AI and the championship Commander decks (D22, D24)**: it now finds and finishes Thassa's Oracle
-  with Demonic Consultation or Tainted Pact and Underworld Breach with Lion's Eye Diamond and Brain Freeze,
-  counters threats, tutors for missing pieces and stops losing to its own Pacts and Final Fortune. Measured
-  2026-10-31 (`node tools/arena.mjs --mixed --commander`, 10 games): 19.6 spells a game, games about 19
-  turns, decided by combat or commander damage — it rarely gets a line together. Next: lines for Ad
-  Nauseam into a win, Food Chain, Najeela's extra combats and Kujo's Isochron Scepter with Dramatic
-  Reversal; holding up protection (Silence, Veil of Summer, a counterspell) for its own line; mulligans
-  that keep fast mana and a tutor.
+- **The AI and the championship Commander decks (D22, D24)**: it finds and finishes Oracle with Consultation or
+  Tainted Pact, Breach with Lion's Eye Diamond and Brain Freeze, Ad Nauseam into either, Isochron Scepter with
+  Dramatic Reversal, and Food Chain with Squee and Terra; it protects a line with Silence-like spells, counters
+  threats and tutors for missing pieces. Measured 2026-11-01: 20.7 spells a game, games about 19 turns, still
+  decided by combat — the pieces rarely come together. Next: plan two turns (hold a tutor for the piece it
+  lacks rather than spend it on the best card now), and a mulligan that looks for a line, which the simple
+  fast-mana one did not do well (A/B, PLAN Status).
 - **The AI and a combo deck**: the AI plays Kujo's deck card by card with its one-turn roll-outs; it does
   not plan the deck's combos (Isochron Scepter + Dramatic Reversal, Painter's Servant + Grindstone,
   Doomsday into Thassa's Oracle, Bloodchief Ascension + Mindcrank). Its evaluator counts a short

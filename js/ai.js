@@ -16,7 +16,7 @@
   // The evaluator. Board presence persists in Magic (handoff 11.8.5): power, toughness and
   // evasion on the battlefield, cards in hand, lands, and life with a low-life cliff.
   // ---------------------------------------------------------------------------------------------
-  const W = { cmdMulligan: 1, castCommander: 0.6, manaRock: 1.2, emptyLibrary: 150, colorAccess: 0.9, pactUnpaid: 400, landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
+  const W = { cmdMulligan: 0, castCommander: 0.6, manaRock: 1.2, emptyLibrary: 150, colorAccess: 0.9, pactUnpaid: 400, landInHand: 0.7, life: 1.0, lowLife: 6, lowLifeExtra: 1.2, card: 2.2, land: 1.6, landCap: 7, pow: 1.4, tou: 0.6, evasion: 0.6, creature: 1.0, perm: 0.8, untappedBlocker: 0.25, counter: 0.0, openInstant: 1.2, rollAttack: 1, waitWindows: 1 };
   MF.aiWeights = W;
   const lifeScore = l => l * W.life - (l < W.lowLife ? (W.lowLife - l) * W.lowLifeExtra : 0);
   function permValue(s, iid) {
@@ -195,7 +195,7 @@
       case 'first': return 'me';
       case 'mulligan': {
         const lands = P(s, me).hand.filter(i => isLand(s, i)).length, n = P(s, me).hand.length;
-        if (s.commander && W.cmdMulligan) {                                                      // PLAN D24: fast mana counts as a land does; a tutor or a line piece makes a thin hand keepable
+        if (s.commander && W.cmdMulligan) {                                                      // PLAN D24: fast mana counts as a land does; a tutor or a line piece makes a thin hand keepable — OFF: in a 10-game A/B it played worse (empty turns 17.2% vs 10.4%, 2026-11-01)
           const hand = P(s, me).hand.map(i => MF.def(s, i)), srcs = hand.filter(isManaCard).length, plan = hand.some(d => LINE_PIECE(d) || /Search your library for a card/.test(d.text || ''));
           return q.mulls >= 2 || (srcs >= 3 && srcs <= n - 1) || (srcs >= 2 && plan) ? 'keep' : 'mull';
         }
