@@ -48,12 +48,15 @@ test('AI: it doesn\'t cast Final Fortune or a Pact it can\'t pay for (the loss i
   for (let k = 0; k < 40 && s.turn === 3 && s.winner == null; k++) s = MF.apply(s, MF.ai.choose(s));
   ok(s.players[0].hand.length === 2, 'both still in hand: ' + s.players[0].hand.map(i => s.cards[i].id));
 });
-test('AI: Commander mulligan — fast mana counts as a land; a two-source hand with a tutor is kept', () => {
+test('AI: Commander mulligan (behind MF.aiWeights.cmdMulligan, off since its A/B) — fast mana counts as a land; a two-source hand with a tutor is kept', () => {
   const q = (s) => ({ who: 0, kind: 'mulligan', mulls: 0, opts: [{ id: 'keep' }, { id: 'mull' }] });
+  const was = MF.aiWeights.cmdMulligan; MF.aiWeights.cmdMulligan = 1;
+  try {
   let s = setup({ commander: true, me: { identity: ['U', 'B'], hand: [U, 'sol-ring', 'demonic-tutor', 'opt', 'force-of-will', 'opt', 'brain-freeze'] } });
   eq(MF.aiPolicy(s, q(s)), 'keep');
   let t = setup({ commander: true, me: { identity: ['U', 'B'], hand: [U, 'opt', 'opt', 'force-of-will', 'brain-freeze', 'gamble', 'silence'] } });
   eq(MF.aiPolicy(t, q(t)), 'mull', 'one source');
+  } finally { MF.aiWeights.cmdMulligan = was; }
 });
 test('AI: Silence before the Oracle line when the opponent holds cards', () => {
   let s = setup({ me: { hand: ['thassas-oracle', 'demonic-consultation', 'silence'], bf: [U, U, B, 'plains'], lib: Array(20).fill(U) }, opp: { hand: ['force-of-will', U] } });
