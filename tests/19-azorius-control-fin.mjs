@@ -13,6 +13,19 @@ test('Three Steps Ahead: spree (CR 702.172) — two modes, both costs added; tar
   s = resolveAll(s, q => q.opts[0].id);
   ok(find(s, 'lightning-strike', 'grave', 1), 'countered'); eq(s.players[0].life, 20); eq(s.players[0].hand.length, 1, 'drew two, discarded one');
 });
+test('Three Steps Ahead: castable when only a mode other than the cheapest is affordable (CR 702.172a)', () => {
+  // One blue source, a spell on the stack: counter ({U}+{1}{U}) needs two blue, draw ({U}+{2}) does not
+  let s = setup({ me: { hand: ['three-steps-ahead'], bf: [U, W, W], lib: [U, U, U] }, opp: { hand: ['lightning-strike'], bf: ['mountain', 'mountain'] } });
+  s = oppTurn(s); s = cast(s, 'lightning-strike', player(0));
+  s = MF.apply(s, { type: 'pass' });
+  const tsa = find(s, 'three-steps-ahead');
+  ok(MF.legalActions(s).some(l => l.type === 'cast' && l.iid === tsa), 'offered'); eq(MF.whyNot(s, 0, tsa), null);
+  s = MF.apply(s, { type: 'cast', iid: tsa });
+  eq(s.pending.q.opts.map(o => o.id), [0, 2], 'counter and draw are offered: each has a legal target or needs none');
+  // With no blue source at all, the refusal names the total for each mode that could be chosen
+  let n = setup({ me: { hand: ['three-steps-ahead'], bf: [W, W, W] } });
+  eq(MF.whyNot(n, 0, find(n, 'three-steps-ahead')), 'You cannot pay {2}{U} (its cost plus one mode) with your untapped mana sources.');
+});
 test('Dreams of Laguna: surveil 1, then draw; flashback from the graveyard', () => {
   let s = setup({ me: { grave: ['dreams-of-laguna'], bf: [U, U, U, U], lib: [W, U, W] } });
   const a = MF.legalActions(s).find(l => l.type === 'cast' && l.via === 'flashback'); ok(a, 'flashback');

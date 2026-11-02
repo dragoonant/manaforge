@@ -1599,12 +1599,16 @@
     if (aura && !slotsLegalNow(s, who, iid, [{ f: aura.f }])) return false;
     const tcl = sp && sp.tg ? d.ab.find(a => a.k === 'costLess' && a.cond && (a.cond.c === 'targetsTapped' || a.cond.c === 'targetsAttacking')) : null;
     const tappedTg = tcl ? MF.targetOptions(s, sp.tg[0], who, iid, []).find(r => MF.cond({ s: s, ctrl: who, src: iid, flags: {}, targets: [[r]] }, tcl.cond)) : null;   // Ride's End, Ephara's Dispersal: priced with a target that qualifies, if one can be chosen
-    let spreeExtra = null;
-    if (sp && sp.spree) { const ms = sp.modes.filter(m => !m.tg || slotsLegalNow(s, who, iid, m.tg)).map(m => MF.parseMana(m.cost)).sort((a, b) => MF.manaValue(a) - MF.manaValue(b)); if (!ms.length) return false; spreeExtra = ms[0]; }
-    { const lm = d0.ab.find(a => a.k === 'addCost' && a.what === 'lifeOrMana'); if (lm && P(s, who).life < lm.life) spreeExtra = MF.parseMana(lm.mana); }   // Redirect Lightning: without the life, the {2}
+    // CR 702.172a: a spree spell is castable if some one mode is affordable with a legal target. Each
+    // mode is tried on its own: the cheapest by mana value can need a colour the player lacks.
+    let extras = [null];
+    if (sp && sp.spree) { extras = spreeExtras(s, who, iid, sp); if (!extras.length) return false; }
+    { const lm = d0.ab.find(a => a.k === 'addCost' && a.what === 'lifeOrMana'); if (lm && P(s, who).life < lm.life) extras = [MF.parseMana(lm.mana)]; }   // Redirect Lightning: without the life, the {2}
     if (via === 'morph') return canPayMana(s, who, MF.parseMana('{3}'), { creature: true });   // CR 702.37a: {3} rather than its mana cost
-    return canPayMana(s, who, spellCost(s, who, iid, { x: sp && sp.xMin || 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: spreeExtra, targets: tappedTg ? [[tappedTg]] : null }), { creature: ch.types.includes('Creature'), artifact: ch.types.includes('Artifact'), subtypes: ch.subtypes });
+    return extras.some(extra => canPayMana(s, who, spellCost(s, who, iid, { x: sp && sp.xMin || 0, alt: alt, door: door, anyMana: anyManaFor(s, iid), via: via, reduce: via === 'harmonize' ? harmonizeBest(s, who) : 0, extra: extra, targets: tappedTg ? [[tappedTg]] : null }), { creature: ch.types.includes('Creature'), artifact: ch.types.includes('Artifact'), subtypes: ch.subtypes }));
   };
+  // The additional cost of each spree mode that could be chosen now (CR 702.172a, 700.2a).
+  const spreeExtras = (s, who, iid, sp) => sp.modes.filter(m => !m.tg || slotsLegalNow(s, who, iid, m.tg)).map(m => MF.parseMana(m.cost));
   // Harmonize: the most generic mana a tapped creature could take off (CR 702.180a).
   const harmonizeTappable = (s, who) => s.bf.filter(i => I(s, i).ctrl === who && !I(s, i).tapped && chars(s, i).types.includes('Creature'));
   const harmonizeBest = (s, who) => Math.max(0, ...harmonizeTappable(s, who).map(i => chars(s, i).p));
@@ -1771,6 +1775,7 @@
     }
     const d = def(s, iid), sp = d.ab.find(a => a.k === 'spell'), aura = d.ab.find(a => a.k === 'enchant');
     if ((sp && sp.tg && !slotsLegalNow(s, who, iid, sp.tg)) || (aura && !slotsLegalNow(s, who, iid, [{ f: aura.f }]))) return 'There is no legal target for it.';
+    if (sp && sp.spree) return 'You cannot pay ' + spreeExtras(s, who, iid, sp).map(e => MF.manaStr(spellCost(s, who, iid, { x: 0, extra: e }))).join(' or ') + ' (its cost plus one mode) with your untapped mana sources.';
     if (doors) return 'You cannot pay ' + doors.map(f => MF.manaStr(spellCost(s, who, iid, { x: 0, door: doors.indexOf(f) }))).join(' or ') + ' for either door with your untapped mana sources.';
     return 'You cannot pay ' + MF.manaStr(spellCost(s, who, iid, { x: 0 })) + ' with your untapped mana sources.';
   };
