@@ -351,6 +351,17 @@ html.is-phone .chip.cmd .cmd-short { display: inline; }
 .pick-dice { width: 3.3rem; flex: none; cursor: pointer; color: #4a1f08; background: linear-gradient(180deg, #fffaf0, #efe0bd); border: 1px solid #b98a4a; border-radius: 8px; box-shadow: 0 2px 0 #9c7238; display: grid; place-items: center; }
 .pick-dice svg { width: 1.6rem; height: 1.6rem; } .pick-dice circle { fill: currentColor; }
 .picker-note { font-size: .82rem; color: #5b4a33; margin: .85rem 0 .55rem; }
+/* PLAN D26: the saved game on the picker, and the save line in the drawer */
+.resume { margin: .7rem 0 .2rem; padding: .7rem .8rem; border: 1px solid #b98a4a; border-radius: 9px; background: rgba(255,250,240,.65); }
+.resume.bad { border-color: #a5523a; background: rgba(255,236,226,.7); }
+.resume-lbl { font: 700 .8rem var(--serif); color: #5a3a1a; letter-spacing: .03em; margin-bottom: .25rem; }
+.resume-what { font-size: .86rem; color: #2a1d10; margin-bottom: .55rem; }
+.resume.bad .resume-what { color: #6e2a17; }
+.resume-btns { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.resume-btns .btn.big { flex: 1 1 12rem; }
+.resume-note { font-size: .78rem; color: #5b4a33; text-align: center; margin: .3rem 0 .2rem; }
+.save-note { padding: .45rem .7rem; font-size: .78rem; color: var(--dim); border-bottom: 1px solid var(--line); }
+.save-note.bad { color: #ffb08a; }
 .seed-row { display: flex; align-items: center; gap: .6rem; font: 700 .8rem var(--serif); color: #5a3a1a; margin-bottom: .85rem; }
 .seed-row input { flex: 1; min-width: 0; padding: .4rem .55rem; font: inherit; font-family: var(--sans); font-weight: 400; color: #2a1d10; background: #fffaf0; border: 1px solid #b98a4a; border-radius: 6px; }
 .panel .btn.big { width: 100%; font: 700 1.15rem var(--serif); letter-spacing: .16em; text-transform: uppercase; padding: .8rem; }
@@ -457,7 +468,8 @@ html.is-phone .sheet-actions .btn { font-size: .78rem; padding: .45rem .55rem; }
 /* The picker in two columns: a phone's height holds one row of deck slots, not two. */
 html.is-phone .panel.picker { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1rem; width: min(46rem, 96vw); top: 44%; padding: .6rem 1.1rem .7rem; max-height: calc(100dvh - 3.4rem); }
 html.is-phone .panel.picker > .panel-kicker, html.is-phone .panel.picker > h1, html.is-phone .panel.picker > .picker-note, html.is-phone .panel.picker > .mode-toggle,
-html.is-phone .panel.picker > .seed-row, html.is-phone .panel.picker > .btn.big, html.is-phone .panel.picker > .picker-row { grid-column: 1 / -1; }
+html.is-phone .panel.picker > .seed-row, html.is-phone .panel.picker > .btn.big, html.is-phone .panel.picker > .picker-row,
+html.is-phone .panel.picker > .resume, html.is-phone .panel.picker > .resume-note { grid-column: 1 / -1; }
 html.is-phone .panel h1 { font-size: 1.6rem; margin: 0 0 .2rem; }
 html.is-phone .field-lbl { margin: .2rem 0 .2rem; }
 html.is-phone .picker-note { display: none; }

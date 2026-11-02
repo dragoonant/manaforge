@@ -23,6 +23,7 @@
     <p><b>Reading the board.</b> Hover any card — board, hand, stack, log — to read its Oracle text and current numbers. Click a graveyard or exile pile to look through it. Escape hides the prompt so you can see the board. The log and the settings are in the drawer on the right edge.</p>
     <p><b>The table.</b> Your half is the lower one: your life and mana pool on the left, your creatures and other permanents in the near row, your lands behind them, your library and graveyard on the right, exile under your life. The opponent’s half mirrors it. The stack stands between the halves on the right.</p>
     <p><b>Commander</b> (the Commander mode). Both players start at 40 life with their commanders in the command zone, shown on their plate. Cast a commander from there; each time it goes back and is cast again it costs {2} more. A commander that goes to a graveyard or exile may return to the command zone (you are asked), and one that would go to your hand or library may go there instead. A player dealt 21 combat damage by one commander loses. Decks are 100 cards, one of each card but basic lands, in the commanders’ colours (CR 903). Two commanders with partner share the command zone, and each has its own tax and its own damage count.</p>
+    <p><b>Saving.</b> The game saves itself after every move, in this browser. Close the page whenever you like: the start screen offers <b>Continue</b>, which puts you back at the same spot. There is one saved game; starting a new one replaces it, and a finished game is not kept. Opening the game from a file and through a local server keeps separate saves.</p>
     <p><b>Keys.</b> Space presses the highlighted button. Escape closes a window or hides the prompt. L opens and closes the log.</p>`;
 
   function deckCard(d, side) {
@@ -84,6 +85,35 @@
       <button class="pick-dice" data-dice="${side}" title="A random deck" aria-label="A random deck">${DIE}</button></div>`;
   }
   const DIE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.7"/><circle cx="16" cy="8" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="8" cy="16" r="1.7"/><circle cx="16" cy="16" r="1.7"/></svg>';
+  // PLAN D26: the saved game, read and checked before it is offered. { save } to continue, { error }
+  // to say why it can't be (with Discard), or null when there is none.
+  let discardArmed = false;
+  function readSave() {
+    let raw;
+    try { raw = localStorage.getItem(MF.ui.SAVE_KEY); } catch (e) { return { error: 'this browser won’t open its storage, so games can’t be saved here (' + (e.message || e) + ')', noStore: true }; }
+    if (raw == null) return null;
+    let sv;
+    try { sv = JSON.parse(raw); } catch (e) { return { error: 'the save is unreadable (' + e.message + ')' }; }
+    if (!sv || sv.v !== 1 || !sv.setup || !Array.isArray(sv.actions) || !sv.state) return { error: 'the save is not one this version writes' };
+    const gone = sv.setup.decks.filter(id => !reg().some(d => d.id === id));
+    if (gone.length) return { error: 'its deck ' + gone.map(id => MF.decks[id] ? '“' + MF.decks[id].name + '”' : '“' + id + '”').join(' and ') + ' is no longer playable here' };
+    try { MF.legalActions(sv.state); MF.whoActs(sv.state); } catch (e) { return { error: 'this version of MANAFORGE can’t open it (' + (e.message || e) + ')' }; }
+    return { save: sv };
+  }
+  function saveHTML(r) {
+    if (!r) return '';
+    const discard = discardArmed
+      ? '<button class="btn" data-discard="yes">Yes, discard it</button><button class="btn ghost" data-discard="no">Keep it</button>'
+      : '<button class="btn ghost" data-discard="ask">Discard it</button>';
+    if (r.noStore) return `<div class="resume bad"><div class="resume-what">Saving is off: ${esc(r.error)}.</div></div>`;
+    if (r.error) return `<div class="resume bad"><div class="resume-lbl">Your saved game</div><div class="resume-what">It can’t be continued: ${esc(r.error)}.</div><div class="resume-btns">${discard}</div></div>`;
+    const sv = r.save, s = sv.state, me = sv.setup.human, d = i => MF.decks[sv.setup.decks[i]].name;
+    const when = s.step === 'pregame' ? 'before the first turn' : 'turn ' + s.turn + ', ' + (s.ap === me ? 'your' : 'the opponent’s') + ' turn';
+    const at = new Date(sv.savedAt).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return `<div class="resume"><div class="resume-lbl">Your saved game</div>
+      <div class="resume-what"><b>${esc(d(me))}</b> (you, ${s.players[me].life} life) against <b>${esc(d(1 - me))}</b> (${s.players[1 - me].life} life) · ${when} · saved ${esc(at)}</div>
+      <div class="resume-btns"><button class="btn primary big" data-resume="1">Continue</button>${discard}</div></div>`;
+  }
   function menu(to) {
     MF.ui.stop();
     const decks = ofMode();
@@ -92,11 +122,12 @@
     const keep = document.querySelector('.chooser-list'), top = keep ? keep.scrollTop : 0;
     const how = overlay ? `<div class="modal" data-close="1"><div class="mbox howto">${overlay}<button class="btn" data-close="1">Close</button></div></div>` : '';
     if (screen === 'title') {
+      const waiting = readSave();
       app().innerHTML = `<div class="screen title-screen" data-continue="1">${MF.boardArt.scene()}
         <div class="title-block"><div class="title-kicker">An unofficial Magic: The Gathering fan project</div>
           <h1 class="title-word">MANAFORGE</h1><div class="title-rule"><span>✦</span></div>
           <div class="title-sub">Every card by its Oracle text, every rule by the book — you against the machine.</div>
-          <div class="title-cta">Click to enter the forge</div></div>${notice}</div>`;
+          <div class="title-cta">Click to enter the forge${waiting && waiting.save ? ' — your saved game is waiting' : ''}</div></div>${notice}</div>`;
       return;
     }
     if (screen === 'chooser') {
@@ -110,14 +141,15 @@
       document.querySelector('.chooser-list').scrollTop = top;
       return;
     }
+    const saved = readSave();
     app().innerHTML = `<div class="screen picker-screen">${MF.boardArt.scene()}
-      <div class="panel picker"><div class="panel-kicker">An unofficial Magic: The Gathering fan project</div><h1>MANAFORGE</h1>
+      <div class="panel picker"><div class="panel-kicker">An unofficial Magic: The Gathering fan project</div><h1>MANAFORGE</h1>${saveHTML(saved)}
         <div class="mode-toggle" role="radiogroup" aria-label="Game mode"><button class="mode-btn ${mode === 'duel' ? 'on' : ''}" role="radio" aria-checked="${mode === 'duel'}" data-mode="duel">Duel<small>20 life · 60 cards</small></button><button class="mode-btn ${mode === 'commander' ? 'on' : ''}" role="radio" aria-checked="${mode === 'commander'}" data-mode="commander">Commander<small>40 life · 100 cards</small></button></div>
         <div class="deck-field"><div class="field-lbl">Your deck</div>${slot('me')}</div>
         <div class="deck-field"><div class="field-lbl">Opponent’s deck</div>${slot('opp')}</div>
         <p class="picker-note">${isCmd(pick.me) ? 'A 1v1 Commander game (CR 903) at 40 life with the London mulligan: commanders start in the command zone; 21 combat damage from one commander loses.' : 'A 1v1 game at 20 life with the London mulligan.'} The opponent is the computer. Same seed, same decks and the same choices replay the same game.</p>
         <label class="seed-row"><span>Seed</span><input id="seed" size="10" placeholder="random" value="${esc(seedText)}"></label>
-        <button class="btn primary big" data-go="1">Start the game</button>
+        <button class="btn ${saved && saved.save ? '' : 'primary'} big" data-go="1">${saved && !saved.noStore ? 'Start a new game' : 'Start the game'}</button>${saved && !saved.noStore ? '<div class="resume-note">A new game replaces your saved one.</div>' : ''}
         <div class="picker-row"><button class="btn" data-howto="1">How to play</button><button class="btn" data-motion="1" title="Cards slide, die and fly to their zones; damage floats">Motion: ${MF.anim.on ? 'on' : 'off'}</button></div>
       </div>${notice}${how}<div id="zoom" class="zoom"></div></div>`;
   }
@@ -143,6 +175,20 @@
     if (d) { const side = d.getAttribute('data-dice'), ds = ofMode(); pick[side] = ds[Math.floor(Math.random() * ds.length)].id; focus = pick[side]; menu(); return; }   // a deck of this mode   // a setup choice, not a game event: the game's own randomness is seeded inside apply
     if (t.closest('[data-back]')) return menu('picker');
     if (t.closest('[data-motion]')) { MF.anim.toggle(); menu(); return; }
+    if (t.closest('[data-resume]')) {                                                         // PLAN D26: the snapshot reopens, at the same spot
+      const r = readSave(); if (!r || !r.save) { menu(); return; }
+      discardArmed = false;
+      MF.ui.begin(r.save.setup, r.save.state, { actions: r.save.actions, recent: r.save.recent });
+      return;
+    }
+    const dc = t.closest('[data-discard]');
+    if (dc) {
+      const k = dc.getAttribute('data-discard');
+      if (k === 'ask') discardArmed = true;
+      else if (k === 'no') discardArmed = false;
+      else { discardArmed = false; localStorage.removeItem(MF.ui.SAVE_KEY); }
+      menu(); return;
+    }
     if (t.closest('[data-go]')) {
       const v = document.getElementById('seed').value.trim();
       const seed = v === '' ? (Date.now() & 0x7fffffff) : (parseInt(v, 10) | 0);

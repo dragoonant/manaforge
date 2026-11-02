@@ -4,12 +4,23 @@
 (function () {
   'use strict';
   const MF = window.MF, T = MF.text, esc = T.esc;
-  const ui = MF.ui = { s: null, human: 0, setup: null, actions: [], menu: null, modal: null, timer: null, passUntil: null, recent: [], spot: null, stops: null, peek: false, drawer: false, resultClosed: false, bannerTurn: null, sheet: null, am: null };
+  const ui = MF.ui = { s: null, human: 0, setup: null, actions: [], menu: null, modal: null, timer: null, passUntil: null, recent: [], spot: null, stops: null, peek: false, drawer: false, resultClosed: false, bannerTurn: null, sheet: null, am: null, saveNote: null };
   // PLAN D4: where the game stops for you when you could do something. me = your turn, opp = theirs.
   const DEFAULT_STOPS = { me: { upkeep: 0, draw: 0, main1: 1, boc: 0, attackers: 1, blockers: 1, fsdamage: 0, damage: 0, eoc: 0, main2: 1, end: 0 }, opp: { upkeep: 0, draw: 0, main1: 0, boc: 0, attackers: 1, blockers: 1, fsdamage: 0, damage: 0, eoc: 0, main2: 0, end: 1 } };
   const STEP_SHORT = { upkeep: 'Upkeep', draw: 'Draw', main1: 'Main 1', boc: 'Combat', attackers: 'Attack', blockers: 'Block', fsdamage: 'First strike', damage: 'Damage', eoc: 'End combat', main2: 'Main 2', end: 'End' };
   function loadStops() { try { const j = JSON.parse(localStorage.getItem('mf-stops')); if (j && j.me && j.opp) return j; } catch (e) { /* storage unavailable: defaults */ } return JSON.parse(JSON.stringify(DEFAULT_STOPS)); }
   function saveStops() { try { localStorage.setItem('mf-stops', JSON.stringify(ui.stops)); } catch (e) { /* not persisted */ } }
+  // PLAN D26: the game in progress, after every move — setup, actions (the bug report replays them)
+  // and a snapshot of the state (what Continue reopens). A finished game is not kept. A browser that
+  // refuses to store is told to the player in the drawer, never passed over.
+  ui.SAVE_KEY = 'mf-save';
+  function saveGame() {
+    try {
+      if (ui.s.winner != null) { localStorage.removeItem(ui.SAVE_KEY); ui.saveNote = null; return; }
+      localStorage.setItem(ui.SAVE_KEY, JSON.stringify({ v: 1, savedAt: Date.now(), setup: ui.setup, actions: ui.actions, recent: ui.recent, state: ui.s }));
+      ui.saveNote = null;
+    } catch (e) { ui.saveNote = 'This game is not being saved: the browser refused to store it (' + (e.message || e) + ').'; }
+  }
 
   // ---------------------------------------------------------------------------------------------
   // The card renderer: one function, three sizes (CARD-PRESENTATION-SPEC §0.4). Art edge to edge,
@@ -254,9 +265,9 @@
       <div class="drawer-controls">
         <button class="btn" data-ui="motion" title="Cards slide, die and fly to their zones; damage floats">Motion: ${MF.anim.on ? 'on' : 'off'}</button>
         <button class="btn" data-ui="howto">How to play</button>
-        <button class="btn" data-ui="menu" title="Leave this game and choose new decks">New game</button>
+        <button class="btn" data-ui="menu" title="Leave this game for the deck picker; it stays saved and Continue reopens it">New game</button>
         <button class="btn ghost" data-ui="bug" title="Copy this game’s seed and actions: it replays exactly">Copy bug report</button>
-      </div>${logHTML(v)}`;
+      </div><div class="save-note ${ui.saveNote ? 'bad' : ''}">${esc(ui.saveNote || (ui.s.winner != null ? 'The game is over: nothing is saved.' : 'Saved after every move. Close the page whenever you like; Continue on the start screen brings you back here.'))}</div>${logHTML(v)}`;
   }
   function modalHTML(v, am) {
     if (!ui.modal) return '';
@@ -590,6 +601,7 @@
     ui.actions.push(a);
     try { ui.s = MF.apply(ui.s, a); }
     catch (err) { MF.main.crash(err); return; }
+    saveGame();
     const fresh = ui.s.log.slice(before);
     ui.spot = null;
     for (const e of fresh) if (e.t === 'cast' || e.t === 'land' || e.t === 'activate') ui.recent.push({ id: e.c, who: e.who });
@@ -619,12 +631,13 @@
       ui.timer = setTimeout(() => dispatch(p), Math.max(visible ? 300 : 40, MF.anim.busyUntil - Date.now()));
     } else if (ui.spot) ui.timer = setTimeout(() => { ui.spot = null; render(); }, 1400);
   }
-  ui.begin = function (setup, state) {
+  ui.begin = function (setup, state, resumed) {                                              // resumed: a saved game's { actions, recent } (PLAN D26)
     clearTimeout(ui.timer);
-    ui.setup = setup; ui.human = setup.human; ui.actions = []; ui.spot = null; ui.modal = null; ui.menu = null; ui.recent = []; ui.passUntil = null; ui.peek = false; ui.resultClosed = false; ui.bannerTurn = null;
+    ui.setup = setup; ui.human = setup.human; ui.actions = resumed ? resumed.actions.slice() : []; ui.spot = null; ui.modal = null; ui.menu = null; ui.recent = resumed ? resumed.recent.slice() : []; ui.passUntil = null; ui.peek = false; ui.resultClosed = false; ui.bannerTurn = null;
     document.getElementById('app').innerHTML = '';                                            // a fresh table: render() builds the skeleton
     ui.stops = loadStops();
     ui.s = state; ui.animReady = false; MF.anim.reset(state);
+    saveGame();
     step(false);
   };
   ui.dispatch = dispatch;

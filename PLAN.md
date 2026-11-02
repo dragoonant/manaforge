@@ -37,12 +37,31 @@ This file owns decisions. No other file states one.
 | D23 | 2026-10-31 | **Art may also be rendered through Hugging Face** — the same SDXL base 1.0 model, prompts, seeds, size and negative prompt as D13, run by Hugging Face's inference router with the fal-ai provider (`fal-ai/fast-sdxl`) by `tools/gen-art-hf.py`, which also makes the 560 px delivery JPEG that `tools/shrink-art.ps1` makes. Owner: "We have eleven labs and hugging face on env vars right? Can we use hf to gen?" — the cloud session has no GPU and could not reach the owner's machine. The hosted endpoint takes one prompt for both text encoders, so it gets the second encoder's full text; the router bills the owner's Hugging Face account per image. Hugging Face's own `hf-inference` provider no longer serves SDXL (HTTP 410). D13's local script stays the first choice on the GPU machine. | owner |
 | D24 | 2026-10-31 | **The AI plays the championship Commander decks toward their wins.** Owner: "start making the improvements to AI so commander feels more competitive." The roll-out AI (one turn ahead) is kept and given what one turn can't see: **win lines**, each run in the engine on a determinized copy with the opponent passing and started only if it wins there (Thassa's Oracle with Demonic Consultation or Tainted Pact; Underworld Breach with Lion's Eye Diamond and Brain Freeze), then followed while this turn's casts show it under way; **threats** on the stack (an opponent's library win, Consultation, Breach, Ad Nauseam, a tutor, a commander, a counterspell on its own spell), worth their value in a roll-out that stops them; **tutors** that fetch the missing piece of the nearest line; an evaluator that counts an empty library (CR 704.5b), the colours its permanents make, mana rocks, and a Pact it couldn't pay at its next upkeep; and, in Commander games only, a small value for each spell cast. No rule moves into the AI: it plays through `legalActions`/`apply` as before. | owner |
 | D25 | 2026-11-01 | **One tool may need Playwright: `tools/page-sweep.mjs`.** Every other tool stays plain Node with no dependencies. The page sweep plays random, mixed and AI games inside the real page in Chromium and draws every decision state from the seat that acts; in the 2026-11-01 crash sweep it found the page crashes the Node sweeps could not see (Vivi Ornitier's payment option, the speed trigger on the stack). Owner, asked whether the rule "tools/: no dependencies" barred it: "yes, add it to tools with the PLAN decision". It is installed on demand, never committed: `npm install --no-save playwright && npx playwright install chromium` in the repo folder (`node_modules/` is ignored; there is no package.json). Without it the tool stops and says so (no silent fallback). The game itself is untouched: no build step, nothing loaded from npm. | owner |
+| D26 | 2026-11-02 | **The game in progress is saved, and can be continued after the page is closed.** Owner: "add a save function to the game so the player can come back in the future after closing the game, and start playing from the same spot". One slot, in the browser's own storage (`localStorage`, key `mf-save`): the setup, the action list and a snapshot of the state, written after every move, so closing the tab at any moment loses nothing. The snapshot, not a replay, is what reopens: it is the same spot even after the engine changes, where replaying the actions under new rules could become a different game; the action list rides along so the bug report still replays from the seed. The picker offers **Continue** (both decks, the turn, both life totals, when it was saved) and **Discard**; starting a new game says it replaces the save; a finished game clears it. A browser that refuses to store says so in the log drawer, and a save this version can't open says why on the picker — never a silent fallback. Saves live per browser and per address: `file://` and `node tools/serve.mjs` keep separate ones. | owner |
 
 ## Cut order if time runs short
 
 Deck count, never quality. A deck that does not compile in full is not registered.
 
 ## Status
+
+**2026-11-02 — the game in progress is saved and continued (D26).**
+
+- After every move (and when a game begins) `js/ui.js` writes the setup, the action list, the recently-played
+  strip and a snapshot of the state to `localStorage['mf-save']`; a finished game removes it. Measured on long
+  AI games: 40 KB (a duel, turn 13) to 93 KB (cEDH Terra v Najeela, turn 19) per save; the snapshot opens in
+  about 1 ms, where replaying the 604 actions takes 0.7 s.
+- The picker shows **Continue** with both decks, the turn, both life totals and when it was saved, and
+  **Discard it** (asked twice); the start button reads "Start a new game", with "A new game replaces your saved
+  one." under it; the title says a saved game is waiting; the drawer says the game is saved, or why not. A save
+  this version can't open (unreadable, a deck no longer playable, a state the engine can't read) is named with
+  its reason and offered for discarding, never opened silently.
+- Checked in the real browser (Playwright, Chromium, a persistent profile, 1500×950 and a phone at 844×390):
+  played to turn 4, closed the browser, reopened; Continue restored the same turn, step, log, life, hand and
+  action list (58 actions, report included); play went on and the bug report still replays to the live log.
+  Leaving by the drawer's New game keeps the save; Discard, Keep it, a corrupt save, a missing deck, a broken
+  state, a finished game (save removed) and a refusing browser (the drawer says so) each behave as above. No
+  page errors. tests 465/465; check-pages clean.
 
 **2026-11-01 — a crash sweep over every registered deck, the page included.**
 
