@@ -1,7 +1,7 @@
 // tools/art-identity.mjs — WHO is on each card, and WHAT is happening (PLAN D10, revised D14).
 //
 // Owner's brief (2026-10-04): warriors, fighters and mages trying to kill or undo each other —
-// never cute. A master-grade super-deformed build for characters. Lands are pure landscape with
+// stern, not soft. A compact armoured build for characters (about 2.8 head-heights). Lands are pure landscape with
 // no characters. Take cues from the real cards' art direction (animal-folk soldiers and mages in
 // practical medieval kit, oversized flora for scale) without copying any illustration.
 // Chosen direction: D, Grim Dark (scratch/audition-sheet.jpg).

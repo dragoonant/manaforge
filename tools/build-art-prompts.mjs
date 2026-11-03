@@ -26,7 +26,7 @@ import { STYLES, styleFor } from './art-styles.mjs';
 // (scratch/audition-sheet.jpg). These constants are byte-identical on every prompt of their kind;
 // they were reviewed as a whole, so the count rule does not apply to "three heads tall" inside them.
 export const STYLE = 'grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro';
-export const SHORT = 'super deformed grim warrior, stocky three heads tall, scarred and armoured, ';
+export const SHORT = 'grim stocky warrior, about 2.8 head-heights tall, very broad shoulders, short thick legs, scarred and armoured, ';
 export const LAND_STYLE = 'grim dark fantasy landscape painting, ash falling, grey smoke, muted earthy palette, desolate wasteland';
 export const LAND_SHORT = 'landscape painting, scenery, ';
 export const OBJECT_SHORT = 'fantasy still life painting of a single object, ';
@@ -39,7 +39,7 @@ const RULES = [
   [/\b(sign|signs|signage|signpost|banner|banners|poster|logo|logos|label|labels|text|lettering|letter|letters|words|word|title|titles|caption|subtitle|newspaper|book|books|page|pages|scroll|scrolls|placard|billboard|nameplate|watermark|signature|inscription|inscriptions|writing|written|typography|font|map|maps)\b/i, 'text-magnet noun, the model will render letters'],
   [/\b(no|not|without|never|none|avoid|exclude|excluding|absent|lacking|free of|don't|doesn't|cannot|can't)\b/i, 'negation, negations summon what they negate'],
   [/\b(magic the gathering|magic: the gathering|mtg|wizards of the coast|wizards|bloomburrow|planeswalker|flesh and blood|one piece|pokemon|yu-?gi-?oh|hearthstone|marvel|disney|pixar|ghibli|sanrio|artstation|rutkowski|in the style of|style of|dungeons and dragons|warhammer|redwall|beatrix potter)\b/i, 'names a real franchise, set, artist, studio or game'],
-  [/\b(cute|kawaii|adorable|chibi|plush|cuddly|hug|hugging|smiling)\b/i, 'cute word: the owner wants warriors and mages, never cute (2026-10-04)'],
+  [/\b(cute|kawaii|adorable|chibi|plush|cuddly|hug|hugging|smiling)\b/i, 'soft-style word: the owner wants stern warriors and mages (2026-10-04)'],
 ];
 // Lint a card's own words (subject and setting), plus the prompt as a whole for the style check.
 export function lint(key, words, prompt, style) {
@@ -57,7 +57,7 @@ if (args.includes('--selftest')) {
     ['negation', 'a knight without a helmet'],
     ['text magnet', 'an otter holding a scroll'],
     ['proper noun', 'an otter from Bloomburrow'],
-    ['cute', 'a cute rabbit hugging a friend'],
+    ['soft-style word', 'an adorable rabbit hugging a friend'],
   ];
   let caught = 0;
   for (const [name, w] of bad) { if (lint(name, w, null).length) caught++; else console.error(`selftest: lint FAILED to reject "${name}"`); }

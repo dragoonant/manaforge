@@ -30,12 +30,12 @@ URL = 'https://router.huggingface.co/fal-ai/fal-ai/fast-sdxl'
 WIDTH, HEIGHT = 832, 1216      # as gen-art-sdxl.py
 STEPS, GUIDANCE = 30, 7.5
 DELIVERY_W, QUALITY = 560, 86  # as shrink-art.ps1
-# The negative prompt, copied from gen-art-sdxl.py (owner, 2026-10-04: never cute).
+# The negative prompt, copied from gen-art-sdxl.py (owner, 2026-10-04: never soft or sweet).
 NEGATIVE = ('text, letters, words, watermark, signature, logo, caption, frame, border, card frame, blurry, low quality, '
             'jpeg artifacts, deformed, extra limbs, extra fingers, mutated hands, bad anatomy, cropped, photorealistic, '
             'tall slender body, ornate border, panel frame, vignette frame, monochrome, black and white, uncolored line art, coloring book, sketch, washed out, '
-            'cute, kawaii, adorable, smiling, happy, hugging, childish, kids illustration, plush toy, mascot')
-SHORT = 'chibi super deformed character art, giant head, tiny body, cel shaded, thick outlines, '
+            'adorable, smiling, happy, hugging, childish, kids illustration, plush doll, mascot, big round eyes, baby face')
+SHORT = 'stern armoured character art, about 2.8 head-heights tall, very broad shoulders, short thick legs, cel shaded, thick outlines, '
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--only', default='')

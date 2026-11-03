@@ -25,12 +25,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SDXL = os.path.expanduser('~/.cache/hy3dgen/sdxl')
 WIDTH, HEIGHT = 832, 1216      # an SDXL training bucket close to the card's 5:7
 STEPS, GUIDANCE = 30, 7.5
-SHORT = 'chibi super deformed character art, giant head, tiny body, cel shaded, thick outlines, '   # a prompt may carry its own `short`
+SHORT = 'stern armoured character art, about 2.8 head-heights tall, very broad shoulders, short thick legs, cel shaded, thick outlines, '   # a prompt may carry its own `short`
 # The negative prompt is where "no text" belongs: in the positive prompt a negation summons what it negates.
 NEGATIVE = ('text, letters, words, watermark, signature, logo, caption, frame, border, card frame, blurry, low quality, '
             'jpeg artifacts, deformed, extra limbs, extra fingers, mutated hands, bad anatomy, cropped, photorealistic, '
             'tall slender body, ornate border, panel frame, vignette frame, monochrome, black and white, uncolored line art, coloring book, sketch, washed out, '
-            'cute, kawaii, adorable, smiling, happy, hugging, childish, kids illustration, plush toy, mascot')   # owner, 2026-10-04: never cute
+            'adorable, smiling, happy, hugging, childish, kids illustration, plush doll, mascot, big round eyes, baby face')   # owner, 2026-10-04: never soft or sweet
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--only', default='')

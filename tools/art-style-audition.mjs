@@ -3,7 +3,7 @@
 // scratch/audition/prompts.json for tools/gen-art-sdxl.py --prompts ... --out scratch/audition.
 //
 // Owner's brief, 2026-10-04: warriors, fighters and mages trying to kill or undo each other —
-// never cute; a "master grade" super-deformed build for characters; lands are pure landscape with
+// stern, never soft; a compact armoured build for characters (about 2.8 head-heights tall, broad shoulders, short thick legs); lands are pure landscape with
 // no characters; take cues from the real cards' art direction without copying any illustration.
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -29,17 +29,17 @@ const CARDS = {
   },
 };
 
-// Five candidate directions. SD = super-deformed; each is a different reading of "master grade".
+// Five candidate directions; each is a different reading of the compact armoured-figure brief (about 2.8 head-heights).
 export const STYLES = {
-  A: { name: 'Painterly war SD', short: 'master grade super deformed warrior, three heads tall, heroic armoured figure, ',
+  A: { name: 'Painterly war', short: 'highly detailed painted miniature warrior, about 2.8 head-heights tall, very broad shoulders, short thick legs, heroic armoured figure, ',
        style: 'oil painting, epic fantasy trading card art, dramatic rim lighting, rich detailed brushwork, battle-worn, intense menacing expression, dark heroic mood' },
-  B: { name: 'Model-kit SD', short: 'master grade SD figure, compact heroic proportions, highly detailed armour plating, ',
+  B: { name: 'Model-kit', short: 'highly detailed model-kit figure, about 2.8 head-heights tall, very broad shoulders, short thick legs, highly detailed armour plating, ',
        style: 'premium scale model kit aesthetic, sharp panel lines, metallic sheen, battle damage and weathering, dynamic action pose, cinematic lighting, fierce' },
-  C: { name: 'Battle anime SD', short: 'super deformed battle anime warrior, three heads tall, fierce glare, ',
+  C: { name: 'Battle anime', short: 'battle anime warrior, about 2.8 head-heights tall, very broad shoulders, short thick legs, fierce glare, ',
        style: 'intense action anime key art, bold ink outlines, hard cel shading, speed lines, impact flash, dramatic camera angle, aggressive and dangerous' },
-  D: { name: 'Grim dark SD', short: 'super deformed grim warrior, stocky three heads tall, scarred and armoured, ',
+  D: { name: 'Grim dark', short: 'grim stocky warrior, about 2.8 head-heights tall, very broad shoulders, short thick legs, scarred and armoured, ',
        style: 'grim dark fantasy painting, muted earthy palette, gritty textures, smoke and blood-red light, brutal violent mood, chiaroscuro' },
-  E: { name: 'Classic fantasy SD', short: 'chunky super deformed fantasy soldier, four heads tall, detailed gear, ',
+  E: { name: 'Classic fantasy', short: 'chunky fantasy soldier, about 3.5 head-heights tall, very broad shoulders, short thick legs, detailed gear, ',
        style: 'classic fantasy card illustration, luminous painterly realism, warm natural sunlight and deep shadow, storybook epic scale, serious and dangerous' },
 };
 // Lands take the style's look but never a figure.
